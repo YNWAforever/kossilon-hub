@@ -1,7 +1,10 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import {
   listStaff,
   updateStaff,
@@ -9,7 +12,14 @@ import {
   previewReassignment,
   listStaffAudit,
 } from "./server-fns";
-import { STAFF_ROLES, type StaffMember, type StaffFilters, type UpdateStaffInput } from "./types";
+import { annualReturnStatusLabel } from "@/features/annual-return/labels";
+import {
+  STAFF_ROLES,
+  STAFF_ROLE_LABELS,
+  type StaffMember,
+  type StaffFilters,
+  type UpdateStaffInput,
+} from "./types";
 import { staffInvitationCapability } from "./auth-provider";
 export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
   const [q, setQ] = useState(""),
@@ -42,36 +52,40 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
   ];
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Administration" title="Admin" subtitle="員工與團隊管理" />
+      <PageHeader eyebrow="管理" title="用戶管理" subtitle="員工與團隊管理" />
       <p>{staffInvitationCapability.message}</p>
       <p>只維護已核實綁定的既有身份。最後登入：沒有可靠紀錄時顯示未知。</p>
-      <section aria-label="Staff filters" className="flex flex-wrap gap-3">
+      <section aria-label="員工篩選" className="flex flex-wrap gap-3">
         <label>
           搜尋
-          <input
-            aria-label="Search staff"
+          <Input
+            aria-label="搜尋員工"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            className="ml-2 rounded border"
+            className="ml-2"
           />
         </label>
         <label>
           角色
-          <select
-            aria-label="Staff role filter"
+          <Select
+            className="ml-2"
+            aria-label="按角色篩選"
             value={role}
             onChange={(e) => setRole(e.target.value)}
           >
             <option value="all">全部</option>
             {STAFF_ROLES.map((r) => (
-              <option key={r}>{r}</option>
+              <option key={r} value={r}>
+                {STAFF_ROLE_LABELS[r]}
+              </option>
             ))}
-          </select>
+          </Select>
         </label>
         <label>
           團隊
-          <select
-            aria-label="Staff team filter"
+          <Select
+            className="ml-2"
+            aria-label="按團隊篩選"
             value={team}
             onChange={(e) => setTeam(e.target.value)}
           >
@@ -82,25 +96,26 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
                 {!t.active ? "（停用）" : ""}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         <label>
           狀態
-          <select
-            aria-label="Staff active filter"
+          <Select
+            className="ml-2"
+            aria-label="按狀態篩選"
             value={active}
             onChange={(e) => setActive(e.target.value)}
           >
             <option value="all">全部</option>
             <option value="true">有效</option>
             <option value="false">停用</option>
-          </select>
+          </Select>
         </label>
       </section>
       {staff.isError || teams.isError ? (
         <p role="alert">未能取得員工資料，請重新載入。已讀取紀錄仍可查閱。</p>
       ) : null}
-      {staff.isPending ? <p>Loading staff administration...</p> : null}
+      {staff.isPending ? <LoadingRows label="員工資料載入中…" rows={4} /> : null}
       <section className="divide-y border-y">
         {rows.map((member) => (
           <StaffRow
@@ -115,13 +130,12 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
         <p>沒有符合條件的員工紀錄。</p>
       ) : null}
       {staff.hasNextPage ? (
-        <button
-          className="rounded border px-3 py-2"
+        <Button
           disabled={staff.isFetchingNextPage}
           onClick={() => void staff.fetchNextPage({ cancelRefetch: false })}
         >
           載入更多員工
-        </button>
+        </Button>
       ) : null}
       {staff.isFetchNextPageError ? (
         <p role="alert">下一頁未能載入；保留已讀取資料，可重試。</p>
@@ -186,8 +200,8 @@ function StaffRow({
         {member.displayName} · {member.teamName ?? "未有團隊"}
       </h2>
       <p>
-        {member.role} · {member.active ? "有效" : "停用"} · 未交案件 {member.openCases} · 未交工作{" "}
-        {member.openWorkItems} · 最後登入：未知
+        {STAFF_ROLE_LABELS[member.role] ?? member.role} · {member.active ? "有效" : "停用"} ·
+        未交案件 {member.openCases} · 未交工作 {member.openWorkItems} · 最後登入：未知
       </p>
       {member.stateMismatch ? (
         <p role="alert">身份及員工狀態不一致，請先核對；暫不可修改。</p>
@@ -197,20 +211,24 @@ function StaffRow({
         <div className="space-y-3 py-3">
           <label>
             帳戶角色
-            <select
-              aria-label={`Role for ${member.displayName}`}
+            <Select
+              className="ml-2"
+              aria-label={`${member.displayName} 的帳戶角色`}
               value={role}
               onChange={(e) => setRole(e.target.value as typeof role)}
             >
               {STAFF_ROLES.map((r) => (
-                <option key={r}>{r}</option>
+                <option key={r} value={r}>
+                  {STAFF_ROLE_LABELS[r]}
+                </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label>
             所屬團隊
-            <select
-              aria-label={`Team for ${member.displayName}`}
+            <Select
+              className="ml-2"
+              aria-label={`${member.displayName} 的所屬團隊`}
               value={teamId}
               onChange={(e) => setTeamId(e.target.value)}
             >
@@ -221,12 +239,12 @@ function StaffRow({
                   {!t.active ? "（停用）" : ""}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="block">
             <input
               type="checkbox"
-              aria-label={`Active for ${member.displayName}`}
+              aria-label={`${member.displayName} 的帳戶有效狀態`}
               checked={active}
               onChange={(e) => setActive(e.target.checked)}
             />
@@ -244,7 +262,7 @@ function StaffRow({
               {preview.data.cases.map((c) => (
                 <p key={c.id}>
                   <Link to="/annual-returns/$id" params={{ id: c.id }}>
-                    {c.companyName} · {c.status}
+                    {c.companyName} · {annualReturnStatusLabel(c.status)}
                   </Link>
                 </p>
               ))}
@@ -267,9 +285,9 @@ function StaffRow({
               </Link>
             </div>
           ) : null}
-          {blocked ? <p>必須先完成轉交，才可停用、移隊或改為 Client。</p> : null}
-          <button
-            className="rounded border px-3 py-2 disabled:opacity-50"
+          {blocked ? <p>必須先完成轉交，才可停用、移隊或改為客戶。</p> : null}
+          <Button
+            variant="primary"
             disabled={
               mutation.isPending ||
               member.stateMismatch ||
@@ -280,7 +298,7 @@ function StaffRow({
             onClick={() => mutation.mutate()}
           >
             套用帳戶變更
-          </button>
+          </Button>
           {mutation.isError ? (
             <p role="alert">
               未能保存。身份、版本或未交工作可能已改變，請重新載入並核對；沒有自動重試。

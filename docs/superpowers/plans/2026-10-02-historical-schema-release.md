@@ -35,8 +35,8 @@ parity and exact candidate failure; Task2 consumes these observations.
    locally executed migration receipts. Compare physical columns/indexes/constraints.
 3. Add controlled synthetic existing-year/unknown-workflow rows; apply current candidate
    SQL inside a rollback-only transaction and record the first actual collision.
-Expected: historical provenance covers66 IDs; applied hashes remain unknown; real
-candidate failure is reproduced with no production writes or persistent candidate DDL.
+   Expected: historical provenance covers66 IDs; applied hashes remain unknown; real
+   candidate failure is reproduced with no production writes or persistent candidate DDL.
 
 ### Task 2: Prepare and verify a guarded release bridge
 
@@ -51,7 +51,7 @@ rollback package and explicit per-feature remaining incompatibilities.
 3. Prove repeat/refusal/rollback and unchanged rows/ledger on the owned Postgres fixture.
 4. Run the existing CI/real Postgres gates; one fresh whole-branch review, then one
    RED/GREEN fix pass if needed. Commit/push/draft PR with actual receipts.
-Expected: local contracts pass, source/runtime remain distinct; unresolved mappings or
+   Expected: local contracts pass, source/runtime remain distinct; unresolved mappings or
    genuine provider clone/restore/Auth/provider acceptance retain precise blockers.
 
 Review focus: false equivalence of historic IDs, incompatible existing types/defaults/

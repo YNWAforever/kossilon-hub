@@ -1,5 +1,7 @@
+import { RiskPill } from "@/features/annual-return/components/risk-pill";
+import { Input, Select } from "@/components/ui/field";
+import { pageTitle } from "@/lib/page-title";
 import { type ReactNode, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 
 import {
@@ -17,13 +19,14 @@ import {
   type AnnualReturnRiskLevel,
 } from "../lib/annual-return-store";
 import { daysUntil } from "../lib/app-data";
+import { formatDate, formatDueDate } from "../lib/format-date";
 import { PageHeader } from "@/components/page-header";
-import { listWorkQueue } from "../features/work-items/server-fns";
+import { Button } from "@/components/ui/button";
 import { ProductionAnnualReturnCommandCenter } from "../features/annual-return/components/production-command-center";
 import { boardSearchFromUrl } from "../features/annual-return/board-filters";
-import type { PersistedWorkItem } from "../features/work-items/repository";
 
 export const Route = createFileRoute("/annual-returns")({
+  head: () => ({ meta: [{ title: pageTitle("周年申報") }] }),
   // Board filters live in the URL so they survive a reload and a return from a
   // detail screen. The sanitiser is in board-filters.ts so it can be unit-tested;
   // a route file cannot export a non-component without tripping react-refresh.
@@ -60,19 +63,6 @@ function AnnualReturnsRoute() {
 
 function DemoAnnualReturnCommandCenter() {
   const cases = useAnnualReturnCases();
-  const workItemsQuery = useQuery({
-    queryKey: ["work-queue", "annual-return-list"],
-    queryFn: () => listWorkQueue({ data: { view: "team" } }),
-  });
-  const workItemsByCase = useMemo(() => {
-    const map = new Map<string, PersistedWorkItem>();
-    for (const item of workItemsQuery.data ?? []) {
-      if (item.annualReturnCaseId && !map.has(item.annualReturnCaseId)) {
-        map.set(item.annualReturnCaseId, item);
-      }
-    }
-    return map;
-  }, [workItemsQuery.data]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<
     "all" | "urgent" | "blocked" | "ready" | "packet-ready" | "needs-follow-up" | "filed"
@@ -109,40 +99,41 @@ function DemoAnnualReturnCommandCenter() {
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader
-        eyebrow="Operations"
-        title="Annual returns"
+        eyebrow="案件與客戶"
+        title="周年申報"
         actions={
-          <Link
-            to="/work-queue"
-            search={{
-              view: "team",
-              owner: "all",
-              workType: "all",
-              sla: "all",
-              priority: "all",
-              status: "all",
-            }}
-            className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
-          >
-            Open work queue
-          </Link>
+          <Button asChild>
+            <Link
+              to="/work-queue"
+              search={{
+                view: "team",
+                owner: "all",
+                workType: "all",
+                sla: "all",
+                priority: "all",
+                status: "all",
+              }}
+            >
+              開啟工作隊列
+            </Link>
+          </Button>
         }
       />
 
-      <div className="grid gap-3 md:grid-cols-5">
-        <Metric label="Overdue" value={metrics.overdue} tone="red" />
-        <Metric label="Due soon" value={metrics.dueSoon} tone="orange" />
-        <Metric label="Blocked" value={metrics.blocked} tone="yellow" />
-        <Metric label="Ready to file" value={metrics.readyToFile} tone="green" />
-        <Metric label="Filed" value={metrics.filed} tone="blue" />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+        <Metric label="已逾期" value={metrics.overdue} tone="red" />
+        <Metric label="即將到期" value={metrics.dueSoon} tone="orange" />
+        <Metric label="受阻" value={metrics.blocked} tone="yellow" />
+        <Metric label="可遞交" value={metrics.readyToFile} tone="green" />
+        <Metric label="已遞交" value={metrics.filed} tone="blue" />
       </div>
 
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto]">
-          <input
-            className="rounded-md border bg-background px-3 py-2 text-sm"
-            aria-label="Search company or contact"
-            placeholder="Search company or contact"
+          <Input
+            className="w-full"
+            aria-label="搜尋公司或聯絡人"
+            placeholder="搜尋公司或聯絡人"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
@@ -158,31 +149,30 @@ function DemoAnnualReturnCommandCenter() {
                 "filed",
               ] as const
             ).map((value) => (
-              <button
+              <Button
                 key={value}
-                className={`rounded-md border px-3 py-2 text-sm ${
-                  filter === value ? "bg-primary text-primary-foreground" : "bg-background"
-                }`}
+                variant={filter === value ? "primary" : "outline"}
+                size="sm"
+                aria-pressed={filter === value}
                 onClick={() => setFilter(value)}
-                type="button"
               >
                 {filterLabel(value)}
-              </button>
+              </Button>
             ))}
           </div>
-          <select
-            className="rounded-md border bg-background px-3 py-2 text-sm"
+          <Select
+            className="w-full"
             value={owner}
             onChange={(event) => setOwner(event.target.value)}
-            aria-label="Filter by owner"
+            aria-label="按負責同事篩選"
           >
-            <option value="all">All owners</option>
+            <option value="all">全部負責同事</option>
             {owners.map((ownerName) => (
               <option key={ownerName} value={ownerName}>
                 {ownerName}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div className="overflow-x-auto">
@@ -190,37 +180,22 @@ function DemoAnnualReturnCommandCenter() {
             <div
               className={`hidden gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid ${CASE_GRID_COLUMNS}`}
             >
-              <span>Company</span>
-              <span>Owner</span>
-              <span>Risk</span>
-              <span>Due</span>
-              <span>Case</span>
-              <span>Blockers</span>
-              <span>Packet</span>
-              <span>Follow-ups</span>
-              <span>Next action</span>
-              <span>Payment</span>
-              <span className="text-right">Open</span>
+              <span>公司</span>
+              <span>負責同事</span>
+              <span>到期日</span>
+              <span>進度</span>
+              <span>未完成事項</span>
+              <span>下一步</span>
+              <span className="text-right">開啟</span>
             </div>
 
             <div className="divide-y">
               {visibleCases.map((caseItem) => (
-                <CaseRow
-                  key={caseItem.id}
-                  caseItem={caseItem}
-                  workItem={workItemsByCase.get(caseItem.id)}
-                  workItemQueryState={
-                    workItemsQuery.isPending
-                      ? "loading"
-                      : workItemsQuery.isError
-                        ? "error"
-                        : "ready"
-                  }
-                />
+                <CaseRow key={caseItem.id} caseItem={caseItem} />
               ))}
               {visibleCases.length === 0 ? (
                 <div className="px-4 py-8 text-sm text-muted-foreground">
-                  No annual return cases match the current filters.
+                  沒有符合篩選條件的周年申報案件。
                 </div>
               ) : null}
             </div>
@@ -234,18 +209,18 @@ function DemoAnnualReturnCommandCenter() {
 // One template shared by the header row and every data row — maintained as two
 // separate literals they drifted, and the columns stopped lining up.
 //
-// The nine fixed tracks (886px) plus ten 12px gaps plus the two minmax floors
-// come to ~1356px, which is wider than the content area on a 1280-1440px
-// laptop once the 300px sidebar and the p-6 padding are taken out. That is why
-// the rows live inside an `overflow-x-auto` container: the board scrolls
-// sideways rather than overflowing and drawing its cells on top of each other.
+// Related facts share a column (risk over due date, case over packet, blockers
+// over follow-ups, next action over payment) so the tracks, six 12px gaps and
+// row padding fit the ~960px content area of a 1280px laptop beside the
+// sidebar. Narrower `lg` widths still get an `overflow-x-auto` container, so
+// the board scrolls sideways rather than drawing cells on top of each other.
 //
 // The floors matter as much as the fixed widths. With `minmax(0, 1.4fr)` the
 // company and next-action columns could be squeezed to nothing, which is what
 // let their text escape the grid in the first place.
 const CASE_GRID_COLUMNS =
-  "lg:grid-cols-[minmax(220px,1.4fr)_110px_96px_130px_64px_140px_110px_80px_minmax(130px,1fr)_84px_72px]";
-const CASE_GRID_MIN_WIDTH = "lg:min-w-[1356px]";
+  "lg:grid-cols-[minmax(180px,1.6fr)_96px_136px_116px_minmax(140px,1fr)_minmax(140px,1.2fr)_72px]";
+const CASE_GRID_MIN_WIDTH = "lg:min-w-[952px]";
 
 function Metric({
   label,
@@ -267,15 +242,7 @@ function Metric({
   );
 }
 
-function CaseRow({
-  caseItem,
-  workItem,
-  workItemQueryState,
-}: {
-  caseItem: AnnualReturnCase;
-  workItem?: PersistedWorkItem;
-  workItemQueryState: "loading" | "error" | "ready";
-}) {
+function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
   const risk = getRiskLevel(caseItem);
   const readiness = getReadinessScore(caseItem);
   const nextAction = getNextAction(caseItem);
@@ -287,66 +254,98 @@ function CaseRow({
   const blockers = getBlockers(caseItem);
   const blockerSummary =
     blockers.length === 0
-      ? "None"
+      ? null
       : blockers.length === 1
         ? blockers[0].label
         : `${blockers[0].label} +${blockers.length - 1}`;
 
   return (
-    <div className={`grid gap-3 px-4 py-4 lg:items-center ${CASE_GRID_COLUMNS}`}>
-      <div className="min-w-0">
-        <p className="truncate font-medium">{caseItem.companyName}</p>
+    <div className={`grid grid-cols-2 gap-3 px-4 py-4 lg:items-center ${CASE_GRID_COLUMNS}`}>
+      <div className="col-span-2 min-w-0 lg:col-span-1">
+        <p className="font-medium leading-5 [overflow-wrap:anywhere]">{caseItem.companyName}</p>
         <p className="truncate text-sm text-muted-foreground">{caseItem.contactName}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Work owner:{" "}
-          {workItemQueryState === "loading"
-            ? "Loading"
-            : workItemQueryState === "error"
-              ? "Unavailable"
-              : workItem?.ownerId
-                ? `Staff ${workItem.ownerId.slice(0, 8)}`
-                : workItem
-                  ? "Unassigned"
-                  : "No work item"}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          SLA state:{" "}
-          {workItemQueryState === "loading"
-            ? "Loading"
-            : workItemQueryState === "error"
-              ? "Unavailable"
-              : workItem
-                ? workItem.escalationState
-                : "No work item"}
-        </p>
       </div>
 
-      <Field label="Owner" value={caseItem.owner} />
-      <Field label="Risk" value={<RiskPill risk={risk} />} />
-      <Field label="Due" value={formatDue(caseItem.dueDate, dueInDays)} />
-      <Field label="Case" value={`${readiness}%`} />
-      <Field label="Blockers" value={blockerSummary} />
-      <Field label="Packet" value={`${packetLabel(packetStatus)} / ${packetReadiness}%`} />
-      <Field label="Follow-ups" value={openFollowUps === 0 ? "None" : `${openFollowUps} open`} />
-      <Field label="Next action" value={nextAction} />
-      <Field label="Payment" value={paymentLabel(caseItem.paymentStatus)} />
+      <Field label="負責同事" value={caseItem.owner} />
+      <Field
+        label="到期日"
+        value={
+          <div className="space-y-1">
+            <RiskPill risk={risk} />
+            <p className="text-xs text-muted-foreground">
+              {risk === "filed"
+                ? `${formatDate(caseItem.dueDate)} · 已遞交`
+                : formatDueDate(caseItem.dueDate, dueInDays)}
+            </p>
+          </div>
+        }
+      />
+      <Field
+        label="進度"
+        value={
+          <div>
+            <p>案件 {readiness}%</p>
+            <p className="text-xs text-muted-foreground">
+              交件套件：{packetLabel(packetStatus)}
+              {packetReadiness > 0 && packetReadiness < 100 ? ` · ${packetReadiness}%` : ""}
+            </p>
+          </div>
+        }
+      />
+      <Field
+        label="未完成事項"
+        value={
+          <div className="min-w-0">
+            <p className="truncate" title={blockerSummary ?? "沒有阻礙事項"}>
+              {blockerSummary ?? "沒有阻礙事項"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {openFollowUps === 0 ? "沒有待跟進" : `${openFollowUps} 項待跟進`}
+            </p>
+          </div>
+        }
+      />
+      <Field
+        label="下一步"
+        className="col-span-2 lg:col-span-1"
+        value={
+          <div>
+            <p>{nextAction}</p>
+            <p
+              className={`text-xs ${caseItem.paymentStatus === "overdue" ? "font-medium text-red-700" : "text-muted-foreground"}`}
+            >
+              付款：{paymentLabel(caseItem.paymentStatus)}
+            </p>
+          </div>
+        }
+      />
 
-      <div className="flex justify-start lg:justify-end">
-        <Link
-          className="rounded-md border px-3 py-2 text-center text-sm"
-          to="/annual-returns/$id"
-          params={{ id: caseItem.id }}
-        >
-          Open
-        </Link>
+      <div className="col-span-2 flex justify-start lg:col-span-1 lg:justify-end">
+        <Button asChild>
+          <Link
+            aria-label={`開啟 ${caseItem.companyName}`}
+            to="/annual-returns/$id"
+            params={{ id: caseItem.id }}
+          >
+            開啟
+          </Link>
+        </Button>
       </div>
     </div>
   );
 }
 
-function Field({ label, value }: { label: string; value: ReactNode }) {
+function Field({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="min-w-0">
+    <div className={className ? `min-w-0 ${className}` : "min-w-0"}>
       <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
         {label}
       </p>
@@ -355,51 +354,32 @@ function Field({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
-function RiskPill({ risk }: { risk: AnnualReturnRiskLevel }) {
-  return (
-    <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${riskToneClass(risk)}`}>
-      {riskLabel(risk)}
-    </span>
-  );
-}
-
 function riskSortValue(risk: AnnualReturnRiskLevel): number {
   return { overdue: 0, "due-soon": 1, blocked: 2, "ready-to-file": 3, healthy: 4, filed: 5 }[risk];
-}
-
-function riskLabel(risk: AnnualReturnRiskLevel): string {
-  return {
-    overdue: "Overdue",
-    "due-soon": "Due soon",
-    blocked: "Blocked",
-    healthy: "Healthy",
-    "ready-to-file": "Ready",
-    filed: "Filed",
-  }[risk];
 }
 
 function filterLabel(
   filter: "all" | "urgent" | "blocked" | "ready" | "packet-ready" | "needs-follow-up" | "filed",
 ): string {
   return {
-    all: "All",
-    urgent: "Urgent",
-    blocked: "Blocked",
-    ready: "Ready",
-    "packet-ready": "Packet ready",
-    "needs-follow-up": "Needs follow-up",
-    filed: "Filed",
+    all: "全部",
+    urgent: "緊急",
+    blocked: "受阻",
+    ready: "可遞交",
+    "packet-ready": "交件套件就緒",
+    "needs-follow-up": "需要跟進",
+    filed: "已遞交",
   }[filter];
 }
 
 function packetLabel(status: AnnualReturnPacketStatus): string {
   return {
-    "not-started": "Not started",
-    building: "Building",
-    "ready-for-review": "Review",
-    approved: "Approved",
-    submitted: "Submitted",
-    accepted: "Accepted",
+    "not-started": "未開始",
+    building: "準備中",
+    "ready-for-review": "待覆核",
+    approved: "已批准",
+    submitted: "已提交",
+    accepted: "已接納",
   }[status];
 }
 
@@ -413,29 +393,10 @@ function metricToneClass(tone: "red" | "orange" | "yellow" | "green" | "blue"): 
   }[tone];
 }
 
-function riskToneClass(risk: AnnualReturnRiskLevel): string {
-  return {
-    overdue: "bg-red-100 text-red-700",
-    "due-soon": "bg-orange-100 text-orange-700",
-    blocked: "bg-yellow-100 text-yellow-800",
-    healthy: "bg-slate-100 text-slate-700",
-    "ready-to-file": "bg-green-100 text-green-700",
-    filed: "bg-blue-100 text-blue-700",
-  }[risk];
-}
-
 function paymentLabel(paymentStatus: AnnualReturnCase["paymentStatus"]): string {
   return {
-    overdue: "Overdue",
-    paid: "Paid",
-    pending: "Pending",
+    overdue: "逾期未付",
+    paid: "已付款",
+    pending: "待付款",
   }[paymentStatus];
-}
-
-function formatDue(dueDate: string, dueInDays: number): string {
-  if (dueInDays < 0) {
-    return `${dueDate} (${Math.abs(dueInDays)}d overdue)`;
-  }
-
-  return `${dueDate} (${dueInDays}d)`;
 }

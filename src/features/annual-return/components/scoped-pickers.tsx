@@ -1,3 +1,5 @@
+import { roleLabel } from "@/features/auth/role-labels";
+import { formatDate } from "@/lib/format-date";
 import { useEffect, useRef, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { listDocumentPage } from "@/features/documents/server-fns";
@@ -5,6 +7,8 @@ import type { DocumentSummary } from "@/features/documents/repository";
 import { documentSafetyOf } from "@/features/documents/safety";
 import type { DocumentCategory } from "@/features/documents/types";
 import { listAssignableStaff } from "../server-fns";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 
 /**
  * The pickers that replace this screen's UUID text boxes.
@@ -61,8 +65,8 @@ export function StaffPicker({
     <div>
       <label className="text-sm">
         搜尋{label}
-        <input
-          className="min-h-11 w-full rounded border px-3"
+        <Input
+          className="min-h-11 w-full"
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -74,9 +78,9 @@ export function StaffPicker({
       <label className="text-sm font-medium" htmlFor={id}>
         {label}
       </label>
-      <select
+      <Select
         id={id}
-        className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
+        className="mt-1 w-full"
         disabled={disabled || staffQuery.isLoading || Boolean(staffQuery.error)}
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -95,15 +99,15 @@ export function StaffPicker({
         ) : null}
         {options.map((member) => (
           <option key={member.id} value={member.id}>
-            {member.name} · {member.role}
+            {member.name} · {roleLabel(member.role)}
             {member.teamName ? ` · ${member.teamName}` : ""}
           </option>
         ))}
-      </select>
+      </Select>
       {staffQuery.error ? (
-        <button type="button" className="min-h-11" onClick={() => void staffQuery.refetch()}>
+        <Button className="min-h-11" onClick={() => void staffQuery.refetch()}>
           重試同事搜尋
-        </button>
+        </Button>
       ) : null}
     </div>
   );
@@ -177,8 +181,8 @@ export function DocumentPicker({
     <div className="min-w-0">
       <label className="text-sm">
         搜尋{label}文件
-        <input
-          className="min-h-11 w-full rounded border px-3"
+        <Input
+          className="min-h-11 w-full"
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -190,9 +194,9 @@ export function DocumentPicker({
       <label className="text-sm font-medium" htmlFor={id}>
         {label}
       </label>
-      <select
+      <Select
         id={id}
-        className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
+        className="mt-1 w-full"
         disabled={disabled || documentsQuery.isLoading || Boolean(documentsQuery.error)}
         value={value}
         onChange={(event) => {
@@ -216,25 +220,23 @@ export function DocumentPicker({
         ) : null}
         {candidates.map((document) => (
           <option key={document.id} value={document.id}>
-            {document.fileName} · {formatUploadedAt(document.uploadedAt)}
+            {document.fileName} · {formatDate(document.uploadedAt)}
           </option>
         ))}
-      </select>
+      </Select>
       {documentsQuery.hasNextPage ? (
-        <button
-          type="button"
-          className="min-h-11 rounded border px-3"
+        <Button
+          className="min-h-11"
           disabled={documentsQuery.isFetchingNextPage}
           onClick={() => void documentsQuery.fetchNextPage({ cancelRefetch: false })}
         >
           載入更多{label}文件
-        </button>
+        </Button>
       ) : null}
       {documentsQuery.error ? (
         <div role="alert">
           文件搜尋未完成。
-          <button
-            type="button"
+          <Button
             className="min-h-11"
             onClick={() =>
               void (documentsQuery.isFetchNextPageError
@@ -243,7 +245,7 @@ export function DocumentPicker({
             }
           >
             重試文件搜尋
-          </button>
+          </Button>
         </div>
       ) : null}
       {/* Naming why the list is short is more useful than an empty dropdown. */}
@@ -257,12 +259,4 @@ export function DocumentPicker({
       ) : null}
     </div>
   );
-}
-
-function formatUploadedAt(value: string): string {
-  return new Date(value).toLocaleDateString("en-HK", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 }

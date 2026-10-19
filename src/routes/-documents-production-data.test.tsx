@@ -141,7 +141,7 @@ describe("/documents against data the types say is impossible", () => {
     expect(html).toContain("director-passport.pdf");
     expect(html).toContain("文件登記未有完整上載來源");
     expect(html).not.toContain("開啟原件");
-    expect(html).not.toContain("Download</button>");
+    expect(html).not.toContain("下載</button>");
   });
   it("accepts a seeded UUID filter and retains safe document actions", async () => {
     const caseId = "40000000-0000-0000-0000-000000000002";
@@ -165,7 +165,7 @@ describe("/documents against data the types say is impossible", () => {
       caseData: { id: CASE_ID, companyName: "Harbour Trading Ltd" },
       withCaseId: true,
     });
-    expect(html).toContain("Production document vault");
+    expect(html).toContain("正式文件庫");
   });
 
   it("a category outside DOCUMENT_CATEGORIES", async () => {
@@ -173,7 +173,7 @@ describe("/documents against data the types say is impossible", () => {
       documents: [{ ...baseDocument, category: "bank-statement" }],
       withCaseId: false,
     });
-    expect(html).toContain("Production document vault");
+    expect(html).toContain("正式文件庫");
   });
 
   it("null in the string columns labelValue formats", async () => {
@@ -181,7 +181,7 @@ describe("/documents against data the types say is impossible", () => {
       documents: [{ ...baseDocument, category: null, uploadStatus: null, reviewStatus: null }],
       withCaseId: false,
     });
-    expect(html).toContain("Production document vault");
+    expect(html).toContain("正式文件庫");
   });
 
   it("a null fileName", async () => {
@@ -189,12 +189,12 @@ describe("/documents against data the types say is impossible", () => {
       documents: [{ ...baseDocument, fileName: null }],
       withCaseId: false,
     });
-    expect(html).toContain("Production document vault");
+    expect(html).toContain("正式文件庫");
   });
 
   it("listDocuments resolving null instead of an array", async () => {
     const html = await render({ documents: null as unknown as unknown[], withCaseId: false });
-    expect(html).toContain("Production document vault");
+    expect(html).toContain("正式文件庫");
   });
 });
 
@@ -228,6 +228,17 @@ describe("/documents in production must not link demo rows into production route
     );
 
     expect(demoLinks.length).toBeGreaterThan(0);
-    expect(html).toContain("Search company, contact, title, or filename");
+    expect(html).toContain("搜尋公司、聯絡人、標題或檔案名稱");
+  });
+
+  it("does not show the empty production vault in demo mode", async () => {
+    // Demo mode never reads Postgres, so the vault could only ever say "No
+    // production documents match this scope" above a populated fixture archive.
+    resetAnnualReturnCasesForTest();
+    resetClientPortalStoreForTest();
+
+    const html = await render({ documents: [], withCaseId: false, dataMode: "demo" });
+
+    expect(html).not.toContain("正式文件庫");
   });
 });

@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { ChevronDown, Layers } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { assignmentLabels } from "@/features/work-items/assignment-labels";
 import { readSnapshotMembership } from "@/features/bulk-operations/membership";
@@ -26,6 +29,8 @@ import type {
   BulkJobCursor,
   MaintenanceActionKind,
   MaintenanceAction,
+  ItemState,
+  JobResult,
 } from "@/features/bulk-operations/types";
 type Props = {
   actorScope: string;
@@ -37,27 +42,76 @@ type Props = {
   maintenanceActions?: MaintenanceActionKind[];
 };
 const maintenanceLabels: Record<MaintenanceActionKind, string> = {
-  client_maintenance: "客戶 owner／team 維護（改資料）",
-  document_assignment: "分派文件所屬案件（同步案及工作）",
+  client_maintenance: "客戶負責同事／團隊維護（更改資料）",
+  document_assignment: "分配文件所屬案件（同步案件及工作）",
   document_return_draft: "文件退回草稿（待單筆覆核）",
-  document_list_export: "安全文件清單（只有 metadata）",
+  document_list_export: "安全文件清單（只含基本資料）",
   follow_up_draft: "追件草稿（不派送）",
   payment_list_export: "付款核對清單（不入賬）",
 };
+const jobStateLabels: Record<JobResult["state"], string> = {
+  queued: "排隊中",
+  running: "進行中",
+  completed: "已完成",
+  partial: "部分完成",
+  cancelled: "已取消",
+};
+const itemStateLabels: Record<ItemState, string> = {
+  pending: "待處理",
+  succeeded: "成功",
+  forbidden: "無權",
+  locked: "鎖定",
+  conflict: "衝突",
+  failed: "失敗",
+  unknown: "結果未知",
+  cancelled: "已取消",
+};
+function stateLabel(labels: Record<string, string>, state: string): string {
+  return labels[state] ?? state;
+}
 /** Changing actor replaces the entire session; changing filters replaces selection only. */
 export function BulkSelectionToolbar(props: Props) {
   return <BulkSession key={props.actorScope} {...props} />;
 }
 function BulkSession(props: Props) {
   const [jobId, setJobId] = useState<string | null>(null);
+  const title = props.maintenanceActions ? "批量日常維護" : "批量分配";
+  // Bulk work is an occasional manager tool, so it starts collapsed instead of
+  // filling the top of every list above the records people came to read. The
+  // native <details> keeps its selection state while closed, and job progress
+  // sits outside it so a running job is never hidden.
   return (
-    <section aria-label="Bulk assignment" className="space-y-3 rounded border p-4">
-      <SelectionControls
-        key={JSON.stringify([props.resource, props.filters])}
-        {...props}
-        onCreated={setJobId}
-      />
-      <BulkJobProgress actorScope={props.actorScope} jobId={jobId} onJobChange={setJobId} />
+    <section aria-label={title} className="rounded-lg border bg-card text-sm">
+      <details className="group">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-4 py-2 font-medium hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center gap-2">
+            <Layers aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
+            {title}
+            <span className="text-xs font-normal text-muted-foreground">管理員及經理</span>
+          </span>
+          <ChevronDown
+            aria-hidden="true"
+            className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180"
+          />
+        </summary>
+        <div className="border-t px-4 py-4">
+          <SelectionControls
+            key={JSON.stringify([props.resource, props.filters])}
+            {...props}
+            onCreated={setJobId}
+          />
+          {jobId ? null : (
+            <div className="mt-4 border-t pt-4">
+              <BulkJobProgress actorScope={props.actorScope} jobId={jobId} onJobChange={setJobId} />
+            </div>
+          )}
+        </div>
+      </details>
+      {jobId ? (
+        <div className="border-t px-4 py-4">
+          <BulkJobProgress actorScope={props.actorScope} jobId={jobId} onJobChange={setJobId} />
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -209,14 +263,13 @@ function SelectionControls({
       : fixedCount - selection.excludedIds.length;
   const busy = snapshot.isPending || dryRun.isPending || execute.isPending;
   return (
-    <div className="space-y-3">
-      <h2 className="font-semibold">{maintenanceActions ? "批量日常維護" : "批量分派"}</h2>
+    <div className="space-y-3 text-muted-foreground [&_label]:text-foreground">
       {maintenanceActions ? (
         <>
           <label>
             操作
-            <select
-              aria-label="Bulk action"
+            <Select
+              aria-label="批量操作"
               value={actionKind}
               disabled={busy}
               onChange={(e) => {
@@ -232,27 +285,28 @@ function SelectionControls({
                   {maintenanceLabels[kind]}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
-          <p>草稿須另作單筆批准；清單不包含文件 bytes，不代表已付款、已派送或已交件。</p>
+          <p>草稿須另作單筆批准；清單不包含文件內容，不代表已付款、已派送或已交件。</p>
         </>
       ) : null}
       <p>
         每頁{pageSize}；已載入{page.length}；全部{total ?? "未知"}
       </p>
       <div className="flex flex-wrap gap-3">
-        <button
+        <Button
+          size="sm"
           disabled={busy || page.length === 0}
           onClick={() => change({ mode: "explicit_ids", ids: page.map((p) => p.id) })}
         >
           選取已載入紀錄
-        </button>
-        <button disabled={busy || total === null} onClick={() => snapshot.mutate()}>
+        </Button>
+        <Button size="sm" disabled={busy || total === null} onClick={() => snapshot.mutate()}>
           選取全部篩選結果
-        </button>
-        <button disabled={busy} onClick={() => change({ mode: "explicit_ids", ids: [] })}>
+        </Button>
+        <Button size="sm" disabled={busy} onClick={() => change({ mode: "explicit_ids", ids: [] })}>
           清空選取
-        </button>
+        </Button>
       </div>
       <p>已選取{count}筆</p>
       {selection.mode === "filtered_snapshot" ? (
@@ -267,7 +321,7 @@ function SelectionControls({
             <label className="block" key={p.id}>
               <input
                 type="checkbox"
-                aria-label={`Select ${p.label}`}
+                aria-label={`選取 ${p.label}`}
                 checked={
                   selection.mode === "explicit_ids"
                     ? selection.ids.includes(p.id)
@@ -288,10 +342,10 @@ function SelectionControls({
       {needsAssignee ? (
         <>
           <label>
-            搜尋批量員工
-            <input
-              aria-label="搜尋批量員工"
-              className="min-h-11 rounded border px-3"
+            搜尋同事
+            <Input
+              aria-label="搜尋同事"
+              className="min-h-11"
               value={assigneeSearch}
               disabled={busy}
               onChange={(event) => {
@@ -302,12 +356,12 @@ function SelectionControls({
                 setRequest(null);
               }}
             />
-            <span className="block text-xs">最多200項；搜尋涵蓋全部獲授權員工。</span>
+            <span className="block text-xs">最多 200 項；搜尋範圍涵蓋所有獲授權同事。</span>
           </label>
           <label>
-            責任
-            <select
-              aria-label="Bulk responsibility"
+            負責角色
+            <Select
+              aria-label="負責角色"
               disabled={busy}
               value={target}
               onChange={(e) => {
@@ -316,15 +370,15 @@ function SelectionControls({
                 setRequest(null);
               }}
             >
-              <option value="owner">Owner</option>
-              <option value="reviewer">Reviewer</option>
-            </select>
+              <option value="owner">負責同事</option>
+              <option value="reviewer">覆核人</option>
+            </Select>
           </label>
           {actionKind === "client_maintenance" ? (
             <label>
-              目標 team
-              <select
-                aria-label="Bulk company team"
+              目標團隊
+              <Select
+                aria-label="目標團隊"
                 value={teamId}
                 disabled={busy}
                 onChange={(e) => {
@@ -333,7 +387,7 @@ function SelectionControls({
                   setRequest(null);
                 }}
               >
-                <option value="">選擇目標 team</option>
+                <option value="">選擇目標團隊</option>
                 {[
                   ...new Map(
                     (assignees.data ?? [])
@@ -345,13 +399,13 @@ function SelectionControls({
                     {name ?? id}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
           ) : null}
           <label>
-            員工
-            <select
-              aria-label="Bulk assignee"
+            同事
+            <Select
+              aria-label="同事"
               disabled={busy || assignees.isError}
               value={assigneeId}
               onChange={(e) => {
@@ -360,13 +414,13 @@ function SelectionControls({
                 setRequest(null);
               }}
             >
-              <option value="">選擇有效員工</option>
+              <option value="">選擇在職同事</option>
               {assignees.data?.map((s) => (
                 <option key={s.id} value={s.id}>
                   {labels.get(s.id)}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         </>
       ) : null}
@@ -382,8 +436,8 @@ function SelectionControls({
             .map((p) => (
               <label className="block" key={p.id}>
                 {p.label}
-                <input
-                  aria-label={`Return reason ${p.label}`}
+                <Input
+                  aria-label={`退回原因：${p.label}`}
                   maxLength={500}
                   disabled={busy}
                   value={returnReasons[p.id] ?? ""}
@@ -400,8 +454,8 @@ function SelectionControls({
       {resource === "work_item" ? (
         <label>
           非首選或超額原因
-          <input
-            aria-label="Bulk override reason"
+          <Input
+            aria-label="非首選或超額原因"
             value={overrideReason}
             disabled={busy}
             onChange={(e) => {
@@ -412,7 +466,9 @@ function SelectionControls({
           />
         </label>
       ) : null}
-      <button
+      <Button
+        variant="primary"
+        size="sm"
         disabled={
           busy ||
           count === 0 ||
@@ -422,12 +478,12 @@ function SelectionControls({
         }
         onClick={() => dryRun.mutate()}
       >
-        {maintenanceActions ? "預覽批量維護" : "預覽批量分派"}
-      </button>
+        {maintenanceActions ? "預覽批量維護" : "預覽批量分配"}
+      </Button>
       {preview ? (
         <div role="status">
           <p>
-            預覽{preview.count}筆；可分派{preview.eligibleCount}；鎖定{preview.reasons.locked}；無權
+            預覽{preview.count}筆；可分配{preview.eligibleCount}；鎖定{preview.reasons.locked}；無權
             {preview.reasons.forbidden}；版本衝突{preview.reasons.conflict}；不合條件
             {preview.reasons.failed}
           </p>
@@ -441,24 +497,26 @@ function SelectionControls({
                     item.output.reason ??
                     item.output.fileName ??
                     item.output.invoiceNumber ??
-                    item.output.kind,
+                    stateLabel(maintenanceLabels, String(item.output.kind)),
                 )}
               </p>
             </div>
           ))}
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             disabled={busy || preview.eligibleCount === 0 || !request}
             onClick={() => execute.mutate()}
           >
-            {maintenanceActions ? "批准並建立維護工作" : "批准並建立分派工作"}
-          </button>
+            {maintenanceActions ? "批准並建立維護工作" : "批准並建立分配工作"}
+          </Button>
         </div>
       ) : null}
       {snapshot.isError ||
       dryRun.isError ||
       (needsAssignee && assignees.isError) ||
       membership.isError ? (
-        <p role="alert">未能取得當前範圍、員工或預覽；請重新核對，暫不套用。</p>
+        <p role="alert">未能取得目前範圍、同事或預覽；請重新核對，暫不套用。</p>
       ) : null}
       {execute.isError ? (
         <p role="alert">
@@ -544,8 +602,8 @@ function BulkJobProgress({
     <div className="space-y-2 border-t pt-3">
       <label>
         已保存工作
-        <select
-          aria-label="Saved bulk job"
+        <Select
+          aria-label="已保存工作"
           value={jobId ?? ""}
           onChange={(e) => onJobChange(e.target.value || null)}
         >
@@ -555,54 +613,66 @@ function BulkJobProgress({
             .map((j) => (
               <option key={j.jobId} value={j.jobId}>
                 {new Date(j.createdAt).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })} ·{" "}
-                {j.total}筆 · {j.state}
+                {j.total}筆 · {stateLabel(jobStateLabels, j.state)}
               </option>
             ))}
-        </select>
+        </Select>
       </label>
       {jobs.hasNextPage ? (
-        <button
+        <Button
+          size="sm"
           disabled={jobs.isFetchingNextPage}
           onClick={() => void jobs.fetchNextPage({ cancelRefetch: false })}
         >
           載入較早的工作
-        </button>
+        </Button>
       ) : null}
       {jobs.isError ? <p role="alert">未能讀取已保存工作，請重新載入。</p> : null}
-      {jobId ? <button onClick={() => void result.refetch()}>刷新工作結果</button> : null}
+      {jobId ? (
+        <Button size="sm" onClick={() => void result.refetch()}>
+          刷新工作結果
+        </Button>
+      ) : null}
       {first ? (
         <>
           <p>
-            工作{first.state}；共{first.total}；成功{first.counts.succeeded ?? 0}；待處理
+            工作狀態：{stateLabel(jobStateLabels, first.state)}；共{first.total}；成功
+            {first.counts.succeeded ?? 0}；待處理
             {first.counts.pending ?? 0}；鎖定{first.counts.locked ?? 0}；無權
             {first.counts.forbidden ?? 0}；衝突{first.counts.conflict ?? 0}；失敗
             {first.counts.failed ?? 0}；結果未知{first.counts.unknown ?? 0}；取消
             {first.counts.cancelled ?? 0}
           </p>
           <div className="flex flex-wrap gap-3">
-            <button
+            <Button
+              size="sm"
               disabled={busy || !["queued", "running"].includes(first.state)}
               onClick={() => resume.mutate()}
             >
               繼續最多100筆
-            </button>
-            <button
+            </Button>
+            <Button
+              size="sm"
               disabled={busy || !["queued", "running"].includes(first.state)}
               onClick={() => cancel.mutate()}
             >
               取消尚未開始項目
-            </button>
-            <button disabled={busy || !first.retryableFailedCount} onClick={() => retry.mutate()}>
+            </Button>
+            <Button
+              size="sm"
+              disabled={busy || !first.retryableFailedCount}
+              onClick={() => retry.mutate()}
+            >
               只重試可重試失敗
-            </button>
+            </Button>
             {(first.counts.unknown ?? 0) > 0 ? (
-              <button disabled={busy} onClick={() => reconcile.mutate()}>
+              <Button size="sm" disabled={busy} onClick={() => reconcile.mutate()}>
                 先核對未知結果
-              </button>
+              </Button>
             ) : null}
-            <button disabled={exporting.isPending} onClick={() => exporting.mutate()}>
+            <Button size="sm" disabled={exporting.isPending} onClick={() => exporting.mutate()}>
               匯出可查閱結果
-            </button>
+            </Button>
           </div>
           <p>衝突需重新預覽；取消保留成功項。匯出結果不等於交件。</p>
           {items.map((i) => (
@@ -621,11 +691,11 @@ function BulkJobProgress({
               ) : (
                 "無權查閱此項 · "
               )}
-              {i.state} · {i.reason ?? "已保存"} · 嘗試{i.attempts}
+              {stateLabel(itemStateLabels, i.state)} · {i.reason ?? "已保存"} · 嘗試{i.attempts}
               {i.output ? (
                 <span>
                   {" "}
-                  · {String(i.output.kind)} ·{" "}
+                  · {stateLabel(maintenanceLabels, String(i.output.kind))} ·{" "}
                   {String(
                     i.output.messagePreview ??
                       i.output.reason ??
@@ -639,12 +709,13 @@ function BulkJobProgress({
             </p>
           ))}
           {result.hasNextPage ? (
-            <button
+            <Button
+              size="sm"
               disabled={result.isFetchingNextPage}
               onClick={() => void result.fetchNextPage({ cancelRefetch: false })}
             >
               載入更多逐筆結果
-            </button>
+            </Button>
           ) : null}
         </>
       ) : null}

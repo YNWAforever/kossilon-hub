@@ -1,5 +1,7 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserCheck, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import {
   confirmAnnualReturnCaseParty,
@@ -68,7 +70,7 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
       </div>
 
       {partiesQuery.error ? (
-        <p className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+        <p className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text">
           無法載入相關人士名單。在確認之前，個人層面的要求不會出現。
         </p>
       ) : null}
@@ -77,7 +79,7 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
           unconfirmed, and saying so is the point. A short list presented as the
           whole list is exactly the false completeness this model prevents. */}
       {unconfirmed.length > 0 ? (
-        <p className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+        <p className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text">
           尚有 {unconfirmed.length}{" "}
           位人士未經確認。在確認之前，他們的身分證明及地址證明要求不會建立，
           因此本案件的要求清單並不完整。
@@ -85,7 +87,7 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
       ) : null}
 
       {partiesQuery.isPending ? (
-        <p className="mt-3 text-sm text-muted-foreground">載入中…</p>
+        <LoadingRows label="正在載入當事人…" rows={2} className="mt-3 p-0" />
       ) : parties.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">
           公司董事名冊沒有在任人士，因此沒有可確認的對象。個人層面的要求不會建立。
@@ -111,15 +113,14 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
               {party.confirmedByUserId ? (
                 <span className="text-xs text-muted-foreground">已確認</span>
               ) : (
-                <button
-                  className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs disabled:opacity-50"
+                <Button
+                  size="sm"
                   disabled={locked || confirmMutation.isPending}
                   onClick={() => confirmMutation.mutate({ partyId: party.id })}
-                  type="button"
                 >
                   <UserCheck aria-hidden className="h-3.5 w-3.5" />
                   確認為相關人士
-                </button>
+                </Button>
               )}
             </div>
           ))}
@@ -127,7 +128,7 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
       )}
 
       {confirmMutation.error ? (
-        <p className="mt-3 text-sm text-status-red">無法確認，請再試一次。</p>
+        <p className="mt-3 text-sm text-status-red-text">無法確認，請再試一次。</p>
       ) : null}
     </section>
   );

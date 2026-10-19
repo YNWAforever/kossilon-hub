@@ -70,6 +70,6 @@ it("does not render accountA's cached case or filenames for accountB's Forbidden
   });
   await waitFor(() => expect(screen.queryByText("A private.pdf")).toBeNull());
   expect(screen.queryByText("A private company")).toBeNull();
-  await screen.findByText("Annual return not found");
+  await screen.findByText("找不到周年申報");
   expect(state.docs).toHaveBeenCalledTimes(1);
 });

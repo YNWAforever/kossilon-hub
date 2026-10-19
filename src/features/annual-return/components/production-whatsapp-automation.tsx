@@ -1,3 +1,4 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
@@ -13,17 +14,28 @@ import type { ProductionFollowUpDraft } from "../follow-ups";
 import { listProductionFollowUpDrafts, sendProductionFollowUp } from "../follow-up-server-fns";
 import { getWhatsAppIntegrationStatus } from "@/features/whatsapp/server-fns";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Unable to queue follow-up.";
+  return error instanceof Error ? error.message : "未能將跟進加入發送隊列。";
 }
 
 function typeLabel(source: ProductionFollowUpDraft["source"]): string {
-  if (source === "document-review") return "Document replacement";
-  if (source === "payment-proof-review") return "Payment proof replacement";
-  return "Annual return";
+  if (source === "document-review") return "補交文件";
+  if (source === "payment-proof-review") return "補交付款證明";
+  return "周年申報";
 }
+
+const STATUS_LABELS: Record<ProductionFollowUpDraft["status"], string> = {
+  draft: "草稿",
+  queued: "已排隊",
+  provider_accepted: "供應商已接收；待回執",
+  delivered: "已送達",
+  failed: "失敗",
+  unknown: "未知",
+  blocked: "受阻",
+};
 
 export function ProductionWhatsAppAutomation({
   actorScope = "",
@@ -69,10 +81,9 @@ export function ProductionWhatsAppAutomation({
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Messaging" title="WhatsApp Automation" />
+      <PageHeader eyebrow="通訊" title="WhatsApp 追件" />
       <p className="text-sm text-muted-foreground">
-        Provider configuration does not prove connection health. Approval queues the inspected
-        draft; only a receipt confirms delivery.
+        供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。
       </p>
       {canBulk ? (
         <BulkSelectionToolbar
@@ -95,8 +106,8 @@ export function ProductionWhatsAppAutomation({
           className="border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"
           role="status"
         >
-          <p className="font-medium">Demo simulation</p>
-          <p>No external WhatsApp or email message is sent.</p>
+          <p className="font-medium">示範模擬</p>
+          <p>不會向外發送任何 WhatsApp 或電郵訊息。</p>
         </div>
       ) : null}
 
@@ -111,20 +122,18 @@ export function ProductionWhatsAppAutomation({
 
       <section className="border bg-card">
         <div className="hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
-          <span>Company</span>
-          <span>Recipient</span>
-          <span>Type</span>
-          <span>Status</span>
-          <span>Preview</span>
-          <span className="text-right">Action</span>
+          <span>公司</span>
+          <span>收件人</span>
+          <span>類別</span>
+          <span>狀態</span>
+          <span>預覽</span>
+          <span className="text-right">操作</span>
         </div>
         <div className="divide-y">
           {draftsQuery.isPending ? (
-            <p className="p-4 text-sm text-muted-foreground">Loading follow-ups...</p>
+            <LoadingRows label="正在載入跟進…" rows={4} />
           ) : drafts.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">
-              No production follow-ups are queued.
-            </p>
+            <p className="p-4 text-sm text-muted-foreground">沒有待處理的跟進。</p>
           ) : (
             drafts.map((draft) => (
               <ProductionAutomationRow
@@ -149,10 +158,9 @@ export function ProductionWhatsAppAutomation({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Approve follow-up</DialogTitle>
+            <DialogTitle>批准跟進</DialogTitle>
             <DialogDescription>
-              Confirm this recipient and the full draft. Queueing does not confirm delivery; outside
-              the session window the approved template may be used.
+              請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。
             </DialogDescription>
           </DialogHeader>
           {preview ? (
@@ -171,22 +179,18 @@ export function ProductionWhatsAppAutomation({
             </p>
           ) : null}
           <DialogFooter>
-            <button
-              type="button"
-              disabled={sendMutation.isPending}
-              onClick={() => setPreview(null)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
+            <Button disabled={sendMutation.isPending} onClick={() => setPreview(null)}>
+              取消
+            </Button>
+            <Button
+              variant="primary"
               disabled={!preview || sendMutation.isPending}
               onClick={() => {
                 if (preview) sendMutation.mutate(preview);
               }}
             >
-              Approve and queue
-            </button>
+              批准並加入隊列
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -215,39 +219,36 @@ function ProductionAutomationRow({
       <p className="truncate">
         {draft.recipientName && draft.phone
           ? `${draft.recipientName} / ${draft.phone}`
-          : "Recipient unavailable"}
+          : "沒有收件人資料"}
       </p>
       <p>{typeLabel(draft.source)}</p>
-      <p>
-        {draft.status === "provider_accepted" ? "Provider accepted; receipt pending" : draft.status}
-      </p>
+      <p>{STATUS_LABELS[draft.status] ?? draft.status}</p>
       <div className="min-w-0">
         <p className="truncate">{draft.messagePreview}</p>
         <p className="truncate text-xs text-muted-foreground">{draft.reasonLabel}</p>
       </div>
       <div className="flex justify-start lg:justify-end">
-        <button
-          className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+        <Button
+          className="disabled:bg-muted disabled:text-muted-foreground"
           disabled={disabled}
           onClick={onSend}
-          type="button"
         >
           {active
-            ? "Queueing"
+            ? "加入隊列中…"
             : draft.status === "provider_accepted"
-              ? "Receipt pending"
+              ? "待回執"
               : draft.status === "blocked"
-                ? "Blocked"
+                ? "受阻"
                 : draft.status === "unknown"
-                  ? "Reconcile with provider"
+                  ? "與供應商核對"
                   : draft.status === "failed"
-                    ? "Review failure"
+                    ? "查看失敗原因"
                     : draft.status === "delivered"
-                      ? "Delivered"
+                      ? "已送達"
                       : draft.status === "queued"
-                        ? "Queued"
-                        : "Preview and approve"}
-        </button>
+                        ? "已排隊"
+                        : "預覽並批准"}
+        </Button>
       </div>
     </div>
   );

@@ -172,5 +172,5 @@ export function formatHongKongTimestamp(value: string): string {
 export function conversationContactLabel(
   conversation: Pick<WhatsAppConversation, "displayName" | "phoneE164">,
 ): string {
-  return conversation.displayName ?? conversation.phoneE164 ?? "Unknown contact";
+  return conversation.displayName ?? conversation.phoneE164 ?? "未知聯絡人";
 }

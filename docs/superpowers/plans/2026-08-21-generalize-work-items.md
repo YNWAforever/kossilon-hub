@@ -17,6 +17,7 @@ pure refactor.
 **Tech Stack:** Postgres (raw SQL, no ORM) · TypeScript 5.8 strict · TanStack Query 5 · Vitest 4.
 
 **Reference files** (read, not modified beyond what's specified):
+
 - `src/server/db/schema.sql` — canonical current-state schema (updated alongside the migration).
 - `src/features/work-items/repository.ts` — `PersistedWorkItem`, `EnsureWorkItemEvent`,
   `ensureWorkItemForEvent`, `recommendationsFor`, the three mutation methods that write
@@ -32,6 +33,7 @@ pure refactor.
 ### Task 1: Schema migration
 
 **Files:**
+
 - Create: `db/migrations/0014_generalize_work_item_case_reference.sql`
 - Modify: `src/server/db/schema.sql` (the `work_items` table definition)
 
@@ -125,6 +127,7 @@ git commit -m "feat: generalize work_items' case reference beyond annual returns
 ### Task 2: Repository and types layer
 
 **Files:**
+
 - Modify: `src/features/work-items/types.ts`
 - Modify: `src/features/work-items/repository.ts`
 - Modify: `src/features/work-items/assignment.ts`
@@ -171,15 +174,15 @@ Also update the DB-integration test's raw fixture insert further down in the sam
 change from:
 
 ```ts
-          const fixtures = await tx<
-            {
-              company_id: string;
-              case_id: string;
-              team_id: string;
-              skill_key: string;
-              policy_id: string;
-            }[]
-          >`
+const fixtures = await tx<
+  {
+    company_id: string;
+    case_id: string;
+    team_id: string;
+    skill_key: string;
+    policy_id: string;
+  }[]
+>`
             select arc.company_id, arc.id case_id, sp.team_id, ss.skill_key, p.id policy_id
             from annual_return_cases arc
             cross join staff_profiles sp
@@ -189,13 +192,13 @@ change from:
             order by arc.id, sp.id, p.version desc
             limit 1
           `;
-          const fixture = fixtures[0];
-          expect(fixture).toBeDefined();
-          const token = crypto.randomUUID();
-          const warningId = crypto.randomUUID();
-          const breachId = crypto.randomUUID();
+const fixture = fixtures[0];
+expect(fixture).toBeDefined();
+const token = crypto.randomUUID();
+const warningId = crypto.randomUUID();
+const breachId = crypto.randomUUID();
 
-          await tx`
+await tx`
             insert into work_items (
               id, company_id, case_id, source_event_key, source_event_type, work_type,
               required_skill_key, title, priority, team_id, sla_policy_version_id,
@@ -216,15 +219,15 @@ change from:
 to:
 
 ```ts
-          const fixtures = await tx<
-            {
-              company_id: string;
-              case_id: string;
-              team_id: string;
-              skill_key: string;
-              policy_id: string;
-            }[]
-          >`
+const fixtures = await tx<
+  {
+    company_id: string;
+    case_id: string;
+    team_id: string;
+    skill_key: string;
+    policy_id: string;
+  }[]
+>`
             select arc.company_id, arc.id case_id, sp.team_id, ss.skill_key, p.id policy_id
             from annual_return_cases arc
             cross join staff_profiles sp
@@ -234,13 +237,13 @@ to:
             order by arc.id, sp.id, p.version desc
             limit 1
           `;
-          const fixture = fixtures[0];
-          expect(fixture).toBeDefined();
-          const token = crypto.randomUUID();
-          const warningId = crypto.randomUUID();
-          const breachId = crypto.randomUUID();
+const fixture = fixtures[0];
+expect(fixture).toBeDefined();
+const token = crypto.randomUUID();
+const warningId = crypto.randomUUID();
+const breachId = crypto.randomUUID();
 
-          await tx`
+await tx`
             insert into work_items (
               id, company_id, case_type, annual_return_case_id, source_event_key,
               source_event_type, work_type, required_skill_key, title, priority, team_id,
@@ -327,8 +330,7 @@ Find the line computing the continuity bonus (`candidate.caseIds.includes(input.
 another null:
 
 ```ts
-  const continuityBonus =
-    input.caseId !== null && candidate.caseIds.includes(input.caseId) ? 30 : 0;
+const continuityBonus = input.caseId !== null && candidate.caseIds.includes(input.caseId) ? 30 : 0;
 ```
 
 - [ ] **Step 5: Update `repository.ts`**
@@ -461,63 +463,63 @@ function mapWorkItem(row: WorkItemRow): PersistedWorkItem {
 `thresholdFor` call's synthetic `id`):
 
 ```ts
-  const work = await client<
-    {
-      user_id: string;
-      annual_return_case_id: string | null;
-      priority: number;
-      sla_warning_at: string | Date;
-      sla_due_at: string | Date;
-      sla_breached_at: string | Date | null;
-    }[]
-  >`
+const work = await client<
+  {
+    user_id: string;
+    annual_return_case_id: string | null;
+    priority: number;
+    sla_warning_at: string | Date;
+    sla_due_at: string | Date;
+    sla_breached_at: string | Date | null;
+  }[]
+>`
     select ${options.assignmentTarget === "reviewer" ? client`reviewer_id` : client`owner_id`} user_id,
       annual_return_case_id, priority, sla_warning_at, sla_due_at, sla_breached_at
     from work_items where ${options.assignmentTarget === "reviewer" ? client`reviewer_id` : client`owner_id`} is not null
       and status in ('open','in_progress','blocked')
   `;
-  const candidates: StaffCandidate[] = rows.map((row) => ({
-    staffId: row.staff_id,
-    userId: row.user_id,
-    role: row.role,
-    teamIds: row.team_id ? [row.team_id] : [],
-    active: row.active,
-    available: true,
-    capacityPoints: row.capacity_points,
-    skills: [{ key: row.skill_key, proficiency: row.proficiency }],
-    activeWork: work
-      .filter((entry) => entry.user_id === row.user_id)
-      .map((entry) => ({
-        threshold: thresholdFor(
-          {
-            id: entry.annual_return_case_id ?? "",
-            status: "open",
-            priority: entry.priority,
-            ownerId: row.user_id,
-            reviewerId: null,
-            slaWarningAt: iso(entry.sla_warning_at),
-            slaDueAt: iso(entry.sla_due_at),
-            slaBreachedAt: nullableIso(entry.sla_breached_at),
-          },
-          now,
-        ),
-        effortPoints: Math.max(1, Math.ceil(entry.priority / 10)),
-      })),
-    caseIds: work
-      .filter((entry) => entry.user_id === row.user_id)
-      .map((entry) => entry.annual_return_case_id),
-  }));
-  return rankAssignmentCandidates({
-    assignmentTarget: options.assignmentTarget ?? "owner",
-    requiredRole: options.requiredRole ?? "Staff",
-    requiredSkillKey: item.requiredSkillKey,
-    teamId: item.teamId,
-    caseId: item.annualReturnCaseId,
-    ownerId: item.ownerId,
-    reviewerId: item.reviewerId,
-    separationOfDuties: options.separationOfDuties ?? true,
-    candidates,
-  });
+const candidates: StaffCandidate[] = rows.map((row) => ({
+  staffId: row.staff_id,
+  userId: row.user_id,
+  role: row.role,
+  teamIds: row.team_id ? [row.team_id] : [],
+  active: row.active,
+  available: true,
+  capacityPoints: row.capacity_points,
+  skills: [{ key: row.skill_key, proficiency: row.proficiency }],
+  activeWork: work
+    .filter((entry) => entry.user_id === row.user_id)
+    .map((entry) => ({
+      threshold: thresholdFor(
+        {
+          id: entry.annual_return_case_id ?? "",
+          status: "open",
+          priority: entry.priority,
+          ownerId: row.user_id,
+          reviewerId: null,
+          slaWarningAt: iso(entry.sla_warning_at),
+          slaDueAt: iso(entry.sla_due_at),
+          slaBreachedAt: nullableIso(entry.sla_breached_at),
+        },
+        now,
+      ),
+      effortPoints: Math.max(1, Math.ceil(entry.priority / 10)),
+    })),
+  caseIds: work
+    .filter((entry) => entry.user_id === row.user_id)
+    .map((entry) => entry.annual_return_case_id),
+}));
+return rankAssignmentCandidates({
+  assignmentTarget: options.assignmentTarget ?? "owner",
+  requiredRole: options.requiredRole ?? "Staff",
+  requiredSkillKey: item.requiredSkillKey,
+  teamId: item.teamId,
+  caseId: item.annualReturnCaseId,
+  ownerId: item.ownerId,
+  reviewerId: item.reviewerId,
+  separationOfDuties: options.separationOfDuties ?? true,
+  candidates,
+});
 ```
 
 (`id: entry.annual_return_case_id ?? ""` — `thresholdFor`'s input `id` field is just an
@@ -528,7 +530,7 @@ being used loosely.)
 `ensureWorkItemForEvent`'s INSERT:
 
 ```ts
-  const inserted = await tx<WorkItemRow[]>`
+const inserted = await tx<WorkItemRow[]>`
     insert into work_items (
       company_id, case_type, annual_return_case_id, source_event_key, source_event_type,
       work_type, required_skill_key, title, priority, owner_id, reviewer_id, team_id,
@@ -580,6 +582,7 @@ git commit -m "feat: generalize work-items repository layer for a case_type disc
 ### Task 3: `annual-return/repository.ts` call sites
 
 **Files:**
+
 - Modify: `src/features/annual-return/repository.ts:490-502` and `:932-943`
 
 - [ ] **Step 1: Update the first call site**
@@ -588,20 +591,20 @@ Around line 490 (inside the function that ensures a work item for an existing ca
 change):
 
 ```ts
-    return ensureWorkItemForEvent(tx, {
-      companyId: lockedCase.company_id,
-      caseType: "annual_return",
-      annualReturnCaseId: lockedCase.id,
-      sourceEventKey: event.sourceEventKey,
-      sourceEventType: event.sourceEventType,
-      workType: "annual_return_case",
-      requiredSkillKey: "annual-return",
-      title: event.title,
-      priority: event.priority,
-      ownerId: lockedCase.owner_id,
-      reviewerId: lockedCase.reviewer_id,
-      teamId: lockedCase.company_team_id,
-    });
+return ensureWorkItemForEvent(tx, {
+  companyId: lockedCase.company_id,
+  caseType: "annual_return",
+  annualReturnCaseId: lockedCase.id,
+  sourceEventKey: event.sourceEventKey,
+  sourceEventType: event.sourceEventType,
+  workType: "annual_return_case",
+  requiredSkillKey: "annual-return",
+  title: event.title,
+  priority: event.priority,
+  ownerId: lockedCase.owner_id,
+  reviewerId: lockedCase.reviewer_id,
+  teamId: lockedCase.company_team_id,
+});
 ```
 
 - [ ] **Step 2: Update the second call site**
@@ -609,19 +612,19 @@ change):
 Around line 932 (inside `createCase`, the P1-1 case-creation flow):
 
 ```ts
-      await ensureWorkItemForEvent(tx, {
-        companyId: input.companyId,
-        caseType: "annual_return",
-        annualReturnCaseId: newCaseId,
-        sourceEventKey: `annual-return:${newCaseId}:created`,
-        sourceEventType: "annual_return_case_created",
-        workType: "annual_return_case",
-        requiredSkillKey: "annual-return",
-        title: "Set up new annual return case",
-        ownerId: input.ownerId,
-        reviewerId: null,
-        teamId: company.assigned_team_id,
-      });
+await ensureWorkItemForEvent(tx, {
+  companyId: input.companyId,
+  caseType: "annual_return",
+  annualReturnCaseId: newCaseId,
+  sourceEventKey: `annual-return:${newCaseId}:created`,
+  sourceEventType: "annual_return_case_created",
+  workType: "annual_return_case",
+  requiredSkillKey: "annual-return",
+  title: "Set up new annual return case",
+  ownerId: input.ownerId,
+  reviewerId: null,
+  teamId: company.assigned_team_id,
+});
 ```
 
 - [ ] **Step 3: Run the annual-return test suite**
@@ -649,6 +652,7 @@ git commit -m "feat: pass case_type/annualReturnCaseId through the annual-return
 ### Task 4: `work-queue.tsx` consumer update
 
 **Files:**
+
 - Modify: `src/routes/work-queue.tsx`
 
 - [ ] **Step 1: Add the case-detail-link helper**
@@ -697,23 +701,23 @@ Replace:
 with:
 
 ```tsx
-                      {caseDetailLinkFor(item) ? (
-                        <Link
-                          to={caseDetailLinkFor(item)!.to}
-                          params={caseDetailLinkFor(item)!.params}
-                          className="font-medium hover:underline"
-                        >
-                          {item.title}
-                        </Link>
-                      ) : (
-                        <p className="font-medium">{item.title}</p>
-                      )}
-                      <p className="truncate text-xs text-muted-foreground">
-                        {item.workType}
-                        {item.annualReturnCaseId
-                          ? ` · Case ${item.annualReturnCaseId.slice(0, 8)}`
-                          : ""}
-                      </p>
+{
+  caseDetailLinkFor(item) ? (
+    <Link
+      to={caseDetailLinkFor(item)!.to}
+      params={caseDetailLinkFor(item)!.params}
+      className="font-medium hover:underline"
+    >
+      {item.title}
+    </Link>
+  ) : (
+    <p className="font-medium">{item.title}</p>
+  );
+}
+<p className="truncate text-xs text-muted-foreground">
+  {item.workType}
+  {item.annualReturnCaseId ? ` · Case ${item.annualReturnCaseId.slice(0, 8)}` : ""}
+</p>;
 ```
 
 - [ ] **Step 3: Update the mobile card's Link block**
@@ -736,23 +740,23 @@ Replace the second, structurally identical block:
 with:
 
 ```tsx
-                    {caseDetailLinkFor(item) ? (
-                      <Link
-                        to={caseDetailLinkFor(item)!.to}
-                        params={caseDetailLinkFor(item)!.params}
-                        className="font-medium hover:underline"
-                      >
-                        {item.title}
-                      </Link>
-                    ) : (
-                      <p className="font-medium">{item.title}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {item.workType}
-                      {item.annualReturnCaseId
-                        ? ` · Case ${item.annualReturnCaseId.slice(0, 8)}`
-                        : ""}
-                    </p>
+{
+  caseDetailLinkFor(item) ? (
+    <Link
+      to={caseDetailLinkFor(item)!.to}
+      params={caseDetailLinkFor(item)!.params}
+      className="font-medium hover:underline"
+    >
+      {item.title}
+    </Link>
+  ) : (
+    <p className="font-medium">{item.title}</p>
+  );
+}
+<p className="text-xs text-muted-foreground">
+  {item.workType}
+  {item.annualReturnCaseId ? ` · Case ${item.annualReturnCaseId.slice(0, 8)}` : ""}
+</p>;
 ```
 
 - [ ] **Step 4: Export the helper and add a focused test**
@@ -828,6 +832,7 @@ git commit -m "feat: route work-queue case links through the case_type discrimin
 ### Task 5: Command-center consumers
 
 **Files:**
+
 - Modify: `src/routes/annual-returns.tsx`
 - Modify: `src/features/annual-return/components/production-command-center.tsx`
 - Modify: `src/features/annual-return/components/demo-case-detail.tsx`
@@ -843,27 +848,27 @@ Confirmed genuine and in-scope before this task was dispatched.
 In `src/routes/annual-returns.tsx`, the `workItemsByCase` construction:
 
 ```ts
-  const workItemsByCase = useMemo(() => {
-    const map = new Map<string, PersistedWorkItem>();
-    for (const item of workItemsQuery.data ?? []) {
-      if (!map.has(item.caseId)) map.set(item.caseId, item);
-    }
-    return map;
-  }, [workItemsQuery.data]);
+const workItemsByCase = useMemo(() => {
+  const map = new Map<string, PersistedWorkItem>();
+  for (const item of workItemsQuery.data ?? []) {
+    if (!map.has(item.caseId)) map.set(item.caseId, item);
+  }
+  return map;
+}, [workItemsQuery.data]);
 ```
 
 becomes:
 
 ```ts
-  const workItemsByCase = useMemo(() => {
-    const map = new Map<string, PersistedWorkItem>();
-    for (const item of workItemsQuery.data ?? []) {
-      if (item.annualReturnCaseId && !map.has(item.annualReturnCaseId)) {
-        map.set(item.annualReturnCaseId, item);
-      }
+const workItemsByCase = useMemo(() => {
+  const map = new Map<string, PersistedWorkItem>();
+  for (const item of workItemsQuery.data ?? []) {
+    if (item.annualReturnCaseId && !map.has(item.annualReturnCaseId)) {
+      map.set(item.annualReturnCaseId, item);
     }
-    return map;
-  }, [workItemsQuery.data]);
+  }
+  return map;
+}, [workItemsQuery.data]);
 ```
 
 - [ ] **Step 2: Update the production command center's map**
@@ -877,13 +882,13 @@ construction (same shape as above).
 In `src/features/annual-return/components/demo-case-detail.tsx`, around line 75:
 
 ```ts
-  const workItem = (workItemsQuery.data ?? []).find((item) => item.caseId === id);
+const workItem = (workItemsQuery.data ?? []).find((item) => item.caseId === id);
 ```
 
 becomes:
 
 ```ts
-  const workItem = (workItemsQuery.data ?? []).find((item) => item.annualReturnCaseId === id);
+const workItem = (workItemsQuery.data ?? []).find((item) => item.annualReturnCaseId === id);
 ```
 
 - [ ] **Step 4: Run the annual-return component tests**
@@ -940,6 +945,7 @@ explicitly rather than silently treating the suite's `skipIf` as a pass.
 - [ ] **Step 5: Manual smoke test**
 
 Start the dev server in demo mode and confirm:
+
 - `/work-queue` renders with case links intact (each row/card links to
   `/annual-returns/$id` and shows the case id snippet, exactly as before).
 - `/annual-returns` (both demo and production command centers, if production data is

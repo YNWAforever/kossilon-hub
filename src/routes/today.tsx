@@ -1,7 +1,12 @@
+import { LoadingRows } from "@/components/ui/skeleton";
+import { pageTitle } from "@/lib/page-title";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate, type SearchSchemaInput } from "@tanstack/react-router";
 
+import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import {
   getAnnualReturnWorkPage,
   getAnnualReturnWorkMetrics,
@@ -23,6 +28,7 @@ import { useRetainedPage } from "@/lib/use-retained-page";
  */
 
 export const Route = createFileRoute("/today")({
+  head: () => ({ meta: [{ title: pageTitle("今日工作") }] }),
   validateSearch: (
     input: SearchSchemaInput & { view?: unknown; q?: unknown; sort?: unknown; cursor?: unknown },
   ) => dailyViewSearch(input),
@@ -66,13 +72,8 @@ function TodayRoute() {
   if (dataMode !== "production") {
     return (
       <main className="flex-1 space-y-4 p-6">
-        <PageHeader eyebrow="Operations" title="今日工作" />
-        <p className="text-sm text-muted-foreground">
-          今日工作讀取正式資料，示範模式沒有可讀取的案件。
-        </p>
-        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-          瀏覽周年申報案件
-        </Link>
+        <PageHeader eyebrow="今日工作" title="今日工作" />
+        <DemoUnavailable message="今日工作讀取正式資料，示範模式沒有可讀取的案件。" />
       </main>
     );
   }
@@ -84,13 +85,13 @@ function TodayRoute() {
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="日常工作" title="今日工作" />
+      <PageHeader eyebrow="今日工作" title="今日工作" />
 
       <div className="flex flex-wrap gap-3">
         <label className="flex flex-col gap-1 text-sm">
           搜尋今日工作
-          <input
-            className="min-h-11 rounded-md border px-3"
+          <Input
+            className="min-h-11"
             value={search.q}
             onChange={(event) =>
               void navigate({
@@ -102,8 +103,8 @@ function TodayRoute() {
         </label>
         <label className="flex flex-col gap-1 text-sm">
           排列
-          <select
-            className="min-h-11 rounded-md border px-3"
+          <Select
+            className="min-h-11"
             value={search.sort}
             onChange={(event) =>
               void navigate({
@@ -116,40 +117,32 @@ function TodayRoute() {
               })
             }
           >
-            <option value="deadline">限期先後</option>
+            <option value="deadline">到期日先後</option>
             <option value="company">公司名稱</option>
-          </select>
+          </Select>
         </label>
       </div>
-      {viewsQuery.isPending ? (
-        <p role="status" aria-live="polite">
-          正在載入今日工作…
-        </p>
-      ) : null}
+      {viewsQuery.isPending ? <LoadingRows label="正在載入今日工作…" rows={5} /> : null}
 
       {viewsQuery.error ? (
         <p
           role="alert"
-          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
         >
           無法載入今日工作。這不代表沒有工作，請直接開啟案件板。
-          <button
-            className="ml-3 min-h-11 rounded-md border px-3"
-            onClick={() => void viewsQuery.refetch()}
-          >
+          <Button className="ml-3 min-h-11" onClick={() => void viewsQuery.refetch()}>
             重新載入
-          </button>
+          </Button>
         </p>
       ) : null}
 
       <nav className="flex flex-wrap gap-2" aria-label="今日工作分類">
         {WORK_VIEWS.map((definition) => (
-          <button
+          <Button
             key={definition.key}
             aria-pressed={definition.key === active}
-            className={`min-h-11 rounded-md border px-3 py-2 text-sm ${
-              definition.key === active ? "bg-primary text-primary-foreground" : ""
-            }`}
+            variant={definition.key === active ? "primary" : "outline"}
+            className="min-h-11"
             onClick={() => setActive(definition.key)}
             type="button"
           >
@@ -159,15 +152,15 @@ function TodayRoute() {
             {definition.released && metricsQuery.data
               ? ` (${metricsQuery.data[definition.key]})`
               : ""}
-          </button>
+          </Button>
         ))}
       </nav>
       {metricsQuery.isError ? (
         <p role="alert">
           工作總數未能載入；已顯示列表不是全範圍總數。
-          <button className="min-h-11 px-3" onClick={() => void metricsQuery.refetch()}>
+          <Button variant="ghost" className="min-h-11" onClick={() => void metricsQuery.refetch()}>
             重試總數
-          </button>
+          </Button>
         </p>
       ) : null}
 
@@ -179,7 +172,9 @@ function TodayRoute() {
           </div>
 
           {!current.definition.released ? (
-            <p className="p-4 text-sm text-status-yellow">{current.definition.unavailableReason}</p>
+            <p className="p-4 text-sm text-status-yellow-text">
+              {current.definition.unavailableReason}
+            </p>
           ) : rows.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">
               {search.q
@@ -202,25 +197,28 @@ function TodayRoute() {
                   {/* The reason this row is here, named. */}
                   <details className="text-muted-foreground">
                     <summary className="flex min-h-11 cursor-pointer items-center">
-                      查看阻擋原因
+                      查看阻礙事項
                     </summary>
                     <p className="break-words py-2">{row.blocker}</p>
                   </details>
                   <p
-                    className={row.daysRemaining < 0 ? "text-status-red" : "text-muted-foreground"}
+                    className={
+                      row.daysRemaining < 0 ? "text-status-red-text" : "text-muted-foreground"
+                    }
                   >
                     {row.daysRemaining < 0
-                      ? `逾期 ${-row.daysRemaining} 天`
-                      : `尚餘 ${row.daysRemaining} 天`}
+                      ? `已逾期 ${-row.daysRemaining} 日`
+                      : `尚餘 ${row.daysRemaining} 日`}
                   </p>
-                  <Link
-                    className="inline-flex min-h-11 items-center justify-self-start rounded-md border px-3 py-2 text-sm md:justify-self-end"
-                    to="/annual-returns/$id"
-                    params={{ id: row.caseId }}
-                    search={{ returnTo: dailyReturnPath(search) }}
-                  >
-                    開啟案件
-                  </Link>
+                  <Button asChild className="min-h-11 justify-self-start md:justify-self-end">
+                    <Link
+                      to="/annual-returns/$id"
+                      params={{ id: row.caseId }}
+                      search={{ returnTo: dailyReturnPath(search) }}
+                    >
+                      開啟案件
+                    </Link>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -229,21 +227,21 @@ function TodayRoute() {
       ) : null}
       <div className="flex flex-wrap gap-3">
         {search.cursor ? (
-          <button
-            className="min-h-11 rounded border px-3"
+          <Button
+            className="min-h-11"
             onClick={() => void navigate({ search: { ...search, cursor: undefined } })}
           >
             回第一頁工作
-          </button>
+          </Button>
         ) : null}
         {page?.nextCursor ? (
-          <button
+          <Button
             disabled={viewsQuery.isFetching || viewsQuery.isError}
-            className="min-h-11 rounded border px-3"
+            className="min-h-11"
             onClick={() => void navigate({ search: { ...search, cursor: page.nextCursor! } })}
           >
             下一頁工作
-          </button>
+          </Button>
         ) : null}
       </div>
     </main>

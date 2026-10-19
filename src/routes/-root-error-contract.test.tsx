@@ -25,13 +25,13 @@ it.each([null, "inert string error", new Error("inert Error")])(
       reset: () => void;
     }>;
     render(createElement(ErrorComponent, { error, reset: vi.fn() }));
-    expect(screen.getByText("Something went wrong")).toBeTruthy();
+    expect(screen.getByText("發生錯誤")).toBeTruthy();
     const message =
       error instanceof Error
         ? error.message
         : typeof error === "string"
           ? error
-          : "No error message was provided.";
+          : "沒有提供錯誤訊息。";
     expect(screen.getByText(message)).toBeTruthy();
   },
 );

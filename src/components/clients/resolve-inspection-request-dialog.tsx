@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -50,7 +52,7 @@ export function ResolveInspectionRequestDialog({
       onSaved();
       onOpenChange(false);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to resolve the request.");
+      setError(caught instanceof Error ? caught.message : "未能處理查閱要求。");
     } finally {
       setSaving(false);
     }
@@ -60,18 +62,18 @@ export function ResolveInspectionRequestDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Resolve inspection request</DialogTitle>
-          <DialogDescription>Record how and when the request was fulfilled.</DialogDescription>
+          <DialogTitle>處理查閱要求</DialogTitle>
+          <DialogDescription>記錄如何及何時完成此要求。</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label className={labelClass} htmlFor="resolve-inspection-note">
-              Resolution note
+              處理備註
             </label>
-            <textarea
+            <Textarea
               id="resolve-inspection-note"
-              className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none"
+              className="w-full"
               rows={3}
               value={resolutionNote}
               onChange={(event) => setResolutionNote(event.target.value)}
@@ -79,23 +81,19 @@ export function ResolveInspectionRequestDialog({
             />
           </div>
 
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && (
+            <p id="resolve-inspection-error" role="alert" className="text-xs text-destructive">
+              {error}
+            </p>
+          )}
 
           <DialogFooter>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-            >
-              {saving ? "Saving…" : "Resolve"}
-            </button>
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+              取消
+            </Button>
+            <Button type="submit" variant="primary" size="sm" disabled={saving}>
+              {saving ? "儲存中…" : "完成處理"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

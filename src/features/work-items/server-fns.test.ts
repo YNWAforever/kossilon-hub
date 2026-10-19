@@ -103,16 +103,16 @@ describe("work queue route contract", () => {
 
   it("registers the daily queue with its operational views", () => {
     expect(routeSource).toContain('createFileRoute("/work-queue")');
-    expect(routeSource).toContain("My work");
-    expect(routeSource).toContain("Team queue");
-    expect(routeSource).toContain("Breached");
+    expect(routeSource).toContain("我的工作");
+    expect(routeSource).toContain("團隊隊列");
+    expect(routeSource).toContain("已逾時");
     expect(sidebarSource).toContain("/work-queue");
     expect(routeSource).toContain('role="table"');
-    expect(routeSource).toContain("Filter by owner");
-    expect(routeSource).toContain("Filter by work type");
-    expect(routeSource).toContain("Filter by SLA state");
-    expect(routeSource).toContain("Company");
-    expect(routeSource).toContain("Blocker");
+    expect(routeSource).toContain("按負責同事篩選");
+    expect(routeSource).toContain("按工作類型篩選");
+    expect(routeSource).toContain("按 SLA 狀態篩選");
+    expect(routeSource).toContain("公司");
+    expect(routeSource).toContain("阻礙事項");
     expect(repositorySource).toContain("getWorkItem(tx, id, true)");
     expect(repositorySource).toContain("recommendationOptions.expectedTeamId");
   });

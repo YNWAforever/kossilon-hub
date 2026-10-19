@@ -107,7 +107,7 @@ describe("/settings checklist templates, by data mode", () => {
     const html = await renderSettings("demo");
 
     expect(html).toContain("Annual return — Private Ltd");
-    expect(html).not.toContain("New template");
+    expect(html).not.toContain("新增模板");
   });
 
   it("shows the real backend's data with working controls in production for an admin", async () => {
@@ -116,6 +116,6 @@ describe("/settings checklist templates, by data mode", () => {
     const html = await renderSettings("production");
 
     expect(html).toContain("Production template");
-    expect(html).toContain("New template");
+    expect(html).toContain("新增模板");
   });
 });

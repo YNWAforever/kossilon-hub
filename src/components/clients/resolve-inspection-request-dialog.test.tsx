@@ -34,10 +34,10 @@ describe("ResolveInspectionRequestDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Resolution note"), {
+    fireEvent.change(screen.getByLabelText("處理備註"), {
       target: { value: "Shown to Officer Lee on site." },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
+    fireEvent.click(screen.getByRole("button", { name: "完成處理" }));
 
     await waitFor(() =>
       expect(serverFns.resolveClientInspectionRequest).toHaveBeenCalledWith({
@@ -64,10 +64,10 @@ describe("ResolveInspectionRequestDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Resolution note"), {
+    fireEvent.change(screen.getByLabelText("處理備註"), {
       target: { value: "Shown to Officer Lee on site." },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
+    fireEvent.click(screen.getByRole("button", { name: "完成處理" }));
 
     expect(await screen.findByText("Client not found.")).toBeTruthy();
   });

@@ -75,8 +75,8 @@ describe("dashboard at both data modes", () => {
   it("shows the demo story rather than an error state", async () => {
     const html = await renderDashboard("demo");
 
-    expect(html).not.toContain("temporarily unavailable");
-    expect(html).not.toContain("could not be loaded");
+    expect(html).not.toContain("暫時無法載入");
+    expect(html).not.toContain("無法載入");
 
     const values = kpiValues(html);
     expect(values).toHaveLength(6);
@@ -88,10 +88,10 @@ describe("dashboard at both data modes", () => {
 
     // Renamed in Phase C. The heading was not inside a dataMode branch, so a
     // production user read "AI" over buildDailyDigest -- a hardcoded weight table.
-    expect(html).toContain("Priority queue");
+    expect(html).toContain("優先處理");
     expect(html).not.toContain("AI daily digest");
-    expect(html).toContain("Upcoming annual returns");
-    expect(html).not.toContain("No priority work detected from annual returns.");
+    expect(html).toContain("即將到期的周年申報");
+    expect(html).not.toContain("周年申報暫無需要優先處理的工作。");
   });
 
   it("renders no numeral in any tile when the production load fails", async () => {
@@ -113,8 +113,8 @@ describe("dashboard at both data modes", () => {
 
     productionFailure.error = new Error("boom");
 
-    expect(outage).toContain("Annual return data is temporarily unavailable");
-    expect(forbidden).toContain("You do not have access to annual return data");
-    expect(forbidden).toContain("Sign in again");
+    expect(outage).toContain("周年申報資料暫時無法載入");
+    expect(forbidden).toContain("你沒有權限查看周年申報資料");
+    expect(forbidden).toContain("請重新登入");
   });
 });

@@ -77,13 +77,15 @@ async function mount() {
   });
 }
 describe("Today truthful journey state", () => {
+  // Under the full parallel suite the default 1s wait for the first render was
+  // occasionally not enough (seen at 1086ms), so it allows 5s.
   it("uses server totals and offers explicit next-page navigation", async () => {
     state.query.mockResolvedValue([
       ...WORK_VIEWS.map((definition) => ({ definition, rows: [] })),
       { sentinel: true },
     ]);
     await mount();
-    await screen.findByRole("button", { name: "今日要追 (10000)" });
+    await screen.findByRole("button", { name: "今日要追 (10000)" }, { timeout: 5000 });
     fireEvent.click(screen.getByRole("button", { name: "下一頁工作" }));
     expect(state.navigate).toHaveBeenCalledWith(
       expect.objectContaining({ search: expect.objectContaining({ cursor: "controlled-cursor" }) }),

@@ -14,7 +14,7 @@ All four were independently re-verified against the current codebase (branch `ma
 
 A new `documentFiltersForActor(actor)` helper mirrors `caseFiltersForActor` (`annual-return/permissions.ts:167-197`) — Admin → `{}` (no restriction), Manager → `{ teamId }`, Staff → `{ teamId }` (documents have no owner/reviewer concept to narrow further, unlike annual-return cases, so Staff and Manager get identical scoping here — team-wide, not "my documents only"). Throws for inactive or Client actors, matching `caseFiltersForActor`'s own guard.
 
-`listDocumentsForActor` spreads this scope into the repository call *after* caller-supplied filters (`{ ...data, ...scope }`), so a client-supplied `companyId`/`caseId` can narrow within an actor's scope but never widen past it — same ordering `annual-return/server-fns.ts:126-139`'s `listAnnualReturnCasesForActor` already uses.
+`listDocumentsForActor` spreads this scope into the repository call _after_ caller-supplied filters (`{ ...data, ...scope }`), so a client-supplied `companyId`/`caseId` can narrow within an actor's scope but never widen past it — same ordering `annual-return/server-fns.ts:126-139`'s `listAnnualReturnCasesForActor` already uses.
 
 `src/features/documents/repository.ts`'s `listDocuments` (type at line 201) and `documentRows` (lines 239-247) gain a `teamId` filter, joining `documents d` → `companies c on c.id = d.company_id` → filtering `c.assigned_team_id`. Same join shape `annual-return/repository.ts:577,598` already uses against the same column, which is indexed (`schema.sql:50,195`).
 

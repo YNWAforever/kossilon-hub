@@ -14,19 +14,19 @@ export class ClientWriteError extends Error {
 const CONSTRAINT_FIELDS: Record<string, { field: ClientWriteField; message: string }> = {
   companies_cr_number_key: {
     field: "crNumber",
-    message: "A company with this CR number already exists.",
+    message: "已有公司使用此 CR 號碼。",
   },
   companies_br_number_key: {
     field: "brNumber",
-    message: "A company with this BR number already exists.",
+    message: "已有公司使用此 BR 號碼。",
   },
   company_contacts_reachable_check: {
     field: "contact",
-    message: "Provide an email or a phone number.",
+    message: "請提供電郵地址或電話號碼。",
   },
   company_contacts_primary_uidx: {
     field: "isPrimary",
-    message: "This company already has a primary contact.",
+    message: "此公司已有主要聯絡人。",
   },
 };
 

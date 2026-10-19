@@ -11,7 +11,7 @@ export function AppSidebar() {
         <BrandBlock />
       </div>
 
-      <nav aria-label="Primary navigation" className="flex-1 overflow-y-auto p-2">
+      <nav aria-label="主要導覽" className="flex-1 overflow-y-auto p-2">
         <NavList pathname={pathname} />
       </nav>
 

@@ -33,42 +33,42 @@
 
 ## Review Focus
 
-| 最容易失敗的邊界 | 必須保留的測試 | 測試負責任務 |
-|---|---|---|
-| Ledger看似修好，實體DDL仍缺；worker恢復後重送 | populated migration、dispatch接受後timeout、3次真scheduled tick | T01、T02、T17 |
-| list/ID/bulk/Client的權限不一致 | scope矩陣、inactive session、越權零寫入 | T05、T12、T13 |
-| 文件齊就誤當可交；V1批准套到V2 | 分階段readiness、concurrent evidence/payment update | T08、T11、T15、T19 |
-| 分頁／filter／全選／retry造成重複或誤改 | null cursor終點、slow response、1240/50 scope、kill/resume | T07、T13、T14 |
-| mock、empty或舊數據被呈現成healthy／成功 | unknown/error區分、provider receipt、golden evidence、fresh login | T16、T17、T23、T22 |
+| 最容易失敗的邊界                              | 必須保留的測試                                                    | 測試負責任務       |
+| --------------------------------------------- | ----------------------------------------------------------------- | ------------------ |
+| Ledger看似修好，實體DDL仍缺；worker恢復後重送 | populated migration、dispatch接受後timeout、3次真scheduled tick   | T01、T02、T17      |
+| list/ID/bulk/Client的權限不一致               | scope矩陣、inactive session、越權零寫入                           | T05、T12、T13      |
+| 文件齊就誤當可交；V1批准套到V2                | 分階段readiness、concurrent evidence/payment update               | T08、T11、T15、T19 |
+| 分頁／filter／全選／retry造成重複或誤改       | null cursor終點、slow response、1240/50 scope、kill/resume        | T07、T13、T14      |
+| mock、empty或舊數據被呈現成healthy／成功      | unknown/error區分、provider receipt、golden evidence、fresh login | T16、T17、T23、T22 |
 
 ## 實施與發布次序
 
-| PR包 | 任務 | 可交付結果 | 發布條件 |
-|---|---|---|---|
-| PR01 | T00、T01、T03 | baseline、schema與origin診斷／保護 | 無破壞性自動修復；正式DB另走核對 |
-| PR02 | T02、T23 | scheduler與真實Operations狀態 | code可先合併；正式dispatch另有gate |
-| PR03 | T04、T05、T06、T07 | Portal、文件可見性、權限及分頁修復 | scope與回歸測試通過 |
-| PR04 | T08、T09、T10、T11 | readiness、指標、分派、付款review | current-version／交易測試通過 |
-| PR05 | T12、T13 | Admin維護與批量分派 | last-admin及bulk並發測試通過 |
-| PR06 | T14 | 月表逐行套用 | populated／重播／部分成功測試 |
-| PR07 | T15、T16 | scanner、內容分析與AI | scanner和AI可分開發布；真連接分開驗收 |
-| PR08 | T17、T18 | WhatsApp閉環及批量維護 | 真recipient測試需核准；draft功能可先用 |
-| PR09 | T19 | 人工交件／回件與目的地adapter | 人工功能不假稱自動connector已完成 |
-| PR10 | T20、T21 | 導覽設定UX及效能 | mobile/keyboard及scale基線 |
-| PR11 | T22 | 50項UAT與release evidence | 本次release的所有關鍵gate通過 |
+| PR包 | 任務               | 可交付結果                         | 發布條件                               |
+| ---- | ------------------ | ---------------------------------- | -------------------------------------- |
+| PR01 | T00、T01、T03      | baseline、schema與origin診斷／保護 | 無破壞性自動修復；正式DB另走核對       |
+| PR02 | T02、T23           | scheduler與真實Operations狀態      | code可先合併；正式dispatch另有gate     |
+| PR03 | T04、T05、T06、T07 | Portal、文件可見性、權限及分頁修復 | scope與回歸測試通過                    |
+| PR04 | T08、T09、T10、T11 | readiness、指標、分派、付款review  | current-version／交易測試通過          |
+| PR05 | T12、T13           | Admin維護與批量分派                | last-admin及bulk並發測試通過           |
+| PR06 | T14                | 月表逐行套用                       | populated／重播／部分成功測試          |
+| PR07 | T15、T16           | scanner、內容分析與AI              | scanner和AI可分開發布；真連接分開驗收  |
+| PR08 | T17、T18           | WhatsApp閉環及批量維護             | 真recipient測試需核准；draft功能可先用 |
+| PR09 | T19                | 人工交件／回件與目的地adapter      | 人工功能不假稱自動connector已完成      |
+| PR10 | T20、T21           | 導覽設定UX及效能                   | mobile/keyboard及scale基線             |
+| PR11 | T22                | 50項UAT與release evidence          | 本次release的所有關鍵gate通過          |
 
 PR包是review邊界，可按大小再拆；不可把全部24任務做成一個巨型PR。任務號用於追蹤，T23屬早期共同工作。T02正式恢復不必等所有AI功能，但啟用哪些pass必須與schema／掃描／派送實際能力相符。
 
 ## 外部依賴台賬
 
-| 依賴 | 需要的證據／資源 | 缺少時仍可完成 | 只阻擋甚麼 |
-|---|---|---|---|
-| Live DB / Web / Worker | 部署SHA、DB branch、read-only catalog/ledger、backup及cron設定 | T01診斷工具、T02測試、所有本地bugfix | 正式migration與scheduler啟用驗收 |
-| Auth測試環境 | Admin/Staff/Client測試帳戶、callback與provider邀請支援 | 管理UI、server權限、mock登入契約 | fresh magic-link/Google、真邀請測試 |
-| R2 / scanner | 隔離bucket、scanner endpoint與憑證、核准樣本 | quarantine/version邏輯、mock adapter測試 | 真scan閉環及安全文件功能release |
-| OCR / AI | 核准provider、資料處理要求、測試額度 | 提取／unknown／human review、golden與mock | 真模型效果/延遲驗收 |
-| WOZTELL | API_BASE_URL、ACCESS_TOKEN、CHANNEL_ID、WEBHOOK_SECRET；官方media協定、測試recipient | 設定UI、draft、mapping、adapter契約、outbox fault測試 | 真收發／receipt／媒體下載驗收 |
-| Handoff目的地 | protocol、地址、權限、冪等與查receipt能力 | approved export、manual紀錄、mock return | 真自動交件／回件驗收 |
+| 依賴                   | 需要的證據／資源                                                                     | 缺少時仍可完成                                        | 只阻擋甚麼                          |
+| ---------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------- | ----------------------------------- |
+| Live DB / Web / Worker | 部署SHA、DB branch、read-only catalog/ledger、backup及cron設定                       | T01診斷工具、T02測試、所有本地bugfix                  | 正式migration與scheduler啟用驗收    |
+| Auth測試環境           | Admin/Staff/Client測試帳戶、callback與provider邀請支援                               | 管理UI、server權限、mock登入契約                      | fresh magic-link/Google、真邀請測試 |
+| R2 / scanner           | 隔離bucket、scanner endpoint與憑證、核准樣本                                         | quarantine/version邏輯、mock adapter測試              | 真scan閉環及安全文件功能release     |
+| OCR / AI               | 核准provider、資料處理要求、測試額度                                                 | 提取／unknown／human review、golden與mock             | 真模型效果/延遲驗收                 |
+| WOZTELL                | API_BASE_URL、ACCESS_TOKEN、CHANNEL_ID、WEBHOOK_SECRET；官方media協定、測試recipient | 設定UI、draft、mapping、adapter契約、outbox fault測試 | 真收發／receipt／媒體下載驗收       |
+| Handoff目的地          | protocol、地址、權限、冪等與查receipt能力                                            | approved export、manual紀錄、mock return              | 真自動交件／回件驗收                |
 
 台賬必須列owner、缺項、可提供的方法和下一步；不要把「BLOCKED」當完成，也不要因此停止無依賴的工作。
 
@@ -81,6 +81,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F01, F02, F20　**依賴：** 無　**類型：** 調查／工程準備
 
 **檔案：**
+
 - Read: `AGENTS.md`
 - Read: `.github/workflows/ci.yml`
 - Read: `package.json`
@@ -100,6 +101,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F01　**依賴：** T00　**類型：** P0 調查＋修復
 
 **檔案：**
+
 - Modify: `src/features/operations/schema-health.ts`
 - Modify: `scripts/db-migrate.ts`
 - Read: `db/migrations/0034_notification_outbox_dispatch_marker.sql`
@@ -120,6 +122,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F20　**依賴：** T00；DB寫入依 T01　**類型：** P1 修復
 
 **檔案：**
+
 - Read: `db/migrations/0030_company_data_origin.sql`
 - Modify: `src/features/annual-return/repository.ts`
 - Modify: `src/features/annual-return/follow-ups.ts`
@@ -140,6 +143,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F02　**依賴：** T01 程式／schema契約；正式啟用另需 T03、T15／T17 對應pass gate　**類型：** P0 修復＋環境操作
 
 **檔案：**
+
 - Modify: `src/server/nitro-scheduled.ts`
 - Modify: `src/server/maintenance.ts`
 - Modify: `src/server/cron.ts`
@@ -160,6 +164,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F17　**依賴：** T01、T02程式；隨各connector更新　**類型：** P2 修復
 
 **檔案：**
+
 - Modify: `src/features/operations/capabilities.ts`
 - Modify: `src/features/operations/health.ts`
 - Modify: `src/features/operations/repository.ts`
@@ -180,6 +185,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F03　**依賴：** T00　**類型：** P1 修復
 
 **檔案：**
+
 - Modify: `src/routes/portal.tsx`
 - Modify: `src/routes/documents.tsx`
 - Create: `src/lib/entity-id.ts`
@@ -198,6 +204,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F16　**依賴：** T00；先於 bulk及文件修補　**類型：** P1 安全前置修復
 
 **檔案：**
+
 - Modify: `src/features/documents/authorization.ts`
 - Modify: `src/features/documents/server-fns.ts`
 - Modify: `src/features/documents/repository.ts`
@@ -217,6 +224,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F04　**依賴：** T05；實體修補依 T01　**類型：** P1 修復
 
 **檔案：**
+
 - Modify: `src/features/documents/repository.ts`
 - Modify: `src/features/documents/types.ts`
 - Modify: `src/routes/documents.tsx`
@@ -237,6 +245,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F07　**依賴：** T00　**類型：** P1 修復
 
 **檔案：**
+
 - Modify: `src/features/annual-return/components/production-command-center.tsx`
 - Modify/Test: `src/features/annual-return/components/production-command-center.interaction.test.tsx`
 
@@ -252,6 +261,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F05　**依賴：** T05、T06；DB條件依 T01　**類型：** P1 業務修復
 
 **檔案：**
+
 - Modify: `src/features/annual-return/workflow.ts`
 - Modify: `src/features/annual-return/work-views.ts`
 - Modify: `src/features/annual-return/repository.ts`
@@ -273,6 +283,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F06　**依賴：** T03、T08　**類型：** P1 修復
 
 **檔案：**
+
 - Modify: `src/features/annual-return/repository.ts`
 - Modify: `src/features/dashboard/dashboard-data.ts`
 - Modify: `src/routes/index.tsx`
@@ -291,6 +302,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F14　**依賴：** T08　**類型：** P2 修復
 
 **檔案：**
+
 - Modify: `src/routes/work-queue.tsx`
 - Modify: `src/features/work-items/repository.ts`
 - Modify/Test: `src/routes/-work-queue-case-links.test.tsx`
@@ -308,6 +320,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F15　**依賴：** T05、T06、T08　**類型：** P2 功能補齊
 
 **檔案：**
+
 - Modify: `src/routes/payments.tsx`
 - Modify: `src/features/annual-return/server-fns.ts`
 - Modify: `src/features/annual-return/repository.ts`
@@ -326,6 +339,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F08　**依賴：** T05；migration依 T01　**類型：** P1 新能力
 
 **檔案：**
+
 - Modify: `src/routes/admin.tsx`
 - Modify: `src/features/auth/neon-auth-server.ts`
 - Create: `src/features/admin/repository.ts`
@@ -346,6 +360,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F13　**依賴：** T05、T07、T10、T12；migration依 T01　**類型：** P1 新能力
 
 **檔案：**
+
 - Create: `src/features/bulk-operations/types.ts`
 - Create: `src/features/bulk-operations/repository.ts`
 - Create: `src/features/bulk-operations/server-fns.ts`
@@ -368,6 +383,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F09　**依賴：** T03、T12、T13；T09供統計驗證　**類型：** P1 新能力
 
 **檔案：**
+
 - Modify: `src/routes/imports.tsx`
 - Modify: `src/features/nar-import/repository.ts`
 - Modify: `src/features/nar-import/server-fns.ts`
@@ -390,6 +406,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F10　**依賴：** T01、T05、T06；執行worker依 T02　**類型：** P1 整合／修復
 
 **檔案：**
+
 - Modify: `src/features/documents/server-fns.ts`
 - Modify: `src/features/documents/live-scanner.ts`
 - Modify: `src/features/documents/scan-worker.ts`
@@ -403,7 +420,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **契約／責任：** scanner adapter沿用現有介面，結果綁object checksum+documentVersionId；production配置缺失/timeout一律unknown或quarantine，不能fallback成clean。
 
 - [ ] **1. 重現／鎖定驗收：** clean、零byte、截斷PDF、加密PDF、隔離安全惡意樣本、provider timeout/429/invalid response、重複job、V1 scan後上V2。
-- [ ] **2. 實作：** 先驗現有 DOCUMENT_SCANNER_* 與runtime adapter，不重建已有HTTP connector。使用核准staging scanner與R2；upload→quarantine→scan→review一路記版本。重試backoff有上限及可追原因；download/preview gate只接受當前clean版本。
+- [ ] **2. 實作：** 先驗現有 DOCUMENT*SCANNER*\* 與runtime adapter，不重建已有HTTP connector。使用核准staging scanner與R2；upload→quarantine→scan→review一路記版本。重試backoff有上限及可追原因；download/preview gate只接受當前clean版本。
 - [ ] **3. 驗證：** DOC-01/02/04；mock契約測試及staging真scanner各留證據。未有scanner credential仍完成程式及mock；真scanner驗收保持blocked，不能改Operations為healthy。
 - [ ] **4. 收尾／提交：** 安全處理可觀察、無靜默放行；現有V1 approval不批准V2。提交 fix: enforce version-bound scanning in live document flow。
 
@@ -412,6 +429,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F10　**依賴：** T08、T15　**類型：** P1 新能力＋整合
 
 **檔案：**
+
 - Modify: `src/features/documents/text-extraction.ts`
 - Modify: `src/features/documents/analysis-checks.ts`
 - Modify: `src/features/documents/analysis-worker.ts`
@@ -434,6 +452,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F11　**依賴：** T01、T03、T05、T08、T15；真scheduler依 T02　**類型：** P1 整合／功能補齊
 
 **檔案：**
+
 - Modify: `src/routes/whatsapp.tsx`
 - Modify: `src/routes/whatsapp.automation.tsx`
 - Modify: `src/features/annual-return/follow-ups.ts`
@@ -457,6 +476,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F13, F11　**依賴：** T08、T11、T13、T14、T17程式契約　**類型：** P1 新能力
 
 **檔案：**
+
 - Modify: `src/routes/clients.tsx`
 - Modify: `src/routes/documents.tsx`
 - Modify: `src/routes/payments.tsx`
@@ -476,6 +496,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F12　**依賴：** T08、T15；connector依 T01/T02及外部協定　**類型：** P1 新能力＋整合
 
 **檔案：**
+
 - Modify: `src/features/annual-return/handoff.ts`
 - Modify: `src/features/annual-return/handoff-destination.ts`
 - Modify: `src/features/annual-return/package-manifest.ts`
@@ -498,6 +519,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F19　**依賴：** T04、T08、T10、T11、T12、T18、T19 UI契約　**類型：** P2 UX優化
 
 **檔案：**
+
 - Modify: `src/components/navigation.ts`
 - Modify: `src/components/nav-content.tsx`
 - Modify: `src/components/app-sidebar.tsx`
@@ -521,6 +543,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F18　**依賴：** T07、T08、T09；新UI穩定後量測　**類型：** P2 效能修復
 
 **檔案：**
+
 - Modify: `src/features/annual-return/repository.ts`
 - Modify: `src/features/annual-return/server-fns.ts`
 - Modify: `src/routes/today.tsx`
@@ -545,6 +568,7 @@ PR包是review邊界，可按大小再拆；不可把全部24任務做成一個�
 **對應：** F01, F02, F03, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20　**依賴：** 所有準備發布的任務；blocked整合可明確留未發布　**類型：** 驗證／發布準備
 
 **檔案：**
+
 - Create: `docs/audit-remediation/uat-results.csv`
 - Create: `docs/audit-remediation/release-checklist.md`
 - Create: `docs/audit-remediation/rollback-runbook.md`
@@ -607,85 +631,85 @@ npm run verify:dev-server-imports
 
 下表的「主要任務」負責修復，「驗收」一律由T22匯總。所有項目都保留審計證據與新結果的區分。
 
-| Finding | 問題 | 主要任務 |
-|---|---|---|
-| F01 | Schema ledger／實體DDL差異 | T01 |
-| F02 | Scheduler freshness／積壓 | T02 |
-| F03 | Portal及文件UUID驗證 | T04 |
-| F04 | 文件metadata與vault不一致 | T06 |
-| F05 | 可以交件readiness錯誤 | T08 |
-| F06 | 跨頁指標與單位不一致 | T09 |
-| F07 | 分頁終點與filter競態 | T07 |
-| F08 | Admin功能缺失 | T12 |
-| F09 | 月表只有staging未apply | T14 |
-| F10 | scanner／內容／OCR／AI未驗證 | T15、T16 |
-| F11 | WhatsApp配置／附件／派送 | T17、T18 |
-| F12 | handoff及return未接通 | T19 |
-| F13 | 缺乏批量日常維護 | T13、T18 |
-| F14 | work queue名稱及blocker | T10 |
-| F15 | 付款缺證據review | T11 |
-| F16 | 文件list/by-ID scope差異 | T05 |
-| F17 | Operations固定文字與實況不同 | T23 |
-| F18 | 全表載入／截斷／效能 | T21 |
-| F19 | 導覽、settings及mobile UX | T20 |
-| F20 | fixture與正式資料混淆 | T03 |
+| Finding | 問題                         | 主要任務 |
+| ------- | ---------------------------- | -------- |
+| F01     | Schema ledger／實體DDL差異   | T01      |
+| F02     | Scheduler freshness／積壓    | T02      |
+| F03     | Portal及文件UUID驗證         | T04      |
+| F04     | 文件metadata與vault不一致    | T06      |
+| F05     | 可以交件readiness錯誤        | T08      |
+| F06     | 跨頁指標與單位不一致         | T09      |
+| F07     | 分頁終點與filter競態         | T07      |
+| F08     | Admin功能缺失                | T12      |
+| F09     | 月表只有staging未apply       | T14      |
+| F10     | scanner／內容／OCR／AI未驗證 | T15、T16 |
+| F11     | WhatsApp配置／附件／派送     | T17、T18 |
+| F12     | handoff及return未接通        | T19      |
+| F13     | 缺乏批量日常維護             | T13、T18 |
+| F14     | work queue名稱及blocker      | T10      |
+| F15     | 付款缺證據review             | T11      |
+| F16     | 文件list/by-ID scope差異     | T05      |
+| F17     | Operations固定文字與實況不同 | T23      |
+| F18     | 全表載入／截斷／效能         | T21      |
+| F19     | 導覽、settings及mobile UX    | T20      |
+| F20     | fixture與正式資料混淆        | T03      |
 
 ## 原50項UAT追蹤表
 
 本表是執行分工，不是測試結果。所有項目新一輪狀態初始為 `not_run`；T22负责彙總。FLOW-10/11/12屬原有支援流程回歸，沒有證據顯示必須重建整個模組；如測出bug才加對應小型修復任務。
 
-| UAT | 情境 | 對應發現 | 實施／驗證任務 | 新一輪狀態 |
-|---|---|---|---|---|
-| AUTH-01 | 現有 Admin session | F08 | T12、T22 | not_run |
-| AUTH-02 | Magic link 返回原頁 | F03 | T04、T22 | not_run |
-| AUTH-03 | Google 登入與未授權帳戶 | F08 | T12、T22 | not_run |
-| AUTH-04 | 跨隊指派文件 | F16 | T05、T22 | not_run |
-| AUTH-05 | 離職停用 | F08 | T12、T13、T22 | not_run |
-| AUTH-06 | Client 隔離 | F16 | T05、T22 | not_run |
-| OPS-01 | Schema 一致 | F01 | T01、T22 | not_run |
-| OPS-02 | 排程 freshness | F02 | T02、T22 | not_run |
-| OPS-03 | 排程部分失敗 | F02,F17 | T02、T23、T22 | not_run |
-| OPS-04 | Fixture 外發抑制 | F20 | T03、T22 | not_run |
-| OPS-05 | 備份恢复與 populated migration | F01 | T01、T22 | not_run |
-| FLOW-01 | 現有案件 Portal | F03 | T04、T22 | not_run |
-| FLOW-02 | 文件篩選 ID 一致 | F03 | T04、T22 | not_run |
-| FLOW-03 | 文件庫與客戶列表對賬 | F04 | T06、T22 | not_run |
-| FLOW-04 | 交件 readiness | F05 | T08、T22 | not_run |
-| FLOW-05 | 跨頁指標一致 | F06 | T09、T22 | not_run |
-| FLOW-06 | 最後一頁 | F07 | T07、T22 | not_run |
-| FLOW-07 | 搜尋与 filter 競態 | F07,F18 | T07、T21、T22 | not_run |
-| FLOW-08 | 工作隊列識別 | F14 | T10、T22 | not_run |
-| FLOW-09 | 新客戶至新案件 | F08,F20 | T03、T12、T22 | not_run |
-| FLOW-10 | 公司成立完整狀態 | F13 | T22 | not_run |
-| FLOW-11 | 公司變更與撤銷 | F13 | T22 | not_run |
-| FLOW-12 | 經常服務與SCR | F13 | T22 | not_run |
-| IMPORT-01 | 月表 staging | F09 | T14、T22 | not_run |
-| IMPORT-02 | 月表特殊值 | F09 | T14、T22 | not_run |
-| IMPORT-03 | 年份與 supplied due date | F09 | T14、T22 | not_run |
-| IMPORT-04 | 套用與重播 | F09 | T14、T22 | not_run |
-| DOC-01 | 正常安全上載 | F03,F10 | T04、T15、T16、T22 | not_run |
-| DOC-02 | 惡意/空檔/損毀/加密 | F10 | T15、T16、T22 | not_run |
-| DOC-03 | 已收但未審 | F05,F11 | T08、T17、T22 | not_run |
-| DOC-04 | 版本競爭與舊批准 | F10 | T08、T15、T16、T22 | not_run |
-| PAY-01 | 付款證據審核 | F15 | T11、T22 | not_run |
-| PAY-02 | 部分款/重覆款/退回 | F15 | T11、T22 | not_run |
-| MSG-01 | 配置健康 | F11 | T17、T18、T22 | not_run |
-| MSG-02 | 共用電話與多案件 | F11 | T17、T18、T22 | not_run |
-| MSG-03 | 附件闭環 | F11 | T17、T18、T22 | not_run |
-| MSG-04 | 正常派送與receipt | F11 | T17、T18、T22 | not_run |
-| MSG-05 | 未知派送與重播 | F01,F02,F11 | T01、T02、T17、T22 | not_run |
-| BULK-01 | 部分成功批量分派 | F13 | T13、T18、T22 | not_run |
-| BULK-02 | 全篩選與跨頁選取 | F13 | T13、T18、T22 | not_run |
-| BULK-03 | 批量追件草稿 | F11,F13 | T13、T17、T18、T22 | not_run |
-| HANDOFF-01 | 正常與重試交件 | F12 | T19、T22 | not_run |
-| HANDOFF-02 | 外部已收但timeout | F12 | T19、T22 | not_run |
-| AI-01 | 真實完整文件 | F10 | T15、T16、T22 | not_run |
-| AI-02 | 缺件與多人適用性 | F10 | T15、T16、T22 | not_run |
-| AI-03 | 錯年度姓名及文件內容指令 | F10 | T15、T16、T22 | not_run |
-| AI-04 | 模糊無文字層文件 | F10 | T15、T16、T22 | not_run |
-| AI-05 | provider故障與版本更新 | F10 | T15、T16、T22 | not_run |
-| PERF-01 | 資料量與權限規模 | F18 | T21、T22 | not_run |
-| UX-01 | 手機與鍵盤日常任務 | F19 | T20、T22 | not_run |
+| UAT        | 情境                           | 對應發現    | 實施／驗證任務     | 新一輪狀態 |
+| ---------- | ------------------------------ | ----------- | ------------------ | ---------- |
+| AUTH-01    | 現有 Admin session             | F08         | T12、T22           | not_run    |
+| AUTH-02    | Magic link 返回原頁            | F03         | T04、T22           | not_run    |
+| AUTH-03    | Google 登入與未授權帳戶        | F08         | T12、T22           | not_run    |
+| AUTH-04    | 跨隊指派文件                   | F16         | T05、T22           | not_run    |
+| AUTH-05    | 離職停用                       | F08         | T12、T13、T22      | not_run    |
+| AUTH-06    | Client 隔離                    | F16         | T05、T22           | not_run    |
+| OPS-01     | Schema 一致                    | F01         | T01、T22           | not_run    |
+| OPS-02     | 排程 freshness                 | F02         | T02、T22           | not_run    |
+| OPS-03     | 排程部分失敗                   | F02,F17     | T02、T23、T22      | not_run    |
+| OPS-04     | Fixture 外發抑制               | F20         | T03、T22           | not_run    |
+| OPS-05     | 備份恢复與 populated migration | F01         | T01、T22           | not_run    |
+| FLOW-01    | 現有案件 Portal                | F03         | T04、T22           | not_run    |
+| FLOW-02    | 文件篩選 ID 一致               | F03         | T04、T22           | not_run    |
+| FLOW-03    | 文件庫與客戶列表對賬           | F04         | T06、T22           | not_run    |
+| FLOW-04    | 交件 readiness                 | F05         | T08、T22           | not_run    |
+| FLOW-05    | 跨頁指標一致                   | F06         | T09、T22           | not_run    |
+| FLOW-06    | 最後一頁                       | F07         | T07、T22           | not_run    |
+| FLOW-07    | 搜尋与 filter 競態             | F07,F18     | T07、T21、T22      | not_run    |
+| FLOW-08    | 工作隊列識別                   | F14         | T10、T22           | not_run    |
+| FLOW-09    | 新客戶至新案件                 | F08,F20     | T03、T12、T22      | not_run    |
+| FLOW-10    | 公司成立完整狀態               | F13         | T22                | not_run    |
+| FLOW-11    | 公司變更與撤銷                 | F13         | T22                | not_run    |
+| FLOW-12    | 經常服務與SCR                  | F13         | T22                | not_run    |
+| IMPORT-01  | 月表 staging                   | F09         | T14、T22           | not_run    |
+| IMPORT-02  | 月表特殊值                     | F09         | T14、T22           | not_run    |
+| IMPORT-03  | 年份與 supplied due date       | F09         | T14、T22           | not_run    |
+| IMPORT-04  | 套用與重播                     | F09         | T14、T22           | not_run    |
+| DOC-01     | 正常安全上載                   | F03,F10     | T04、T15、T16、T22 | not_run    |
+| DOC-02     | 惡意/空檔/損毀/加密            | F10         | T15、T16、T22      | not_run    |
+| DOC-03     | 已收但未審                     | F05,F11     | T08、T17、T22      | not_run    |
+| DOC-04     | 版本競爭與舊批准               | F10         | T08、T15、T16、T22 | not_run    |
+| PAY-01     | 付款證據審核                   | F15         | T11、T22           | not_run    |
+| PAY-02     | 部分款/重覆款/退回             | F15         | T11、T22           | not_run    |
+| MSG-01     | 配置健康                       | F11         | T17、T18、T22      | not_run    |
+| MSG-02     | 共用電話與多案件               | F11         | T17、T18、T22      | not_run    |
+| MSG-03     | 附件闭環                       | F11         | T17、T18、T22      | not_run    |
+| MSG-04     | 正常派送與receipt              | F11         | T17、T18、T22      | not_run    |
+| MSG-05     | 未知派送與重播                 | F01,F02,F11 | T01、T02、T17、T22 | not_run    |
+| BULK-01    | 部分成功批量分派               | F13         | T13、T18、T22      | not_run    |
+| BULK-02    | 全篩選與跨頁選取               | F13         | T13、T18、T22      | not_run    |
+| BULK-03    | 批量追件草稿                   | F11,F13     | T13、T17、T18、T22 | not_run    |
+| HANDOFF-01 | 正常與重試交件                 | F12         | T19、T22           | not_run    |
+| HANDOFF-02 | 外部已收但timeout              | F12         | T19、T22           | not_run    |
+| AI-01      | 真實完整文件                   | F10         | T15、T16、T22      | not_run    |
+| AI-02      | 缺件與多人適用性               | F10         | T15、T16、T22      | not_run    |
+| AI-03      | 錯年度姓名及文件內容指令       | F10         | T15、T16、T22      | not_run    |
+| AI-04      | 模糊無文字層文件               | F10         | T15、T16、T22      | not_run    |
+| AI-05      | provider故障與版本更新         | F10         | T15、T16、T22      | not_run    |
+| PERF-01    | 資料量與權限規模               | F18         | T21、T22           | not_run    |
+| UX-01      | 手機與鍵盤日常任務             | F19         | T20、T22           | not_run    |
 
 ## 給執行Codex的工作節奏
 

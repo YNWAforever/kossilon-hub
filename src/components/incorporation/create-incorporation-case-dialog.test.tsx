@@ -40,19 +40,19 @@ describe("CreateIncorporationCaseDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Proposed name (English)"), {
+    fireEvent.change(screen.getByLabelText("擬用名稱（英文）"), {
       target: { value: "New Venture Limited" },
     });
-    fireEvent.change(screen.getByLabelText("Proposed registered office"), {
+    fireEvent.change(screen.getByLabelText("擬用註冊辦事處"), {
       target: { value: "1 Test Street, Hong Kong" },
     });
-    fireEvent.change(screen.getByLabelText("Business nature"), {
+    fireEvent.change(screen.getByLabelText("業務性質"), {
       target: { value: "Trading" },
     });
-    fireEvent.change(screen.getByLabelText("Target completion date"), {
+    fireEvent.change(screen.getByLabelText("目標完成日期"), {
       target: { value: "2026-09-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Start incorporation" }));
+    fireEvent.click(screen.getByRole("button", { name: "開始公司註冊" }));
 
     await waitFor(() =>
       expect(serverFns.createIncorporationCase).toHaveBeenCalledWith({
@@ -85,28 +85,27 @@ describe("CreateIncorporationCaseDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Proposed name (English)"), {
+    fireEvent.change(screen.getByLabelText("擬用名稱（英文）"), {
       target: { value: "New Venture Limited" },
     });
-    fireEvent.change(screen.getByLabelText("Proposed registered office"), {
+    fireEvent.change(screen.getByLabelText("擬用註冊辦事處"), {
       target: { value: "1 Test Street, Hong Kong" },
     });
-    fireEvent.change(screen.getByLabelText("Business nature"), {
+    fireEvent.change(screen.getByLabelText("業務性質"), {
       target: { value: "Trading" },
     });
-    fireEvent.change(screen.getByLabelText("Registered capital (HKD)"), {
+    fireEvent.change(screen.getByLabelText("註冊資本（HKD）"), {
       target: { value: "5e2" },
     });
-    fireEvent.change(screen.getByLabelText("Target completion date"), {
+    fireEvent.change(screen.getByLabelText("目標完成日期"), {
       target: { value: "2026-09-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Start incorporation" }));
+    fireEvent.click(screen.getByRole("button", { name: "開始公司註冊" }));
 
-    expect(
-      await screen.findByText(
-        "Enter a whole number of dollars greater than zero for registered capital.",
-      ),
-    ).toBeTruthy();
+    expect(await screen.findByText("註冊資本須為大於零的整數金額。")).toBeTruthy();
+    const capital = screen.getByLabelText("註冊資本（HKD）");
+    expect(capital.getAttribute("aria-invalid")).toBe("true");
+    expect(capital.getAttribute("aria-describedby")).toBe("intake-form-error");
     expect(serverFns.createIncorporationCase).not.toHaveBeenCalled();
   });
 
@@ -125,19 +124,19 @@ describe("CreateIncorporationCaseDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Proposed name (English)"), {
+    fireEvent.change(screen.getByLabelText("擬用名稱（英文）"), {
       target: { value: "New Venture Limited" },
     });
-    fireEvent.change(screen.getByLabelText("Proposed registered office"), {
+    fireEvent.change(screen.getByLabelText("擬用註冊辦事處"), {
       target: { value: "1 Test Street, Hong Kong" },
     });
-    fireEvent.change(screen.getByLabelText("Business nature"), {
+    fireEvent.change(screen.getByLabelText("業務性質"), {
       target: { value: "Trading" },
     });
-    fireEvent.change(screen.getByLabelText("Target completion date"), {
+    fireEvent.change(screen.getByLabelText("目標完成日期"), {
       target: { value: "2026-09-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Start incorporation" }));
+    fireEvent.click(screen.getByRole("button", { name: "開始公司註冊" }));
 
     expect(await screen.findByText("Owner not found or inactive.")).toBeTruthy();
   });

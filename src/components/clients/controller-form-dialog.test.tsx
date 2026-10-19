@@ -32,14 +32,14 @@ describe("ControllerFormDialog", () => {
       <ControllerFormDialog open onOpenChange={() => {}} companyId="company-1" onSaved={onSaved} />,
     );
 
-    fireEvent.change(screen.getByLabelText("Controller name"), {
+    fireEvent.change(screen.getByLabelText("重要控制人名稱"), {
       target: { value: "Jane Controller" },
     });
-    fireEvent.click(screen.getByLabelText("Holds more than 25% of shares"));
-    fireEvent.change(screen.getByLabelText("Registered date"), {
+    fireEvent.click(screen.getByLabelText("持有超過 25% 股份"));
+    fireEvent.change(screen.getByLabelText("登記日期"), {
       target: { value: "2026-01-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Record controller" }));
+    fireEvent.click(screen.getByRole("button", { name: "記錄重要控制人" }));
 
     await waitFor(() =>
       expect(serverFns.recordClientController).toHaveBeenCalledWith({
@@ -68,12 +68,12 @@ describe("ControllerFormDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Controller name"), {
+    fireEvent.change(screen.getByLabelText("重要控制人名稱"), {
       target: { value: "Jane Controller" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Record controller" }));
+    fireEvent.click(screen.getByRole("button", { name: "記錄重要控制人" }));
 
-    expect(await screen.findByText("Select at least one control basis.")).toBeTruthy();
+    expect(await screen.findByText("請選擇最少一項控制條件。")).toBeTruthy();
     expect(serverFns.recordClientController).not.toHaveBeenCalled();
   });
 
@@ -87,21 +87,22 @@ describe("ControllerFormDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Controller name"), {
+    fireEvent.change(screen.getByLabelText("重要控制人名稱"), {
       target: { value: "Jane Controller" },
     });
-    fireEvent.click(screen.getByLabelText("Holds more than 25% of shares"));
-    fireEvent.change(screen.getByLabelText("Registered date"), {
+    fireEvent.click(screen.getByLabelText("持有超過 25% 股份"));
+    fireEvent.change(screen.getByLabelText("登記日期"), {
       target: { value: "2026-01-01" },
     });
-    fireEvent.change(screen.getByLabelText("Register update due date"), {
+    fireEvent.change(screen.getByLabelText("登記冊更新到期日"), {
       target: { value: "2025-12-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Record controller" }));
+    fireEvent.click(screen.getByRole("button", { name: "記錄重要控制人" }));
 
-    expect(
-      await screen.findByText("Register update due date cannot be before the registered date."),
-    ).toBeTruthy();
+    expect(await screen.findByText("登記冊更新到期日不可早於登記日期。")).toBeTruthy();
+    const dueDate = screen.getByLabelText("登記冊更新到期日");
+    expect(dueDate.getAttribute("aria-invalid")).toBe("true");
+    expect(dueDate.getAttribute("aria-describedby")).toBe("controller-form-error");
     expect(serverFns.recordClientController).not.toHaveBeenCalled();
   });
 
@@ -131,10 +132,10 @@ describe("ControllerFormDialog", () => {
       />,
     );
 
-    expect(screen.queryByLabelText("Controller name")).toBeNull();
-    fireEvent.change(screen.getByLabelText("Address"), { target: { value: "New address" } });
-    fireEvent.click(screen.getByLabelText("Exercises significant influence or control"));
-    fireEvent.click(screen.getByRole("button", { name: "Save particulars" }));
+    expect(screen.queryByLabelText("重要控制人名稱")).toBeNull();
+    fireEvent.change(screen.getByLabelText("地址"), { target: { value: "New address" } });
+    fireEvent.click(screen.getByLabelText("行使重大影響力或控制權"));
+    fireEvent.click(screen.getByRole("button", { name: "儲存資料" }));
 
     await waitFor(() =>
       expect(serverFns.updateClientControllerParticulars).toHaveBeenCalledWith({
@@ -162,14 +163,14 @@ describe("ControllerFormDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Controller name"), {
+    fireEvent.change(screen.getByLabelText("重要控制人名稱"), {
       target: { value: "Jane Controller" },
     });
-    fireEvent.click(screen.getByLabelText("Holds more than 25% of shares"));
-    fireEvent.change(screen.getByLabelText("Registered date"), {
+    fireEvent.click(screen.getByLabelText("持有超過 25% 股份"));
+    fireEvent.change(screen.getByLabelText("登記日期"), {
       target: { value: "2026-01-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Record controller" }));
+    fireEvent.click(screen.getByRole("button", { name: "記錄重要控制人" }));
 
     expect(await screen.findByText("Client not found.")).toBeTruthy();
   });
@@ -182,16 +183,16 @@ describe("ControllerFormDialog", () => {
       <ControllerFormDialog open onOpenChange={() => {}} companyId="company-1" onSaved={onSaved} />,
     );
 
-    fireEvent.change(screen.getByLabelText("Controller name"), {
+    fireEvent.change(screen.getByLabelText("重要控制人名稱"), {
       target: { value: "Jane Controller" },
     });
-    fireEvent.click(screen.getByLabelText("Holds more than 25% of shares"));
-    fireEvent.click(screen.getByLabelText("Holds more than 25% of shares"));
-    fireEvent.click(screen.getByLabelText("Exercises significant influence or control"));
-    fireEvent.change(screen.getByLabelText("Registered date"), {
+    fireEvent.click(screen.getByLabelText("持有超過 25% 股份"));
+    fireEvent.click(screen.getByLabelText("持有超過 25% 股份"));
+    fireEvent.click(screen.getByLabelText("行使重大影響力或控制權"));
+    fireEvent.change(screen.getByLabelText("登記日期"), {
       target: { value: "2026-01-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Record controller" }));
+    fireEvent.click(screen.getByRole("button", { name: "記錄重要控制人" }));
 
     await waitFor(() =>
       expect(serverFns.recordClientController).toHaveBeenCalledWith({

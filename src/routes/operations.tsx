@@ -1,9 +1,16 @@
+import { pageTitle } from "@/lib/page-title";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { getOperationsHealth } from "@/features/operations/server-fns";
-import { dispatchCountLabel, type MaintenanceHealthState } from "@/features/operations/health";
+import {
+  dispatchCountLabel,
+  type MaintenanceHealthState,
+  type MaintenanceRunOutcome,
+} from "@/features/operations/health";
 import type { JobQueueDepth } from "@/features/operations/repository";
 import { earliestMissingLabel, type SchemaHealthState } from "@/features/operations/schema-health";
 import { formatHongKongTimestamp } from "@/features/whatsapp/conversations";
@@ -19,6 +26,7 @@ import { formatHongKongTimestamp } from "@/features/whatsapp/conversations";
  */
 
 export const Route = createFileRoute("/operations")({
+  head: () => ({ meta: [{ title: pageTitle("系統運作") }] }),
   component: OperationsRoute,
 });
 
@@ -33,11 +41,17 @@ const STATE_LABEL: Record<MaintenanceHealthState, string> = {
 // `never-observed` is amber, not grey and not green. It is an unknown, and an
 // unknown about the one subsystem nobody watches is worth a colour.
 const STATE_TONE: Record<MaintenanceHealthState, string> = {
-  "never-observed": "bg-status-yellow-soft text-status-yellow",
-  stale: "bg-status-red-soft text-status-red",
-  failing: "bg-status-red-soft text-status-red",
-  degraded: "bg-status-yellow-soft text-status-yellow",
-  healthy: "bg-status-green-soft text-status-green",
+  "never-observed": "bg-status-yellow-soft text-status-yellow-text",
+  stale: "bg-status-red-soft text-status-red-text",
+  failing: "bg-status-red-soft text-status-red-text",
+  degraded: "bg-status-yellow-soft text-status-yellow-text",
+  healthy: "bg-status-green-soft text-status-green-text",
+};
+
+const OUTCOME_LABEL: Record<MaintenanceRunOutcome, string> = {
+  succeeded: "成功",
+  partial: "部分成功",
+  failed: "失敗",
 };
 
 const SCHEMA_LABEL: Record<SchemaHealthState, string> = {
@@ -54,12 +68,12 @@ const SCHEMA_LABEL: Record<SchemaHealthState, string> = {
 // `ahead` is red rather than amber -- it means the running code is older than
 // the database, which running the migrator cannot fix.
 const SCHEMA_TONE: Record<SchemaHealthState, string> = {
-  unavailable: "bg-status-yellow-soft text-status-yellow",
-  "no-ledger": "bg-status-yellow-soft text-status-yellow",
-  behind: "bg-status-red-soft text-status-red",
-  ahead: "bg-status-red-soft text-status-red",
-  diverged: "bg-status-red-soft text-status-red",
-  current: "bg-status-green-soft text-status-green",
+  unavailable: "bg-status-yellow-soft text-status-yellow-text",
+  "no-ledger": "bg-status-yellow-soft text-status-yellow-text",
+  behind: "bg-status-red-soft text-status-red-text",
+  ahead: "bg-status-red-soft text-status-red-text",
+  diverged: "bg-status-red-soft text-status-red-text",
+  current: "bg-status-green-soft text-status-green-text",
 };
 
 function QueueRow({ label, depth }: { label: string; depth: JobQueueDepth }) {
@@ -96,10 +110,8 @@ function OperationsRoute() {
   if (dataMode !== "production") {
     return (
       <main className="flex-1 space-y-4 p-6">
-        <PageHeader eyebrow="Operations" title="系統運作" />
-        <p className="text-sm text-muted-foreground">
-          系統運作讀取正式資料。示範模式沒有排程，也沒有可讀取的執行紀錄。
-        </p>
+        <PageHeader eyebrow="管理" title="系統運作" />
+        <DemoUnavailable message="系統運作讀取正式資料。示範模式沒有排程，也沒有可讀取的執行紀錄。" />
       </main>
     );
   }
@@ -113,18 +125,17 @@ function OperationsRoute() {
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader
-        eyebrow="Operations"
+        eyebrow="管理"
         title="系統運作"
         subtitle="所有時間均為香港時間（UTC+8）；此頁開啟時每分鐘更新。"
         actions={
-          <button
+          <Button
             type="button"
-            className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
             onClick={() => void healthQuery.refetch()}
             disabled={healthQuery.isFetching}
           >
             {healthQuery.isFetching ? "正在更新" : "重新載入"}
-          </button>
+          </Button>
         }
       />
 
@@ -144,7 +155,7 @@ function OperationsRoute() {
       {unavailable ? (
         <p
           role="alert"
-          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
         >
           {healthQuery.fetchStatus === "paused"
             ? "連線暫停，現時狀態未知。恢復連線後會重新讀取。"
@@ -193,7 +204,7 @@ function OperationsRoute() {
             <section className="rounded-lg border bg-card p-4">
               <h2 className="text-base font-semibold">已批准版本的結構相容性</h2>
               <p
-                className={`mt-2 text-sm ${view.releaseCompatibility.applicationSchemaCompatible ? "text-status-green" : "text-status-yellow"}`}
+                className={`mt-2 text-sm ${view.releaseCompatibility.applicationSchemaCompatible ? "text-status-green-text" : "text-status-yellow-text"}`}
               >
                 {view.releaseCompatibility.applicationSchemaCompatible
                   ? "此版本與環境的結構相容性已核對。歷史遷移仍有分歧，不能執行普通遷移；登入、供應商及業務驗收須另行確認。"
@@ -203,7 +214,7 @@ function OperationsRoute() {
           ) : null}
 
           {view.maintenance === null ? (
-            <p className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red">
+            <p className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red-text">
               排程狀態暫時無法判斷。其他成功讀取的隊列或執行紀錄仍會顯示；
               缺少的資料保持未知，請按診斷參考跟進。
             </p>
@@ -261,22 +272,22 @@ function OperationsRoute() {
           ) : null}
 
           {view.queues === null ? (
-            <p role="status" className="text-sm text-status-yellow">
+            <p role="status" className="text-sm text-status-yellow-text">
               工作隊列無法讀取，數量未知；不能當作0。
             </p>
           ) : null}
           {view.maintenance === null ? (
-            <p role="status" className="text-sm text-status-yellow">
+            <p role="status" className="text-sm text-status-yellow-text">
               排程證據無法讀取，健康狀態未知。
             </p>
           ) : null}
           {view.schedulerLeases ? (
             <p className="text-sm">
-              已開始而結果待核對：{view.schedulerLeases.startedUnknown}；未開始的過期 lease：
+              已開始而結果待核對：{view.schedulerLeases.startedUnknown}；未開始而已過期的排程鎖：
               {view.schedulerLeases.claimedExpired}。未知結果不自動重跑。
             </p>
           ) : (
-            <p className="text-sm text-status-yellow">排程 lease 診斷未知。</p>
+            <p className="text-sm text-status-yellow-text">排程鎖診斷結果未知。</p>
           )}
           {view.diagnostics && view.diagnostics.failedReads.length > 0 ? (
             <p role="status" className="text-sm">
@@ -326,7 +337,7 @@ function OperationsRoute() {
             <div className="border-b p-4">
               <h2 className="text-base font-semibold">能力、配置與實際健康</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                程式實作、綁定配置及 runtime 驗證分開顯示。健康恢復不會取消正式操作的批准要求。
+                程式實作、綁定配置及運行驗證分開顯示。健康恢復不會取消正式操作的批准要求。
               </p>
               <a
                 className="mt-2 inline-block text-sm underline"
@@ -343,7 +354,7 @@ function OperationsRoute() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{integration.capability}</span>
                     {integration.approvalRequired ? (
-                      <span className="rounded-full bg-status-red-soft px-2 py-0.5 text-xs text-status-red">
+                      <span className="rounded-full bg-status-red-soft px-2 py-0.5 text-xs text-status-red-text">
                         正式操作需批准
                       </span>
                     ) : null}
@@ -399,9 +410,7 @@ function OperationsRoute() {
                         <th className="px-4 py-2 font-medium">觸發</th>
                         <th className="px-4 py-2 font-medium">已派送</th>
                         <th className="px-4 py-2 font-medium">已攔截</th>
-                        <th className="px-4 py-2 font-medium">
-                          工作 claimed／completed／failed／unknown
-                        </th>
+                        <th className="px-4 py-2 font-medium">工作：已領取／已完成／失敗／未知</th>
                         <th className="px-4 py-2 font-medium">參考</th>
                         <th className="px-4 py-2 font-medium">失敗環節</th>
                       </tr>
@@ -412,7 +421,9 @@ function OperationsRoute() {
                           <td className="px-4 py-2 tabular-nums">
                             {formatHongKongTimestamp(entry.scheduledFor)}
                           </td>
-                          <td className="px-4 py-2">{entry.outcome}</td>
+                          <td className="px-4 py-2">
+                            {OUTCOME_LABEL[entry.outcome] ?? entry.outcome}
+                          </td>
                           <td className="px-4 py-2 tabular-nums">{entry.durationMs} ms</td>
                           <td className="px-4 py-2">
                             {entry.triggerSource === "scheduled"

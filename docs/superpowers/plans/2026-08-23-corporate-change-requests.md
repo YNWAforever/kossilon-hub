@@ -14,7 +14,8 @@
 
 ## Naming note (implementation refinement, not a scope change)
 
-The spec calls the work-item case type `'corporate_change'`. During planning, the existing `annual_return`/`annual_return_case` precedent showed `work_items.case_type` and the SLA-lookup `work_type` are two *different* strings (`annual_return` vs `annual_return_case`). For clarity and consistency with that precedent, this plan uses:
+The spec calls the work-item case type `'corporate_change'`. During planning, the existing `annual_return`/`annual_return_case` precedent showed `work_items.case_type` and the SLA-lookup `work_type` are two _different_ strings (`annual_return` vs `annual_return_case`). For clarity and consistency with that precedent, this plan uses:
+
 - `work_items.case_type` value: `'corporate_change_request'`
 - `sla_policies.work_type` / `ensureWorkItemForEvent`'s `workType`: `'corporate_change_request'`
 - `corporate_change_requests.change_type` (the four ad hoc sub-types): `'name_change' | 'share_transfer' | 'officer_change' | 'address_change'` — unchanged from the spec.
@@ -24,6 +25,7 @@ The spec calls the work-item case type `'corporate_change'`. During planning, th
 ### Task 1: Migration 0019 — `corporate_change_requests` and `corporate_change_checklist_items`
 
 **Files:**
+
 - Create: `db/migrations/0019_corporate_change_requests.sql`
 
 - [ ] **Step 1: Write the migration**
@@ -147,6 +149,7 @@ git commit -m "feat: add corporate_change_requests and checklist tables"
 ### Task 2: Migration 0020 — extend `work_items` for the `corporate_change_request` case type
 
 **Files:**
+
 - Create: `db/migrations/0020_corporate_change_work_items.sql`
 
 - [ ] **Step 1: Write the migration**
@@ -189,17 +192,21 @@ git commit -m "feat: extend work_items for corporate_change_request case type"
 ### Task 3: Update `src/server/db/schema.sql` to match the new cumulative schema
 
 **Files:**
+
 - Modify: `src/server/db/schema.sql:301-333` (the `work_items` table block)
 - Modify: `src/server/db/schema.sql` (append new tables after the `incorporation_checklist_items` block, or after the last table in the file — find the actual end of the file first)
 
 - [ ] **Step 1: Update the `work_items` table block**
 
 At `src/server/db/schema.sql:301`, change:
+
 ```sql
   case_type text not null check (case_type in ('annual_return')),
   annual_return_case_id uuid references annual_return_cases(id) on delete restrict,
 ```
+
 to:
+
 ```sql
   case_type text not null check (case_type in ('annual_return', 'corporate_change_request')),
   annual_return_case_id uuid references annual_return_cases(id) on delete restrict,
@@ -207,10 +214,13 @@ to:
 ```
 
 At `src/server/db/schema.sql:333`, change:
+
 ```sql
     case_type <> 'annual_return' or annual_return_case_id is not null
 ```
+
 to:
+
 ```sql
     (case_type = 'annual_return' and annual_return_case_id is not null and corporate_change_request_id is null)
     or (case_type = 'corporate_change_request' and corporate_change_request_id is not null and annual_return_case_id is null)
@@ -319,6 +329,7 @@ git commit -m "docs: sync schema.sql with corporate change request migrations"
 ### Task 4: `src/features/corporate-changes/types.ts`
 
 **Files:**
+
 - Create: `src/features/corporate-changes/types.ts`
 - Test: `src/features/corporate-changes/workflow.test.ts` (written in Task 5 alongside `workflow.ts`, which imports these types)
 
@@ -502,6 +513,7 @@ git commit -m "feat: add corporate change request types"
 ### Task 5: `src/features/corporate-changes/workflow.ts` — status transitions and checklist content
 
 **Files:**
+
 - Create: `src/features/corporate-changes/workflow.ts`
 - Test: `src/features/corporate-changes/workflow.test.ts`
 
@@ -514,9 +526,15 @@ import { checklistLabelsFor, isAllowedCorporateChangeStatusTransition } from "./
 describe("isAllowedCorporateChangeStatusTransition", () => {
   it("allows moving forward one step in the lifecycle", () => {
     expect(isAllowedCorporateChangeStatusTransition("Requested", "Documents pending")).toBe(true);
-    expect(isAllowedCorporateChangeStatusTransition("Documents pending", "Ready to file")).toBe(true);
-    expect(isAllowedCorporateChangeStatusTransition("Ready to file", "Filed with Registrar")).toBe(true);
-    expect(isAllowedCorporateChangeStatusTransition("Filed with Registrar", "Completed")).toBe(true);
+    expect(isAllowedCorporateChangeStatusTransition("Documents pending", "Ready to file")).toBe(
+      true,
+    );
+    expect(isAllowedCorporateChangeStatusTransition("Ready to file", "Filed with Registrar")).toBe(
+      true,
+    );
+    expect(isAllowedCorporateChangeStatusTransition("Filed with Registrar", "Completed")).toBe(
+      true,
+    );
   });
 
   it("rejects skipping a step", () => {
@@ -530,7 +548,9 @@ describe("isAllowedCorporateChangeStatusTransition", () => {
   it("allows cancelling from any non-terminal status", () => {
     expect(isAllowedCorporateChangeStatusTransition("Requested", "Cancelled")).toBe(true);
     expect(isAllowedCorporateChangeStatusTransition("Documents pending", "Cancelled")).toBe(true);
-    expect(isAllowedCorporateChangeStatusTransition("Filed with Registrar", "Cancelled")).toBe(true);
+    expect(isAllowedCorporateChangeStatusTransition("Filed with Registrar", "Cancelled")).toBe(
+      true,
+    );
   });
 
   it("rejects cancelling a terminal request", () => {
@@ -652,6 +672,7 @@ git commit -m "test: add corporate change status transitions and checklist conte
 ### Task 6: `src/features/corporate-changes/authorization.ts`
 
 **Files:**
+
 - Create: `src/features/corporate-changes/authorization.ts`
 - Test: `src/features/corporate-changes/authorization.test.ts`
 
@@ -660,7 +681,10 @@ git commit -m "test: add corporate change status transitions and checklist conte
 ```ts
 import { describe, expect, it } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
-import { assertCorporateChangeRequestCreatable, assertCorporateChangeRequestWritable } from "./authorization";
+import {
+  assertCorporateChangeRequestCreatable,
+  assertCorporateChangeRequestWritable,
+} from "./authorization";
 
 const TEAM_A = "10000000-0000-0000-0000-000000000001";
 const TEAM_B = "10000000-0000-0000-0000-000000000002";
@@ -684,9 +708,9 @@ describe("assertCorporateChangeRequestWritable", () => {
   });
 
   it("rejects Staff on a different team", () => {
-    expect(() =>
-      assertCorporateChangeRequestWritable(actor(), { assignedTeamId: TEAM_B }),
-    ).toThrow(/Forbidden/);
+    expect(() => assertCorporateChangeRequestWritable(actor(), { assignedTeamId: TEAM_B })).toThrow(
+      /Forbidden/,
+    );
   });
 
   it("rejects an inactive actor", () => {
@@ -712,15 +736,13 @@ describe("assertCorporateChangeRequestWritable", () => {
 
 describe("assertCorporateChangeRequestCreatable", () => {
   it("allows Staff creating into their own team", () => {
-    expect(() =>
-      assertCorporateChangeRequestCreatable(actor(), { teamId: TEAM_A }),
-    ).not.toThrow();
+    expect(() => assertCorporateChangeRequestCreatable(actor(), { teamId: TEAM_A })).not.toThrow();
   });
 
   it("rejects Staff creating into another team", () => {
-    expect(() =>
-      assertCorporateChangeRequestCreatable(actor(), { teamId: TEAM_B }),
-    ).toThrow(/Forbidden/);
+    expect(() => assertCorporateChangeRequestCreatable(actor(), { teamId: TEAM_B })).toThrow(
+      /Forbidden/,
+    );
   });
 });
 ```
@@ -791,6 +813,7 @@ git commit -m "test: add corporate change request authorization"
 The `officer_change` request's `detail_change` action needs an in-place edit of an existing officer's address/identification without ceasing their appointment. No such function exists yet — P1-5 only ever built appoint/cease.
 
 **Files:**
+
 - Modify: `src/features/clients/types.ts` (add `UpdateOfficerDetailsInput` near `CeaseOfficerInput`)
 - Modify: `src/features/clients/repository.ts:59-62` (interface), and add the implementation near `ceaseOfficer` (~line 907)
 - Test: `src/features/clients/repository.test.ts`
@@ -861,7 +884,9 @@ describe("updateOfficerDetails", () => {
       appointmentDate: "2026-01-01",
       actorId: USER_AMY_ID,
     });
-    const officer = detail.officers.find((candidate) => candidate.name === "Cross Company Officer")!;
+    const officer = detail.officers.find(
+      (candidate) => candidate.name === "Cross Company Officer",
+    )!;
 
     await expect(
       repository.updateOfficerDetails({
@@ -902,13 +927,13 @@ Add `UpdateOfficerDetailsInput` to the type-only import block at the top of the 
 Immediately after `appointOfficer`'s closing brace (~line 861), before `assertOfficerBelongsToCompany`:
 
 ```ts
-  async function updateOfficerDetails(input: UpdateOfficerDetailsInput): Promise<ClientDetail> {
-    try {
-      return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
-        const officer = await assertOfficerBelongsToCompany(tx, input.companyId, input.officerId);
+async function updateOfficerDetails(input: UpdateOfficerDetailsInput): Promise<ClientDetail> {
+  try {
+    return await withTransaction(sql, async (tx) => {
+      await assertActor(tx, input.actorId);
+      const officer = await assertOfficerBelongsToCompany(tx, input.companyId, input.officerId);
 
-        await tx`
+      await tx`
           update officers
           set name = ${input.name},
               identification_type = ${input.identificationType},
@@ -918,26 +943,26 @@ Immediately after `appointOfficer`'s closing brace (~line 861), before `assertOf
           where id = ${input.officerId} and company_id = ${input.companyId}
         `;
 
-        if (officer.officer_type === "secretary") {
-          await tx`
+      if (officer.officer_type === "secretary") {
+        await tx`
             update companies set company_secretary = ${input.name}, updated_at = now()
             where id = ${input.companyId}
           `;
-        }
+      }
 
-        await writeTimelineEvent(tx, {
-          companyId: input.companyId,
-          eventType: "officer_details_updated",
-          actorId: input.actorId,
-          description: `Updated details for ${input.name} (${officer.officer_type}).`,
-        });
-
-        return hydrateOrThrow(tx, input.companyId);
+      await writeTimelineEvent(tx, {
+        companyId: input.companyId,
+        eventType: "officer_details_updated",
+        actorId: input.actorId,
+        description: `Updated details for ${input.name} (${officer.officer_type}).`,
       });
-    } catch (error) {
-      rethrowClientWriteError(error);
-    }
+
+      return hydrateOrThrow(tx, input.companyId);
+    });
+  } catch (error) {
+    rethrowClientWriteError(error);
   }
+}
 ```
 
 And add `updateOfficerDetails,` to the returned object at the bottom of `createClientRepository` (near line 1209, alongside `appointOfficer,`).
@@ -959,6 +984,7 @@ git commit -m "feat: add updateOfficerDetails for in-place officer edits"
 ### Task 8: `work-items` — widen `WorkItemCaseType` and `EnsureWorkItemEvent`
 
 **Files:**
+
 - Modify: `src/features/work-items/types.ts:41`
 - Modify: `src/features/work-items/repository.ts` (the `EnsureWorkItemEvent` type, `WorkItemRow` type, `ensureWorkItemForEvent`, `mapWorkItem`)
 - Test: `src/features/work-items/repository.test.ts`
@@ -966,10 +992,13 @@ git commit -m "feat: add updateOfficerDetails for in-place officer edits"
 - [ ] **Step 1: Widen `WorkItemCaseType`**
 
 In `src/features/work-items/types.ts:41`, change:
+
 ```ts
 export type WorkItemCaseType = "annual_return";
 ```
+
 to:
+
 ```ts
 export type WorkItemCaseType = "annual_return" | "corporate_change_request";
 ```
@@ -1023,6 +1052,7 @@ Expected: FAIL — `caseType` type error or `corporateChangeRequestId` does not 
 - [ ] **Step 4: Widen `EnsureWorkItemEvent`, `WorkItemRow`, and `PersistedWorkItem`**
 
 In `src/features/work-items/repository.ts`, change `EnsureWorkItemEvent`:
+
 ```ts
 export type EnsureWorkItemEvent = {
   companyId: string;
@@ -1047,8 +1077,9 @@ Add `corporate_change_request_id: string | null;` to `WorkItemRow` (next to `ann
 - [ ] **Step 5: Update the INSERT in `ensureWorkItemForEvent`**
 
 Change the insert's column list and values from:
+
 ```ts
-  const inserted = await tx<WorkItemRow[]>`
+const inserted = await tx<WorkItemRow[]>`
     insert into work_items (
       company_id, case_type, annual_return_case_id, source_event_key, source_event_type,
       work_type, required_skill_key, title, priority, owner_id, reviewer_id, team_id,
@@ -1062,9 +1093,11 @@ Change the insert's column list and values from:
     ) on conflict (source_event_key) do nothing returning *
   `;
 ```
+
 to:
+
 ```ts
-  const inserted = await tx<WorkItemRow[]>`
+const inserted = await tx<WorkItemRow[]>`
     insert into work_items (
       company_id, case_type, annual_return_case_id, corporate_change_request_id,
       source_event_key, source_event_type,
@@ -1107,6 +1140,7 @@ git commit -m "feat: widen work_items to accept corporate_change_request cases"
 `ensureWorkItemForEvent` throws `"No active SLA policy exists for work type corporate_change_request."` until a matching `sla_policies` row exists. This codebase seeds `sla_policies` exclusively via `scripts/db-seed-annual-return.ts` (not migrations — confirmed no migration inserts into `sla_policies` anywhere in this repo), and production got its own `annual_return_case` policy the same way. This task adds parity for demo/CI, and documents the production step explicitly rather than silently assuming it will happen.
 
 **Files:**
+
 - Modify: `scripts/db-seed-annual-return.ts` (find the existing `insert into sla_policies` call and add a second one)
 - Modify: `docs/runbooks/firm-deployment.md` (add a step)
 
@@ -1164,6 +1198,7 @@ git commit -m "feat: seed corporate_change_request SLA policy, document prod set
 ### Task 10: `src/features/corporate-changes/repository.ts` — factory, row mapping, `listRequests`/`getRequest`
 
 **Files:**
+
 - Create: `src/features/corporate-changes/repository.ts`
 - Test: `src/features/corporate-changes/repository.test.ts`
 
@@ -1269,7 +1304,12 @@ Expected: FAIL with "Cannot find module './repository'" (or SKIPPED if `TEST_DAT
 
 ```ts
 import { rethrowClientWriteError } from "@/features/clients/errors";
-import { createSqlClient, getSqlClient, type CreateSqlClientOptions, type QueryClient } from "@/server/db/client";
+import {
+  createSqlClient,
+  getSqlClient,
+  type CreateSqlClientOptions,
+  type QueryClient,
+} from "@/server/db/client";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { checklistLabelsFor } from "./workflow";
 import type {
@@ -1293,7 +1333,9 @@ function withTransaction<T>(
   handler: (tx: TransactionSqlClient) => Promise<T>,
 ): Promise<T> {
   if ("begin" in client) {
-    return (client as { begin: (fn: (tx: TransactionSqlClient) => Promise<T>) => Promise<T> }).begin(handler);
+    return (
+      client as { begin: (fn: (tx: TransactionSqlClient) => Promise<T>) => Promise<T> }
+    ).begin(handler);
   }
   return handler(client as TransactionSqlClient);
 }
@@ -1414,7 +1456,9 @@ export interface CorporateChangeRequestRepository {
   listRequests(filter: ListCorporateChangeRequestsFilter): Promise<CorporateChangeRequestSummary[]>;
   getRequest(requestId: string): Promise<CorporateChangeRequestDetail>;
   createRequest(input: CreateCorporateChangeRequestInput): Promise<CorporateChangeRequestDetail>;
-  updateChecklistItemStatus(input: UpdateChecklistItemStatusInput): Promise<CorporateChangeRequestDetail>;
+  updateChecklistItemStatus(
+    input: UpdateChecklistItemStatusInput,
+  ): Promise<CorporateChangeRequestDetail>;
   transitionStatus(input: TransitionStatusInput): Promise<CorporateChangeRequestDetail>;
   cancelRequest(input: CancelRequestInput): Promise<CorporateChangeRequestDetail>;
   completeRequest(input: CompleteRequestInput): Promise<CorporateChangeRequestDetail>;
@@ -1533,6 +1577,7 @@ git commit -m "feat: add corporate change request repository read paths"
 ### Task 11: `repository.ts` — `createRequest` (all four change types) and checklist seeding
 
 **Files:**
+
 - Modify: `src/features/corporate-changes/repository.ts`
 - Modify: `src/features/corporate-changes/repository.test.ts` (extend the Task 10 test file)
 
@@ -1616,21 +1661,21 @@ Expected: FAIL with "createRequest is implemented in a later task." (requires th
 - [ ] **Step 3: Implement `createRequest`**, replacing the `createRequest: notImplemented("createRequest"),` line in the returned object with `createRequest,` and adding the function above the `return` statement:
 
 ```ts
-  async function createRequest(
-    input: CreateCorporateChangeRequestInput,
-  ): Promise<CorporateChangeRequestDetail> {
-    try {
-      return await withTransaction(sql, async (tx) => {
-        const companyRows = await tx<{ id: string; assigned_team_id: string }[]>`
+async function createRequest(
+  input: CreateCorporateChangeRequestInput,
+): Promise<CorporateChangeRequestDetail> {
+  try {
+    return await withTransaction(sql, async (tx) => {
+      const companyRows = await tx<{ id: string; assigned_team_id: string }[]>`
           select id, assigned_team_id from companies where id = ${input.companyId} for update
         `;
-        const company = companyRows[0];
-        if (!company) throw new Error("Company not found.");
+      const company = companyRows[0];
+      if (!company) throw new Error("Company not found.");
 
-        let insertedId: string;
+      let insertedId: string;
 
-        if (input.changeType === "name_change") {
-          const rows = await tx<{ id: string }[]>`
+      if (input.changeType === "name_change") {
+        const rows = await tx<{ id: string }[]>`
             insert into corporate_change_requests (
               company_id, change_type, owner_id, quoted_fee, new_name_en, new_name_zh
             ) values (
@@ -1638,9 +1683,9 @@ Expected: FAIL with "createRequest is implemented in a later task." (requires th
               ${input.newNameEn}, ${input.newNameZh}
             ) returning id
           `;
-          insertedId = rows[0].id;
-        } else if (input.changeType === "share_transfer") {
-          const rows = await tx<{ id: string }[]>`
+        insertedId = rows[0].id;
+      } else if (input.changeType === "share_transfer") {
+        const rows = await tx<{ id: string }[]>`
             insert into corporate_change_requests (
               company_id, change_type, owner_id, quoted_fee,
               transferor_shareholding_id, transferee_shareholding_id,
@@ -1653,9 +1698,9 @@ Expected: FAIL with "createRequest is implemented in a later task." (requires th
               ${input.sharesTransferred}, ${input.consideration}, ${input.stampDutyAmount}
             ) returning id
           `;
-          insertedId = rows[0].id;
-        } else if (input.changeType === "officer_change") {
-          const rows = await tx<{ id: string }[]>`
+        insertedId = rows[0].id;
+      } else if (input.changeType === "officer_change") {
+        const rows = await tx<{ id: string }[]>`
             insert into corporate_change_requests (
               company_id, change_type, owner_id, quoted_fee,
               officer_id, officer_action, new_officer_type, new_officer_name,
@@ -1668,9 +1713,9 @@ Expected: FAIL with "createRequest is implemented in a later task." (requires th
               ${input.newOfficerAddress}, ${input.effectiveDate}
             ) returning id
           `;
-          insertedId = rows[0].id;
-        } else {
-          const rows = await tx<{ id: string }[]>`
+        insertedId = rows[0].id;
+      } else {
+        const rows = await tx<{ id: string }[]>`
             insert into corporate_change_requests (
               company_id, change_type, owner_id, quoted_fee, new_registered_office
             ) values (
@@ -1678,34 +1723,34 @@ Expected: FAIL with "createRequest is implemented in a later task." (requires th
               ${input.newRegisteredOffice}
             ) returning id
           `;
-          insertedId = rows[0].id;
-        }
+        insertedId = rows[0].id;
+      }
 
-        for (const label of checklistLabelsFor(input.changeType)) {
-          await tx`
+      for (const label of checklistLabelsFor(input.changeType)) {
+        await tx`
             insert into corporate_change_checklist_items (request_id, item_label)
             values (${insertedId}, ${label})
           `;
-        }
+      }
 
-        await ensureWorkItemForEvent(tx, {
-          companyId: input.companyId,
-          caseType: "corporate_change_request",
-          corporateChangeRequestId: insertedId,
-          sourceEventKey: `corporate-change:${insertedId}:created`,
-          sourceEventType: "corporate_change_request_created",
-          workType: "corporate_change_request",
-          title: `Process ${input.changeType.replace("_", " ")} request`,
-          ownerId: input.actorId,
-          teamId: company.assigned_team_id,
-        });
-
-        return hydrateOrThrow(tx, insertedId);
+      await ensureWorkItemForEvent(tx, {
+        companyId: input.companyId,
+        caseType: "corporate_change_request",
+        corporateChangeRequestId: insertedId,
+        sourceEventKey: `corporate-change:${insertedId}:created`,
+        sourceEventType: "corporate_change_request_created",
+        workType: "corporate_change_request",
+        title: `Process ${input.changeType.replace("_", " ")} request`,
+        ownerId: input.actorId,
+        teamId: company.assigned_team_id,
       });
-    } catch (error) {
-      rethrowClientWriteError(error);
-    }
+
+      return hydrateOrThrow(tx, insertedId);
+    });
+  } catch (error) {
+    rethrowClientWriteError(error);
   }
+}
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -1725,6 +1770,7 @@ git commit -m "feat: implement corporate change request creation for all four ty
 ### Task 12: `repository.ts` — `updateChecklistItemStatus`, `transitionStatus`, `cancelRequest`
 
 **Files:**
+
 - Modify: `src/features/corporate-changes/repository.ts`
 - Modify: `src/features/corporate-changes/repository.test.ts`
 
@@ -1787,7 +1833,10 @@ it(
       actorId: USER_AMY_ID,
     });
 
-    const cancelled = await repository.cancelRequest({ requestId: created.id, actorId: USER_AMY_ID });
+    const cancelled = await repository.cancelRequest({
+      requestId: created.id,
+      actorId: USER_AMY_ID,
+    });
     expect(cancelled.status).toBe("Cancelled");
 
     const sql = sqlForTests();
@@ -1814,11 +1863,11 @@ Expected: FAIL with "updateChecklistItemStatus is implemented in a later task."
 - [ ] **Step 3: Implement the three functions**, replacing their `notImplemented(...)` lines with the real function names, and adding the implementations above `return`:
 
 ```ts
-  async function updateChecklistItemStatus(
-    input: UpdateChecklistItemStatusInput,
-  ): Promise<CorporateChangeRequestDetail> {
-    return withTransaction(sql, async (tx) => {
-      await tx`
+async function updateChecklistItemStatus(
+  input: UpdateChecklistItemStatusInput,
+): Promise<CorporateChangeRequestDetail> {
+  return withTransaction(sql, async (tx) => {
+    await tx`
         update corporate_change_checklist_items
         set status = ${input.status},
             note = ${input.note},
@@ -1827,53 +1876,55 @@ Expected: FAIL with "updateChecklistItemStatus is implemented in a later task."
             updated_at = now()
         where id = ${input.itemId} and request_id = ${input.requestId}
       `;
-      return hydrateOrThrow(tx, input.requestId);
-    });
-  }
+    return hydrateOrThrow(tx, input.requestId);
+  });
+}
 
-  async function transitionStatus(input: TransitionStatusInput): Promise<CorporateChangeRequestDetail> {
-    return withTransaction(sql, async (tx) => {
-      const rows = await tx<{ status: CorporateChangeRequest["status"] }[]>`
+async function transitionStatus(
+  input: TransitionStatusInput,
+): Promise<CorporateChangeRequestDetail> {
+  return withTransaction(sql, async (tx) => {
+    const rows = await tx<{ status: CorporateChangeRequest["status"] }[]>`
         select status from corporate_change_requests where id = ${input.requestId} for update
       `;
-      const current = rows[0];
-      if (!current) throw new Error("Corporate change request not found.");
-      if (!isAllowedCorporateChangeStatusTransition(current.status, input.toStatus)) {
-        throw new Error(`Cannot transition from ${current.status} to ${input.toStatus}.`);
-      }
+    const current = rows[0];
+    if (!current) throw new Error("Corporate change request not found.");
+    if (!isAllowedCorporateChangeStatusTransition(current.status, input.toStatus)) {
+      throw new Error(`Cannot transition from ${current.status} to ${input.toStatus}.`);
+    }
 
-      await tx`
+    await tx`
         update corporate_change_requests set status = ${input.toStatus}, updated_at = now()
         where id = ${input.requestId}
       `;
 
-      return hydrateOrThrow(tx, input.requestId);
-    });
-  }
+    return hydrateOrThrow(tx, input.requestId);
+  });
+}
 
-  async function cancelRequest(input: CancelRequestInput): Promise<CorporateChangeRequestDetail> {
-    return withTransaction(sql, async (tx) => {
-      const rows = await tx<{ status: CorporateChangeRequest["status"] }[]>`
+async function cancelRequest(input: CancelRequestInput): Promise<CorporateChangeRequestDetail> {
+  return withTransaction(sql, async (tx) => {
+    const rows = await tx<{ status: CorporateChangeRequest["status"] }[]>`
         select status from corporate_change_requests where id = ${input.requestId} for update
       `;
-      const current = rows[0];
-      if (!current) throw new Error("Corporate change request not found.");
-      if (!isAllowedCorporateChangeStatusTransition(current.status, "Cancelled")) {
-        throw new Error(`Cannot transition from ${current.status} to Cancelled.`);
-      }
+    const current = rows[0];
+    if (!current) throw new Error("Corporate change request not found.");
+    if (!isAllowedCorporateChangeStatusTransition(current.status, "Cancelled")) {
+      throw new Error(`Cannot transition from ${current.status} to Cancelled.`);
+    }
 
-      await tx`
+    await tx`
         update corporate_change_requests set status = 'Cancelled', updated_at = now()
         where id = ${input.requestId}
       `;
-      await tx`
+    await tx`
         update work_items set status = 'cancelled', updated_at = now()
         where corporate_change_request_id = ${input.requestId}
       `;
 
-      return hydrateOrThrow(tx, input.requestId);
-    });
-  }
+    return hydrateOrThrow(tx, input.requestId);
+  });
+}
 ```
 
 Add `import { checklistLabelsFor, isAllowedCorporateChangeStatusTransition } from "./workflow";` to the top-of-file import (extending the Task 11 import of `checklistLabelsFor` alone).
@@ -1895,6 +1946,7 @@ git commit -m "feat: add checklist status updates, status transitions, and cance
 ### Task 13: `repository.ts` — `completeRequest` for `name_change` and `address_change`
 
 **Files:**
+
 - Modify: `src/features/corporate-changes/repository.ts`
 - Modify: `src/features/corporate-changes/repository.test.ts`
 
@@ -1914,11 +1966,26 @@ it(
       newNameZh: "新測試有限公司",
       actorId: USER_AMY_ID,
     });
-    await repository.transitionStatus({ requestId: created.id, toStatus: "Documents pending", actorId: USER_AMY_ID });
-    await repository.transitionStatus({ requestId: created.id, toStatus: "Ready to file", actorId: USER_AMY_ID });
-    await repository.transitionStatus({ requestId: created.id, toStatus: "Filed with Registrar", actorId: USER_AMY_ID });
+    await repository.transitionStatus({
+      requestId: created.id,
+      toStatus: "Documents pending",
+      actorId: USER_AMY_ID,
+    });
+    await repository.transitionStatus({
+      requestId: created.id,
+      toStatus: "Ready to file",
+      actorId: USER_AMY_ID,
+    });
+    await repository.transitionStatus({
+      requestId: created.id,
+      toStatus: "Filed with Registrar",
+      actorId: USER_AMY_ID,
+    });
 
-    const completed = await repository.completeRequest({ requestId: created.id, actorId: USER_AMY_ID });
+    const completed = await repository.completeRequest({
+      requestId: created.id,
+      actorId: USER_AMY_ID,
+    });
     expect(completed.status).toBe("Completed");
     expect(completed.completedAt).not.toBeNull();
 
@@ -1967,43 +2034,43 @@ Expected: FAIL with "completeRequest is implemented in a later task."
 - [ ] **Step 3: Implement `completeRequest`**, branching only on `name_change`/`address_change` for now (officer_change and share_transfer branches are added in Tasks 14-15 by extending this same function):
 
 ```ts
-  async function completeRequest(input: CompleteRequestInput): Promise<CorporateChangeRequestDetail> {
-    return withTransaction(sql, async (tx) => {
-      await tx`select id from corporate_change_requests where id = ${input.requestId} for update`;
-      const current = await hydrateOrThrow(tx, input.requestId);
+async function completeRequest(input: CompleteRequestInput): Promise<CorporateChangeRequestDetail> {
+  return withTransaction(sql, async (tx) => {
+    await tx`select id from corporate_change_requests where id = ${input.requestId} for update`;
+    const current = await hydrateOrThrow(tx, input.requestId);
 
-      if (current.status !== "Filed with Registrar") {
-        throw new Error(
-          `Cannot complete a request from status ${current.status}; it must be Filed with Registrar.`,
-        );
-      }
+    if (current.status !== "Filed with Registrar") {
+      throw new Error(
+        `Cannot complete a request from status ${current.status}; it must be Filed with Registrar.`,
+      );
+    }
 
-      if (current.changeType === "name_change") {
-        await tx`
+    if (current.changeType === "name_change") {
+      await tx`
           update companies set company_name = ${current.newNameEn}, updated_at = now()
           where id = ${current.companyId}
         `;
-      } else if (current.changeType === "address_change") {
-        await tx`
+    } else if (current.changeType === "address_change") {
+      await tx`
           update companies set registered_office = ${current.newRegisteredOffice}, updated_at = now()
           where id = ${current.companyId}
         `;
-      }
-      // officer_change and share_transfer branches: Tasks 14-15.
+    }
+    // officer_change and share_transfer branches: Tasks 14-15.
 
-      await tx`
+    await tx`
         update corporate_change_requests
         set status = 'Completed', completed_at = now(), updated_at = now()
         where id = ${input.requestId}
       `;
-      await tx`
+    await tx`
         update work_items set status = 'completed', completed_at = now(), updated_at = now()
         where corporate_change_request_id = ${input.requestId}
       `;
 
-      return hydrateOrThrow(tx, input.requestId);
-    });
-  }
+    return hydrateOrThrow(tx, input.requestId);
+  });
+}
 ```
 
 (Note: use the real `companies` column name — confirm via `grep -n "company_name\|^  name " src/server/db/schema.sql` whether the column is `company_name` or `name`; the incorporation `completeCase` excerpt from research uses `company_name`, so this plan follows that, but verify against the live schema before running the test in case a later migration renamed it.)
@@ -2025,6 +2092,7 @@ git commit -m "feat: complete name_change and address_change requests"
 ### Task 14: `repository.ts` — `completeRequest` for `officer_change` (reusing `clients` repository)
 
 **Files:**
+
 - Modify: `src/features/corporate-changes/repository.ts`
 - Modify: `src/features/corporate-changes/repository.test.ts`
 
@@ -2050,15 +2118,29 @@ it(
       effectiveDate: "2026-09-01",
       actorId: USER_AMY_ID,
     });
-    await repository.transitionStatus({ requestId: created.id, toStatus: "Documents pending", actorId: USER_AMY_ID });
-    await repository.transitionStatus({ requestId: created.id, toStatus: "Ready to file", actorId: USER_AMY_ID });
-    await repository.transitionStatus({ requestId: created.id, toStatus: "Filed with Registrar", actorId: USER_AMY_ID });
+    await repository.transitionStatus({
+      requestId: created.id,
+      toStatus: "Documents pending",
+      actorId: USER_AMY_ID,
+    });
+    await repository.transitionStatus({
+      requestId: created.id,
+      toStatus: "Ready to file",
+      actorId: USER_AMY_ID,
+    });
+    await repository.transitionStatus({
+      requestId: created.id,
+      toStatus: "Filed with Registrar",
+      actorId: USER_AMY_ID,
+    });
 
     await repository.completeRequest({ requestId: created.id, actorId: USER_AMY_ID });
 
     const clients = createClientRepository(databaseUrl!);
     const detail = await clients.getClient(companyId);
-    expect(detail.officers.some((o) => o.name === "New Director" && o.cessationDate === null)).toBe(true);
+    expect(detail.officers.some((o) => o.name === "New Director" && o.cessationDate === null)).toBe(
+      true,
+    );
     await clients.close();
 
     await repository.close();
@@ -2131,6 +2213,7 @@ git commit -m "feat: complete officer_change requests by reusing the clients rep
 ### Task 15: `repository.ts` — `completeRequest` for `share_transfer` (two-row lock, new "move shares" logic)
 
 **Files:**
+
 - Modify: `src/features/corporate-changes/repository.ts`
 - Modify: `src/features/corporate-changes/repository.test.ts`
 
@@ -2168,9 +2251,21 @@ it(
       transfereeNewShareholderAddress: "9 Test Ave, Hong Kong",
       actorId: USER_AMY_ID,
     });
-    await repository.transitionStatus({ requestId: created.id, toStatus: "Documents pending", actorId: USER_AMY_ID });
-    await repository.transitionStatus({ requestId: created.id, toStatus: "Ready to file", actorId: USER_AMY_ID });
-    await repository.transitionStatus({ requestId: created.id, toStatus: "Filed with Registrar", actorId: USER_AMY_ID });
+    await repository.transitionStatus({
+      requestId: created.id,
+      toStatus: "Documents pending",
+      actorId: USER_AMY_ID,
+    });
+    await repository.transitionStatus({
+      requestId: created.id,
+      toStatus: "Ready to file",
+      actorId: USER_AMY_ID,
+    });
+    await repository.transitionStatus({
+      requestId: created.id,
+      toStatus: "Filed with Registrar",
+      actorId: USER_AMY_ID,
+    });
 
     await repository.completeRequest({ requestId: created.id, actorId: USER_AMY_ID });
 
@@ -2219,9 +2314,21 @@ it(
       transfereeNewShareholderAddress: "10 Test Ave, Hong Kong",
       actorId: USER_AMY_ID,
     });
-    await repository.transitionStatus({ requestId: created.id, toStatus: "Documents pending", actorId: USER_AMY_ID });
-    await repository.transitionStatus({ requestId: created.id, toStatus: "Ready to file", actorId: USER_AMY_ID });
-    await repository.transitionStatus({ requestId: created.id, toStatus: "Filed with Registrar", actorId: USER_AMY_ID });
+    await repository.transitionStatus({
+      requestId: created.id,
+      toStatus: "Documents pending",
+      actorId: USER_AMY_ID,
+    });
+    await repository.transitionStatus({
+      requestId: created.id,
+      toStatus: "Ready to file",
+      actorId: USER_AMY_ID,
+    });
+    await repository.transitionStatus({
+      requestId: created.id,
+      toStatus: "Filed with Registrar",
+      actorId: USER_AMY_ID,
+    });
     await repository.completeRequest({ requestId: created.id, actorId: USER_AMY_ID });
 
     const clientsAfter = createClientRepository(databaseUrl!);
@@ -2313,6 +2420,7 @@ git commit -m "feat: complete share_transfer requests with atomic two-row share 
 ### Task 16: `src/features/corporate-changes/server-fns.ts`
 
 **Files:**
+
 - Create: `src/features/corporate-changes/server-fns.ts`
 - Test: `src/features/corporate-changes/server-fns.test.ts`
 
@@ -2330,7 +2438,9 @@ import { createCorporateChangeRequest } from "./server-fns";
 
 describe("createCorporateChangeRequest", () => {
   it("rejects a Client-role actor before touching the repository", async () => {
-    vi.mocked(requireStaffActor).mockRejectedValue(new Error("Forbidden: staff access is required."));
+    vi.mocked(requireStaffActor).mockRejectedValue(
+      new Error("Forbidden: staff access is required."),
+    );
 
     await expect(
       createCorporateChangeRequest({
@@ -2410,8 +2520,12 @@ const createShareTransferSchema = baseCreateSchema
     transfereeNewShareholderAddress: z.string().nullable(),
   })
   .refine(
-    (input) => Boolean(input.transfereeShareholdingId) !== Boolean(input.transfereeNewShareholderName),
-    { message: "Provide exactly one of an existing transferee or a new shareholder name.", path: ["transfereeShareholdingId"] },
+    (input) =>
+      Boolean(input.transfereeShareholdingId) !== Boolean(input.transfereeNewShareholderName),
+    {
+      message: "Provide exactly one of an existing transferee or a new shareholder name.",
+      path: ["transfereeShareholdingId"],
+    },
   );
 
 const createOfficerChangeSchema = baseCreateSchema.extend({
@@ -2443,7 +2557,10 @@ export const createCorporateChangeRequest = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     withRepository(async (repository) => {
       const actor = await requireWritableRequestCompany(repository, data.companyId);
-      return repository.createRequest({ ...data, actorId: actor.userId! } as CreateCorporateChangeRequestInput);
+      return repository.createRequest({
+        ...data,
+        actorId: actor.userId!,
+      } as CreateCorporateChangeRequestInput);
     }),
   );
 
@@ -2466,7 +2583,14 @@ export const updateCorporateChangeChecklistItemStatus = createServerFn({ method:
 
 const transitionStatusSchema = z.object({
   requestId: z.string().uuid(),
-  toStatus: z.enum(["Requested", "Documents pending", "Ready to file", "Filed with Registrar", "Completed", "Cancelled"]),
+  toStatus: z.enum([
+    "Requested",
+    "Documents pending",
+    "Ready to file",
+    "Filed with Registrar",
+    "Completed",
+    "Cancelled",
+  ]),
 });
 
 export const transitionCorporateChangeRequestStatus = createServerFn({ method: "POST" })
@@ -2502,8 +2626,19 @@ export const completeCorporateChangeRequest = createServerFn({ method: "POST" })
   );
 
 const listSchema = z.object({
-  changeType: z.enum(["name_change", "share_transfer", "officer_change", "address_change"]).optional(),
-  status: z.enum(["Requested", "Documents pending", "Ready to file", "Filed with Registrar", "Completed", "Cancelled"]).optional(),
+  changeType: z
+    .enum(["name_change", "share_transfer", "officer_change", "address_change"])
+    .optional(),
+  status: z
+    .enum([
+      "Requested",
+      "Documents pending",
+      "Ready to file",
+      "Filed with Registrar",
+      "Completed",
+      "Cancelled",
+    ])
+    .optional(),
 });
 
 export const listCorporateChangeRequests = createServerFn({ method: "GET" })
@@ -2520,7 +2655,9 @@ export const listCorporateChangeRequests = createServerFn({ method: "GET" })
 
 export const getCorporateChangeRequest = createServerFn({ method: "GET" })
   .validator(z.object({ requestId: z.string().uuid() }))
-  .handler(async ({ data }) => withRepository((repository) => repository.getRequest(data.requestId)));
+  .handler(async ({ data }) =>
+    withRepository((repository) => repository.getRequest(data.requestId)),
+  );
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -2540,6 +2677,7 @@ git commit -m "feat: add corporate change request server functions"
 ### Task 17: Demo notice + navigation entry + `page-header.convention.test.ts` allowlist
 
 **Files:**
+
 - Create: `src/features/corporate-changes/components/demo-corporate-change-notice.tsx`
 - Modify: `src/components/navigation.ts`
 - Modify: `src/components/page-header.convention.test.ts`
@@ -2595,24 +2733,24 @@ In `src/components/navigation.ts`, add `Repeat2` (or another unused `lucide-reac
 In `src/components/page-header.convention.test.ts`, extend the `passThroughRoutes` Set:
 
 ```ts
-    const passThroughRoutes = new Set([
-      "routes/__root.tsx",
-      "routes/login.tsx",
-      // A pass-through to the demo and production case-detail components, which
-      // render the header themselves.
-      "routes/annual-returns.$id.tsx",
-      // A pass-through to DemoClientNotice / ProductionClientRegister(/Detail), same reason.
-      "routes/clients.tsx",
-      "routes/clients.$id.tsx",
-      // A pass-through to ProductionIncorporationList / DemoIncorporationNotice, same reason.
-      "routes/incorporation.tsx",
-      // A pass-through to ProductionIncorporationDetail / DemoIncorporationNotice, same reason.
-      "routes/incorporation.$id.tsx",
-      // A pass-through to ProductionCorporateChangeList / DemoCorporateChangeNotice, same reason.
-      "routes/corporate-changes.tsx",
-      // A pass-through to ProductionCorporateChangeDetail / DemoCorporateChangeNotice, same reason.
-      "routes/corporate-changes.$id.tsx",
-    ]);
+const passThroughRoutes = new Set([
+  "routes/__root.tsx",
+  "routes/login.tsx",
+  // A pass-through to the demo and production case-detail components, which
+  // render the header themselves.
+  "routes/annual-returns.$id.tsx",
+  // A pass-through to DemoClientNotice / ProductionClientRegister(/Detail), same reason.
+  "routes/clients.tsx",
+  "routes/clients.$id.tsx",
+  // A pass-through to ProductionIncorporationList / DemoIncorporationNotice, same reason.
+  "routes/incorporation.tsx",
+  // A pass-through to ProductionIncorporationDetail / DemoIncorporationNotice, same reason.
+  "routes/incorporation.$id.tsx",
+  // A pass-through to ProductionCorporateChangeList / DemoCorporateChangeNotice, same reason.
+  "routes/corporate-changes.tsx",
+  // A pass-through to ProductionCorporateChangeDetail / DemoCorporateChangeNotice, same reason.
+  "routes/corporate-changes.$id.tsx",
+]);
 ```
 
 - [ ] **Step 4: Run the convention test** (it will still fail until Task 20 adds the actual route files — run it now only to confirm no syntax errors in the allowlist edit)
@@ -2634,6 +2772,7 @@ git commit -m "feat: add corporate changes demo notice, nav entry, and header al
 This task ships the dialog with `name_change`/`address_change` working end-to-end; `share_transfer`/`officer_change` need a shareholding/officer picker scoped to the selected company's existing register, which doesn't exist as a reusable component anywhere in this codebase yet. Rather than leave those two silently broken, Task 18a immediately following this one adds that picker and completes the dialog for all four types before any UI ships. The two buttons are disabled with an explanatory message only within this task's own commit — Task 18a removes that limitation before the branch is done.
 
 **Files:**
+
 - Create: `src/features/corporate-changes/components/production-corporate-change-list.tsx`
 - Create: `src/components/corporate-changes/create-corporate-change-request-dialog.tsx`
 - Test: `src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx`
@@ -2790,7 +2929,9 @@ export function CreateCorporateChangeRequestDialog({
         </DialogHeader>
 
         {hasError ? (
-          <p className="text-sm text-destructive">Failed to load companies. Try closing and reopening this dialog.</p>
+          <p className="text-sm text-destructive">
+            Failed to load companies. Try closing and reopening this dialog.
+          </p>
         ) : (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -2877,9 +3018,9 @@ export function CreateCorporateChangeRequestDialog({
 
             {(changeType === "share_transfer" || changeType === "officer_change") && (
               <p className="text-sm text-muted-foreground">
-                Share transfer and officer change requests need a shareholding/officer picker
-                scoped to this company's register, which is not built yet — see this task's
-                flagged scope trim. Use name change or address change here for now.
+                Share transfer and officer change requests need a shareholding/officer picker scoped
+                to this company's register, which is not built yet — see this task's flagged scope
+                trim. Use name change or address change here for now.
               </p>
             )}
 
@@ -2965,7 +3106,11 @@ export function ProductionCorporateChangeList() {
               {requestsQuery.data!.map((request) => (
                 <tr key={request.id} className="border-b last:border-0">
                   <td className="p-3">
-                    <Link to="/corporate-changes/$id" params={{ id: request.id }} className="underline">
+                    <Link
+                      to="/corporate-changes/$id"
+                      params={{ id: request.id }}
+                      className="underline"
+                    >
                       {request.companyName}
                     </Link>
                   </td>
@@ -3016,6 +3161,7 @@ git commit -m "feat: add corporate change request list screen and creation dialo
 Closes the gap flagged in Task 18: once a company is selected, fetch that company's `officers`/`shareholdings` via the existing `getClient` server fn (`src/features/clients/server-fns.ts:256`, already used by `ProductionClientDetail` — no new server fn needed) and use them to populate real pickers instead of free text.
 
 **Files:**
+
 - Modify: `src/components/corporate-changes/create-corporate-change-request-dialog.tsx`
 - Modify: `src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx`
 
@@ -3029,7 +3175,12 @@ vi.mock("@/features/clients/server-fns", () => ({
       { id: "officer-1", name: "Existing Director", officerType: "director", cessationDate: null },
     ],
     shareholdings: [
-      { id: "holding-1", shareholderName: "Existing Holder", numberOfShares: 1000, cessationDate: null },
+      {
+        id: "holding-1",
+        shareholderName: "Existing Holder",
+        numberOfShares: 1000,
+        cessationDate: null,
+      },
     ],
   }),
 }));
@@ -3202,7 +3353,9 @@ export function CreateCorporateChangeRequestDialog({
   const [officerId, setOfficerId] = useState("");
   const [newOfficerType, setNewOfficerType] = useState<NewOfficerType>("director");
   const [newOfficerName, setNewOfficerName] = useState("");
-  const [newOfficerIdentificationType, setNewOfficerIdentificationType] = useState<IdentificationType | "">("");
+  const [newOfficerIdentificationType, setNewOfficerIdentificationType] = useState<
+    IdentificationType | ""
+  >("");
   const [newOfficerIdentificationNumber, setNewOfficerIdentificationNumber] = useState("");
   const [newOfficerAddress, setNewOfficerAddress] = useState("");
   const [effectiveDate, setEffectiveDate] = useState("");
@@ -3282,8 +3435,10 @@ export function CreateCorporateChangeRequestDialog({
         consideration: Number(consideration),
         stampDutyAmount: Number(stampDutyAmount),
         transfereeShareholdingId: transfereeMode === "existing" ? transfereeShareholdingId : null,
-        transfereeNewShareholderName: transfereeMode === "new" ? transfereeNewShareholderName : null,
-        transfereeNewShareholderAddress: transfereeMode === "new" ? transfereeNewShareholderAddress : null,
+        transfereeNewShareholderName:
+          transfereeMode === "new" ? transfereeNewShareholderName : null,
+        transfereeNewShareholderAddress:
+          transfereeMode === "new" ? transfereeNewShareholderAddress : null,
       };
     }
     return {
@@ -3292,15 +3447,20 @@ export function CreateCorporateChangeRequestDialog({
       officerAction,
       officerId: officerAction === "appoint" ? null : officerId,
       newOfficerType: officerAction === "appoint" ? newOfficerType : null,
-      newOfficerName: officerAction === "appoint" || officerAction === "detail_change" ? newOfficerName : null,
+      newOfficerName:
+        officerAction === "appoint" || officerAction === "detail_change" ? newOfficerName : null,
       newOfficerIdentificationType:
         officerAction === "appoint" || officerAction === "detail_change"
           ? newOfficerIdentificationType || null
           : null,
       newOfficerIdentificationNumber:
-        officerAction === "appoint" || officerAction === "detail_change" ? newOfficerIdentificationNumber || null : null,
+        officerAction === "appoint" || officerAction === "detail_change"
+          ? newOfficerIdentificationNumber || null
+          : null,
       newOfficerAddress:
-        officerAction === "appoint" || officerAction === "detail_change" ? newOfficerAddress || null : null,
+        officerAction === "appoint" || officerAction === "detail_change"
+          ? newOfficerAddress || null
+          : null,
       effectiveDate,
     };
   }
@@ -3311,8 +3471,16 @@ export function CreateCorporateChangeRequestDialog({
     if (changeType === "name_change") return Boolean(newNameEn);
     if (changeType === "share_transfer") {
       const hasTransferee =
-        transfereeMode === "existing" ? Boolean(transfereeShareholdingId) : Boolean(transfereeNewShareholderName);
-      return Boolean(transferorShareholdingId) && Boolean(sharesTransferred) && Boolean(consideration) && Boolean(stampDutyAmount) && hasTransferee;
+        transfereeMode === "existing"
+          ? Boolean(transfereeShareholdingId)
+          : Boolean(transfereeNewShareholderName);
+      return (
+        Boolean(transferorShareholdingId) &&
+        Boolean(sharesTransferred) &&
+        Boolean(consideration) &&
+        Boolean(stampDutyAmount) &&
+        hasTransferee
+      );
     }
     if (!effectiveDate) return false;
     if (officerAction === "appoint") return Boolean(newOfficerType) && Boolean(newOfficerName);
@@ -3348,7 +3516,9 @@ export function CreateCorporateChangeRequestDialog({
         </DialogHeader>
 
         {hasError ? (
-          <p className="text-sm text-destructive">Failed to load companies. Try closing and reopening this dialog.</p>
+          <p className="text-sm text-destructive">
+            Failed to load companies. Try closing and reopening this dialog.
+          </p>
         ) : (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -3435,7 +3605,9 @@ export function CreateCorporateChangeRequestDialog({
 
             {changeType === "share_transfer" && (
               <>
-                {registerLoading && <p className="text-sm text-muted-foreground">Loading the company's register…</p>}
+                {registerLoading && (
+                  <p className="text-sm text-muted-foreground">Loading the company's register…</p>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="transferor-shareholding">Transferor shareholding</Label>
                   <select
@@ -3554,7 +3726,9 @@ export function CreateCorporateChangeRequestDialog({
 
             {changeType === "officer_change" && (
               <>
-                {registerLoading && <p className="text-sm text-muted-foreground">Loading the company's register…</p>}
+                {registerLoading && (
+                  <p className="text-sm text-muted-foreground">Loading the company's register…</p>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="officer-action">Officer action</Label>
                   <select
@@ -3614,7 +3788,9 @@ export function CreateCorporateChangeRequestDialog({
                       </Label>
                       <Input
                         id="new-officer-name"
-                        aria-label={officerAction === "appoint" ? "New officer name" : "Updated name"}
+                        aria-label={
+                          officerAction === "appoint" ? "New officer name" : "Updated name"
+                        }
                         value={newOfficerName}
                         onChange={(event) => setNewOfficerName(event.target.value)}
                       />
@@ -3626,7 +3802,11 @@ export function CreateCorporateChangeRequestDialog({
                         aria-label="Identification type"
                         className="w-full rounded-md border p-2"
                         value={newOfficerIdentificationType}
-                        onChange={(event) => setNewOfficerIdentificationType(event.target.value as IdentificationType | "")}
+                        onChange={(event) =>
+                          setNewOfficerIdentificationType(
+                            event.target.value as IdentificationType | "",
+                          )
+                        }
                       >
                         <option value="">None</option>
                         <option value="hkid">HKID</option>
@@ -3635,7 +3815,9 @@ export function CreateCorporateChangeRequestDialog({
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="new-officer-identification-number">Identification number</Label>
+                      <Label htmlFor="new-officer-identification-number">
+                        Identification number
+                      </Label>
                       <Input
                         id="new-officer-identification-number"
                         aria-label="Identification number"
@@ -3703,6 +3885,7 @@ git commit -m "feat: add shareholding/officer pickers, completing the creation d
 ### Task 19: `ProductionCorporateChangeDetail` (checklist, status stepper, complete/cancel)
 
 **Files:**
+
 - Create: `src/features/corporate-changes/components/production-corporate-change-detail.tsx`
 - Test: `src/features/corporate-changes/components/production-corporate-change-detail.test.tsx`
 
@@ -3723,7 +3906,16 @@ vi.mock("@/features/corporate-changes/server-fns", () => ({
     quotedFee: 2800,
     newRegisteredOffice: "88 New Road, Hong Kong",
     checklistItems: [
-      { id: "item-1", requestId: "request-1", itemLabel: "NR1 form", required: true, status: "Verified", note: null, receivedAt: null, verifiedAt: null },
+      {
+        id: "item-1",
+        requestId: "request-1",
+        itemLabel: "NR1 form",
+        required: true,
+        status: "Verified",
+        note: null,
+        receivedAt: null,
+        verifiedAt: null,
+      },
     ],
   }),
   completeCorporateChangeRequest: vi.fn().mockResolvedValue({ status: "Completed" }),
@@ -3744,7 +3936,9 @@ describe("ProductionCorporateChangeDetail", () => {
     await userEvent.click(completeButton);
 
     await waitFor(() => {
-      expect(completeCorporateChangeRequest).toHaveBeenCalledWith({ data: { requestId: "request-1" } });
+      expect(completeCorporateChangeRequest).toHaveBeenCalledWith({
+        data: { requestId: "request-1" },
+      });
     });
   });
 });
@@ -3784,7 +3978,9 @@ export function ProductionCorporateChangeDetail({ requestId }: Props) {
   }
 
   async function handleChecklistStatus(itemId: string, status: ChecklistItemStatus) {
-    await updateCorporateChangeChecklistItemStatus({ data: { requestId, itemId, status, note: null } });
+    await updateCorporateChangeChecklistItemStatus({
+      data: { requestId, itemId, status, note: null },
+    });
     await invalidate();
   }
 
@@ -3857,7 +4053,10 @@ export function ProductionCorporateChangeDetail({ requestId }: Props) {
         <h2 className="border-b p-4 text-sm font-medium">Checklist</h2>
         <ul>
           {request.checklistItems.map((item) => (
-            <li key={item.id} className="flex items-center justify-between border-b p-4 last:border-0">
+            <li
+              key={item.id}
+              className="flex items-center justify-between border-b p-4 last:border-0"
+            >
               <span>
                 {item.itemLabel}
                 {item.required ? "" : " (optional)"}
@@ -3901,12 +4100,14 @@ git commit -m "feat: add corporate change request detail screen"
 ### Task 20: Routes — `/corporate-changes` and `/corporate-changes/$id`
 
 **Files:**
+
 - Create: `src/routes/corporate-changes.tsx`
 - Create: `src/routes/corporate-changes.$id.tsx`
 
 - [ ] **Step 1: Write both route files**, copying the incorporation routes exactly (research §7):
 
 `src/routes/corporate-changes.tsx`:
+
 ```tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { DemoCorporateChangeNotice } from "@/features/corporate-changes/components/demo-corporate-change-notice";
@@ -3927,6 +4128,7 @@ function CorporateChangesRoute() {
 ```
 
 `src/routes/corporate-changes.$id.tsx`:
+
 ```tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { DemoCorporateChangeNotice } from "@/features/corporate-changes/components/demo-corporate-change-notice";
@@ -3975,6 +4177,7 @@ git commit -m "feat: add /corporate-changes and /corporate-changes/:id routes"
 Officers/shareholdings tests that also exercise corporate-change completion (Tasks 14-15) create `corporate_change_requests` rows referencing test companies with `on delete restrict`. Any test file that deletes those companies must delete `corporate_change_requests` (and `work_items` referencing them) first, or cleanup silently fails to delete and fixtures leak across test runs.
 
 **Files:**
+
 - Modify: `src/features/clients/repository.test.ts` (the `cleanupClientFixtures` function, research §11)
 
 - [ ] **Step 1: Add the missing delete lines**
@@ -3982,10 +4185,10 @@ Officers/shareholdings tests that also exercise corporate-change completion (Tas
 In `cleanupClientFixtures()`, immediately after the existing `scr_inspection_requests` delete line and before the `companies` deletes:
 
 ```ts
-  await sql`delete from work_items where corporate_change_request_id in (
+await sql`delete from work_items where corporate_change_request_id in (
     select id from corporate_change_requests where company_id = any(${allCompanyIds}::uuid[])
   )`;
-  await sql`delete from corporate_change_requests where company_id = any(${allCompanyIds}::uuid[])`;
+await sql`delete from corporate_change_requests where company_id = any(${allCompanyIds}::uuid[])`;
 ```
 
 - [ ] **Step 2: Run the full clients + corporate-changes integration suites to confirm no fixture leakage**

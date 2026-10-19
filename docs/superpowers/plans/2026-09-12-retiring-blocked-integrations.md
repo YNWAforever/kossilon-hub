@@ -24,13 +24,13 @@
 
 ## File structure
 
-| File | Responsibility | Task |
-| --- | --- | --- |
-| `src/features/operations/capabilities.ts` | `ClearingEvidence` type, `evidence` on every entry, runtime evidence registry, `staleBlockedIntegrations`, `runtimeCheckedIds` | 1, 2, 3 |
-| `src/features/operations/capabilities.test.ts` | Build evidence registry, both exhaustiveness guards, the build check | 1, 3 |
-| `src/features/operations/server-fns.ts` | Computes `staleBlockers` into `OperationsHealthView` | 4 |
-| `src/features/operations/server-fns.test.ts` | Pins that an unknown maintenance state flags nothing | 4 |
-| `src/routes/operations.tsx` | Renders the "may no longer be true" notice | 4 |
+| File                                           | Responsibility                                                                                                                 | Task    |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| `src/features/operations/capabilities.ts`      | `ClearingEvidence` type, `evidence` on every entry, runtime evidence registry, `staleBlockedIntegrations`, `runtimeCheckedIds` | 1, 2, 3 |
+| `src/features/operations/capabilities.test.ts` | Build evidence registry, both exhaustiveness guards, the build check                                                           | 1, 3    |
+| `src/features/operations/server-fns.ts`        | Computes `staleBlockers` into `OperationsHealthView`                                                                           | 4       |
+| `src/features/operations/server-fns.test.ts`   | Pins that an unknown maintenance state flags nothing                                                                           | 4       |
+| `src/routes/operations.tsx`                    | Renders the "may no longer be true" notice                                                                                     | 4       |
 
 ---
 
@@ -39,6 +39,7 @@
 **This task ends with a FAILING test, on purpose, and you commit it anyway.** `local-postgres`'s build evidence is present today, so the new check catches it immediately. That failure is the only proof the mechanism works; Task 2 clears it. Do not delete the entry in this task.
 
 **Files:**
+
 - Modify: `src/features/operations/capabilities.ts`
 - Test: `src/features/operations/capabilities.test.ts`
 
@@ -79,8 +80,8 @@ export type ClearingEvidence =
 Then add to the `BlockedIntegration` type, after `blocksRelease`:
 
 ```ts
-  /** Where a person or a test could see that this is no longer true. */
-  evidence: ClearingEvidence;
+/** Where a person or a test could see that this is no longer true. */
+evidence: ClearingEvidence;
 ```
 
 - [ ] **Step 2: Give every entry its evidence**
@@ -209,6 +210,7 @@ The body must say the check fails against `local-postgres` **right now**, and th
 ### Task 2: Retire `local-postgres`
 
 **Files:**
+
 - Modify: `src/features/operations/capabilities.ts`
 
 - [ ] **Step 1: Delete the entry and its id**
@@ -266,6 +268,7 @@ Body: both stated clearing conditions were met — CI runs every repository test
 ### Task 3: Check the runtime ones
 
 **Files:**
+
 - Modify: `src/features/operations/capabilities.ts`
 - Test: `src/features/operations/capabilities.test.ts`
 
@@ -409,6 +412,7 @@ git commit -m "feat: flag deployment-runtime once a scheduled run has been recor
 ### Task 4: Surface it on /operations
 
 **Files:**
+
 - Modify: `src/features/operations/server-fns.ts`
 - Modify: `src/routes/operations.tsx`
 - Test: `src/features/operations/server-fns.test.ts`
@@ -418,27 +422,27 @@ git commit -m "feat: flag deployment-runtime once a scheduled run has been recor
 Append inside the existing `describe("buildOperationsHealth", ...)` block in `src/features/operations/server-fns.test.ts`:
 
 ```ts
-  it("flags nothing while no scheduled run has been recorded", async () => {
-    const view = await buildOperationsHealth({ now: NOW }, { repository: repository([]) });
+it("flags nothing while no scheduled run has been recorded", async () => {
+  const view = await buildOperationsHealth({ now: NOW }, { repository: repository([]) });
 
-    expect(view.staleBlockers).toEqual([]);
-  });
+  expect(view.staleBlockers).toEqual([]);
+});
 
-  /**
-   * Null maintenance means the reads failed and the state is unknown -- which is
-   * not evidence that a schedule ran. Guessing here would be the exact
-   * false reassurance this codebase refuses everywhere else.
-   */
-  it("flags nothing when the maintenance state could not be read at all", async () => {
-    const repo = repository([]);
-    repo.schemaLedger.mockResolvedValue({ present: false, applied: [] });
-    repo.queueDepths.mockRejectedValue(new Error('relation "maintenance_runs" does not exist'));
+/**
+ * Null maintenance means the reads failed and the state is unknown -- which is
+ * not evidence that a schedule ran. Guessing here would be the exact
+ * false reassurance this codebase refuses everywhere else.
+ */
+it("flags nothing when the maintenance state could not be read at all", async () => {
+  const repo = repository([]);
+  repo.schemaLedger.mockResolvedValue({ present: false, applied: [] });
+  repo.queueDepths.mockRejectedValue(new Error('relation "maintenance_runs" does not exist'));
 
-    const view = await buildOperationsHealth({ now: NOW }, { repository: repo });
+  const view = await buildOperationsHealth({ now: NOW }, { repository: repo });
 
-    expect(view.maintenance).toBeNull();
-    expect(view.staleBlockers).toEqual([]);
-  });
+  expect(view.maintenance).toBeNull();
+  expect(view.staleBlockers).toEqual([]);
+});
 ```
 
 - [ ] **Step 2: Run it and watch it fail**
@@ -464,12 +468,12 @@ In the `catch` branch that returns the degraded view, add `staleBlockers: []`.
 In `readOperationsState`, lift the maintenance value out of the returned object literal so both fields read the same value:
 
 ```ts
-  const maintenance = maintenanceHealthOf({
-    runs: scheduledRuns,
-    now: input.now,
-    toleranceSeconds: defaultToleranceSeconds(),
-    lastScheduledSuccessAt,
-  });
+const maintenance = maintenanceHealthOf({
+  runs: scheduledRuns,
+  now: input.now,
+  toleranceSeconds: defaultToleranceSeconds(),
+  lastScheduledSuccessAt,
+});
 ```
 
 then return `maintenance` plus:
@@ -491,16 +495,18 @@ Run: `bunx tsc --noEmit` — expect clean.
 In `src/routes/operations.tsx`, inside the blocked-integrations `<section>`, directly above the `<ul>`, add:
 
 ```tsx
-            {view.staleBlockers.length > 0 ? (
-              <p className="border-b bg-status-yellow-soft px-4 py-3 text-sm text-status-yellow">
-                以下功能仍被列為停用，但它們所說的解除條件看來已經達成：
-                {view.staleBlockers.join("、")}。
-                這不代表功能已恢復——請由人確認後，把它從 capabilities.ts 移除。
-              </p>
-            ) : null}
+{
+  view.staleBlockers.length > 0 ? (
+    <p className="border-b bg-status-yellow-soft px-4 py-3 text-sm text-status-yellow">
+      以下功能仍被列為停用，但它們所說的解除條件看來已經達成：
+      {view.staleBlockers.join("、")}。 這不代表功能已恢復——請由人確認後，把它從 capabilities.ts
+      移除。
+    </p>
+  ) : null;
+}
 ```
 
-The wording matters: it says the condition *appears* met and asks a person to confirm. It must never say the capability is restored.
+The wording matters: it says the condition _appears_ met and asks a person to confirm. It must never say the capability is restored.
 
 - [ ] **Step 6: Verify and commit**
 
@@ -520,5 +526,5 @@ git commit -m "feat: tell the operations screen when a blocker looks cleared"
 
 - **Task 1 ends red on purpose.** Do not "fix" it by deleting `local-postgres` early. The two-commit split is the deliverable: commit one shows the mechanism catching a real stale entry, commit two resolves it.
 - **Never auto-clear anything.** Every check here reports; a human deletes.
-- No database is needed. `TEST_DATABASE_URL=postgres://unused` in Task 1 Step 4 tests whether the variable is *set*, not whether it connects.
+- No database is needed. `TEST_DATABASE_URL=postgres://unused` in Task 1 Step 4 tests whether the variable is _set_, not whether it connects.
 - Expect a merge conflict with PR #62 in `src/routes/operations.tsx`. Different sections of the same file; resolve by keeping both.

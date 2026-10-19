@@ -34,12 +34,12 @@ attributable to any of them.
 
 **Not "the deploy succeeded".** Four facts, all readable on `/operations`:
 
-| # | Check | Proves |
-| --- | --- | --- |
-| 1 | Schema panel reads 一致, `appliedCount` equal to `EXPECTED_MIGRATIONS.length` (33 at the time of writing) | `0023`–`0033` actually ran against the staging database |
-| 2 | A run row with trigger 排程 | The five-minute cron fires on a real runtime |
-| 3 | Maintenance state is not `never-observed` | The tick is being recorded, not merely scheduled |
-| 4 | Dispatch reports fixture-origin **cancelled > 0, sent = 0** | The send-gate holds in a live Worker, not only in tests |
+| #   | Check                                                                                                     | Proves                                                  |
+| --- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| 1   | Schema panel reads 一致, `appliedCount` equal to `EXPECTED_MIGRATIONS.length` (33 at the time of writing) | `0023`–`0033` actually ran against the staging database |
+| 2   | A run row with trigger 排程                                                                               | The five-minute cron fires on a real runtime            |
+| 3   | Maintenance state is not `never-observed`                                                                 | The tick is being recorded, not merely scheduled        |
+| 4   | Dispatch reports fixture-origin **cancelled > 0, sent = 0**                                               | The send-gate holds in a live Worker, not only in tests |
 
 Check 1 exercises the schema-drift check for the first time against a database
 somebody else migrated. Check 2 is what clears `deployment-runtime`. Check 4 is
@@ -54,7 +54,7 @@ once a deployment exists:
 - The malware scanner, the AI provider, WhatsApp media download and WhatsApp
   sending. All four stay unconfigured so their capabilities stay disabled.
 - **F-5**, the pilot. It needs the scanner for `verified` → package approval, and
-  `pilot-measurement-plan.md` requires the baseline to be collected *before*
+  `pilot-measurement-plan.md` requires the baseline to be collected _before_
   anyone is handed the product.
 - **F-6**, scale and query plans. Still blocked: there is no representative
   dataset, and adding indexes without measurement is what plan F2 forbids.
@@ -77,6 +77,7 @@ anything outside this machine.
    exist without them. What makes sending impossible in this phase is the
    withheld auth secret, not an empty base URL. Rendering config and withholding
    credentials are different things, and only the second one gates capability.
+
 3. **`verify:firm` against the rendered file.** Proves the deploy surface is
    complete before any database is touched.
 4. **Apply `0023`–`0033` to staging. REQUIRES EXPLICIT APPROVAL AT THE MOMENT OF
@@ -128,13 +129,13 @@ and should not be attempted without changing `resolveProviderMode`.
 
 ## Failure modes
 
-| Symptom | Meaning | Why it is acceptable |
-| --- | --- | --- |
-| `/operations` stays `never-observed` | The cron never fired | Visible rather than silent. This is exactly what F-1 and F-2 were built to make legible. |
-| Schema panel says `behind` | Migrations did not all apply | Names the earliest missing migration rather than failing as a scattered `relation ... does not exist`. |
-| Schema panel says `ahead` | The database is newer than the deployed code | A deploy-order problem. Do **not** run the migrator. |
-| The page fails outright | The database is unreachable (Hyperdrive misconfigured) | The ledger read happens first and is deliberately unguarded: a database that cannot be reached is not one this screen can report on. |
-| Dispatch shows `sent > 0` | **Stop.** The send-gate did not hold | Pause the deployment per `pilot-operations.md` before investigating. |
+| Symptom                              | Meaning                                                | Why it is acceptable                                                                                                                 |
+| ------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `/operations` stays `never-observed` | The cron never fired                                   | Visible rather than silent. This is exactly what F-1 and F-2 were built to make legible.                                             |
+| Schema panel says `behind`           | Migrations did not all apply                           | Names the earliest missing migration rather than failing as a scattered `relation ... does not exist`.                               |
+| Schema panel says `ahead`            | The database is newer than the deployed code           | A deploy-order problem. Do **not** run the migrator.                                                                                 |
+| The page fails outright              | The database is unreachable (Hyperdrive misconfigured) | The ledger read happens first and is deliberately unguarded: a database that cannot be reached is not one this screen can report on. |
+| Dispatch shows `sent > 0`            | **Stop.** The send-gate did not hold                   | Pause the deployment per `pilot-operations.md` before investigating.                                                                 |
 
 ## Documentation changes in scope
 
@@ -149,7 +150,7 @@ and should not be attempted without changing `resolveProviderMode`.
 `document-text-extraction` (new work, not a provider) and
 `external-handoff-destination` (needs the internal server's protocol) remain
 blocked and are untouched by this phase. The four provider-gated integrations
-remain blocked *by choice* here, and each becomes its own sub-project once a
+remain blocked _by choice_ here, and each becomes its own sub-project once a
 deployment exists to verify it against.
 
 ## Open question for implementation

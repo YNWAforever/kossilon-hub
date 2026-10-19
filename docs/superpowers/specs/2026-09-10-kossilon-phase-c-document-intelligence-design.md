@@ -7,7 +7,7 @@ evidence, and approve a specific package version. AI findings never become a hum
 approval.
 
 Verified against this branch (`codex/kossilon-phase-c`, from `codex/kossilon-phase-b`).
-The single most important fact about Phase C is what is *not* here: there is no AI
+The single most important fact about Phase C is what is _not_ here: there is no AI
 provider in this repository at all. A repo-wide grep for
 `anthropic|openai|gpt-|claude-|gemini|bedrock|llm|tesseract|ocr|textract|embedding`
 across `src/`, `scripts/`, `db/`, `package.json` and the wrangler config returns only
@@ -38,7 +38,13 @@ its place on the dashboard — under a name that says what it is.
 `ai-agent.ts:254-260`:
 
 ```ts
-const confidence = Math.min(96, 70 + context.faqs.length * 4 + context.documents.length * 3 + (annualReturnContext || clientCase ? 8 : 0));
+const confidence = Math.min(
+  96,
+  70 +
+    context.faqs.length * 4 +
+    context.documents.length * 3 +
+    (annualReturnContext || clientCase ? 8 : 0),
+);
 ```
 
 `faqs` is capped at 4 and `documents` at 3, so this is a pure arity function bounded to

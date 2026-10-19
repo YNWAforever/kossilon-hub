@@ -1,3 +1,4 @@
+import { checklistItemText } from "@/lib/checklist-item-label";
 import type { DocumentVersionState } from "@/features/documents/versions";
 import { blocksRelease } from "@/features/documents/findings";
 import type { DocumentStatus, ScanVerdictSource } from "@/features/documents/types";
@@ -115,14 +116,14 @@ export function computeReadiness(input: ReadinessInput): ReadinessSnapshot {
       add(
         "internal_review_pending",
         "prepare",
-        `${item.itemLabel} 已收，等內部覆核。`,
+        `${checklistItemText(item.itemLabel)} 已收，等內部覆核。`,
         `/documents?caseId=${case_.id}`,
       );
     else if (item.status !== "Verified")
       add(
         "required_document_missing",
         "prepare",
-        `${item.itemLabel} 尚欠可用文件。`,
+        `${checklistItemText(item.itemLabel)} 尚欠可用文件。`,
         `/documents?caseId=${case_.id}`,
       );
     else if (
@@ -133,11 +134,19 @@ export function computeReadiness(input: ReadinessInput): ReadinessSnapshot {
       add(
         "required_evidence_unverified",
         "prepare",
-        `${item.itemLabel} 欠當前版本、安全掃描或人手覆核證據。`,
+        `${checklistItemText(item.itemLabel)} 欠當前版本、安全掃描或人手覆核證據。`,
         `/documents?caseId=${case_.id}`,
       );
-    if (!input.requirements.some((requirement) => requirement.instance.checklistItemId === item.id))
-      add("requirements_unknown", "prepare", `${item.itemLabel} 未有適用需求實例。`);
+    // With no instances at all, the case-level line above already says so.
+    if (
+      input.requirements.length &&
+      !input.requirements.some((requirement) => requirement.instance.checklistItemId === item.id)
+    )
+      add(
+        "requirements_unknown",
+        "prepare",
+        `${checklistItemText(item.itemLabel)} 未有適用需求實例。`,
+      );
   }
   if (
     case_.payment?.status !== "Payment received" ||

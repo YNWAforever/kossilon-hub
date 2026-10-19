@@ -1,9 +1,12 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Paperclip } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { labelValue } from "@/lib/format-label";
 import { MessageIntake } from "./message-intake";
 import {
   CONVERSATION_MESSAGE_PAGE_SIZE,
@@ -20,10 +23,10 @@ import {
   listWhatsAppConversations,
 } from "../server-fns";
 
-const EMPTY_INBOX_MESSAGE = "No WhatsApp conversations are recorded in your current scope.";
+const EMPTY_INBOX_MESSAGE = "您目前的權限範圍內未有 WhatsApp 對話記錄。";
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Unable to load the WhatsApp inbox.";
+  return error instanceof Error ? error.message : "無法載入 WhatsApp 收件箱。";
 }
 
 /**
@@ -105,15 +108,14 @@ export function ProductionWhatsAppInbox() {
           : "live";
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]">
+    <main className="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]">
       <section className="border-r bg-card">
         {/* The conversation rail is this screen's header — an inbox has no room
             for a page title above it, so PageHeader sits inside the rail. */}
         <div className="border-b p-4">
-          <PageHeader eyebrow="Messaging" title="WhatsApp Inbox" />
+          <PageHeader eyebrow="通訊" title="WhatsApp 收件箱" />
           <p className="mt-2 text-xs text-muted-foreground">
-            Configuration shows binding presence only. Connection health and live receipt
-            verification remain unverified.
+            設定狀態只顯示伺服器綁定是否存在，連線健康及實際收訊尚未核實。
           </p>
         </div>
 
@@ -125,53 +127,51 @@ export function ProductionWhatsAppInbox() {
 
         {connection === "unknown" ? (
           <p role="alert" className="border-b p-4 text-sm text-destructive">
-            {errorMessage(integrationQuery.error)} The WhatsApp connection state could not be
-            checked, so this list may be incomplete.
+            {errorMessage(integrationQuery.error)}未能檢查 WhatsApp 連線狀態，此列表可能不完整。
           </p>
         ) : null}
 
         {connection === "blocked" ? (
           <div
-            className="border-b bg-status-yellow-soft p-4 text-sm text-status-yellow"
+            className="border-b bg-status-yellow-soft p-4 text-sm text-status-yellow-text"
             role="status"
           >
-            <p className="font-medium">WhatsApp setup is incomplete</p>
+            <p className="font-medium">WhatsApp 設定未完成</p>
             <p className="mt-1">
-              Missing server bindings: {integrationQuery.data?.missingLiveEnvVars.join(", ")}.
-              Existing recorded conversations remain visible; signed inbound and actual delivery
-              need separate verification.
+              缺少伺服器綁定：{integrationQuery.data?.missingLiveEnvVars.join(", ")}。
+              已記錄的對話仍可查看；已簽署的收訊及實際送達須另行核實。
             </p>
           </div>
         ) : null}
 
         {connection === "simulated" ? (
-          <div className="border-b bg-status-blue-soft p-4 text-sm text-status-blue" role="status">
-            <p className="font-medium">Demo simulation</p>
-            <p className="mt-1">
-              No external WhatsApp message is sent or received, so no conversation is recorded.
-            </p>
+          <div
+            className="border-b bg-status-blue-soft p-4 text-sm text-status-blue-text"
+            role="status"
+          >
+            <p className="font-medium">示範模擬</p>
+            <p className="mt-1">不會發送或接收任何外部 WhatsApp 訊息，因此不會記錄對話。</p>
           </div>
         ) : null}
 
         {selectionDropped ? (
           <div className="border-b p-4 text-sm text-muted-foreground" role="status">
-            <p>That conversation is no longer in this page of the inbox.</p>
+            <p>該對話已不在收件箱的這一頁。</p>
             {/* Without this the notice is a dead end: selectedContactId is only
                 otherwise reassigned by clicking a row, and the list may be empty. */}
-            <button
+            <Button
               type="button"
-              className="mt-1 underline"
+              variant="link"
+              className="mt-1"
               onClick={() => setSelectedContactId(undefined)}
             >
-              Show the newest conversation
-            </button>
+              顯示最新對話
+            </Button>
           </div>
         ) : null}
 
         <div className="divide-y">
-          {conversationsQuery.isPending ? (
-            <p className="p-4 text-sm text-muted-foreground">Loading conversations...</p>
-          ) : null}
+          {conversationsQuery.isPending ? <LoadingRows label="對話載入中…" rows={5} /> : null}
 
           {/* Only a confirmed-live provider licenses this claim. Under checking,
               unknown, blocked or simulated an empty list says nothing about
@@ -223,17 +223,15 @@ export function ProductionWhatsAppInbox() {
                     {conversationContactLabel(selected)}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    {selected.phoneE164 ?? "No phone number on file"}
+                    {selected.phoneE164 ?? "未有電話號碼記錄"}
                   </p>
                 </div>
                 {selected.caseId ? (
-                  <Link
-                    className="shrink-0 rounded-md border px-3 py-2 text-sm"
-                    to="/annual-returns/$id"
-                    params={{ id: selected.caseId }}
-                  >
-                    Annual return
-                  </Link>
+                  <Button asChild>
+                    <Link to="/annual-returns/$id" params={{ id: selected.caseId }}>
+                      周年申報
+                    </Link>
+                  </Button>
                 ) : null}
               </div>
             </div>
@@ -246,7 +244,7 @@ export function ProductionWhatsAppInbox() {
               ) : null}
 
               {messagesQuery.isPending ? (
-                <p className="text-sm text-muted-foreground">Loading conversation...</p>
+                <LoadingRows label="對話載入中…" rows={3} className="p-0" />
               ) : null}
 
               {messages.map((message) => (
@@ -273,7 +271,7 @@ export function ProductionWhatsAppInbox() {
                       {message.attachments.map((attachment) => (
                         <p
                           key={attachment.providerMediaId}
-                          className="flex items-center gap-2 rounded bg-status-yellow-soft px-2 py-1 text-xs text-status-yellow"
+                          className="flex items-center gap-2 rounded bg-status-yellow-soft px-2 py-1 text-xs text-status-yellow-text"
                         >
                           <Paperclip aria-hidden className="h-3 w-3" />
                           客戶傳送了 {attachment.mediaType.toLowerCase()} 檔案
@@ -296,7 +294,7 @@ export function ProductionWhatsAppInbox() {
                     />
                   ) : null}
                   {message.sentAs === "template" ? (
-                    <p className="mt-2 rounded bg-status-yellow-soft px-2 py-1 text-xs text-status-yellow">
+                    <p className="mt-2 rounded bg-status-yellow-soft px-2 py-1 text-xs text-status-yellow-text">
                       客戶收到的是範本訊息
                       {message.sentTemplateName ? `（${message.sentTemplateName}）` : ""}
                       ，不是上面這段文字。範本不含公司名稱或限期。
@@ -304,29 +302,29 @@ export function ProductionWhatsAppInbox() {
                   ) : null}
                   <p className="mt-2 text-xs text-muted-foreground">
                     {formatHongKongTimestamp(conversationMessageOccurredAt(message))} -{" "}
-                    {message.status}
+                    {labelValue(message.status)}
                   </p>
                 </div>
               ))}
             </div>
 
             <div className="border-t bg-card p-4 text-sm text-muted-foreground">
-              Replies are sent as approved templates from{" "}
+              回覆須以已核准的範本經{" "}
               {/* /whatsapp declares validateSearch, so its children must state a
                   search value. `enquiry` addresses a demo fixture and has no
                   production meaning. */}
               <Link className="underline" to="/whatsapp/automation" search={{ enquiry: undefined }}>
-                WhatsApp Automation
+                WhatsApp 追件
               </Link>
-              .
+              發送。
             </div>
           </>
         ) : (
           <div className="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground">
-            Select a conversation to read it.
+            選擇對話以閱讀內容。
           </div>
         )}
       </section>
-    </div>
+    </main>
   );
 }

@@ -2,6 +2,8 @@ import { checklistTemplates, daysUntil, type ClientCase } from "./app-data";
 import { type AnnualReturnAiContext } from "./annual-return-store";
 import { type ClientPortalPaymentProofAiContext } from "./client-portal-store";
 import { type FaqEntry, type ReferenceDoc } from "./knowledge-base";
+import { formatDate, formatDateEnglish } from "./format-date";
+import { labelValue } from "./format-label";
 import { tokenize } from "./text-tokens";
 
 export type AiEnquiry = {
@@ -80,15 +82,6 @@ function normalizeIntent(intent: string): NormalizedIntent {
   return "General";
 }
 
-const annualReturnStatusLabels: Record<AnnualReturnAiContext["status"], string> = {
-  preparing: "Preparing",
-  "waiting-documents": "Waiting documents",
-  "payment-pending": "Payment pending",
-  "internal-review": "Internal review",
-  "ready-to-file": "Ready to file",
-  filed: "Filed",
-};
-
 const annualReturnPaymentStatusLabels: Record<AnnualReturnAiContext["paymentStatus"], string> = {
   pending: "Pending",
   paid: "Paid",
@@ -101,6 +94,21 @@ function scoreText(query: string[], target: string, boosts: string[]): number {
   const boostScore = boosts.reduce((sum, word) => sum + (targetWords.has(word) ? 1 : 0), 0);
   return queryScore + boostScore;
 }
+
+// The grounding list is shown to staff beside the draft, so it is in the UI
+// language; the draft itself is English text written to the client.
+const clientCaseStatusLabels: Record<ClientCase["status"], string> = {
+  Preparing: "準備中",
+  "Waiting documents": "等待文件",
+  "Ready to file": "可遞交",
+  Filed: "已遞交",
+};
+
+const clientPaymentLabels: Record<ClientCase["paymentStatus"], string> = {
+  Paid: "已付款",
+  Pending: "待付款",
+  Overdue: "逾期未付",
+};
 
 export function retrieveContext(
   enquiry: AiEnquiry,
@@ -153,14 +161,24 @@ export function retrieveContext(
 
   const caseFields = clientCase
     ? [
-        `${clientCase.companyName} status: ${clientCase.status}`,
-        `Due date: ${clientCase.dueDate}`,
-        `Payment: ${clientCase.paymentStatus}`,
-        `Missing documents: ${clientCase.missingDocs.length || "none"}`,
+        `${clientCase.companyName} 狀態：${clientCaseStatusLabels[clientCase.status]}`,
+        `到期日：${formatDate(clientCase.dueDate)}`,
+        `付款：${clientPaymentLabels[clientCase.paymentStatus]}`,
+        `欠缺文件：${clientCase.missingDocs.length || "無"}`,
       ]
     : [];
 
   return { faqs: scoredFaqs, documents: scoredDocs, checklistItems, caseFields };
+}
+
+/** `subject` is written as it should read in place, e.g. "The filing" or "your annual return". */
+function dueSentence(subject: string, dueDate: string, daysToDue: number): string {
+  const date = `**${formatDateEnglish(dueDate)}**`;
+  if (daysToDue < 0) {
+    return `${subject} was due on ${date}. That date has passed, so we would like to file as soon as possible.`;
+  }
+  const when = daysToDue === 0 ? "today" : daysToDue === 1 ? "tomorrow" : `in ${daysToDue} days`;
+  return `${subject} is due on ${date} (${when}).`;
 }
 
 export function draftReply(
@@ -173,9 +191,6 @@ export function draftReply(
   const normalizedIntent = normalizeIntent(enquiry.intent);
   const topFaq = context.faqs[0]?.item;
   const topDoc = context.documents[0]?.item;
-  const annualReturnStatusLabel = annualReturnContext
-    ? annualReturnStatusLabels[annualReturnContext.status]
-    : undefined;
   const annualReturnPaymentStatusLabel = annualReturnContext
     ? annualReturnPaymentStatusLabels[annualReturnContext.paymentStatus]
     : undefined;
@@ -191,18 +206,33 @@ export function draftReply(
             : " Payment proof has not been uploaded yet."
     : "";
   const existingBasicClientCaseLine = clientCase
-    ? `\n\nFor **${clientCase.companyName}**, the current case status is **${clientCase.status}**. The filing due date is **${clientCase.dueDate}** (${daysUntil(clientCase.dueDate)} days from today). ${
+    ? `\n\nFor **${clientCase.companyName}**, the current case status is **${clientCase.status}**. ${dueSentence("The filing", clientCase.dueDate, daysUntil(clientCase.dueDate))} ${
         clientCase.missingDocs.length
           ? `We are still missing: **${clientCase.missingDocs.join(", ")}**.`
           : "All required documents are currently marked as received."
       } Payment status: **${clientCase.paymentStatus}**.`
     : "";
+  // This paragraph is sent to the client. Owner, readiness, internal status,
+  // the staff next action and review blockers are workflow detail -- staff see
+  // them in the case-context panel beside the draft -- so only what the client
+  // can supply is asked for here.
+  // Payment is reported on its own line below. Signature blockers carry staff
+  // status labels ("Signature requested"), so they are named as the thing the
+  // client sends.
+  const clientActionable = (annualReturnContext?.blockers ?? []).flatMap((blocker) =>
+    blocker.type === "document"
+      ? [blocker.label]
+      : blocker.type === "signature"
+        ? ["your signature on the NAR1"]
+        : [],
+  );
+  const outstandingSentence = clientActionable.length
+    ? `To complete the filing we still need: **${clientActionable.join(", ")}**.`
+    : annualReturnContext?.paymentStatus === "paid"
+      ? "We have everything we need from you for the filing."
+      : "Once we receive your payment we can complete the filing.";
   const enrichedCaseLine = annualReturnContext
-    ? `\n\nFor **${annualReturnContext.companyName}**, owner **${annualReturnContext.owner}** is currently tracking **${annualReturnStatusLabel}**. The filing due date is **${annualReturnContext.dueDate}** (${annualReturnContext.daysToDue} days from today), readiness is **${annualReturnContext.readinessScore}%**, and the next action is **${annualReturnContext.nextAction}**. ${
-        annualReturnContext.blockers.length
-          ? `Current blockers: **${annualReturnContext.blockers.map((blocker) => blocker.label).join(", ")}**.`
-          : "No blockers are currently open."
-      } Payment status: **${annualReturnPaymentStatusLabel}**.${paymentProofLine}`
+    ? `\n\nFor **${annualReturnContext.companyName}**, ${dueSentence("your annual return", annualReturnContext.dueDate, annualReturnContext.daysToDue)} ${outstandingSentence} Payment status: **${annualReturnPaymentStatusLabel}**.${paymentProofLine}`
     : "";
   const caseLine = enrichedCaseLine || `${existingBasicClientCaseLine}${paymentProofLine}`;
 
@@ -252,11 +282,11 @@ export function draftReply(
           {
             id: "payment-proof-status",
             type: "Case" as const,
-            label: "Payment proof",
+            label: "付款證明",
             preview:
               paymentProofContext.status === "rejected"
-                ? `${paymentProofContext.reasonLabel ?? "Payment proof rejected"}${paymentProofContext.note ? `: ${paymentProofContext.note}` : ""}`
-                : `Payment proof status: ${paymentProofContext.status}`,
+                ? `${paymentProofContext.reasonLabel ?? "付款證明已退回"}${paymentProofContext.note ? `：${paymentProofContext.note}` : ""}`
+                : `付款證明狀態：${labelValue(paymentProofContext.status)}`,
           },
         ]
       : []),

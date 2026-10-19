@@ -114,3 +114,71 @@ describe("draftReply grounding", () => {
     expect(draft).not.toHaveProperty("confidence");
   });
 });
+
+describe("draftReply case paragraph is written for the client", () => {
+  const enquiry: AiEnquiry = {
+    name: "Mandy Lee",
+    phone: "+852 9123 4567",
+    lastMessage: "When is our NAR1 due?",
+    intent: "Annual Return",
+  };
+  const empty = { faqs: [], documents: [], checklistItems: [], caseFields: [] };
+  const overdueCase = {
+    companyName: "Aurora Trading Limited",
+    status: "waiting-documents" as const,
+    owner: "Mandy Lee",
+    dueDate: "2026-08-12",
+    daysToDue: -61,
+    readinessScore: 0,
+    paymentStatus: "pending" as const,
+    nextAction: "Request Signed NAR1",
+    blockers: [
+      { id: "b1", type: "document" as const, label: "Signed NAR1", action: "" },
+      { id: "b2", type: "signature" as const, label: "Signature requested", action: "" },
+      { id: "b3", type: "review" as const, label: "Internal review in progress", action: "" },
+      { id: "b4", type: "payment" as const, label: "Payment pending", action: "" },
+    ],
+  };
+
+  it("states the due date in words a client reads, not a signed day count", () => {
+    const { markdown } = draftReply(enquiry, empty, undefined, overdueCase);
+
+    expect(markdown).toContain("**12 Aug 2026**");
+    expect(markdown).toContain("has passed");
+    expect(markdown).not.toContain("2026-08-12");
+    expect(markdown).not.toContain("-61");
+  });
+
+  it("asks only for what the client can provide and keeps internal workflow out", () => {
+    const { markdown } = draftReply(enquiry, empty, undefined, overdueCase);
+
+    expect(markdown).toContain("**Signed NAR1, your signature on the NAR1**");
+    expect(markdown).not.toContain("Internal review");
+    expect(markdown).not.toContain("readiness");
+    expect(markdown).not.toContain("is currently tracking");
+    expect(markdown).not.toContain("Request Signed NAR1");
+  });
+
+  it("counts down to a future due date", () => {
+    const { markdown } = draftReply(enquiry, empty, undefined, {
+      ...overdueCase,
+      daysToDue: 1,
+      paymentStatus: "paid",
+      blockers: [],
+    });
+
+    expect(markdown).toContain("due on **12 Aug 2026** (tomorrow)");
+    expect(markdown).toContain("We have everything we need from you");
+  });
+
+  it("does not tell a client with an unpaid invoice that nothing is outstanding", () => {
+    const { markdown } = draftReply(enquiry, empty, undefined, {
+      ...overdueCase,
+      paymentStatus: "overdue",
+      blockers: [{ id: "b4", type: "payment", label: "Payment overdue", action: "" }],
+    });
+
+    expect(markdown).not.toContain("everything we need");
+    expect(markdown).toContain("Once we receive your payment");
+  });
+});

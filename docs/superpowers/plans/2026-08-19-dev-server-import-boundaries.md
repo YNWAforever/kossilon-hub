@@ -23,7 +23,7 @@ child process, requests every route, and fails if `[import-protection]` appears 
 ## Context for every task below
 
 - Design spec: `docs/superpowers/specs/2026-08-19-dev-server-import-boundaries-design.md` — read
-  this first if anything below is unclear about *why*.
+  this first if anything below is unclear about _why_.
 - **No business logic changes anywhere in Tasks 1–6.** Every `*ForActor` function (the actual,
   already-unit-tested logic) keeps its exact signature, parameters, and behavior. Only changes:
   where a `server-fns.ts` file gets its `getRequest` / actor-resolution / repository-factory
@@ -48,6 +48,7 @@ child process, requests every route, and fails if `[import-protection]` appears 
 ### Task 1: `annual-return/server-fns.ts` (the file actually breaking `/documents`, `/payments`, `/portal` today) — ✅ DONE (commit `42a76dd`)
 
 **Files:**
+
 - Modify: `src/features/annual-return/server-fns.ts`
 - Test (run unchanged): `src/features/annual-return/server-fns.test.ts`,
   `src/features/annual-return/server-fns.authorization.test.ts`
@@ -57,7 +58,7 @@ This file statically imports `getRequest`, `getSqlClient`, `createAnnualReturnRe
 `./session`, which itself statically imports `requireStaffActor` from
 `@/features/auth/neon-auth-server`, which statically imports `getSqlClient` from
 `@/server/db/client`) — the actual root-cause chain. It also statically imports
-`hongKongBusinessDate` from `./repository`, which merely re-exports a function actually *defined*
+`hongKongBusinessDate` from `./repository`, which merely re-exports a function actually _defined_
 in `./workflow.ts` (confirmed: `./workflow.ts` has zero imports of its own — it's a fully pure,
 standalone module). Since `./repository.ts`'s own top-level imports reach `@/server/db/client`,
 importing anything from it — even a re-exported pure function — pulls the whole module into Vite
@@ -327,6 +328,7 @@ git commit -m "fix: lazy-load server-only deps in annual-return/server-fns.ts"
 ### Task 2: `annual-return/client-portal-server-fns.ts` — ✅ DONE (commit `749ba12`)
 
 **Files:**
+
 - Modify: `src/features/annual-return/client-portal-server-fns.ts`
 - Test (run unchanged): `src/features/annual-return/client-portal-server-fns.test.ts`
 
@@ -436,6 +438,7 @@ git commit -m "fix: lazy-load server-only deps in annual-return/client-portal-se
 ### Task 3: `annual-return/evidence-server-fns.ts` — ✅ DONE (commit `e6b212f`)
 
 **Files:**
+
 - Modify: `src/features/annual-return/evidence-server-fns.ts`
 - Test (run unchanged): `src/features/annual-return/evidence-server-fns.test.ts`
 
@@ -553,6 +556,7 @@ git commit -m "fix: lazy-load server-only deps in annual-return/evidence-server-
 ### Task 4: `annual-return/follow-up-server-fns.ts` — ✅ DONE (commit `355674b`)
 
 **Files:**
+
 - Modify: `src/features/annual-return/follow-up-server-fns.ts`
 - Test (run unchanged): `src/features/annual-return/follow-up-server-fns.test.ts`
 
@@ -799,6 +803,7 @@ git commit -m "fix: lazy-load server-only deps in annual-return/follow-up-server
 ### Task 5: `whatsapp/server-fns.ts` — ✅ DONE (commit `b6eabad`)
 
 **Files:**
+
 - Modify: `src/features/whatsapp/server-fns.ts`
 - Test (run unchanged): `src/features/whatsapp/server-fns.test.ts`
 
@@ -957,6 +962,7 @@ git commit -m "fix: lazy-load server-only deps in whatsapp/server-fns.ts"
 ### Task 6: `clients/server-fns.ts` — ✅ DONE (commits `e7857db`, `624f279`)
 
 **Files:**
+
 - Modify: `src/features/clients/server-fns.ts`
 - No dedicated test file exists for this one today — verified by `tsc`, the full suite (Task 9),
   and the manual smoke test (Task 9).
@@ -1163,6 +1169,7 @@ git commit -m "fix: lazy-load server-only deps in clients/server-fns.ts"
 ### Task 7: Regression-gate script — `scripts/verify-dev-server-imports.ts` — ✅ DONE (commits `da28008`, `45d7a9d`, `d572a46`)
 
 **Files:**
+
 - Create: `scripts/verify-dev-server-imports.ts`
 - Create: `scripts/verify-dev-server-imports.test.ts`
 - Modify: `package.json`
@@ -1264,9 +1271,7 @@ function waitForReady(getOutput: () => string, timeoutMs: number): Promise<void>
       }
       if (Date.now() - start > timeoutMs) {
         clearInterval(interval);
-        reject(
-          new Error(`Dev server did not report ready within ${timeoutMs}ms.\n${getOutput()}`),
-        );
+        reject(new Error(`Dev server did not report ready within ${timeoutMs}ms.\n${getOutput()}`));
       }
     }, 200);
   });
@@ -1334,7 +1339,9 @@ async function main(): Promise<void> {
     }
 
     for (const result of results) {
-      console.log(`${result.ok ? "PASS" : "FAIL"} request ${result.path}${result.error ? `: ${result.error}` : ""}`);
+      console.log(
+        `${result.ok ? "PASS" : "FAIL"} request ${result.path}${result.error ? `: ${result.error}` : ""}`,
+      );
     }
 
     const violation = findImportProtectionViolation(output);
@@ -1394,6 +1401,7 @@ git commit -m "test: add dev-server import-boundary regression gate"
 ### Task 8: Wire the gate into CI
 
 **Files:**
+
 - Modify: `.github/workflows/ci.yml`
 
 - [ ] **Step 1: Add the new step after Build, before the cron-wiring check**
@@ -1401,36 +1409,36 @@ git commit -m "test: add dev-server import-boundary regression gate"
 Replace:
 
 ```yaml
-      # The scheduled handler only reaches the Worker through a nitro plugin, and
-      # nothing but a real build proves the hook actually lands in the output.
-      - name: Build
-        run: npm run build
+# The scheduled handler only reaches the Worker through a nitro plugin, and
+# nothing but a real build proves the hook actually lands in the output.
+- name: Build
+  run: npm run build
 
-      - name: Cron trigger has a handler in the built Worker
-        run: |
-          grep -q 'hooks.hook("cloudflare:scheduled"' .output/server/index.mjs \
-            || { echo "cloudflare:scheduled hook missing from the built Worker"; exit 1; }
+- name: Cron trigger has a handler in the built Worker
+  run: |
+    grep -q 'hooks.hook("cloudflare:scheduled"' .output/server/index.mjs \
+      || { echo "cloudflare:scheduled hook missing from the built Worker"; exit 1; }
 ```
 
 With:
 
 ```yaml
-      # The scheduled handler only reaches the Worker through a nitro plugin, and
-      # nothing but a real build proves the hook actually lands in the output.
-      - name: Build
-        run: npm run build
+# The scheduled handler only reaches the Worker through a nitro plugin, and
+# nothing but a real build proves the hook actually lands in the output.
+- name: Build
+  run: npm run build
 
-      # npm run build passing doesn't prove npm run dev works — dev mode skips
-      # Rollup's tree-shaking, so a static import of server-only code that build
-      # happily eliminates can still break every page in dev. This boots the real
-      # dev server and requests every route to catch that class of regression.
-      - name: Dev server import boundaries
-        run: npm run verify:dev-server-imports
+# npm run build passing doesn't prove npm run dev works — dev mode skips
+# Rollup's tree-shaking, so a static import of server-only code that build
+# happily eliminates can still break every page in dev. This boots the real
+# dev server and requests every route to catch that class of regression.
+- name: Dev server import boundaries
+  run: npm run verify:dev-server-imports
 
-      - name: Cron trigger has a handler in the built Worker
-        run: |
-          grep -q 'hooks.hook("cloudflare:scheduled"' .output/server/index.mjs \
-            || { echo "cloudflare:scheduled hook missing from the built Worker"; exit 1; }
+- name: Cron trigger has a handler in the built Worker
+  run: |
+    grep -q 'hooks.hook("cloudflare:scheduled"' .output/server/index.mjs \
+      || { echo "cloudflare:scheduled hook missing from the built Worker"; exit 1; }
 ```
 
 - [ ] **Step 2: Commit**

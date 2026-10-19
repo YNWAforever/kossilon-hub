@@ -1,24 +1,36 @@
+import { formatDate } from "@/lib/format-date";
 import { type ReactNode, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
 import { ClientFormDialog } from "@/components/clients/client-form-dialog";
 import { listClientAssignmentOptions, listClientPage } from "../server-fns";
 import type { ClientPaymentStatus, ClientSummary, CompanyStatus } from "../types";
 import { dataOriginLabel } from "../data-origin";
+import { COMPANY_STATUS_LABELS, PAYMENT_STATUS_LABELS } from "../labels";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { useRetainedPage } from "@/lib/use-retained-page";
 
-const REGISTER_GRID_COLUMNS =
-  "lg:grid-cols-[minmax(220px,1.6fr)_140px_140px_100px_120px_110px_72px]";
-const REGISTER_GRID_MIN_WIDTH = "lg:min-w-[1180px]";
+// The tracks, six 12px gaps and row padding come to ~944px, so the register fits
+// the content area of a 1280px laptop. The old 1180px floor scrolled sideways
+// even at 1440px and clipped the 開啟 column.
+const REGISTER_GRID_COLUMNS = "lg:grid-cols-[minmax(220px,1.6fr)_140px_120px_88px_112px_96px_64px]";
+const REGISTER_GRID_MIN_WIDTH = "lg:min-w-[944px]";
 
 const STATUS_FILTERS = ["all", "active", "inactive"] as const;
 type StatusFilter = (typeof STATUS_FILTERS)[number];
+
+const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
+  all: "全部",
+  active: COMPANY_STATUS_LABELS.active,
+  inactive: COMPANY_STATUS_LABELS.inactive,
+};
 
 const companyStatusTone: Record<CompanyStatus, StatusTone> = {
   active: "green",
@@ -77,17 +89,12 @@ export function ProductionClientRegister({
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader
-        eyebrow="Operations"
-        title="Clients"
+        eyebrow="案件與客戶"
+        title="客戶"
         actions={
-          <button
-            type="button"
-            disabled={!optionsQuery.data}
-            onClick={() => setIsCreateOpen(true)}
-            className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
-          >
-            New client
-          </button>
+          <Button disabled={!optionsQuery.data} onClick={() => setIsCreateOpen(true)}>
+            新增客戶
+          </Button>
         }
       />
       <p className="text-sm text-muted-foreground">
@@ -124,55 +131,56 @@ export function ProductionClientRegister({
 
       {clientsQuery.isError ? (
         <p role="alert" className="text-sm text-destructive">
-          Client data is unavailable. Try again shortly.
-          <button className="min-h-11 px-3" onClick={() => void clientsQuery.refetch()}>
+          客戶資料暫時無法載入，請稍後再試。
+          <Button
+            variant="ghost"
+            className="min-h-11 px-3"
+            onClick={() => void clientsQuery.refetch()}
+          >
             重試客戶頁面
-          </button>
+          </Button>
         </p>
       ) : null}
 
       {optionsQuery.isError ? (
-        <p role="status" className="text-sm text-status-yellow">
-          Owner and team options are unavailable. New client is disabled until this loads.
+        <p role="status" className="text-sm text-status-yellow-text">
+          負責同事及團隊選項暫時無法載入，載入前未能新增客戶。
         </p>
       ) : null}
 
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto]">
-          <input
-            className="rounded-md border bg-background px-3 py-2 text-sm"
-            aria-label="Search company, CR or BR number"
-            placeholder="Search company, CR or BR number"
+          <Input
+            className="w-full"
+            aria-label="搜尋公司名稱、CR 或 BR 號碼"
+            placeholder="搜尋公司名稱、CR 或 BR 號碼"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
           <div className="flex flex-wrap gap-2">
             {STATUS_FILTERS.map((value) => (
-              <button
+              <Button
                 key={value}
-                type="button"
-                className={`rounded-md border px-3 py-2 text-sm capitalize ${
-                  statusFilter === value ? "bg-primary text-primary-foreground" : "bg-background"
-                }`}
+                variant={statusFilter === value ? "primary" : "outline"}
                 onClick={() => setStatusFilter(value)}
               >
-                {value}
-              </button>
+                {STATUS_FILTER_LABELS[value]}
+              </Button>
             ))}
           </div>
-          <select
-            className="rounded-md border bg-background px-3 py-2 text-sm"
-            aria-label="Filter by team"
+          <Select
+            className="w-full"
+            aria-label="按團隊篩選"
             value={teamFilter}
             onChange={(event) => setTeamFilter(event.target.value)}
           >
-            <option value="all">All teams</option>
+            <option value="all">全部團隊</option>
             {(optionsQuery.data?.teams ?? []).map((team) => (
               <option key={team.id} value={team.id}>
                 {team.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div className="overflow-x-auto">
@@ -180,13 +188,13 @@ export function ProductionClientRegister({
             <div
               className={`hidden gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid ${REGISTER_GRID_COLUMNS}`}
             >
-              <span>Company</span>
-              <span>Owner</span>
-              <span>Team</span>
-              <span>Status</span>
-              <span>AR due</span>
-              <span>Payment</span>
-              <span className="text-right">Open</span>
+              <span>公司</span>
+              <span>負責同事</span>
+              <span>團隊</span>
+              <span>狀態</span>
+              <span>周年申報到期日</span>
+              <span>付款</span>
+              <span className="text-right">開啟</span>
             </div>
 
             <div className="divide-y">
@@ -198,32 +206,27 @@ export function ProductionClientRegister({
         </div>
 
         {clientsQuery.isPending ? (
-          <p className="px-4 py-6 text-sm text-muted-foreground">Loading clients...</p>
+          <p className="px-4 py-6 text-sm text-muted-foreground">載入客戶中…</p>
         ) : null}
 
         {!clientsQuery.isPending && !clientsQuery.isError && visibleClients.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-muted-foreground">
-            No clients match the current filters.
-          </p>
+          <p className="px-4 py-6 text-sm text-muted-foreground">沒有客戶符合目前的篩選條件。</p>
         ) : null}
       </section>
       <div className="flex gap-3">
         {cursor ? (
-          <button
-            className="min-h-11 rounded border px-3"
-            onClick={() => setPagination({ key: filterKey })}
-          >
+          <Button className="min-h-11" onClick={() => setPagination({ key: filterKey })}>
             回第一頁客戶
-          </button>
+          </Button>
         ) : null}
         {page?.nextCursor ? (
-          <button
+          <Button
             disabled={clientsQuery.isFetching || clientsQuery.isError}
-            className="min-h-11 rounded border px-3"
+            className="min-h-11"
             onClick={() => setPagination({ key: filterKey, cursor: page.nextCursor! })}
           >
             下一頁客戶
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -249,19 +252,26 @@ function ClientRow({ client }: { client: ClientSummary }) {
           CR {client.crNumber} · BR {client.brNumber}
         </p>
       </div>
-      <Field label="Owner" value={client.ownerName} />
-      <Field label="Team" value={client.teamName} />
+      <Field label="負責同事" value={client.ownerName} />
+      <Field label="團隊" value={client.teamName} />
       <Field
-        label="Status"
-        value={<StatusPill tone={companyStatusTone[client.status]}>{client.status}</StatusPill>}
+        label="狀態"
+        value={
+          <StatusPill tone={companyStatusTone[client.status]}>
+            {COMPANY_STATUS_LABELS[client.status]}
+          </StatusPill>
+        }
       />
-      <Field label="AR due" value={client.arDueDate ?? "No case yet"} />
       <Field
-        label="Payment"
+        label="周年申報到期日"
+        value={client.arDueDate ? formatDate(client.arDueDate) : "尚未有案件"}
+      />
+      <Field
+        label="付款"
         value={
           client.paymentStatus ? (
             <StatusPill tone={paymentStatusTone[client.paymentStatus]}>
-              {client.paymentStatus}
+              {PAYMENT_STATUS_LABELS[client.paymentStatus]}
             </StatusPill>
           ) : (
             "—"
@@ -269,13 +279,11 @@ function ClientRow({ client }: { client: ClientSummary }) {
         }
       />
       <div className="flex justify-start lg:justify-end">
-        <Link
-          className="rounded-md border px-3 py-2 text-center text-sm"
-          to="/clients/$id"
-          params={{ id: client.id }}
-        >
-          Open
-        </Link>
+        <Button asChild>
+          <Link to="/clients/$id" params={{ id: client.id }}>
+            開啟
+          </Link>
+        </Button>
       </div>
     </div>
   );

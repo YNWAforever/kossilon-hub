@@ -37,13 +37,13 @@ mandatory Node22/24 CI legs plus the stable `verify` result.
 
 - [ ] Run the runtime-major guard under Node24 with expected22; observe the mismatch.
 - [ ] Run it with expected24 and execute existing `npm run test` on localhost55441
-  actual Postgres17, plus lint/typecheck/build/local Chrome/demo/dev/cron/offline gates.
+      actual Postgres17, plus lint/typecheck/build/local Chrome/demo/dev/cron/offline gates.
 - [ ] Add a Node22/24 matrix, fail-fast=false, explicit selected-runtime guard and
-  stable `verify` aggregate requiring needs.verify-runtime.result exactly success.
+      stable `verify` aggregate requiring needs.verify-runtime.result exactly success.
 - [ ] Reproduce aggregate failure with non-success and success outcomes; retain logs.
 - [ ] Commit only explicit files. Push/draft PR after Task2 and fresh whole-branch review.
-Expected: genuine runtime guard RED/GREEN, full existing contracts on Node24 pass,
-and no existing CI gate is removed or allowed to fail silently.
+      Expected: genuine runtime guard RED/GREEN, full existing contracts on Node24 pass,
+      and no existing CI gate is removed or allowed to fail silently.
 
 ### Task 2: Record owner facts and the narrowed release blockers
 
@@ -54,9 +54,9 @@ ownership/dependency facts separately from business attribution/freeze/provider 
 
 - [ ] Preserve the actual dated SELECT result without business rows/secrets.
 - [ ] Record owner neondb_owner/ACL defaults, observed RLS/FK dependencies, connector
-  role flags and unknown app-role/consumer/sole-owner facts; retain NO_GO.
+      role flags and unknown app-role/consumer/sole-owner facts; retain NO_GO.
 - [ ] Update current source integration receipts and gate owner/next-action entries.
 - [ ] Execute verify:audit-release; prove all50 original rows/results unchanged.
 - [ ] Commit, fresh whole-branch review, one RED/GREEN fix pass if needed, full matrix CI.
-Expected: accurate evidence with providerWrites0; no false release/UAT/ownership claim;
-original50 remains19LOCALONLYpass/31blocked/0not_run. Merge only after all checks green.
+      Expected: accurate evidence with providerWrites0; no false release/UAT/ownership claim;
+      original50 remains19LOCALONLYpass/31blocked/0not_run. Merge only after all checks green.

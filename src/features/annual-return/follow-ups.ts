@@ -181,7 +181,7 @@ export function deriveProductionFollowUpDrafts(
       ownerName: caseItem.ownerName,
       recipientName: recipient?.recipientName ?? null,
       phone: recipient?.recipientPhone ?? null,
-      reasonLabel: "Annual return follow-up",
+      reasonLabel: "周年申報跟進",
       messagePreview: buildReminderDraft(caseItem, recipient?.recipientName ?? "貴公司", today),
       status: deliveryStatus(identity, state, Boolean(recipient)),
     });
@@ -208,7 +208,7 @@ export function deriveProductionFollowUpDrafts(
       ownerName: caseItem.ownerName,
       recipientName: recipient?.recipientName ?? null,
       phone: recipient?.recipientPhone ?? null,
-      reasonLabel: evidence.rejectionReason ?? "Replacement required",
+      reasonLabel: evidence.rejectionReason ?? "需要補交",
       messagePreview: evidenceBody(source, evidence.fileName, evidence.rejectionReason),
       status: deliveryStatus(identity, state, Boolean(recipient)),
     });

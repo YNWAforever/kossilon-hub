@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/format-date";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -13,6 +14,8 @@ import type { ClientAssignmentOptions } from "@/features/clients/types";
 import { createAnnualReturnCase } from "../server-fns";
 import type { EligibleCompanyForCase } from "../repository";
 import { dataOriginLabel } from "@/features/clients/data-origin";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 
 type Props = {
   companySearch?: string;
@@ -76,8 +79,6 @@ function emptyForm(
   };
 }
 
-const inputClass =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none";
 const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
 export function CreateCaseDialog({
@@ -143,11 +144,11 @@ export function CreateCaseDialog({
           feeAmount: Number(form.feeAmount),
         },
       });
-      toast.success("Annual return case created.");
+      toast.success("已建立周年申報案件。");
       onCreated(created.id);
       onOpenChange(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to create the case.";
+      const message = error instanceof Error ? error.message : "未能建立案件。";
       toast.error(message);
     } finally {
       setSaving(false);
@@ -158,16 +159,15 @@ export function CreateCaseDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New case</DialogTitle>
-          <DialogDescription>
-            Create an annual return case for a company that doesn't have one yet this year.
-          </DialogDescription>
+          <DialogTitle>新增案件</DialogTitle>
+          <DialogDescription>為今年尚未有周年申報案件的公司建立案件。</DialogDescription>
         </DialogHeader>
         {onCompanySearch ? (
           <label className="text-sm">
             搜尋全範圍可建立案件的公司
-            <input
-              className={inputClass}
+            <Input
+              size="sm"
+              className="w-full"
               value={companySearch ?? ""}
               onChange={(event) => onCompanySearch(event.target.value)}
             />
@@ -178,30 +178,29 @@ export function CreateCaseDialog({
         ) : null}
 
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-sm text-muted-foreground">載入中…</p>
         ) : hasError ? (
           <p role="alert" className="text-sm text-destructive">
-            Unable to load company, template, or owner data. Try again shortly.
+            無法載入公司、模板或負責同事資料，請稍後再試。
           </p>
         ) : companies.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No companies are eligible for a new case right now — every active company already has
-            one for its current return year.
+            目前沒有可建立新案件的公司：所有有效公司在本申報年度均已有案件。
           </p>
         ) : templates.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No active checklist templates exist yet. Ask an Admin to configure one under Settings
-            before creating a case.
+            尚未有啟用中的清單模板。建立案件前，請 Admin 先在設定中設定模板。
           </p>
         ) : (
           <form onSubmit={submit} className="space-y-4">
             <div>
               <label className={labelClass} htmlFor="case-company">
-                Company
+                公司
               </label>
-              <select
+              <Select
                 id="case-company"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={selectedCompany ? form.companyId : ""}
                 onChange={(event) => selectCompany(event.target.value)}
                 required
@@ -217,10 +216,10 @@ export function CreateCaseDialog({
                     {dataOriginLabel(company.dataOrigin)}
                   </option>
                 ))}
-              </select>
+              </Select>
               {selectedCompany ? (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Basis date {selectedCompany.annualReturnBasisDate} · Team{" "}
+                  申報基準日 {formatDate(selectedCompany.annualReturnBasisDate)} · 團隊{" "}
                   {selectedCompany.assignedTeamName}
                 </p>
               ) : null}
@@ -228,11 +227,12 @@ export function CreateCaseDialog({
 
             <div>
               <label className={labelClass} htmlFor="case-template">
-                Checklist template
+                清單模板
               </label>
-              <select
+              <Select
                 id="case-template"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.templateId}
                 onChange={(event) => set("templateId", event.target.value)}
                 required
@@ -242,16 +242,17 @@ export function CreateCaseDialog({
                     {template.name} — {template.serviceType}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div>
               <label className={labelClass} htmlFor="case-owner">
-                Owner
+                負責同事
               </label>
-              <select
+              <Select
                 id="case-owner"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.ownerId}
                 onChange={(event) => set("ownerId", event.target.value)}
                 required
@@ -261,17 +262,18 @@ export function CreateCaseDialog({
                     {owner.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className={labelClass} htmlFor="case-invoice">
-                  Invoice number
+                  發票編號
                 </label>
-                <input
+                <Input
                   id="case-invoice"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.invoiceNumber}
                   onChange={(event) => set("invoiceNumber", event.target.value)}
                   required
@@ -279,14 +281,15 @@ export function CreateCaseDialog({
               </div>
               <div>
                 <label className={labelClass} htmlFor="case-fee">
-                  Fee (HKD)
+                  費用（HKD）
                 </label>
-                <input
+                <Input
                   id="case-fee"
                   type="number"
                   min="1"
                   step="1"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.feeAmount}
                   onChange={(event) => set("feeAmount", event.target.value)}
                   required
@@ -295,20 +298,17 @@ export function CreateCaseDialog({
             </div>
 
             <DialogFooter>
-              <button
-                type="button"
-                onClick={() => onOpenChange(false)}
-                className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
-              >
-                Cancel
-              </button>
-              <button
+              <Button size="sm" onClick={() => onOpenChange(false)}>
+                取消
+              </Button>
+              <Button
                 type="submit"
+                variant="primary"
+                size="sm"
                 disabled={saving || !selectedCompany}
-                className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
-                {saving ? "Creating…" : "Create case"}
-              </button>
+                {saving ? "建立中…" : "建立案件"}
+              </Button>
             </DialogFooter>
           </form>
         )}

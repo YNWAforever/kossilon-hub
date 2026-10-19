@@ -1,3 +1,4 @@
+import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
 
 type Props = {
@@ -6,14 +7,12 @@ type Props = {
 
 const COPY: Record<Props["variant"], { title: string; message: string }> = {
   list: {
-    title: "Corporate changes",
-    message:
-      "Corporate change requests track live case data and have no demo fixtures. Sign in to a production environment to use them.",
+    title: "公司變更",
+    message: "公司變更申請追蹤實時案件資料，並無示範資料。請登入正式環境使用。",
   },
   detail: {
-    title: "Corporate change request",
-    message:
-      "Corporate change request detail reads live case data and has no demo fixtures. Sign in to a production environment to view one.",
+    title: "公司變更申請",
+    message: "公司變更申請詳情讀取實時案件資料，並無示範資料。請登入正式環境查看。",
   },
 };
 
@@ -22,10 +21,8 @@ export function DemoCorporateChangeNotice({ variant }: Props) {
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Operations" title={copy.title} />
-      <section className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
-        {copy.message}
-      </section>
+      <PageHeader eyebrow="案件與客戶" title={copy.title} />
+      <DemoUnavailable message={copy.message} />
     </main>
   );
 }

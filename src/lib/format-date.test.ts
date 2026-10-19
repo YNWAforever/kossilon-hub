@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { formatDate } from "@/lib/format-date";
+import { formatDate, formatDateEnglish, formatDateTime, formatDueDate } from "@/lib/format-date";
 
 const originalTimeZone = process.env.TZ;
 
@@ -10,9 +10,9 @@ afterEach(() => {
 
 describe("formatDate", () => {
   it("renders a date-only string as that date", () => {
-    expect(formatDate("2026-07-05")).toBe("05 Jul 2026");
-    expect(formatDate("2026-01-01")).toBe("01 Jan 2026");
-    expect(formatDate("2026-12-31")).toBe("31 Dec 2026");
+    expect(formatDate("2026-07-05")).toBe("2026年7月5日");
+    expect(formatDate("2026-01-01")).toBe("2026年1月1日");
+    expect(formatDate("2026-12-31")).toBe("2026年12月31日");
   });
 
   it("renders a date-only string as that date in a negative-offset timezone", () => {
@@ -21,17 +21,33 @@ describe("formatDate", () => {
     // still the previous day -- so a viewer outside Hong Kong was shown a due
     // date one day earlier than the one the firm filed against.
     process.env.TZ = "America/Los_Angeles";
-    expect(formatDate("2026-07-05")).toBe("05 Jul 2026");
+    expect(formatDate("2026-07-05")).toBe("2026年7月5日");
 
     process.env.TZ = "Pacific/Honolulu";
-    expect(formatDate("2026-01-01")).toBe("01 Jan 2026");
+    expect(formatDate("2026-01-01")).toBe("2026年1月1日");
   });
 
   it("renders a full instant as its Hong Kong calendar day", () => {
     // 17:00Z is already tomorrow in Hong Kong, and the firm's screens speak the
     // firm's day wherever the viewer happens to be sitting.
     process.env.TZ = "America/Los_Angeles";
-    expect(formatDate("2026-07-05T17:00:00.000Z")).toBe("06 Jul 2026");
-    expect(formatDate("2026-07-05T15:59:00.000Z")).toBe("05 Jul 2026");
+    expect(formatDate("2026-07-05T17:00:00.000Z")).toBe("2026年7月6日");
+    expect(formatDate("2026-07-05T15:59:00.000Z")).toBe("2026年7月5日");
+  });
+
+  it("describes a due date relative to today without a signed day count", () => {
+    expect(formatDueDate("2026-06-10", -124)).toBe("2026年6月10日 · 已逾期 124 日");
+    expect(formatDueDate("2026-06-10", 0)).toBe("2026年6月10日 · 今日到期");
+    expect(formatDueDate("2026-06-10", 9)).toBe("2026年6月10日 · 尚餘 9 日");
+  });
+
+  it("keeps an English date for English text written to a client", () => {
+    expect(formatDateEnglish("2026-08-12")).toBe("12 Aug 2026");
+  });
+
+  it("renders an instant as its Hong Kong date and 24-hour time", () => {
+    process.env.TZ = "America/Los_Angeles";
+    expect(formatDateTime("2026-06-11T01:00:00.000Z")).toBe("2026年6月11日 09:00");
+    expect(formatDateTime("2026-07-05T17:30:00.000Z")).toBe("2026年7月6日 01:30");
   });
 });

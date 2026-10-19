@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import { assignmentLabels } from "@/features/work-items/assignment-labels";
 import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import type { NarImportRow } from "./repository";
 import type { NarRowInputs } from "./apply-contracts";
+import { narApplyRequirementLabel, narApplyStateLabel } from "./apply-labels";
 import {
   getNarApplyOptions,
   previewNarApply,
@@ -138,15 +141,14 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
     <section className="space-y-4 rounded-lg border bg-card p-4">
       <h2 className="text-base font-semibold">批准套用所選行</h2>
       <p className="text-sm text-muted-foreground">
-        付款日期及 credit note
-        只作來源觀察；實際費用由人手輸入，收款仍需獨立付款證據。未選行保留待處理。歷史案件禁止外發。
+        付款日期及貸項通知單只作來源參考；實際費用由人手輸入，收款仍需獨立的付款證明。未選取的行保留待處理。歷史案件禁止外發。
       </p>
       {error || options.isError || jobs.isError || job.isError ? (
         <p role="alert">{error ?? "未能載入套用資料，請重新載入。"}</p>
       ) : null}
       <label>
         案件用途{" "}
-        <select
+        <Select
           aria-label="案件用途"
           disabled={busy}
           value={mode}
@@ -158,7 +160,7 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
         >
           <option value="historical">歷史記錄（禁止外發）</option>
           <option value="client">本年度正式案件</option>
-        </select>
+        </Select>
       </label>
       {mode === "client" ? (
         <label className="block">
@@ -199,7 +201,7 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
             <div className="grid gap-2 md:grid-cols-2">
               <label>
                 實際費用（HKD）
-                <input
+                <Input
                   aria-label={`第${row.rowNumber}行實際費用`}
                   type="number"
                   min="1"
@@ -214,9 +216,9 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
                 />
               </label>
               <label>
-                Made-up date{" "}
-                <input
-                  aria-label={`第${row.rowNumber}行made-up date`}
+                結算日期{" "}
+                <Input
+                  aria-label={`第${row.rowNumber}行結算日期`}
                   type="date"
                   disabled={busy}
                   value={inputs[row.id]?.madeUpDate ?? ""}
@@ -224,24 +226,24 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
                 />
               </label>
               <label>
-                清單範本
-                <select
-                  aria-label={`第${row.rowNumber}行範本`}
+                清單模板
+                <Select
+                  aria-label={`第${row.rowNumber}行模板`}
                   disabled={busy}
                   value={inputs[row.id]?.templateId ?? ""}
                   onChange={(e) => update(row.id, { templateId: e.target.value || undefined })}
                 >
-                  <option value="">選擇範本</option>
+                  <option value="">選擇模板</option>
                   {options.data?.templates.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <label>
                 負責同事
-                <select
+                <Select
                   aria-label={`第${row.rowNumber}行負責同事`}
                   disabled={busy}
                   value={inputs[row.id]?.ownerId ?? ""}
@@ -253,11 +255,11 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
                       {ownerLabels.get(o.id)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <label>
-                Invoice reference（可沿用來源；Nil 時需確認）
-                <input
+                發票編號（可沿用來源；來源為 Nil 時需確認）
+                <Input
                   disabled={busy}
                   value={inputs[row.id]?.invoiceNumber ?? ""}
                   onChange={(e) => update(row.id, { invoiceNumber: e.target.value || undefined })}
@@ -265,7 +267,7 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
               </label>
               {(
                 [
-                  ["acknowledgeDueDifference", "確認採用來源 due date，已覆核與42日計算的差異"],
+                  ["acknowledgeDueDifference", "確認採用來源到期日，已覆核與 42 日計算的差異"],
                   ["acknowledgeYearDifference", "確認選定年度與工作表名稱的差異"],
                   ["acknowledgeSourceIssues", "已覆核此行的來源注意事項"],
                 ] as const
@@ -290,13 +292,13 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
           ) : null}
         </div>
       ))}
-      <button
+      <Button
         type="button"
         disabled={busy || !selected.length || options.isPending || options.isError}
         onClick={() => preview.mutate()}
       >
         預覽所選行
-      </button>
+      </Button>
       {approvedPreview ? (
         <div className="space-y-2 border-t pt-3">
           <p>
@@ -313,7 +315,7 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
                 {r.original?.filing_due_date ?? "新案件"} → <span>{r.candidate.filingDueDate}</span>
               </p>
               <p>
-                Invoice {r.candidate.invoiceNumber ?? "待確認"} · 費用
+                發票 {r.candidate.invoiceNumber ?? "待確認"} · 費用
                 {r.candidate.feeAmount ?? "沿用現有／待確認"}
               </p>
               {r.diff?.map((d) => (
@@ -322,9 +324,9 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
                     {
                       companyId: "公司",
                       returnYear: "年度",
-                      madeUpDate: "Made-up date",
-                      filingDueDate: "申報限期",
-                      invoiceNumber: "Invoice",
+                      madeUpDate: "結算日期",
+                      filingDueDate: "申報到期日",
+                      invoiceNumber: "發票",
                       feeAmount: "實際費用",
                     }[d.field]
                   }
@@ -333,13 +335,13 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
               ))}
               {r.sourceInvoiceDifference ? (
                 <p>
-                  來源 Invoice {r.sourceInvoiceDifference.source} 與現有{" "}
+                  來源發票 {r.sourceInvoiceDifference.source} 與現有發票{" "}
                   {r.sourceInvoiceDifference.existing ?? "未有記錄"}{" "}
                   不同；需另行覆核，付款資料保留。
                 </p>
               ) : null}
               <p>
-                {r.requiredInputs.join("、")} {r.conflicts.join("、")}
+                {[...r.requiredInputs, ...r.conflicts].map(narApplyRequirementLabel).join("、")}
               </p>
             </div>
           ))}
@@ -353,37 +355,39 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
             />
             確認此版本及逐行差異；被阻擋行不會寫入
           </label>
-          <button
+          <Button
             type="button"
             disabled={busy || !confirmation || !approvedPreview.value.eligibleCount}
             onClick={() => execute.mutate()}
           >
             批准建立套用工作
-          </button>
+          </Button>
         </div>
       ) : null}
       <h3>已批准工作</h3>
       {jobs.data?.pages
         .flatMap((p) => p.items)
         .map((j) => (
-          <button
+          <Button
             key={j.id}
             type="button"
             aria-label="開啟套用工作"
+            size="sm"
+            className="h-auto whitespace-normal py-2 text-left"
             disabled={busy}
             onClick={() => setJobId(j.id)}
           >
-            {j.createdAt} · {j.state}
-          </button>
+            {j.createdAt} · {narApplyStateLabel(j.state)}
+          </Button>
         ))}
       {jobs.hasNextPage ? (
-        <button
+        <Button
           type="button"
           disabled={busy || jobs.isFetchingNextPage}
           onClick={() => void jobs.fetchNextPage()}
         >
           載入較早的套用工作
-        </button>
+        </Button>
       ) : null}
       {job.data ? (
         <div className="space-y-2">
@@ -397,29 +401,29 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
           </p>
           {job.data.rows.map((r) => (
             <p key={r.row_id}>
-              {r.company_name} · 第{r.row_number}行 · {r.state} {r.reason}
+              {r.company_name} · 第{r.row_number}行 · {narApplyStateLabel(r.state)} {r.reason}
             </p>
           ))}
-          <button
+          <Button
             type="button"
             disabled={busy || !job.data.counts.pending}
             onClick={() => resume.mutate()}
           >
             繼續處理最多100行
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             disabled={busy || !job.data.counts.pending}
             onClick={() => cancel.mutate()}
           >
             取消待處理行
-          </button>
-          <button type="button" disabled={busy} onClick={() => void compensation.refetch()}>
+          </Button>
+          <Button type="button" disabled={busy} onClick={() => void compensation.refetch()}>
             預覽補償
-          </button>
-          <button type="button" disabled={busy} onClick={refresh}>
+          </Button>
+          <Button type="button" disabled={busy} onClick={refresh}>
             重新載入工作狀態
-          </button>
+          </Button>
           {compensation.isError ? <p role="alert">未能載入補償資料，請重新載入。</p> : null}
           {compensation.data ? (
             <div>
@@ -430,10 +434,10 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
                     {r.companyName} · 第{r.rowNumber}行
                   </p>
                   <p>{r.currentMatches ? "版本相符，需再覆核補償" : "版本已變，不可沿用舊補償"}</p>
-                  <p>原申報限期：{snapshotFilingDate(r.proposedBefore) ?? "未有原案件"}</p>
-                  <p>現申報限期：{snapshotFilingDate(r.current) ?? "待確認"}</p>
+                  <p>原申報到期日：{snapshotFilingDate(r.proposedBefore) ?? "未有原案件"}</p>
+                  <p>現申報到期日：{snapshotFilingDate(r.current) ?? "待確認"}</p>
                   <details>
-                    <summary>完整 before／current 資料</summary>
+                    <summary>完整原有／現時資料</summary>
                     <pre className="overflow-auto text-xs">
                       {JSON.stringify({ before: r.proposedBefore, current: r.current }, null, 2)}
                     </pre>

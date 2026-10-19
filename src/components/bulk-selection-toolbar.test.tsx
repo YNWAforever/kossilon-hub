@@ -84,7 +84,7 @@ describe("explicit scope and durable bulk toolbar", () => {
       data.q === "201" ? [{ id: assignee, name: "Member201", role: "Staff", teamId: null }] : [],
     );
     setup();
-    fireEvent.change(screen.getByLabelText("搜尋批量員工"), { target: { value: "201" } });
+    fireEvent.change(screen.getByLabelText("搜尋同事"), { target: { value: "201" } });
     await screen.findByText(/Member201/);
     expect(api.assignees).toHaveBeenLastCalledWith({ data: { q: "201", limit: 200 } });
   });
@@ -132,7 +132,7 @@ describe("explicit scope and durable bulk toolbar", () => {
     );
     expect(await screen.findByText("Synthetic draft, no dispatch")).toBeTruthy();
     expect(screen.getByText("批准並建立維護工作")).toBeTruthy();
-    fireEvent.change(screen.getByLabelText("Bulk action"), {
+    fireEvent.change(screen.getByLabelText("批量操作"), {
       target: { value: "payment_list_export" },
     });
     expect(screen.queryByText("批准並建立維護工作")).toBeNull();
@@ -152,7 +152,7 @@ describe("explicit scope and durable bulk toolbar", () => {
     );
     setup();
     fireEvent.click(await screen.findByRole("button", { name: "載入較早的工作" }));
-    await screen.findByRole("option", { name: /100筆.*partial/ });
+    await screen.findByRole("option", { name: /100筆.*部分完成/ });
     expect(api.jobs).toHaveBeenLastCalledWith({
       data: { cursor: { id: snapshotId, createdAt: "2026-10-01T00:00:00.000001Z" } },
     });
@@ -185,8 +185,8 @@ describe("explicit scope and durable bulk toolbar", () => {
       nextCursor: 50,
     });
     setup();
-    await screen.findByRole("option", { name: /100筆.*partial/ });
-    fireEvent.change(screen.getByLabelText("Saved bulk job"), { target: { value: snapshotId } });
+    await screen.findByRole("option", { name: /100筆.*部分完成/ });
+    fireEvent.change(screen.getByLabelText("已保存工作"), { target: { value: snapshotId } });
     expect(await screen.findByRole("link", { name: "Business company" })).toBeTruthy();
     expect((screen.getByText("只重試可重試失敗") as HTMLButtonElement).disabled).toBe(false);
     expect(screen.queryByText(ids[0])).toBeNull();
@@ -198,13 +198,13 @@ describe("explicit scope and durable bulk toolbar", () => {
     fireEvent.click(screen.getByText("選取全部篩選結果"));
     await screen.findByText(/已固定全部1240/);
     await waitFor(() =>
-      expect((screen.getByLabelText("Select Scoped case 1") as HTMLInputElement).disabled).toBe(
+      expect((screen.getByLabelText("選取 Scoped case 1") as HTMLInputElement).disabled).toBe(
         false,
       ),
     );
-    fireEvent.click(screen.getByLabelText("Select Scoped case 1"));
-    fireEvent.change(screen.getByLabelText("Bulk assignee"), { target: { value: assignee } });
-    fireEvent.click(screen.getByText("預覽批量分派"));
+    fireEvent.click(screen.getByLabelText("選取 Scoped case 1"));
+    fireEvent.change(screen.getByLabelText("同事"), { target: { value: assignee } });
+    fireEvent.click(screen.getByText("預覽批量分配"));
     await waitFor(() =>
       expect(api.preview).toHaveBeenCalledWith({
         data: {
@@ -219,7 +219,7 @@ describe("explicit scope and durable bulk toolbar", () => {
   it("retains explicit cross-page IDs and clears selection/preview on a filter or actor change", async () => {
     const v = setup();
     await screen.findByRole("option", { name: /Mei Lam/ });
-    fireEvent.click(screen.getByLabelText("Select Scoped case 1"));
+    fireEvent.click(screen.getByLabelText("選取 Scoped case 1"));
     v.rerender(
       v.element({ q: "scoped" }, [
         { id: "40000000-0000-0000-0000-000000000051", label: "Next page" },
@@ -228,8 +228,8 @@ describe("explicit scope and durable bulk toolbar", () => {
     expect(screen.getByText("已選取1筆")).toBeTruthy();
     v.rerender(v.element({ q: "different" }));
     expect(screen.getByText("已選取0筆")).toBeTruthy();
-    expect((screen.getByText("預覽批量分派") as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(screen.getByLabelText("Select Scoped case 2"));
+    expect((screen.getByText("預覽批量分配") as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByLabelText("選取 Scoped case 2"));
     v.rerender(v.element({ q: "different" }, page, "manager-B"));
     expect(screen.getByText("已選取0筆")).toBeTruthy();
   });
@@ -242,9 +242,9 @@ describe("explicit scope and durable bulk toolbar", () => {
     );
     const v = setup();
     await screen.findByRole("option", { name: /Mei Lam/ });
-    fireEvent.click(screen.getByLabelText("Select Scoped case 1"));
-    fireEvent.change(screen.getByLabelText("Bulk assignee"), { target: { value: assignee } });
-    fireEvent.click(screen.getByText("預覽批量分派"));
+    fireEvent.click(screen.getByLabelText("選取 Scoped case 1"));
+    fireEvent.change(screen.getByLabelText("同事"), { target: { value: assignee } });
+    fireEvent.click(screen.getByText("預覽批量分配"));
     await waitFor(() => expect(api.preview).toHaveBeenCalledOnce());
     v.rerender(v.element({ q: "new" }));
     await act(async () =>
@@ -255,7 +255,7 @@ describe("explicit scope and durable bulk toolbar", () => {
         reasons: { forbidden: 0, locked: 0, failed: 0, conflict: 0 },
       }),
     );
-    expect(screen.queryByText("批准並建立分派工作")).toBeNull();
+    expect(screen.queryByText("批准並建立分配工作")).toBeNull();
     expect(screen.getByText("已選取0筆")).toBeTruthy();
   });
   it("recovers a persisted job after refresh and never automatically resumes unknown outcomes", async () => {
@@ -283,8 +283,8 @@ describe("explicit scope and durable bulk toolbar", () => {
       nextCursor: null,
     });
     setup();
-    await screen.findByRole("option", { name: /100筆.*partial/ });
-    fireEvent.change(screen.getByLabelText("Saved bulk job"), { target: { value: snapshotId } });
+    await screen.findByRole("option", { name: /100筆.*部分完成/ });
+    fireEvent.change(screen.getByLabelText("已保存工作"), { target: { value: snapshotId } });
     await screen.findByText(/結果未知10/);
     expect(api.resume).not.toHaveBeenCalled();
     expect(api.retry).not.toHaveBeenCalled();

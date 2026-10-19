@@ -73,8 +73,8 @@ async function renderAdmin(dataMode: "production" | "demo" = "production") {
 describe("/admin production console, gated by role", () => {
   it("keeps demo staff roles and active flags read-only", async () => {
     const html = await renderAdmin("demo");
-    expect(html).toMatch(/<select[^>]*disabled=""[^>]*aria-label="Role for Readonly Demo"/);
-    expect(html).toMatch(/<button[^>]*disabled=""[^>]*aria-label="Deactivate Readonly Demo"/);
+    expect(html).toMatch(/<select[^>]*disabled=""[^>]*aria-label="Readonly Demo 的角色"/);
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*aria-label="停用 Readonly Demo"/);
   });
   it("shows the console to an admin", async () => {
     mockIsAdmin.value = true;
@@ -83,7 +83,7 @@ describe("/admin production console, gated by role", () => {
 
     expect(html).toContain("員工與團隊管理");
     expect(html).toContain("邀請未啟用");
-    expect(html).not.toContain("Admin access required");
+    expect(html).not.toContain("須具備管理員權限");
   });
 
   it("shows a denied state to a non-admin", async () => {
@@ -91,7 +91,7 @@ describe("/admin production console, gated by role", () => {
 
     const html = await renderAdmin();
 
-    expect(html).toContain("Admin access required");
+    expect(html).toContain("須具備管理員權限");
     expect(html).not.toContain("Not available in this deployment");
   });
 });

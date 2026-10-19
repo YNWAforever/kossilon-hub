@@ -1,6 +1,13 @@
+import { checklistItemText } from "@/lib/checklist-item-label";
+import { ChecklistItemLabel } from "@/components/checklist-item-label";
+import { Link } from "@tanstack/react-router";
+import { LoadingRows } from "@/components/ui/skeleton";
+import { parseEntityId } from "@/lib/entity-id";
+import { RecordUnavailable } from "@/components/record-unavailable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/field";
 import { PageHeader } from "@/components/page-header";
 import {
   cancelCorporateChangeRequest,
@@ -9,8 +16,29 @@ import {
   updateCorporateChangeChecklistItemStatus,
 } from "../server-fns";
 import type { ChecklistItemStatus } from "../types";
+import {
+  CHECKLIST_ITEM_STATUS_LABELS,
+  CORPORATE_CHANGE_STATUS_LABELS,
+  CORPORATE_CHANGE_TYPE_LABELS,
+} from "../labels";
 
 export function ProductionCorporateChangeDetail({ requestId }: { requestId: string }) {
+  // A malformed link can never name a request; asking the server only fails
+  // its schema validation, which used to read as a temporary outage.
+  if (parseEntityId(requestId) === null) return <CorporateChangeNotFound />;
+  return <CorporateChangeDetail requestId={requestId} />;
+}
+
+function CorporateChangeNotFound() {
+  return (
+    <RecordUnavailable
+      title="找不到公司變更申請"
+      back={<Link to="/corporate-changes">返回公司變更</Link>}
+    />
+  );
+}
+
+function CorporateChangeDetail({ requestId }: { requestId: string }) {
   const queryClient = useQueryClient();
 
   const requestQuery = useQuery({
@@ -29,51 +57,50 @@ export function ProductionCorporateChangeDetail({ requestId }: { requestId: stri
         data: { requestId, itemId: input.itemId, status: input.status, note: input.note },
       }),
     onSuccess: invalidate,
-    onError: () => toast.error("Unable to update the checklist item. Try again."),
+    onError: () => toast.error("未能更新清單項目，請再試一次。"),
   });
 
   const complete = useMutation({
     mutationFn: () => completeCorporateChangeRequest({ data: { requestId } }),
     onSuccess: () => {
-      toast.success("Corporate change request completed.");
+      toast.success("公司變更申請已完成。");
       invalidate();
     },
-    onError: () => toast.error("Unable to complete this request. Try again."),
+    onError: () => toast.error("未能完成此申請，請再試一次。"),
   });
 
   const cancel = useMutation({
     mutationFn: () => cancelCorporateChangeRequest({ data: { requestId } }),
     onSuccess: () => {
-      toast.success("Corporate change request cancelled.");
+      toast.success("公司變更申請已取消。");
       invalidate();
     },
-    onError: () => toast.error("Unable to cancel this request. Try again."),
+    onError: () => toast.error("未能取消此申請，請再試一次。"),
   });
 
   if (requestQuery.isPending) {
     return (
       <main className="flex-1 space-y-6 p-4 md:p-6">
-        <PageHeader eyebrow="Operations" title="Corporate change request" />
-        <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
-          <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />
-          Loading…
-        </div>
+        <PageHeader eyebrow="案件與客戶" title="公司變更申請" />
+        <LoadingRows label="正在載入公司變更申請…" rows={6} className="p-6" />
       </main>
+    );
+  }
+
+  if (requestQuery.isError) {
+    return (
+      <RecordUnavailable
+        title="公司變更申請無法載入"
+        message="未能載入此申請。請稍後再試。"
+        back={<Link to="/corporate-changes">返回公司變更</Link>}
+        onRetry={() => void requestQuery.refetch()}
+      />
     );
   }
 
   const request = requestQuery.data;
 
-  if (requestQuery.isError || !request) {
-    return (
-      <main className="flex-1 space-y-3 p-4 md:p-6">
-        <PageHeader eyebrow="Operations" title="Corporate change request" />
-        <p role="alert" className="text-sm text-destructive">
-          Failed to load this request.
-        </p>
-      </main>
-    );
-  }
+  if (!request) return <CorporateChangeNotFound />;
 
   const requiredItemsVerified = request.checklistItems
     .filter((item) => item.required)
@@ -84,26 +111,20 @@ export function ProductionCorporateChangeDetail({ requestId }: { requestId: stri
   return (
     <main className="flex-1 space-y-6 p-4 md:p-6">
       <PageHeader
-        eyebrow="Operations"
-        title="Corporate change request"
+        eyebrow="案件與客戶"
+        title="公司變更申請"
         actions={
           <>
-            <button
-              type="button"
+            <Button
+              variant="primary"
               onClick={() => complete.mutate()}
               disabled={!canComplete || complete.isPending}
-              className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              Complete
-            </button>
-            <button
-              type="button"
-              onClick={() => cancel.mutate()}
-              disabled={!canCancel || cancel.isPending}
-              className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
-            >
-              Cancel request
-            </button>
+              完成
+            </Button>
+            <Button onClick={() => cancel.mutate()} disabled={!canCancel || cancel.isPending}>
+              取消申請
+            </Button>
           </>
         }
       />
@@ -112,19 +133,23 @@ export function ProductionCorporateChangeDetail({ requestId }: { requestId: stri
         <dl className="grid gap-4 md:grid-cols-3">
           <div>
             <dt className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              Change type
+              變更類別
             </dt>
-            <dd className="mt-1 text-sm">{request.changeType.replace(/_/g, " ")}</dd>
+            <dd className="mt-1 text-sm">
+              {CORPORATE_CHANGE_TYPE_LABELS[request.changeType] ?? request.changeType}
+            </dd>
           </div>
           <div>
             <dt className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              Status
+              狀態
             </dt>
-            <dd className="mt-1 text-sm">{request.status}</dd>
+            <dd className="mt-1 text-sm">
+              {CORPORATE_CHANGE_STATUS_LABELS[request.status] ?? request.status}
+            </dd>
           </div>
           <div>
             <dt className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              Quoted fee
+              報價
             </dt>
             <dd className="mt-1 text-sm">HKD {request.quotedFee.toLocaleString()}</dd>
           </div>
@@ -132,17 +157,18 @@ export function ProductionCorporateChangeDetail({ requestId }: { requestId: stri
       </section>
 
       <section className="rounded-lg border bg-card p-4">
-        <h2 className="mb-3 text-sm font-semibold">Checklist</h2>
+        <h2 className="mb-3 text-sm font-semibold">清單</h2>
         <div className="divide-y">
           {request.checklistItems.map((item) => (
             <div key={item.id} className="flex items-center justify-between gap-3 py-3">
               <span className="min-w-0 truncate text-sm">
-                {item.itemLabel}
-                {item.required ? "" : " (optional)"}
+                <ChecklistItemLabel label={item.itemLabel} />
+                {item.required ? "" : "（選填）"}
               </span>
-              <select
-                aria-label={`${item.itemLabel} status`}
-                className="shrink-0 rounded-md border border-border bg-background px-2 py-1 text-xs"
+              <Select
+                size="sm"
+                aria-label={`${checklistItemText(item.itemLabel)} 狀態`}
+                className="shrink-0"
                 value={item.status}
                 onChange={(event) =>
                   updateItem.mutate({
@@ -153,11 +179,11 @@ export function ProductionCorporateChangeDetail({ requestId }: { requestId: stri
                 }
                 disabled={updateItem.isPending}
               >
-                <option value="Missing">Missing</option>
-                <option value="Received">Received</option>
-                <option value="Verified">Verified</option>
-                <option value="Rejected">Rejected</option>
-              </select>
+                <option value="Missing">{CHECKLIST_ITEM_STATUS_LABELS.Missing}</option>
+                <option value="Received">{CHECKLIST_ITEM_STATUS_LABELS.Received}</option>
+                <option value="Verified">{CHECKLIST_ITEM_STATUS_LABELS.Verified}</option>
+                <option value="Rejected">{CHECKLIST_ITEM_STATUS_LABELS.Rejected}</option>
+              </Select>
             </div>
           ))}
         </div>

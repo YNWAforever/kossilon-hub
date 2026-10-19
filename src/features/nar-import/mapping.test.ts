@@ -243,7 +243,7 @@ describe("readNarSheet", () => {
       (candidate) => candidate.code === "payment-after-ar-due",
     );
     expect(issue?.severity).toBe("attention");
-    expect(issue?.message).toContain("does not establish late filing");
+    expect(issue?.message).toContain("不代表逾期遞交");
   });
 
   it("flags a value the workbook computed rather than one the source asserted", () => {
@@ -363,7 +363,7 @@ describe("dispositionFor", () => {
     const note = result.issues.find(
       (issue) => issue.code === "ar-due-differs-from-anniversary-rule",
     );
-    expect(note?.message).toContain("The source value is kept.");
+    expect(note?.message).toContain("已保留來源數值。");
     expect(note?.message).toContain("2025-10-08");
     expect(note?.severity).toBe("attention");
   });

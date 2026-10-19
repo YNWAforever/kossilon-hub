@@ -1,8 +1,12 @@
+import { pageTitle } from "@/lib/page-title";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Input, Select, Textarea } from "@/components/ui/field";
 import { NarApplyPanel } from "@/features/nar-import/apply-panel";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { DataMode } from "@/features/runtime/data-mode";
@@ -15,6 +19,7 @@ import {
   mapNarImportCompany,
   stageNarImportBatch,
 } from "@/features/nar-import/server-fns";
+import { formatDate } from "@/lib/format-date";
 
 /**
  * The monthly workbook import.
@@ -30,6 +35,7 @@ import {
  */
 
 export const Route = createFileRoute("/imports")({
+  head: () => ({ meta: [{ title: pageTitle("月表匯入") }] }),
   component: ImportsRoute,
 });
 
@@ -43,12 +49,12 @@ const DISPOSITION_LABELS: Record<NarRowDisposition, string> = {
 };
 
 const DISPOSITION_TONES: Record<NarRowDisposition, string> = {
-  new: "bg-status-green-soft text-status-green",
-  updated: "bg-status-yellow-soft text-status-yellow",
+  new: "bg-status-green-soft text-status-green-text",
+  updated: "bg-status-yellow-soft text-status-yellow-text",
   unchanged: "bg-muted text-muted-foreground",
-  conflict: "bg-status-orange-soft text-status-orange",
-  invalid: "bg-status-red-soft text-status-red",
-  needsCompanyMapping: "bg-status-orange-soft text-status-orange",
+  conflict: "bg-status-orange-soft text-status-orange-text",
+  invalid: "bg-status-red-soft text-status-red-text",
+  needsCompanyMapping: "bg-status-orange-soft text-status-orange-text",
 };
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -121,7 +127,7 @@ function ImportsWorkspace({
 
   const stageMutation = useMutation({
     mutationFn: async () => {
-      if (!file) throw new Error("Choose a workbook first.");
+      if (!file) throw new Error("請先選擇月表檔案。");
       const bytes = new Uint8Array(await file.arrayBuffer());
       return stageNarImportBatch({
         data: {
@@ -178,10 +184,8 @@ function ImportsWorkspace({
   if (dataMode !== "production") {
     return (
       <main className="flex-1 space-y-4 p-6">
-        <PageHeader eyebrow="Operations" title="月表匯入" />
-        <p className="text-sm text-muted-foreground">
-          匯入只在正式環境提供，示範模式沒有可寫入的資料庫。
-        </p>
+        <PageHeader eyebrow="案件與客戶" title="月表匯入" />
+        <DemoUnavailable message="匯入只在正式環境提供，示範模式沒有可寫入的資料庫。" />
       </main>
     );
   }
@@ -189,18 +193,22 @@ function ImportsWorkspace({
   if (!allowed)
     return (
       <main className="flex-1 p-6">
-        <PageHeader eyebrow="Operations" title="月表匯入" />
-        <p>只有已核實的現任 Admin 可以覆核跨公司月表。</p>
+        <PageHeader eyebrow="案件與客戶" title="月表匯入" />
+        <p>只有已核實的在職管理員可以覆核跨公司月表。</p>
       </main>
     );
   const review = reviewQuery.data;
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Operations" title="月表匯入" subtitle="NAR Monthly Working" />
+      <PageHeader
+        eyebrow="案件與客戶"
+        title="月表匯入"
+        subtitle="匯入 NAR Monthly Working 月表，逐行覆核後才套用。"
+      />
 
       {error ? (
-        <div className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red">
+        <div className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red-text">
           {error}
         </div>
       ) : null}
@@ -216,7 +224,7 @@ function ImportsWorkspace({
           <label className="grid gap-1 text-sm">
             檔案
             <input
-              aria-label="Workbook file"
+              aria-label="月表檔案"
               className="rounded-md border bg-background px-3 py-2"
               type="file"
               accept=".xlsx"
@@ -225,9 +233,9 @@ function ImportsWorkspace({
           </label>
           <label className="grid gap-1 text-sm">
             申報年度
-            <input
-              aria-label="Return year"
-              className="rounded-md border bg-background px-3 py-2"
+            <Input
+              aria-label="申報年度"
+              className="w-full"
               type="number"
               min={1900}
               max={2100}
@@ -237,22 +245,22 @@ function ImportsWorkspace({
           </label>
           <label className="grid gap-1 text-sm">
             工作表（可留空）
-            <input
-              aria-label="Sheet name"
-              className="rounded-md border bg-background px-3 py-2"
+            <Input
+              aria-label="工作表名稱"
+              className="w-full"
               placeholder="8.2025"
               value={sheetName}
               onChange={(event) => setSheetName(event.target.value)}
             />
           </label>
-          <button
-            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50"
+          <Button
+            variant="primary"
             disabled={!file || stageMutation.isPending}
             onClick={() => stageMutation.mutate()}
             type="button"
           >
             {stageMutation.isPending ? "讀取中…" : "讀取並預覽"}
-          </button>
+          </Button>
         </div>
 
         {stageMutation.data?.reused ? (
@@ -266,7 +274,7 @@ function ImportsWorkspace({
           </p>
         ) : null}
         {stageMutation.data?.sheetIssues.map((issue) => (
-          <p key={issue.code + issue.message} className="mt-2 text-sm text-status-yellow">
+          <p key={issue.code + issue.message} className="mt-2 text-sm text-status-yellow-text">
             {issue.message}
           </p>
         ))}
@@ -278,7 +286,7 @@ function ImportsWorkspace({
           <p>舊版本沒有保存選定年度。檔名不是年度批准證據；確認後不可更改。</p>
           <label>
             已覆核年度
-            <input
+            <Input
               aria-label="既有批次已覆核年度"
               type="number"
               min="1900"
@@ -289,7 +297,7 @@ function ImportsWorkspace({
           </label>
           <label>
             來源及確認理由
-            <textarea
+            <Textarea
               minLength={10}
               maxLength={1000}
               value={legacyReason}
@@ -304,7 +312,7 @@ function ImportsWorkspace({
             />
             已覆核與工作表名稱的年度差異
           </label>
-          <button
+          <Button
             type="button"
             disabled={
               confirmYearMutation.isPending ||
@@ -315,7 +323,7 @@ function ImportsWorkspace({
             onClick={() => confirmYearMutation.mutate()}
           >
             確認既有批次年度
-          </button>
+          </Button>
         </section>
       ) : null}
       {review ? (
@@ -366,7 +374,9 @@ function ImportsWorkspace({
                       <li
                         key={`${row.id}-${issue.code}-${index}`}
                         className={
-                          issue.severity === "blocking" ? "text-status-red" : "text-status-yellow"
+                          issue.severity === "blocking"
+                            ? "text-status-red-text"
+                            : "text-status-yellow-text"
                         }
                       >
                         {issue.message}
@@ -380,10 +390,10 @@ function ImportsWorkspace({
                     <label className="sr-only" htmlFor={`map-${row.id}`}>
                       對應公司
                     </label>
-                    <select
+                    <Select
+                      size="sm"
                       id={`map-${row.id}`}
-                      aria-label={`Map ${row.externalClientId} to a company`}
-                      className="rounded-md border bg-background px-2 py-1 text-sm"
+                      aria-label={`將客戶編號 ${row.externalClientId} 對應公司`}
                       defaultValue=""
                       onChange={(event) => {
                         if (!event.target.value) return;
@@ -400,18 +410,19 @@ function ImportsWorkspace({
                           {company.companyName} · {company.crNumber}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                     <span className="text-xs text-muted-foreground">
                       預覽會重新核對最新映射；更改既有映射必須再確認。
                     </span>
                     {pendingMapping?.externalClientId === row.externalClientId ? (
-                      <button
+                      <Button
                         type="button"
+                        size="sm"
                         disabled={mapMutation.isPending}
                         onClick={() => mapMutation.mutate(pendingMapping)}
                       >
                         確認公司映射
-                      </button>
+                      </Button>
                     ) : null}
                   </div>
                 ) : null}
@@ -449,7 +460,7 @@ function ImportsWorkspace({
                 {batch.sourceFileName} · {batch.sheetName}
               </span>
               <span className="text-xs text-muted-foreground">
-                {`${batch.rowCount} 筆 · ${new Date(batch.createdAt).toLocaleDateString("en-HK")}`}
+                {`${batch.rowCount} 筆 · ${formatDate(batch.createdAt)}`}
               </span>
             </button>
           ))}

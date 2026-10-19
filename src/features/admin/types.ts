@@ -1,5 +1,9 @@
+import { ROLE_LABELS } from "@/features/auth/role-labels";
 import { z } from "zod";
 export const STAFF_ROLES = ["Admin", "Manager", "Staff", "Client"] as const;
+
+/** Display labels; the role values themselves are stored and compared in code. */
+export const STAFF_ROLE_LABELS: Record<(typeof STAFF_ROLES)[number], string> = ROLE_LABELS;
 export const staffFiltersSchema = z
   .object({
     q: z.string().trim().min(1).max(120).optional(),

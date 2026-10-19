@@ -53,11 +53,11 @@ function describeAnnualReturnError(error: unknown): {
   if (/^(Forbidden|Unauthorized):/.test(cause)) {
     return {
       kind: "forbidden",
-      message: `You do not have access to annual return data. ${cause}`,
+      message: `你沒有權限查看周年申報資料。${cause}`,
     };
   }
 
-  return { kind: "unavailable", message: `Annual return data could not be loaded. ${cause}` };
+  return { kind: "unavailable", message: `周年申報資料無法載入。${cause}` };
 }
 
 const defaultDependencies: DashboardDataDependencies = {

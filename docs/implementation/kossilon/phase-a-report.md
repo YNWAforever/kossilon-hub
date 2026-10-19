@@ -1,22 +1,22 @@
 # Phase A report — Safe, usable staff document workflow
 
-| | |
-|---|---|
-| Branch | `codex/kossilon-phase-a` (from `main` = `fa02046`, the audit baseline) |
-| Starting commit | `fa02046` |
-| Ending commit | `9f2c76e` |
-| Spec | `docs/superpowers/specs/2026-09-10-kossilon-phase-a-document-safety-design.md` |
-| Migration | `0023_document_scan_jobs_and_quarantine_retention.sql` (**not applied to any database**) |
-| State | `CODE_COMPLETE` · `INTEGRATION_VERIFIED`: no · `RELEASE_READY`: no |
+|                 |                                                                                          |
+| --------------- | ---------------------------------------------------------------------------------------- |
+| Branch          | `codex/kossilon-phase-a` (from `main` = `fa02046`, the audit baseline)                   |
+| Starting commit | `fa02046`                                                                                |
+| Ending commit   | `9f2c76e`                                                                                |
+| Spec            | `docs/superpowers/specs/2026-09-10-kossilon-phase-a-document-safety-design.md`           |
+| Migration       | `0023_document_scan_jobs_and_quarantine_retention.sql` (**not applied to any database**) |
+| State           | `CODE_COMPLETE` · `INTEGRATION_VERIFIED`: no · `RELEASE_READY`: no                       |
 
 ## 1. What was actually wrong, and what changed
 
 ### A1 — by-ID operations applied no object scope
 
-`documentFiltersForActor` narrowed *list* reads to the actor's team, but every
+`documentFiltersForActor` narrowed _list_ reads to the actor's team, but every
 by-ID operation went through `authorizeCompany`, which for a non-Client actor was
 exactly `assertStaffAccess` — "is this an active staff account", with no notion of
-*which* company. An active Staff actor on any team could download any company's
+_which_ company. An active Staff actor on any team could download any company's
 bytes, approve or reject another team's evidence and be recorded as its reviewer,
 and drive any scan lifecycle: `scanQuarantinedDocumentForActor` had no company
 check at all.
@@ -35,14 +35,14 @@ evidence.
 
 1. **Live mode was handed the deterministic test scanner.** `server-fns.ts`
    passed `createDeterministicDocumentScanner()` unconditionally while resolving
-   *storage* per provider mode two lines above. Real malware was marked
+   _storage_ per provider mode two lines above. Real malware was marked
    `available`. Now a selector mirrors the storage one and **throws** for live
    rather than falling back — a missing scanner has to block release, never grant
    it.
 2. **A received file was deleted 15 minutes after the intent was created.**
    `expireUploads` swept `status in ('created','uploaded','quarantined')` and the
    maintenance pass deleted the R2 object for every row it returned — and
-   `quarantined` is precisely the status a *successfully received* file holds. The
+   `quarantined` is precisely the status a _successfully received_ file holds. The
    `documents` row survived pointing at a deleted key, could never be scanned
    (`recordScanResult` matches only `quarantined`) and could never be read
    (`downloadDocumentForActor` requires `available`), while the checklist still
@@ -71,7 +71,7 @@ All are fixed; see the commit message on `9f2c76e` for specifics.
 
 ### A4 — the broad-category dead end
 
-`createUploadIntent` refused any new intent when a *verified* document already
+`createUploadIntent` refused any new intent when a _verified_ document already
 existed for `(company, case, category)`, and `category` is one of eight broad
 buckets with no notion of a person — so once director A's HKID was verified,
 director B's could not be uploaded at all, and `replacementDocumentId` was no
@@ -90,23 +90,23 @@ cannot produce. Fixed, and the runbook's step 5 is now performable.
 
 ## 2. Files changed
 
-| Area | Files |
-|---|---|
-| New policy | `documents/authorization.ts`, `documents/safety.ts` |
-| New scanning | `documents/live-scanner.ts`, `documents/scan-jobs.ts`, `documents/scan-worker.ts` |
-| New review support | `documents/rejection-reasons.ts`, `annual-return/components/scoped-pickers.tsx` |
-| Changed | `documents/{repository,server-fns,scanner,types}.ts`, `server/{cron,maintenance,runtime-env}.ts`, `server/db/schema.sql`, `annual-return/{repository,server-fns}.ts`, `annual-return/components/production-case-detail.tsx`, `routes/{documents,portal}.tsx`, `test/db-integration-files.ts` |
-| Migration | `db/migrations/0023_document_scan_jobs_and_quarantine_retention.sql` |
+| Area               | Files                                                                                                                                                                                                                                                                                        |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New policy         | `documents/authorization.ts`, `documents/safety.ts`                                                                                                                                                                                                                                          |
+| New scanning       | `documents/live-scanner.ts`, `documents/scan-jobs.ts`, `documents/scan-worker.ts`                                                                                                                                                                                                            |
+| New review support | `documents/rejection-reasons.ts`, `annual-return/components/scoped-pickers.tsx`                                                                                                                                                                                                              |
+| Changed            | `documents/{repository,server-fns,scanner,types}.ts`, `server/{cron,maintenance,runtime-env}.ts`, `server/db/schema.sql`, `annual-return/{repository,server-fns}.ts`, `annual-return/components/production-case-detail.tsx`, `routes/{documents,portal}.tsx`, `test/db-integration-files.ts` |
+| Migration          | `db/migrations/0023_document_scan_jobs_and_quarantine_retention.sql`                                                                                                                                                                                                                         |
 
 ## 3. Commands actually run, and their results
 
-| Command | Result |
-|---|---|
-| `npm run typecheck` | Pass |
-| `npm run lint` | Pass — 0 errors, 1 pre-existing warning in `routes/work-queue.tsx` |
-| `npm run test` | **1033 passed, 152 skipped, 0 failed** (135 files) |
+| Command                            | Result                                                                                                                                                                                                                                                                                                     |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`                | Pass                                                                                                                                                                                                                                                                                                       |
+| `npm run lint`                     | Pass — 0 errors, 1 pre-existing warning in `routes/work-queue.tsx`                                                                                                                                                                                                                                         |
+| `npm run test`                     | **1033 passed, 152 skipped, 0 failed** (135 files)                                                                                                                                                                                                                                                         |
 | `npm run verify:firm -- --dry-run` | Offline gates pass: `strict-data-mode`, `local-provider-mode`, `migration-schema`, `neon-auth-capability`, `cron`, `dry-run safety` (33 reads, 0 network calls, 0 writes). `BLOCKED`: database, storage, malware-scanner, whatsapp, email, backups, browser-evidence, live bindings, external provisioning |
-| `npm run db:migrate` | **Not run.** No authorization was given for any non-local `DATABASE_URL`, and no local database exists |
+| `npm run db:migrate`               | **Not run.** No authorization was given for any non-local `DATABASE_URL`, and no local database exists                                                                                                                                                                                                     |
 
 The baseline flake noted in `baseline-and-decisions.md` (`vite.config.test.ts`
 timing out at Vitest's 15 s default on this machine) passed on the final run. It
@@ -131,7 +131,7 @@ existing data. Its backfills are conservative:
 - `quarantine_retention_until` is measured from actual receipt, so a file
   quarantined three weeks ago surfaces for escalation immediately rather than
   being handed a fresh 14 days.
-- Rows expired *while quarantined* are the data-loss victims of the old sweep.
+- Rows expired _while quarantined_ are the data-loss victims of the old sweep.
   They are deliberately **not** repaired: their bytes are gone from R2 and
   resetting status would fabricate a record of a file that no longer exists. They
   need the reconciliation query and a human.
@@ -143,26 +143,26 @@ one that deleted received evidence.
 
 None for the parts that need a real provider. Stated plainly:
 
-| Capability | State |
-|---|---|
-| Live malware scanning | `BLOCKED_INTEGRATION: malware-scanner-provider`. The adapter is implemented and contract-tested against a stub transport across nine cases (clean, infected, unreadable object, checksum mismatch, transport failure, timeout, 5xx, 4xx, malformed response). **It has never run against a real vendor.** |
-| Repository SQL | `BLOCKED_INTEGRATION: local-postgres`. 11 new integration tests written; skipped locally, run by CI. |
-| Scheduled execution | `BLOCKED_INTEGRATION: deployment-runtime`. The Cloudflare bridge is real (`src/server/nitro-scheduled.ts` registers `cloudflare:scheduled` → `runFirmMaintenance`, and `wrangler.template.jsonc` declares `*/5 * * * *`), but whether the deployed runtime is Cloudflare or Vercel is not determinable from source. |
-| Browser walkthrough | Not performed. Requires an authorized login against a real environment; a fixture demo would not be evidence. |
+| Capability            | State                                                                                                                                                                                                                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live malware scanning | `BLOCKED_INTEGRATION: malware-scanner-provider`. The adapter is implemented and contract-tested against a stub transport across nine cases (clean, infected, unreadable object, checksum mismatch, transport failure, timeout, 5xx, 4xx, malformed response). **It has never run against a real vendor.**           |
+| Repository SQL        | `BLOCKED_INTEGRATION: local-postgres`. 11 new integration tests written; skipped locally, run by CI.                                                                                                                                                                                                                |
+| Scheduled execution   | `BLOCKED_INTEGRATION: deployment-runtime`. The Cloudflare bridge is real (`src/server/nitro-scheduled.ts` registers `cloudflare:scheduled` → `runFirmMaintenance`, and `wrangler.template.jsonc` declares `*/5 * * * *`), but whether the deployed runtime is Cloudflare or Vercel is not determinable from source. |
+| Browser walkthrough   | Not performed. Requires an authorized login against a real environment; a fixture demo would not be evidence.                                                                                                                                                                                                       |
 
 ## 6. Acceptance gate status
 
-| Gate | Status |
-|---|---|
-| Unauthorized direct-ID download/review/upload fails; authorized owner/reviewer still work | Code complete, 18 unit tests + wiring tests. Needs a browser walkthrough. |
-| A received file survives a >15-minute scanner outage and completes after retry | Code complete; unit-covered in `scan-worker.test.ts`, DB-covered in CI |
+| Gate                                                                                      | Status                                                                                        |
+| ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Unauthorized direct-ID download/review/upload fails; authorized owner/reviewer still work | Code complete, 18 unit tests + wiring tests. Needs a browser walkthrough.                     |
+| A received file survives a >15-minute scanner outage and completes after retry            | Code complete; unit-covered in `scan-worker.test.ts`, DB-covered in CI                        |
 | Live mode cannot use the deterministic scanner; a missing scanner cannot release evidence | **Verified** — `scanner-selection.test.ts` asserts live throws under every option combination |
-| Finalize replay and worker replay create one version and one effective outcome | Code complete; DB test in CI |
-| Finalize/expiry concurrency cannot accept and delete the same file | Code complete; both orderings tested, in CI |
-| Legacy artificial-clean results do not bypass genuine scanning | **Verified** — `safety.test.ts` |
-| Staff can inspect a safe pending file, decide with a reason, see the event | Code complete. Needs a browser walkthrough. |
-| Staff assign a named person and select a proof document without UUIDs | **Verified** — `production-case-detail.interaction.test.tsx` |
-| A second director's identity upload is accepted as separate evidence | Code complete; DB test in CI |
+| Finalize replay and worker replay create one version and one effective outcome            | Code complete; DB test in CI                                                                  |
+| Finalize/expiry concurrency cannot accept and delete the same file                        | Code complete; both orderings tested, in CI                                                   |
+| Legacy artificial-clean results do not bypass genuine scanning                            | **Verified** — `safety.test.ts`                                                               |
+| Staff can inspect a safe pending file, decide with a reason, see the event                | Code complete. Needs a browser walkthrough.                                                   |
+| Staff assign a named person and select a proof document without UUIDs                     | **Verified** — `production-case-detail.interaction.test.tsx`                                  |
+| A second director's identity upload is accepted as separate evidence                      | Code complete; DB test in CI                                                                  |
 
 No gate is claimed as passed on the strength of code alone where it needs a
 database, a provider or a browser.

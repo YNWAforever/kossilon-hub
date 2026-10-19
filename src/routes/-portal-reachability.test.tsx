@@ -110,7 +110,7 @@ describe("the production portal is reachable", () => {
         companyName: `Existing company ${index}`,
       });
       expect(html).toContain(`Existing company ${index}`);
-      expect(html).not.toContain("Production portal</h1>");
+      expect(html).not.toContain("客戶入口</h1>");
     },
   );
   it("explains invalid IDs without revealing whether a foreign case exists", async () => {

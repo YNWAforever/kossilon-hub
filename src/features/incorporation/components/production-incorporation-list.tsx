@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import { DeadlinePill } from "@/components/deadline-pill";
@@ -10,6 +11,7 @@ import { CreateIncorporationCaseDialog } from "@/components/incorporation/create
 import { listClientAssignmentOptions } from "@/features/clients/server-fns";
 import { listIncorporationCases } from "../server-fns";
 import type { IncorporationStatus } from "../types";
+import { INCORPORATION_STATUS_LABELS } from "../labels";
 
 const statusTone: Record<IncorporationStatus, StatusTone> = {
   Intake: "neutral",
@@ -40,7 +42,7 @@ export function ProductionIncorporationList() {
     return (
       <div className="flex min-h-64 items-center justify-center p-6 text-sm text-muted-foreground">
         <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />
-        Loading incorporation cases
+        載入公司註冊案件中
       </div>
     );
   }
@@ -48,9 +50,9 @@ export function ProductionIncorporationList() {
   if (casesQuery.isError) {
     return (
       <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="Operations" title="Incorporation" />
+        <PageHeader eyebrow="案件與客戶" title="公司註冊" />
         <p role="alert" className="text-sm text-destructive">
-          Incorporation case data is unavailable. Try again shortly.
+          公司註冊案件資料暫時無法載入，請稍後再試。
         </p>
       </main>
     );
@@ -61,25 +63,21 @@ export function ProductionIncorporationList() {
   return (
     <main className="flex-1 space-y-6 p-4 md:p-6">
       <PageHeader
-        eyebrow="Operations"
-        title="Incorporation"
-        subtitle="New-HK-company intake, from case creation through Companies Registry approval."
+        eyebrow="案件與客戶"
+        title="公司註冊"
+        subtitle="新香港公司註冊受理，由開立案件至公司註冊處批核。"
         actions={
           optionsQuery.data ? (
-            <button
-              type="button"
-              onClick={() => setIsCreateOpen(true)}
-              className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Start incorporation
-            </button>
+            <Button variant="primary" onClick={() => setIsCreateOpen(true)}>
+              開始公司註冊
+            </Button>
           ) : null
         }
       />
 
       {optionsQuery.isError ? (
-        <p role="status" className="text-sm text-status-yellow">
-          Owner and team options are unavailable. Starting a new case is disabled until this loads.
+        <p role="status" className="text-sm text-status-yellow-text">
+          負責同事及團隊選項暫時無法載入，載入前未能開立新案件。
         </p>
       ) : null}
 
@@ -94,23 +92,21 @@ export function ProductionIncorporationList() {
                 {incorporationCase.proposedCompanyNameEn}
               </span>
               <StatusPill tone={statusTone[incorporationCase.status]}>
-                {incorporationCase.status}
+                {INCORPORATION_STATUS_LABELS[incorporationCase.status]}
               </StatusPill>
               {incorporationCase.status !== "Completed" ? (
                 <DeadlinePill dueDate={incorporationCase.targetCompletionDate} />
               ) : null}
               <span className="text-muted-foreground">{incorporationCase.ownerName}</span>
-              <Link
-                to="/incorporation/$id"
-                params={{ id: incorporationCase.id }}
-                className="rounded-md border px-2 py-1 text-xs"
-              >
-                Open
-              </Link>
+              <Button asChild size="sm">
+                <Link to="/incorporation/$id" params={{ id: incorporationCase.id }}>
+                  開啟
+                </Link>
+              </Button>
             </div>
           ))}
           {cases.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No incorporation cases yet.</p>
+            <p className="py-3 text-sm text-muted-foreground">尚未有公司註冊案件。</p>
           ) : null}
         </div>
       </section>

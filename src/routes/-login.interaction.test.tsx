@@ -47,7 +47,7 @@ import { Route } from "./login";
 const LoginPage = Route.options.component as ComponentType;
 
 function enterEmail(email: string) {
-  fireEvent.change(screen.getByLabelText("Email"), { target: { value: email } });
+  fireEvent.change(screen.getByLabelText("電郵"), { target: { value: email } });
 }
 
 afterEach(() => {
@@ -63,7 +63,7 @@ beforeEach(() => {
   login.mockResolvedValue({ ok: true });
   loginWithMagicLink.mockResolvedValue({
     ok: true,
-    message: "Check your email for a magic link.",
+    message: "請查看電郵中的登入連結。",
   });
   loginDemo.mockResolvedValue({ ok: true });
   loginWithGoogle.mockResolvedValue({ ok: true });
@@ -98,6 +98,28 @@ describe("LoginPage", () => {
       }
     },
   );
+  it("lands demo staff on the populated dashboard instead of the empty 今日工作", async () => {
+    const originalHref = window.location.href;
+    history.replaceState(null, "", "/login");
+    window.sessionStorage.clear();
+    vi.stubEnv("VITE_ENABLE_DEMO_AUTH", "true");
+    mockSession = {
+      id: "controlled-local",
+      name: "Local",
+      email: "local@example.test",
+      role: "Staff",
+      initials: "L",
+      team: "x",
+      signedInAt: "2026-10-02T00:00:00Z",
+    };
+    try {
+      render(<LoginPage />);
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith({ href: "/", replace: true }));
+    } finally {
+      vi.unstubAllEnvs();
+      history.replaceState(null, "", originalHref);
+    }
+  });
   it("preserves an explicit dashboard return rather than treating slash as absence", async () => {
     const originalHref = window.location.href;
     history.replaceState(null, "", "/login?redirect=%2F");
@@ -121,51 +143,51 @@ describe("LoginPage", () => {
   it("shows magic link and Google by default (a real Neon Auth backend)", () => {
     render(<LoginPage />);
 
-    expect(screen.getByRole("button", { name: "Magic link" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "電郵登入連結" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "以 Google 帳戶登入" })).toBeTruthy();
   });
 
   it("hides magic link and Google under the fixture demo-auth provider", () => {
     vi.stubEnv("VITE_ENABLE_DEMO_AUTH", "true");
     render(<LoginPage />);
 
-    expect(screen.queryByRole("button", { name: "Magic link" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Continue with Google" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Request an invitation" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "電郵登入連結" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "以 Google 帳戶登入" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "申請邀請" })).toBeNull();
   });
 
   it("switches to magic-link mode and requests a link", async () => {
     render(<LoginPage />);
-    fireEvent.click(screen.getByRole("button", { name: "Magic link" }));
+    fireEvent.click(screen.getByRole("button", { name: "電郵登入連結" }));
     enterEmail("staff@example.com");
-    fireEvent.click(screen.getByRole("button", { name: "Email me a magic link" }));
+    fireEvent.click(screen.getByRole("button", { name: "以電郵傳送登入連結" }));
 
     await waitFor(() => expect(loginWithMagicLink).toHaveBeenCalledWith("staff@example.com"));
-    expect(await screen.findByText("Check your email for a magic link.")).toBeTruthy();
+    expect(await screen.findByText("請查看電郵中的登入連結。")).toBeTruthy();
   });
 
   it("renders a provider error from a magic-link request", async () => {
     loginWithMagicLink.mockResolvedValue({ ok: false, error: "Invitation required." });
     render(<LoginPage />);
-    fireEvent.click(screen.getByRole("button", { name: "Magic link" }));
+    fireEvent.click(screen.getByRole("button", { name: "電郵登入連結" }));
     enterEmail("staff@example.com");
-    fireEvent.click(screen.getByRole("button", { name: "Email me a magic link" }));
+    fireEvent.click(screen.getByRole("button", { name: "以電郵傳送登入連結" }));
 
     expect((await screen.findByRole("alert")).textContent).toContain("Invitation required.");
   });
 
   it("hides the password input in magic-link mode", () => {
     render(<LoginPage />);
-    fireEvent.click(screen.getByRole("button", { name: "Magic link" }));
+    fireEvent.click(screen.getByRole("button", { name: "電郵登入連結" }));
 
-    expect(screen.queryByLabelText("Password")).toBeNull();
+    expect(screen.queryByLabelText("密碼")).toBeNull();
   });
 
   it("keeps password login behavior", async () => {
     render(<LoginPage />);
     enterEmail("staff@example.com");
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret" } });
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    fireEvent.change(screen.getByLabelText("密碼"), { target: { value: "secret" } });
+    fireEvent.click(screen.getByRole("button", { name: "登入" }));
 
     await waitFor(() => expect(login).toHaveBeenCalledWith("staff@example.com", "secret"));
   });
@@ -173,15 +195,15 @@ describe("LoginPage", () => {
   it("recovers controls after a rejected magic-link request", async () => {
     loginWithMagicLink.mockRejectedValueOnce(new Error("Network unavailable"));
     render(<LoginPage />);
-    fireEvent.click(screen.getByRole("button", { name: "Magic link" }));
+    fireEvent.click(screen.getByRole("button", { name: "電郵登入連結" }));
     enterEmail("staff@example.com");
-    fireEvent.click(screen.getByRole("button", { name: "Email me a magic link" }));
+    fireEvent.click(screen.getByRole("button", { name: "以電郵傳送登入連結" }));
 
     expect((await screen.findByRole("alert")).textContent).toContain(
-      "Unable to complete sign-in request. Please try again.",
+      "未能完成登入要求，請再試一次。",
     );
     const submitButton = screen.getByRole("button", {
-      name: "Email me a magic link",
+      name: "以電郵傳送登入連結",
     }) as HTMLButtonElement;
     expect(submitButton.disabled).toBe(false);
   });
@@ -189,7 +211,7 @@ describe("LoginPage", () => {
   it("links invitation requests to the firm contact", () => {
     render(<LoginPage />);
 
-    expect(screen.getByRole("link", { name: "Request an invitation" }).getAttribute("href")).toBe(
+    expect(screen.getByRole("link", { name: "申請邀請" }).getAttribute("href")).toBe(
       "mailto:willylai@fimmick.com?subject=Kossilon%20demo%20invitation%20request",
     );
   });
@@ -198,7 +220,7 @@ describe("LoginPage", () => {
     loginWithGoogle.mockResolvedValue({ ok: false, error: "Google sign-in is not configured." });
     render(<LoginPage />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
+    fireEvent.click(screen.getByRole("button", { name: "以 Google 帳戶登入" }));
 
     await waitFor(() => expect(loginWithGoogle).toHaveBeenCalledTimes(1));
     expect((await screen.findByRole("alert")).textContent).toContain(
@@ -226,7 +248,7 @@ describe("LoginPage denied state", () => {
       render(<LoginPage />);
 
       await waitFor(() => expect(signOut).toHaveBeenCalledTimes(1));
-      expect(screen.getByRole("alert").textContent).toContain("does not have access");
+      expect(screen.getByRole("alert").textContent).toContain("未獲授權使用");
     } finally {
       Object.defineProperty(window, "location", { configurable: true, value: originalLocation });
     }
@@ -234,7 +256,7 @@ describe("LoginPage denied state", () => {
 
   it("does not show the denied message without the query param", () => {
     render(<LoginPage />);
-    expect(screen.queryByText(/does not have access/i)).toBeNull();
+    expect(screen.queryByText(/未獲授權使用/)).toBeNull();
     expect(signOut).not.toHaveBeenCalled();
   });
 
@@ -265,7 +287,7 @@ describe("LoginPage denied state", () => {
 
       await waitFor(() => expect(signOut).toHaveBeenCalledTimes(1));
       expect(navigate).not.toHaveBeenCalled();
-      expect(screen.getByRole("alert").textContent).toContain("does not have access");
+      expect(screen.getByRole("alert").textContent).toContain("未獲授權使用");
     } finally {
       Object.defineProperty(window, "location", { configurable: true, value: originalLocation });
     }
@@ -322,7 +344,7 @@ describe("LoginPage denied state", () => {
       render(<LoginPage />);
 
       await waitFor(() => expect(signOut).toHaveBeenCalledTimes(1));
-      expect(screen.getByRole("alert").textContent).toContain("does not have access");
+      expect(screen.getByRole("alert").textContent).toContain("未獲授權使用");
       // Confirm the fix actually cleared the URL marker before relying on
       // that below -- otherwise this test could pass for the wrong reason.
       await waitFor(() =>
@@ -330,8 +352,8 @@ describe("LoginPage denied state", () => {
       );
 
       enterEmail("different@example.test");
-      fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret" } });
-      fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+      fireEvent.change(screen.getByLabelText("密碼"), { target: { value: "secret" } });
+      fireEvent.click(screen.getByRole("button", { name: "登入" }));
 
       await waitFor(() => expect(navigate).toHaveBeenCalled());
     } finally {

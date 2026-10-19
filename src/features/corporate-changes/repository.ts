@@ -8,6 +8,7 @@ import {
 import { createClientRepository } from "@/features/clients/repository";
 import { rethrowClientWriteError } from "@/features/clients/errors";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
+import { CorporateChangeRequestNotFoundError } from "./errors";
 import { checklistLabelsFor, isAllowedCorporateChangeStatusTransition } from "./workflow";
 import type {
   CancelRequestInput,
@@ -192,7 +193,7 @@ export function createCorporateChangeRequestRepository(
       select ${sql.unsafe(REQUEST_COLUMNS)} from corporate_change_requests where id = ${requestId}
     `;
     const [row] = rows;
-    if (!row) throw new Error("Corporate change request not found.");
+    if (!row) throw new CorporateChangeRequestNotFoundError();
 
     const checklistRows = await tx<ChecklistRow[]>`
       select id, request_id, item_label, required, status, note, received_at, verified_at

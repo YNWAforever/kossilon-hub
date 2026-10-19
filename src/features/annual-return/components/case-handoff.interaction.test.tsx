@@ -122,3 +122,35 @@ describe("human package approval and manual submission UI", () => {
     expect(mocks.export).not.toHaveBeenCalled();
   });
 });
+
+describe("approval blockers", () => {
+  it("summarises what blocks approval and points at the full list instead of repeating it", async () => {
+    mocks.get.mockResolvedValue({
+      preview: {
+        readyForApproval: false,
+        sourceVersion: "v1",
+        manifestSha256: null,
+        blockers: [
+          { code: "a", stage: "prepare", message: "CDD 尚欠可用文件。", action: "/documents" },
+          { code: "b", stage: "approval", message: "套件未批准。", action: "/x" },
+          { code: "c", stage: "transmit", message: "外部交件未驗證。", action: "/x" },
+        ],
+      },
+      handoffs: [],
+      returns: [],
+      connectorConfigured: false,
+    });
+    mocks.documents.mockResolvedValue([]);
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <CaseHandoff caseId="11111111-1111-4111-8111-111111111111" locked={false} />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText(/尚有 2 項事項須先處理/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "查看交件阻礙事項" }).getAttribute("href")).toBe(
+      "#case-blockers",
+    );
+    expect(screen.queryByText("CDD 尚欠可用文件。")).toBeNull();
+  });
+});

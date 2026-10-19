@@ -7,16 +7,16 @@ the plan. Where the plan and the code disagree, the code is recorded.
 
 ## 1. Baseline established (A0)
 
-| Item | Value |
-|---|---|
-| Checkout | `kossilon-hub-work` (the authoritative one of five local copies) |
-| Branch | `codex/outbox-observability` |
-| HEAD | `b2c75f4` — `docs: design for P3-1 outbox observability` (documentation only) |
-| `origin/main` | `fa02046` — `Merge pull request #57 from YNWAforever/codex/record-provider-mode` |
-| Audit baseline in the plan | `fa02046b4288085851c3c4f3a26805b029306c78` |
-| Drift from audit baseline | **None in source.** `origin/main` *is* the audit baseline; HEAD adds one docs-only commit |
-| Working tree | Clean |
-| Migrations | `0001`–`0022`; next unused number is **`0023`** |
+| Item                       | Value                                                                                     |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| Checkout                   | `kossilon-hub-work` (the authoritative one of five local copies)                          |
+| Branch                     | `codex/outbox-observability`                                                              |
+| HEAD                       | `b2c75f4` — `docs: design for P3-1 outbox observability` (documentation only)             |
+| `origin/main`              | `fa02046` — `Merge pull request #57 from YNWAforever/codex/record-provider-mode`          |
+| Audit baseline in the plan | `fa02046b4288085851c3c4f3a26805b029306c78`                                                |
+| Drift from audit baseline  | **None in source.** `origin/main` _is_ the audit baseline; HEAD adds one docs-only commit |
+| Working tree               | Clean                                                                                     |
+| Migrations                 | `0001`–`0022`; next unused number is **`0023`**                                           |
 
 The plan anticipated drift and told us to reconcile findings against current HEAD and
 preserve newer fixes. There is no newer source work to preserve on this branch: the
@@ -28,10 +28,10 @@ Other local checkouts (`kossilon-hub`, `auth-fix-worktree`, `task6-fix-worktree`
 
 ### Baseline checks actually run
 
-| Command | Result |
-|---|---|
-| `npm run typecheck` | **Pass** (exit 0) |
-| `npm run test` | **1 failed, 959 passed, 141 skipped** (135 files) |
+| Command             | Result                                            |
+| ------------------- | ------------------------------------------------- |
+| `npm run typecheck` | **Pass** (exit 0)                                 |
+| `npm run test`      | **1 failed, 959 passed, 141 skipped** (135 files) |
 
 The single failure is pre-existing and environmental, not a code defect:
 `vite.config.test.ts > injects source locations before TanStack recompiles route files`
@@ -112,11 +112,11 @@ plan warns must not be read as late filing.
 Recorded against the exact unavailable dependency, per plan §1.2. Independent work
 continues around each; the affected capability stays disabled.
 
-| ID | Blocker | Effect | What would clear it |
-|---|---|---|---|
-| `BLOCKED_INTEGRATION: local-postgres` | No local Postgres. Docker Desktop is installed but its `com.docker.service` is **Stopped** and starting it needs elevation this session does not have; nothing listens on 5432. | The 141 `describe.skipIf(!databaseUrl)` repository tests cannot run locally, including the new Phase A concurrency tests. They are written and pushed so CI (which provisions `postgres:17-alpine`, migrates and seeds) executes them. **Skipped is recorded as skipped, never as passed.** | A running Postgres reachable as `TEST_DATABASE_URL`, or the CI run on the PR. |
-| `BLOCKED_INTEGRATION: malware-scanner-provider` | No scanning provider is configured or named by the operating owner. | The live scanner adapter is implemented against a real content-inspecting interface and contract-tested in isolation, but the live capability stays disabled and refuses to start rather than falling back. | An approved provider, its endpoint binding name and its data-handling terms. |
-| `BLOCKED_INTEGRATION: deployment-runtime` | Source targets Cloudflare Workers with a 5-minute cron (`wrangler.template.jsonc`, `src/server.ts` `scheduled`); the URL supplied in the plan is on Vercel. Which runtime actually executes the schedule cannot be determined from source. | Scan jobs are enqueued durably and drained by the existing `runFirmMaintenance` entry point, which is trigger-agnostic by design. Whether that entry point is really invoked on the deployed runtime is unverified. | Deployment evidence: a real scheduled invocation observed on the actual runtime. |
+| ID                                              | Blocker                                                                                                                                                                                                                                    | Effect                                                                                                                                                                                                                                                                                      | What would clear it                                                              |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `BLOCKED_INTEGRATION: local-postgres`           | No local Postgres. Docker Desktop is installed but its `com.docker.service` is **Stopped** and starting it needs elevation this session does not have; nothing listens on 5432.                                                            | The 141 `describe.skipIf(!databaseUrl)` repository tests cannot run locally, including the new Phase A concurrency tests. They are written and pushed so CI (which provisions `postgres:17-alpine`, migrates and seeds) executes them. **Skipped is recorded as skipped, never as passed.** | A running Postgres reachable as `TEST_DATABASE_URL`, or the CI run on the PR.    |
+| `BLOCKED_INTEGRATION: malware-scanner-provider` | No scanning provider is configured or named by the operating owner.                                                                                                                                                                        | The live scanner adapter is implemented against a real content-inspecting interface and contract-tested in isolation, but the live capability stays disabled and refuses to start rather than falling back.                                                                                 | An approved provider, its endpoint binding name and its data-handling terms.     |
+| `BLOCKED_INTEGRATION: deployment-runtime`       | Source targets Cloudflare Workers with a 5-minute cron (`wrangler.template.jsonc`, `src/server.ts` `scheduled`); the URL supplied in the plan is on Vercel. Which runtime actually executes the schedule cannot be determined from source. | Scan jobs are enqueued durably and drained by the existing `runFirmMaintenance` entry point, which is trigger-agnostic by design. Whether that entry point is really invoked on the deployed runtime is unverified.                                                                         | Deployment evidence: a real scheduled invocation observed on the actual runtime. |
 
 Providers, accounts and folder access named in later phases (AI, WeChat/WeCom, group
 messaging, the internal file server) are not yet in scope and are tracked in
@@ -130,7 +130,7 @@ messaging, the internal file server) are not yet in scope and are tracked in
 2. **Scan jobs get their own table rather than rows in `notification_outbox`.** The
    outbox's `NOT NULL` `channel` check constrains it to `email`/`whatsapp`/`in_app` and
    its redaction constraint is built around a recipient and payload; a scan job has
-   neither. The *mechanism* (claim/lease/fence/backoff) is copied; the table is not
+   neither. The _mechanism_ (claim/lease/fence/backoff) is copied; the table is not
    overloaded. This follows the plan's "extend the existing job conventions" while
    avoiding a channel enum lie.
 3. **Upload-intent expiry and received-quarantine retention become separate columns**,
@@ -148,12 +148,12 @@ messaging, the internal file server) are not yet in scope and are tracked in
 
 These do not block implementation; each has a safe default recorded in code.
 
-| Input | Safe behavior now |
-|---|---|
-| External system name, client-ID mapping and export format | Manual export/import; unresolved rows stage rather than create companies |
-| Meaning of `(Nil)`, blank BR dates, deposit-credit notes | Preserved verbatim with provenance; never mapped to paid/unpaid |
-| Which deadline the 1-month/14-day/7-day reminders anchor on | Configurable versioned policy; reminders stay off for unconfirmed cases |
-| Per-person document applicability, address-proof reference date, waiver authority | Versioned template with explicit unresolved applicability |
-| Scanner and AI providers, and permitted data handling | Real adapters, capability disabled until configured |
-| Actual WhatsApp/WeChat accounts, groups and conversation access | Manual routes with explicit per-capability states |
-| Internal server protocol, folder rights, returned-file meaning | Reconciliation UI plus a transport interface against a local fixture |
+| Input                                                                             | Safe behavior now                                                        |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| External system name, client-ID mapping and export format                         | Manual export/import; unresolved rows stage rather than create companies |
+| Meaning of `(Nil)`, blank BR dates, deposit-credit notes                          | Preserved verbatim with provenance; never mapped to paid/unpaid          |
+| Which deadline the 1-month/14-day/7-day reminders anchor on                       | Configurable versioned policy; reminders stay off for unconfirmed cases  |
+| Per-person document applicability, address-proof reference date, waiver authority | Versioned template with explicit unresolved applicability                |
+| Scanner and AI providers, and permitted data handling                             | Real adapters, capability disabled until configured                      |
+| Actual WhatsApp/WeChat accounts, groups and conversation access                   | Manual routes with explicit per-capability states                        |
+| Internal server protocol, folder rights, returned-file meaning                    | Reconciliation UI plus a transport interface against a local fixture     |

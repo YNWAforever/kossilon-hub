@@ -125,15 +125,15 @@ describe("mergeCaseHistory", () => {
 
 describe("describeCaseHistoryEntry", () => {
   const auditActionLabels: Record<AuditEventRow["action"], string> = {
-    create_case: "Case created",
-    assign_owner: "Owner reassigned",
-    add_note: "Note added",
-    record_reminder: "Reminder recorded",
-    update_checklist: "Checklist updated",
-    update_payment: "Payment updated",
-    update_filing_proof: "Filing proof updated",
-    change_status: "Status changed",
-    complete: "Case completed",
+    create_case: "已建立案件",
+    assign_owner: "已重新分配負責同事",
+    add_note: "已加入備註",
+    record_reminder: "已記錄提醒",
+    update_checklist: "已更新清單",
+    update_payment: "已更新付款",
+    update_filing_proof: "已更新遞交證明",
+    change_status: "已更改狀態",
+    complete: "案件已完成",
   };
 
   it.each(Object.entries(auditActionLabels) as [AuditEventRow["action"], string][])(
@@ -145,17 +145,44 @@ describe("describeCaseHistoryEntry", () => {
     },
   );
 
-  it("labels an audit entry's description as its stored summary", () => {
-    const [entry] = mergeCaseHistory([baseAuditRow], []);
+  // The stored summaries are English audit evidence and stay as written; the
+  // screen describes them in the UI language.
+  it.each([
+    ["Annual return case created.", "已建立周年申報案件。"],
+    ["Case note added.", "已加入備註。"],
+    ["Note added.", "已加入備註。"],
+    ["Annual return owner assigned.", "已分配負責同事。"],
+    ["Annual return reviewer assigned.", "已分配覆核同事。"],
+    [
+      "Status changed from Upcoming to Client reminder sent.",
+      "狀態由「即將開始」改為「已提醒客戶」。",
+    ],
+    ["Payment status changed to Payment pending.", "付款狀態改為「待付款」。"],
+    ["Register of directors marked as Received.", "「Register of directors」已標記為「已收到」。"],
+    [
+      "Manual WhatsApp reminder logged for Ada Director.",
+      "已記錄向 Ada Director 發出的 WhatsApp 提醒。",
+    ],
+    ["Filing reference and confirmation proof updated.", "已更新遞交編號及回條證明。"],
+    ["Payment evidence record.", "已記錄付款證明。"],
+    ["Payment evidence review.", "已覆核付款證明。"],
+  ])("describes the stored summary %j in Chinese", (summary, description) => {
+    const [entry] = mergeCaseHistory([{ ...baseAuditRow, summary }], []);
 
-    expect(describeCaseHistoryEntry(entry).description).toBe("Note added.");
+    expect(describeCaseHistoryEntry(entry).description).toBe(description);
+  });
+
+  it("shows a summary it does not recognise as stored rather than hiding it", () => {
+    const [entry] = mergeCaseHistory([{ ...baseAuditRow, summary: "approve_handoff" }], []);
+
+    expect(describeCaseHistoryEntry(entry).description).toBe("approve_handoff");
   });
 
   it("labels a manual assignment and describes the reassignment", () => {
     const [entry] = mergeCaseHistory([], [baseAssignmentRow]);
 
     const { label, description } = describeCaseHistoryEntry(entry);
-    expect(label).toBe("Assignment: manual");
+    expect(label).toBe("分配：手動");
     expect(description).toBe("Amy Chan → Ken Wong");
   });
 
@@ -166,7 +193,7 @@ describe("describeCaseHistoryEntry", () => {
     );
 
     const { label, description } = describeCaseHistoryEntry(entry);
-    expect(label).toBe("Assignment: overridden");
+    expect(label).toBe("分配：已改選");
     expect(description).toBe("Amy Chan → Ken Wong (Amy is on leave.)");
   });
 
@@ -176,15 +203,15 @@ describe("describeCaseHistoryEntry", () => {
       [{ ...baseAssignmentRow, decision: "accepted_recommendation" }],
     );
 
-    expect(describeCaseHistoryEntry(entry).label).toBe("Assignment: accepted recommendation");
+    expect(describeCaseHistoryEntry(entry).label).toBe("分配：接納建議");
   });
 
-  it("describes an assignment with no previous assignee as Unassigned", () => {
+  it("describes an assignment with no previous assignee as 未分配", () => {
     const [entry] = mergeCaseHistory(
       [],
       [{ ...baseAssignmentRow, previous_assignee_id: null, previous_assignee_name: null }],
     );
 
-    expect(describeCaseHistoryEntry(entry).description).toBe("Unassigned → Ken Wong");
+    expect(describeCaseHistoryEntry(entry).description).toBe("未分配 → Ken Wong");
   });
 });

@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   assign: vi.fn(),
   ack: vi.fn(),
   navigate: vi.fn(),
+  dataMode: "production" as "demo" | "production",
 }));
 vi.mock("@/components/bulk-selection-toolbar", () => ({
   BulkSelectionToolbar: ({ resource }: { resource: string }) => (
@@ -37,14 +38,34 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
     }),
     useNavigate: () => mocks.navigate,
     useRouteContext: () => ({
-      dataMode: "production",
+      dataMode: mocks.dataMode,
       actor: { userId: "admin", authUserId: "auth", role: "Admin", teamId: null, active: true },
     }),
   }),
   Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
 import { WorkQueueRoute } from "./work-queue";
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  mocks.dataMode = "production";
+});
+describe("work queue in demo mode", () => {
+  it("explains the empty queue instead of calling the production server", () => {
+    // Demo mode has no database; the call used to spin on "Loading work
+    // queue..." through three retries and then report a load failure.
+    mocks.dataMode = "demo";
+    mocks.list.mockClear();
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkQueueRoute />
+      </QueryClientProvider>,
+    );
+
+    expect(mocks.list).not.toHaveBeenCalled();
+    expect(screen.queryByText("工作隊列載入中…")).toBeNull();
+    expect(screen.getByText(/示範模式沒有可讀取的工作項目/)).toBeTruthy();
+  });
+});
 describe("work queue assignment and blockers", () => {
   it("shows real identity, payment blocker with on-track SLA, and current owner/reviewer candidates", async () => {
     const userId = "20000000-0000-0000-0000-000000000001";
@@ -118,17 +139,17 @@ describe("work queue assignment and blockers", () => {
     );
     await screen.findByText("Amy Chan · Team A");
     expect(screen.getByText("work_item")).toBeTruthy();
-    fireEvent.change(screen.getByPlaceholderText("Search case or work type"), {
+    fireEvent.change(screen.getByPlaceholderText("搜尋案件或工作類型"), {
       target: { value: "Scoped company" },
     });
     expect(screen.getAllByText("Review case").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Payment missing").length).toBeGreaterThan(0);
     expect(screen.queryByText("None")).toBeNull();
     expect(screen.queryByText("Staff 20000000")).toBeNull();
-    fireEvent.click(screen.getAllByTitle("Assign work item")[0]);
+    fireEvent.click(screen.getAllByTitle("分配工作項目")[0]);
     await screen.findByRole("button", { name: /Amy Chan · Team A/ });
     expect(screen.queryByText("Inactive person")).toBeNull();
-    fireEvent.change(screen.getByLabelText("Assignment responsibility"), {
+    fireEvent.change(screen.getByLabelText("分配角色"), {
       target: { value: "reviewer" },
     });
     await waitFor(() =>

@@ -26,6 +26,7 @@ Vitest, React 19.
 ## Task 1: Migration and schema.sql
 
 **Files:**
+
 - Create: `db/migrations/0018_recurring_service_subscriptions.sql`
 - Modify: `src/server/db/schema.sql`
 
@@ -100,6 +101,7 @@ git commit -m "feat: add service_subscriptions tables, retire service_packages"
 ## Task 2: Extract shared date math
 
 **Files:**
+
 - Create: `src/lib/date-math.ts`
 - Create: `src/lib/date-math.test.ts`
 - Modify: `src/features/incorporation/workflow.ts`
@@ -238,6 +240,7 @@ git commit -m "refactor: move oneYearLater/daysBetween to src/lib/date-math, re-
 ## Task 3: Extract shared reminder cadence
 
 **Files:**
+
 - Create: `src/lib/reminder-cadence.ts`
 - Create: `src/lib/reminder-cadence.test.ts`
 - Modify: `src/features/annual-return/reminder-cadence.ts`
@@ -363,6 +366,7 @@ git commit -m "refactor: move dueMilestone to src/lib/reminder-cadence, re-expor
 ## Task 4: Types and constants
 
 **Files:**
+
 - Create: `src/features/service-subscriptions/types.ts`
 - Create: `src/features/service-subscriptions/constants.ts`
 
@@ -456,6 +460,7 @@ git commit -m "feat: add service subscription types and fixed catalogue"
 ## Task 5: Errors and authorization
 
 **Files:**
+
 - Create: `src/features/service-subscriptions/errors.ts`
 - Create: `src/features/service-subscriptions/authorization.ts`
 
@@ -478,16 +483,19 @@ export class ServiceSubscriptionWriteError extends Error {
   }
 }
 
-const CONSTRAINT_FIELDS: Record<string, { field: ServiceSubscriptionWriteField; message: string }> = {
-  service_subscriptions_one_per_type: {
-    field: "serviceType",
-    message: "This company already has an active subscription for that service.",
-  },
-};
+const CONSTRAINT_FIELDS: Record<string, { field: ServiceSubscriptionWriteField; message: string }> =
+  {
+    service_subscriptions_one_per_type: {
+      field: "serviceType",
+      message: "This company already has an active subscription for that service.",
+    },
+  };
 
 const HANDLED_CODES = new Set(["23505", "23514"]);
 
-export function toServiceSubscriptionWriteError(error: unknown): ServiceSubscriptionWriteError | null {
+export function toServiceSubscriptionWriteError(
+  error: unknown,
+): ServiceSubscriptionWriteError | null {
   if (!(error instanceof Error)) {
     return null;
   }
@@ -574,6 +582,7 @@ git commit -m "feat: add service subscription errors and authorization"
 ## Task 6: Repository
 
 **Files:**
+
 - Create: `src/features/service-subscriptions/repository.ts`
 
 Read `src/features/clients/repository.ts` lines 1-70 (the `ClientRepository`
@@ -717,7 +726,10 @@ export function createServiceSubscriptionRepository(
     return mapSubscription(row);
   }
 
-  async function hydrateById(client: QueryClient, subscriptionId: string): Promise<ServiceSubscription> {
+  async function hydrateById(
+    client: QueryClient,
+    subscriptionId: string,
+  ): Promise<ServiceSubscription> {
     const rows = await client<SubscriptionRow[]>`
       select id, company_id, service_type, fee, status, renewal_date, cancelled_at
       from service_subscriptions
@@ -837,6 +849,7 @@ git commit -m "feat: add service subscription repository"
 ## Task 7: Repository integration tests
 
 **Files:**
+
 - Create: `src/features/service-subscriptions/repository.test.ts`
 
 - [ ] **Step 1: Write the test file**
@@ -1077,6 +1090,7 @@ teardown-ordering hazard like incorporation's `completeCase` tests have.
 npx eslint --fix src/features/service-subscriptions/repository.test.ts
 npx vitest run src/features/service-subscriptions/repository.test.ts
 ```
+
 Expected: skipped locally (no `TEST_DATABASE_URL`), no syntax errors.
 
 - [ ] **Step 3: Commit**
@@ -1091,6 +1105,7 @@ git commit -m "test: add service subscription repository integration tests"
 ## Task 8: Server functions
 
 **Files:**
+
 - Create: `src/features/service-subscriptions/server-fns.ts`
 
 Read `src/features/incorporation/server-fns.ts` in full first — this task's
@@ -1117,7 +1132,9 @@ const loadDefaultServiceSubscriptionContext = createServerOnlyFn(async () => {
   return { getRequest, requireStaffActor, createServiceSubscriptionRepository };
 });
 
-async function getCurrentServiceSubscriptionActor(): Promise<AuthenticatedActor & { userId: string }> {
+async function getCurrentServiceSubscriptionActor(): Promise<
+  AuthenticatedActor & { userId: string }
+> {
   const { getRequest, requireStaffActor } = await loadDefaultServiceSubscriptionContext();
   const actor = await requireStaffActor(getRequest());
 
@@ -1236,6 +1253,7 @@ git commit -m "feat: add service subscription server functions"
 ## Task 9: Reminders
 
 **Files:**
+
 - Modify: `src/features/service-subscriptions/repository.ts`
 - Create: `src/features/service-subscriptions/reminder-draft.ts`
 - Create: `src/features/service-subscriptions/reminder-draft.test.ts`
@@ -1352,10 +1370,12 @@ Add `evaluateReminders` as a new method inside `createServiceSubscriptionReposit
 before the `return { ... }` block:
 
 ```ts
-  async function evaluateReminders(now: string = hongKongBusinessDate()): Promise<EvaluateRemindersResult> {
-    const candidates = await sql<
-      { id: string; company_id: string; company_name: string; renewal_date: string }[]
-    >`
+async function evaluateReminders(
+  now: string = hongKongBusinessDate(),
+): Promise<EvaluateRemindersResult> {
+  const candidates = await sql<
+    { id: string; company_id: string; company_name: string; renewal_date: string }[]
+  >`
       select ss.id, ss.company_id, c.company_name, ss.renewal_date::text
       from service_subscriptions ss
       join companies c on c.id = ss.company_id
@@ -1363,51 +1383,49 @@ before the `return { ... }` block:
         and ss.renewal_date <= (${now}::date + interval '30 days')
     `;
 
-    let sent = 0;
-    let skipped = 0;
+  let sent = 0;
+  let skipped = 0;
 
-    for (const candidate of candidates) {
-      const outcome = await withTransaction(sql, async (tx) => {
-        const lockedRows = await tx<{ id: string; status: "Active" | "Cancelled" }[]>`
+  for (const candidate of candidates) {
+    const outcome = await withTransaction(sql, async (tx) => {
+      const lockedRows = await tx<{ id: string; status: "Active" | "Cancelled" }[]>`
           select id, status from service_subscriptions where id = ${candidate.id} for update
         `;
-        const locked = lockedRows[0];
-        // Re-check under lock: a subscription cancelled by staff while this
-        // sweep was still processing an earlier row must not receive a
-        // reminder for a service that's no longer active — the same race
-        // annual-return's evaluateReminders guards against for a case
-        // marked Filed mid-sweep.
-        if (!locked || locked.status !== "Active") return null;
+      const locked = lockedRows[0];
+      // Re-check under lock: a subscription cancelled by staff while this
+      // sweep was still processing an earlier row must not receive a
+      // reminder for a service that's no longer active — the same race
+      // annual-return's evaluateReminders guards against for a case
+      // marked Filed mid-sweep.
+      if (!locked || locked.status !== "Active") return null;
 
-        const firedRows = await tx<{ milestone: ReminderMilestone }[]>`
+      const firedRows = await tx<{ milestone: ReminderMilestone }[]>`
           select milestone from service_subscription_reminder_events where subscription_id = ${candidate.id}
         `;
-        const milestone = dueMilestone(
-          candidate.renewal_date,
-          now,
-          firedRows.map((row) => row.milestone),
-        );
-        if (!milestone) return null;
+      const milestone = dueMilestone(
+        candidate.renewal_date,
+        now,
+        firedRows.map((row) => row.milestone),
+      );
+      if (!milestone) return null;
 
-        const insertedEvent = await tx<{ id: string }[]>`
+      const insertedEvent = await tx<{ id: string }[]>`
           insert into service_subscription_reminder_events (subscription_id, milestone, occurred_at)
           values (${candidate.id}, ${milestone}, ${now})
           on conflict (subscription_id, milestone) do nothing
           returning id
         `;
-        if (!insertedEvent[0]) return null;
+      if (!insertedEvent[0]) return null;
 
-        const contactRows = await tx<
-          { name: string; email: string | null; phone: string | null }[]
-        >`
+      const contactRows = await tx<{ name: string; email: string | null; phone: string | null }[]>`
           select name, email, phone from company_contacts
           where company_id = ${candidate.company_id} and is_primary = true
           limit 1
         `;
-        const contact = contactRows[0];
+      const contact = contactRows[0];
 
-        if (!contact) {
-          await tx`
+      if (!contact) {
+        await tx`
             insert into timeline_events (
               company_id, event_type, actor_type, actor_id, description, metadata
             ) values (
@@ -1416,14 +1434,14 @@ before the `return { ... }` block:
               ${tx.json({ subscriptionId: candidate.id, milestone, reason: "no_primary_contact" })}
             )
           `;
-          return "skipped" as const;
-        }
+        return "skipped" as const;
+      }
 
-        const channel: "whatsapp" | "email" = contact.phone ? "whatsapp" : "email";
-        const recipient = contact.phone ?? contact.email;
+      const channel: "whatsapp" | "email" = contact.phone ? "whatsapp" : "email";
+      const recipient = contact.phone ?? contact.email;
 
-        if (!recipient) {
-          await tx`
+      if (!recipient) {
+        await tx`
             insert into timeline_events (
               company_id, event_type, actor_type, actor_id, description, metadata
             ) values (
@@ -1432,29 +1450,34 @@ before the `return { ... }` block:
               ${tx.json({ subscriptionId: candidate.id, milestone, reason: "unreachable_primary_contact" })}
             )
           `;
-          return "skipped" as const;
-        }
+        return "skipped" as const;
+      }
 
-        const fullRows = await tx<SubscriptionRow[]>`
+      const fullRows = await tx<SubscriptionRow[]>`
           select id, company_id, service_type, fee, status, renewal_date, cancelled_at
           from service_subscriptions where id = ${candidate.id}
         `;
-        const subscription = mapSubscription(fullRows[0]);
+      const subscription = mapSubscription(fullRows[0]);
 
-        await enqueueNotification(tx, {
-          companyId: candidate.company_id,
-          channel,
-          notificationType: `service_subscription_reminder_${milestone}`,
-          recipient,
-          payload: {
-            subscriptionId: candidate.id,
-            milestone,
-            subject: `「${candidate.company_name}」服務續期提醒`,
-            body: buildServiceSubscriptionReminderDraft(subscription, candidate.company_name, contact.name, now),
-          },
-        });
+      await enqueueNotification(tx, {
+        companyId: candidate.company_id,
+        channel,
+        notificationType: `service_subscription_reminder_${milestone}`,
+        recipient,
+        payload: {
+          subscriptionId: candidate.id,
+          milestone,
+          subject: `「${candidate.company_name}」服務續期提醒`,
+          body: buildServiceSubscriptionReminderDraft(
+            subscription,
+            candidate.company_name,
+            contact.name,
+            now,
+          ),
+        },
+      });
 
-        await tx`
+      await tx`
           insert into timeline_events (
             company_id, event_type, actor_type, actor_id, description, metadata
           ) values (
@@ -1464,15 +1487,15 @@ before the `return { ... }` block:
           )
         `;
 
-        return "sent" as const;
-      });
+      return "sent" as const;
+    });
 
-      if (outcome === "sent") sent += 1;
-      else if (outcome === "skipped") skipped += 1;
-    }
-
-    return { sent, skipped };
+    if (outcome === "sent") sent += 1;
+    else if (outcome === "skipped") skipped += 1;
   }
+
+  return { sent, skipped };
+}
 ```
 
 Note: this fetches the subscription's full row a second time (`fullRows`)
@@ -1499,61 +1522,61 @@ Append to `src/features/service-subscriptions/repository.test.ts` (inside
 the existing `describe.skipIf(!databaseUrl)` block):
 
 ```ts
-  it("fires a reminder once per milestone and never again after cancellation", async () => {
-    const setupSql = sqlForTests();
-    let subscriptionId: string | undefined;
+it("fires a reminder once per milestone and never again after cancellation", async () => {
+  const setupSql = sqlForTests();
+  let subscriptionId: string | undefined;
 
-    try {
-      const repository = createServiceSubscriptionRepository({ sql: setupSql });
-      const [company] = await setupSql<{ id: string }[]>`select id from companies limit 1`;
-      const [owner] = await setupSql<{ id: string }[]>`select id from users where active limit 1`;
+  try {
+    const repository = createServiceSubscriptionRepository({ sql: setupSql });
+    const [company] = await setupSql<{ id: string }[]>`select id from companies limit 1`;
+    const [owner] = await setupSql<{ id: string }[]>`select id from users where active limit 1`;
 
-      const created = await repository.addSubscription({
-        companyId: company.id,
-        serviceType: "secretary",
-        fee: 2800,
-        renewalDate: "2026-09-12",
-        actorId: owner.id,
-      });
-      subscriptionId = created.id;
+    const created = await repository.addSubscription({
+      companyId: company.id,
+      serviceType: "secretary",
+      fee: 2800,
+      renewalDate: "2026-09-12",
+      actorId: owner.id,
+    });
+    subscriptionId = created.id;
 
-      await repository.evaluateReminders("2026-08-13");
+    await repository.evaluateReminders("2026-08-13");
 
-      const fired = await setupSql<{ milestone: string }[]>`
+    const fired = await setupSql<{ milestone: string }[]>`
         select milestone from service_subscription_reminder_events where subscription_id = ${created.id}
       `;
-      // A primary contact may or may not exist on the seeded fixture company —
-      // either way, re-running the same day must not fire a second event for
-      // the same milestone (sent -> gating row exists; skipped -> nothing to
-      // dedupe against, so re-run count must match exactly).
-      await repository.evaluateReminders("2026-08-13");
-      const firedAfterSecond = await setupSql<{ milestone: string }[]>`
+    // A primary contact may or may not exist on the seeded fixture company —
+    // either way, re-running the same day must not fire a second event for
+    // the same milestone (sent -> gating row exists; skipped -> nothing to
+    // dedupe against, so re-run count must match exactly).
+    await repository.evaluateReminders("2026-08-13");
+    const firedAfterSecond = await setupSql<{ milestone: string }[]>`
         select milestone from service_subscription_reminder_events where subscription_id = ${created.id}
       `;
-      expect(firedAfterSecond).toHaveLength(fired.length);
+    expect(firedAfterSecond).toHaveLength(fired.length);
 
-      await repository.cancelSubscription({
-        subscriptionId: created.id,
-        companyId: company.id,
-        actorId: owner.id,
-      });
+    await repository.cancelSubscription({
+      subscriptionId: created.id,
+      companyId: company.id,
+      actorId: owner.id,
+    });
 
-      await repository.evaluateReminders("2026-08-29");
-      const firedAfterCancel = await setupSql<{ milestone: string }[]>`
+    await repository.evaluateReminders("2026-08-29");
+    const firedAfterCancel = await setupSql<{ milestone: string }[]>`
         select milestone from service_subscription_reminder_events where subscription_id = ${created.id}
       `;
-      // Cancelling stops future milestones from ever firing — no new rows
-      // appear for this subscription after cancellation, even though 2_week
-      // would otherwise be due by 2026-08-29.
-      expect(firedAfterCancel).toHaveLength(fired.length);
-    } finally {
-      if (subscriptionId) {
-        await setupSql`delete from service_subscription_reminder_events where subscription_id = ${subscriptionId}`;
-        await setupSql`delete from service_subscriptions where id = ${subscriptionId}`;
-      }
-      await setupSql.end();
+    // Cancelling stops future milestones from ever firing — no new rows
+    // appear for this subscription after cancellation, even though 2_week
+    // would otherwise be due by 2026-08-29.
+    expect(firedAfterCancel).toHaveLength(fired.length);
+  } finally {
+    if (subscriptionId) {
+      await setupSql`delete from service_subscription_reminder_events where subscription_id = ${subscriptionId}`;
+      await setupSql`delete from service_subscriptions where id = ${subscriptionId}`;
     }
-  });
+    await setupSql.end();
+  }
+});
 ```
 
 - [ ] **Step 7: Format, lint, run**
@@ -1562,6 +1585,7 @@ the existing `describe.skipIf(!databaseUrl)` block):
 npx eslint --fix src/features/service-subscriptions
 npx vitest run src/features/service-subscriptions
 ```
+
 Expected: all new tests pass or skip cleanly (integration tests skip
 without `TEST_DATABASE_URL`); `reminder-draft.test.ts` runs and passes
 unconditionally (no DB needed).
@@ -1609,6 +1633,7 @@ was needed.)
 ## Task 10: Retire `service_packages` from the clients feature
 
 **Files:**
+
 - Modify: `src/features/clients/types.ts`
 - Modify: `src/features/clients/repository.ts`
 - Modify: `src/features/clients/repository.test.ts`
@@ -1636,25 +1661,25 @@ null;` and `packageName: string | null;` from `ClientSummary`. Remove
   and its implementation (around line 315), and remove it from the
   returned object at the end of the file (line 1246).
 - In `listAssignmentOptions`: change `const [owners, teams, packages] =
-  await Promise.all([...])` to `const [owners, teams] = await
-  Promise.all([...])`, removing the `listServicePackages()` call from the
+await Promise.all([...])` to `const [owners, teams] = await
+Promise.all([...])`, removing the `listServicePackages()` call from the
   array, and remove `packages,` from the returned object.
 - In `mapSummary`: remove the `packageId: row.service_package_id,
-  packageName: row.package_name,` lines.
+packageName: row.package_name,` lines.
 - In `SummaryRow`: remove `service_package_id: string | null;` and
   `package_name: string | null;`.
 - In `listClients`'s SQL: remove `c.service_package_id,` and `sp.name as
-  package_name,` from the `select` list, and remove `left join
-  service_packages sp on sp.id = c.service_package_id` from the `from`
+package_name,` from the `select` list, and remove `left join
+service_packages sp on sp.id = c.service_package_id` from the `from`
   clause.
 - Do the identical removal in `hydrateClient`'s SQL (the same three lines,
   duplicated for the detail query).
 - In `createClient`'s insert: remove `service_package_id` from the column
   list and `${input.packageId}` from the values list.
 - In `changedFields`: remove the `["packageId", before.packageId,
-  input.packageId],` comparison tuple.
+input.packageId],` comparison tuple.
 - In `updateClient`'s update statement: remove `service_package_id =
-  ${input.packageId},`.
+${input.packageId},`.
 
 - [ ] **Step 3: `src/features/clients/server-fns.ts`**
 
@@ -1701,6 +1726,7 @@ git commit -m "refactor: remove service_packages from the clients feature"
 ## Task 11: Retire `service_packages` from the UI
 
 **Files:**
+
 - Modify: `src/components/clients/client-form-dialog.tsx`
 - Modify: `src/features/clients/components/production-client-detail.tsx`
 - Modify: `src/features/clients/components/production-client-register.tsx`
@@ -1776,6 +1802,7 @@ git commit -m "refactor: remove service_packages UI from client form, detail, an
 ## Task 12: Subscriptions section on the client detail page
 
 **Files:**
+
 - Create: `src/features/clients/components/service-subscriptions-section.tsx`
 - Create: `src/features/clients/components/service-subscriptions-section.test.tsx`
 - Modify: `src/features/clients/components/production-client-detail.tsx`
@@ -1980,7 +2007,9 @@ function AddSubscriptionDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add subscription</DialogTitle>
-          <DialogDescription>Start tracking a recurring service for this company.</DialogDescription>
+          <DialogDescription>
+            Start tracking a recurring service for this company.
+          </DialogDescription>
         </DialogHeader>
 
         {offeredTypes.length === 0 ? (
@@ -1990,7 +2019,10 @@ function AddSubscriptionDialog({
         ) : (
           <form onSubmit={submit} className="space-y-4">
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-muted-foreground" htmlFor="subscription-type">
+              <label
+                className="text-[10px] uppercase tracking-wider text-muted-foreground"
+                htmlFor="subscription-type"
+              >
                 Service
               </label>
               <select
@@ -2011,7 +2043,10 @@ function AddSubscriptionDialog({
               </select>
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-muted-foreground" htmlFor="subscription-fee">
+              <label
+                className="text-[10px] uppercase tracking-wider text-muted-foreground"
+                htmlFor="subscription-fee"
+              >
                 Fee (HKD)
               </label>
               <input
@@ -2026,7 +2061,10 @@ function AddSubscriptionDialog({
               />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-muted-foreground" htmlFor="subscription-renewal">
+              <label
+                className="text-[10px] uppercase tracking-wider text-muted-foreground"
+                htmlFor="subscription-renewal"
+              >
                 Renewal date
               </label>
               <input
@@ -2136,7 +2174,9 @@ describe("ServiceSubscriptionsSection", () => {
     await userEvent.click(screen.getByRole("button", { name: "Add subscription" }));
 
     const select = screen.getByLabelText("Service");
-    const options = Array.from(select.querySelectorAll("option")).map((option) => option.textContent);
+    const options = Array.from(select.querySelectorAll("option")).map(
+      (option) => option.textContent,
+    );
     expect(options).not.toContain("Company Secretary");
     expect(options).toContain("Registered Office");
   });
@@ -2231,6 +2271,7 @@ Expected: passes, including `migration-schema` for migration 0018.
 ```bash
 grep -rn "service_packages\|service_package_id\|ServicePackage\|listServicePackages" src/ db/migrations/0018_recurring_service_subscriptions.sql
 ```
+
 Expected: zero matches outside `db/migrations/0008_client_register.sql`
 (the original migration, left untouched — migrations are forward-only and
 never edited retroactively) and `db/migrations/0018_...`'s own drop

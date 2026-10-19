@@ -74,9 +74,9 @@ async function renderRoute(pathname: string, dataMode: "demo" | "production") {
 }
 
 // Markers, chosen so each screen is identified by something only it renders.
-const DEMO_COMPOSER = "Type a reply or insert an AI draft";
-const PRODUCTION_INBOX = "Loading conversations";
-const AUTOMATION_TITLE = "WhatsApp Automation";
+const DEMO_COMPOSER = "輸入回覆，或插入 AI 草稿";
+const PRODUCTION_INBOX = "對話載入中";
+const AUTOMATION_TITLE = "WhatsApp 追件";
 
 describe("whatsapp route across data modes", () => {
   // The regression guard. /whatsapp/automation is a CHILD of /whatsapp and renders
@@ -98,6 +98,15 @@ describe("whatsapp route across data modes", () => {
     expect(html).not.toContain(DEMO_COMPOSER);
   });
 
+  it("presents the demo automation queue as read-only instead of offering dead Send buttons", async () => {
+    const html = await renderRoute("/whatsapp/automation", "demo");
+    const sendButtons = [...html.matchAll(/<button[^>]*>立即發送<\/button>/g)].map((m) => m[0]);
+
+    expect(html).toContain("唯讀示範。");
+    expect(sendButtons.length).toBeGreaterThan(0);
+    expect(sendButtons.every((button) => button.includes("disabled"))).toBe(true);
+  });
+
   it("renders the production inbox at /whatsapp in production mode", async () => {
     // renderToString does not run TanStack Query, so this asserts the production
     // component is mounted rather than that the server call fired. The server call
@@ -116,4 +125,15 @@ describe("whatsapp route across data modes", () => {
     expect(html).toContain("Mandy Lee");
     expect(html).not.toContain(PRODUCTION_INBOX);
   });
+
+  it.each(["demo", "production"] as const)(
+    "gives the %s inbox a main landmark like every other screen",
+    async (dataMode) => {
+      // The inbox used a bare <div> root, so screen-reader landmark navigation
+      // had no "main" to jump to on this one screen.
+      const html = await renderRoute("/whatsapp", dataMode);
+
+      expect(html.match(/<main[\s>]/g)).toHaveLength(1);
+    },
+  );
 });

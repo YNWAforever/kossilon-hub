@@ -1,3 +1,6 @@
+import { checklistItemText } from "@/lib/checklist-item-label";
+import { ChecklistItemLabel } from "@/components/checklist-item-label";
+import { pageTitle } from "@/lib/page-title";
 import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
 import {
   getAnnualReturnCase,
@@ -10,9 +13,13 @@ import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-quer
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Download, ReceiptText } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
-import { formatDate } from "@/lib/format-date";
+import { formatDate, formatDateTime } from "@/lib/format-date";
+import { labelValue } from "@/lib/format-label";
+import { annualReturnStatusLabel, paymentStatusLabel } from "../features/annual-return/labels";
 import {
   getClientPortalCase,
   listClientPortalCases,
@@ -52,6 +59,7 @@ type PortalSearch = {
 };
 
 export const Route = createFileRoute("/portal")({
+  head: () => ({ meta: [{ title: pageTitle("客戶入口") }] }),
   validateSearch: (search): PortalSearch => ({
     caseId: search.caseId,
   }),
@@ -110,20 +118,18 @@ function PortalRoute() {
     if (invalidCaseId)
       return (
         <main className="flex-1 space-y-3 p-6">
-          <PageHeader eyebrow="Operations" title="Portal" />
+          <PageHeader eyebrow="客戶入口" title="客戶入口" />
           <p role="alert" className="text-sm text-destructive">
             案件 ID 格式無效。請重新選擇案件。
           </p>
-          <Link
-            to="/portal"
-            search={{}}
-            className="inline-flex rounded-md border px-3 py-2 text-sm"
-          >
-            重新選擇案件
-          </Link>
-          <Link to="/today" className="inline-flex rounded-md border px-3 py-2 text-sm">
-            返回今日工作
-          </Link>
+          <Button asChild>
+            <Link to="/portal" search={{}}>
+              重新選擇案件
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link to="/today">返回今日工作</Link>
+          </Button>
         </main>
       );
     // A Client sign-in gets its own companies' cases. Every other read in this
@@ -136,17 +142,17 @@ function PortalRoute() {
     if (!productionCaseId) {
       return (
         <main className="flex-1 space-y-3 p-6">
-          <PageHeader eyebrow="Operations" title="Production portal" />
+          <PageHeader eyebrow="客戶入口" title="客戶入口" />
           {/* The sidebar links here with no caseId, so this is the screen staff
               actually land on. It used to stop at a sentence, leaving the only
               route onward as editing the URL by hand. */}
           <p className="text-sm text-muted-foreground">
-            Open a case from the annual returns board to see its client portal.
+            請選擇案件，或從周年申報列表開啟案件，以查看該案件的客戶入口。
           </p>
           <label className="block text-sm">
             搜尋全範圍案件
-            <input
-              className="min-h-11 ml-2 rounded border px-3"
+            <Input
+              className="min-h-11 ml-2"
               value={caseSearch}
               onChange={(event) => setCaseSearch(event.target.value)}
             />
@@ -156,9 +162,9 @@ function PortalRoute() {
           </label>
           <label className="block text-sm">
             選擇案件
-            <select
+            <Select
               aria-label="選擇案件"
-              className="ml-2 rounded-md border bg-background px-3 py-2"
+              className="ml-2"
               value=""
               onChange={(event) => {
                 const id = parseEntityId(event.target.value);
@@ -171,34 +177,32 @@ function PortalRoute() {
                   {item.companyName} · {item.returnYear}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           {pickerQuery.isError ? (
             <p role="alert" className="text-sm text-destructive">
               無法載入授權案件，請稍後再試。
             </p>
           ) : null}
-          <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-            Browse annual returns
-          </Link>
-          <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/today">
-            返回今日工作
-          </Link>
+          <Button asChild>
+            <Link to="/annual-returns">瀏覽周年申報</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/today">返回今日工作</Link>
+          </Button>
         </main>
       );
     }
     if (productionCaseQuery.isLoading) {
-      return <div className="p-6 text-sm text-muted-foreground">Loading production portal...</div>;
+      return <div className="p-6 text-sm text-muted-foreground">客戶入口載入中…</div>;
     }
     if (productionCaseQuery.data) {
       return <ProductionPortalCaseView caseItem={productionCaseQuery.data} />;
     }
     return (
       <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="Operations" title="Portal case unavailable" />
-        <p className="text-sm text-destructive">
-          Unable to load the production annual return case.
-        </p>
+        <PageHeader eyebrow="客戶入口" title="無法載入案件" />
+        <p className="text-sm text-destructive">無法載入此周年申報案件。</p>
       </main>
     );
   }
@@ -206,10 +210,10 @@ function PortalRoute() {
   if (!selectedCase) {
     return (
       <main className="flex-1 space-y-4 p-6">
-        <PageHeader eyebrow="Operations" title="Portal case not found" />
-        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-          Back to staff app
-        </Link>
+        <PageHeader eyebrow="客戶入口" title="找不到案件" />
+        <Button asChild>
+          <Link to="/annual-returns">返回周年申報</Link>
+        </Button>
       </main>
     );
   }
@@ -225,13 +229,12 @@ function PortalRoute() {
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader
-        eyebrow="Client portal demo"
+        eyebrow="客戶入口"
         title={selectedCase.companyName}
-        subtitle={`Annual return due ${selectedCase.dueDate} / Packet ${packetStatus}`}
+        subtitle={`周年申報到期日 ${formatDate(selectedCase.dueDate)} · 交件套件：${labelValue(packetStatus)}`}
         actions={
-          <select
-            aria-label="Select portal case"
-            className="rounded-md border bg-background px-3 py-2 text-sm"
+          <Select
+            aria-label="選擇客戶入口案件"
             value={selectedCase.id}
             onChange={(event) => {
               setWarning(undefined);
@@ -245,12 +248,12 @@ function PortalRoute() {
                 {caseItem.companyName}
               </option>
             ))}
-          </select>
+          </Select>
         }
       />
 
       {warning ? (
-        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text">
           {warning}
         </div>
       ) : null}
@@ -258,7 +261,7 @@ function PortalRoute() {
       <section className="rounded-lg border bg-card p-4">
         <div className="grid gap-3 md:grid-cols-[1fr_220px] md:items-center">
           <div>
-            <h2 className="text-lg font-semibold">Next client action</h2>
+            <h2 className="text-lg font-semibold">客戶下一步</h2>
             <p className="mt-1 text-sm text-muted-foreground">{progress.nextAction}</p>
           </div>
           <div>
@@ -269,7 +272,7 @@ function PortalRoute() {
               />
             </div>
             <p className="mt-2 text-right text-sm text-muted-foreground">
-              {progress.completed}/{progress.total} complete
+              已完成 {progress.completed}/{progress.total}
             </p>
           </div>
         </div>
@@ -279,9 +282,9 @@ function PortalRoute() {
         <section className="rounded-lg border bg-card p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold">Required actions</h2>
+              <h2 className="text-lg font-semibold">待辦事項</h2>
               <p className="text-sm text-muted-foreground">
-                Mock client actions update the staff archive and case timeline.
+                示範客戶操作會更新同事的文件庫及案件時間線。
               </p>
             </div>
             <CheckCircle2 className="h-5 w-5 text-primary" />
@@ -297,7 +300,7 @@ function PortalRoute() {
               />
             ))}
             {requiredActions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No client action is needed.</p>
+              <p className="text-sm text-muted-foreground">客戶毋須採取任何行動。</p>
             ) : null}
           </div>
         </section>
@@ -305,20 +308,20 @@ function PortalRoute() {
         <section className="rounded-lg border bg-card p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold">Portal activity</h2>
-              <p className="text-sm text-muted-foreground">Newest client actions appear first.</p>
+              <h2 className="text-lg font-semibold">客戶入口活動</h2>
+              <p className="text-sm text-muted-foreground">最新的客戶操作排在最前。</p>
             </div>
             <ReceiptText className="h-5 w-5 text-primary" />
           </div>
           <div className="mt-4 space-y-3">
             {activity.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No portal activity yet.</p>
+              <p className="text-sm text-muted-foreground">暫未有客戶入口活動。</p>
             ) : (
               activity.map((item) => (
                 <div key={item.id} className="rounded-md border px-3 py-3 text-sm">
                   <p className="font-medium">{item.summary}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {formatTimestamp(item.createdAt)}
+                    {formatDateTime(item.createdAt)}
                   </p>
                 </div>
               ))
@@ -355,8 +358,8 @@ function PortalActionRow({
   const documentPrimaryLabel =
     action.kind === "document"
       ? action.documentAction === "replace"
-        ? "Replace"
-        : "Upload"
+        ? "更換"
+        : "上載"
       : undefined;
   const showPrimaryAction =
     action.kind === "document"
@@ -369,29 +372,27 @@ function PortalActionRow({
     onWarning(undefined);
 
     if (action.kind === "document") {
-      onWarning("Use the production document uploader below to submit this file.");
+      onWarning("請使用下方的正式文件上載功能提交此檔案。");
       return;
     }
 
     if (action.kind === "payment-proof" && action.paymentProofAction) {
-      onWarning("Use the production document uploader for private proof files.");
+      onWarning("請使用正式文件上載功能提交私人證明檔案。");
       return;
     }
 
     if (action.kind === "payment") {
-      onWarning(
-        "Production payment acknowledgement is handled by the annual-return server action.",
-      );
+      onWarning("正式環境的付款確認由周年申報流程處理。");
       return;
     }
 
     if (action.kind === "packet") {
-      onWarning("Production packet approval is handled by the annual-return server action.");
+      onWarning("正式環境的交件套件批核由周年申報流程處理。");
       return;
     }
 
     if (action.kind === "receipt") {
-      onWarning("Production receipt viewing is handled by the annual-return server action.");
+      onWarning("正式環境的收據查閱由周年申報流程處理。");
     }
   }
 
@@ -402,25 +403,27 @@ function PortalActionRow({
           <p className="font-medium">{action.label}</p>
           <p className="mt-1 text-sm text-muted-foreground">{action.detail}</p>
         </div>
-        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">{action.status}</span>
+        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">
+          {labelValue(action.status)}
+        </span>
       </div>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
         {showPrimaryAction ? (
-          <button
-            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+          <Button
+            variant="primary"
             disabled={primaryDisabled}
             onClick={handlePrimaryAction}
             type="button"
             aria-label={
               action.kind === "payment-proof"
-                ? `${primaryActionLabel(action)} for ${caseItem.companyName}`
+                ? `為 ${caseItem.companyName} ${primaryActionLabel(action)}`
                 : documentPrimaryLabel
-                  ? `${documentPrimaryLabel} ${action.label}`
+                  ? `${documentPrimaryLabel}「${action.label}」`
                   : undefined
             }
           >
             {primaryActionLabel(action)}
-          </button>
+          </Button>
         ) : null}
       </div>
     </div>
@@ -431,12 +434,12 @@ function PaymentProofHistory({ proofs }: { proofs: ClientPortalPaymentProof[] })
   return (
     <section className="rounded-lg border bg-card p-4">
       <div>
-        <h2 className="text-lg font-semibold">Payment proof history</h2>
-        <p className="text-sm text-muted-foreground">Uploaded proof and staff review outcomes.</p>
+        <h2 className="text-lg font-semibold">付款證明記錄</h2>
+        <p className="text-sm text-muted-foreground">已上載的證明及同事覆核結果。</p>
       </div>
       <div className="mt-4 divide-y">
         {proofs.length === 0 ? (
-          <p className="py-3 text-sm text-muted-foreground">No payment proof uploaded yet.</p>
+          <p className="py-3 text-sm text-muted-foreground">暫未上載付款證明。</p>
         ) : (
           proofs.map((proof) => (
             <div
@@ -446,22 +449,22 @@ function PaymentProofHistory({ proofs }: { proofs: ClientPortalPaymentProof[] })
               <div className="min-w-0">
                 <p className="font-medium">{proof.filename}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Uploaded by {proof.uploadedBy} on {formatTimestamp(proof.uploadedAt)}
+                  {proof.uploadedBy} 於 {formatDateTime(proof.uploadedAt)} 上載
                 </p>
                 {proof.reviewedBy && proof.reviewedAt ? (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Reviewed by {proof.reviewedBy} on {formatTimestamp(proof.reviewedAt)}
+                    {proof.reviewedBy} 於 {formatDateTime(proof.reviewedAt)} 覆核
                   </p>
                 ) : null}
                 {proof.reviewReasonLabel ? (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Reason: {proof.reviewReasonLabel}
-                    {proof.reviewNote ? ` - ${proof.reviewNote}` : ""}
+                    原因：{proof.reviewReasonLabel}
+                    {proof.reviewNote ? ` — ${proof.reviewNote}` : ""}
                   </p>
                 ) : null}
               </div>
-              <span>{proof.origin}</span>
-              <span>{proof.status}</span>
+              <span>{labelValue(proof.origin)}</span>
+              <span>{labelValue(proof.status)}</span>
             </div>
           ))
         )}
@@ -483,22 +486,20 @@ function ArchivePreview({
     <section className="rounded-lg border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Shared archive</h2>
+          <h2 className="text-lg font-semibold">共用文件庫</h2>
           <p className="text-sm text-muted-foreground">
-            Portal uploads and generated filing records appear here and in Documents.
+            客戶入口上載的檔案及系統產生的遞交記錄，會顯示於此及「文件」頁。
           </p>
         </div>
-        <Link
-          className="rounded-md border px-3 py-2 text-sm"
-          to="/documents"
-          search={{ caseId: selectedCase.id }}
-        >
-          Open documents
-        </Link>
+        <Button asChild>
+          <Link to="/documents" search={{ caseId: selectedCase.id }}>
+            開啟文件
+          </Link>
+        </Button>
       </div>
       <div className="mt-4 divide-y">
         {previewRows.length === 0 ? (
-          <p className="py-3 text-sm text-muted-foreground">No archive rows yet.</p>
+          <p className="py-3 text-sm text-muted-foreground">文件庫暫無記錄。</p>
         ) : (
           previewRows.map((row) => (
             <div key={row.id} className="grid gap-2 py-3 text-sm md:grid-cols-[1fr_140px_120px]">
@@ -507,13 +508,13 @@ function ArchivePreview({
                 {row.reviewSummary ? (
                   <span className="mt-1 block text-xs font-normal text-muted-foreground">
                     {row.reviewSummary}
-                    {row.reviewReasonLabel ? ` - ${row.reviewReasonLabel}` : ""}
-                    {row.reviewNote ? ` - ${row.reviewNote}` : ""}
+                    {row.reviewReasonLabel ? ` — ${row.reviewReasonLabel}` : ""}
+                    {row.reviewNote ? ` — ${row.reviewNote}` : ""}
                   </span>
                 ) : null}
               </span>
-              <span>{row.source}</span>
-              <span>{row.status}</span>
+              <span>{labelValue(row.source)}</span>
+              <span>{labelValue(row.status)}</span>
             </div>
           ))
         )}
@@ -554,27 +555,29 @@ function ClientPortalCaseView({ caseItem }: { caseItem: ClientPortalCaseDetail }
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader
-        eyebrow="Client portal"
+        eyebrow="客戶入口"
         title={caseItem.companyName}
-        subtitle={`Annual return ${caseItem.returnYear} · due ${formatDate(caseItem.filingDueDate)}`}
+        subtitle={`${caseItem.returnYear} 年度周年申報 · 到期日 ${formatDate(caseItem.filingDueDate)}`}
       />
 
       <section className="rounded-xl border border-border bg-card p-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-display text-base font-semibold text-foreground">Progress</h2>
+          <h2 className="font-display text-base font-semibold text-foreground">進度</h2>
           <StatusPill tone={clientPortalStatusTone(caseItem.currentStatus)}>
-            {caseItem.currentStatus}
+            {annualReturnStatusLabel(caseItem.currentStatus)}
           </StatusPill>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
           {outstanding.length === 0
-            ? "Everything we need from you has been received."
-            : `We are still waiting on ${outstanding.length} document${outstanding.length === 1 ? "" : "s"} from you.`}
+            ? "我們已收到所需的全部文件，謝謝您。"
+            : `我們仍在等待您提供 ${outstanding.length} 份文件。`}
         </p>
         {outstanding.length > 0 ? (
           <ul className="mt-3 list-inside list-disc text-sm text-muted-foreground">
             {outstanding.map((item) => (
-              <li key={item.id}>{item.itemLabel}</li>
+              <li key={item.id}>
+                <ChecklistItemLabel label={item.itemLabel} />
+              </li>
             ))}
           </ul>
         ) : null}
@@ -583,23 +586,17 @@ function ClientPortalCaseView({ caseItem }: { caseItem: ClientPortalCaseDetail }
             who has just uploaded, and the old screen showed neither. */}
         {awaitingOurReview.length > 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
-            {`We have received ${awaitingOurReview.length} document${
-              awaitingOurReview.length === 1 ? "" : "s"
-            } from you and are reviewing ${awaitingOurReview.length === 1 ? "it" : "them"}. Nothing further is needed for ${
-              awaitingOurReview.length === 1 ? "it" : "them"
-            }.`}
+            {`我們已收到您提供的 ${awaitingOurReview.length} 份文件，現正覆核，您毋須再提交。`}
           </p>
         ) : null}
         {caseItem.payment ? (
           <p className="mt-3 text-sm text-muted-foreground">
-            Invoice {caseItem.payment.invoiceNumber} — {caseItem.payment.currency}{" "}
-            {caseItem.payment.amount} · {caseItem.payment.status}
+            發票 {caseItem.payment.invoiceNumber} — {caseItem.payment.currency}{" "}
+            {caseItem.payment.amount} · {paymentStatusLabel(caseItem.payment.status)}
           </p>
         ) : null}
         {caseItem.filingReference ? (
-          <p className="mt-1 text-sm text-muted-foreground">
-            Filing reference {caseItem.filingReference}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">遞交編號 {caseItem.filingReference}</p>
         ) : null}
       </section>
 
@@ -609,9 +606,9 @@ function ClientPortalCaseView({ caseItem }: { caseItem: ClientPortalCaseDetail }
         requirements={outstanding}
         onWarning={setWarning}
       />
-      <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/portal">
-        Back to your filings
-      </Link>
+      <Button asChild>
+        <Link to="/portal">返回您的周年申報</Link>
+      </Button>
     </main>
   );
 }
@@ -638,46 +635,42 @@ function ClientPortalView({ caseId }: { caseId?: string }) {
 
   if (caseId) {
     if (caseQuery.isPending) {
-      return <div className="p-6 text-sm text-muted-foreground">Loading your annual return...</div>;
+      return <div className="p-6 text-sm text-muted-foreground">正在載入您的周年申報…</div>;
     }
     if (caseQuery.data && !caseQuery.isError) {
       return <ClientPortalCaseView caseItem={caseQuery.data} />;
     }
     return (
       <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="Client portal" title="Annual return not found" />
-        <p className="text-sm text-muted-foreground">
-          This annual return is not one of your company&rsquo;s filings.
-        </p>
-        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/portal">
-          Back to your filings
-        </Link>
+        <PageHeader eyebrow="客戶入口" title="找不到周年申報" />
+        <p className="text-sm text-muted-foreground">此周年申報並不屬於您公司的申報。</p>
+        <Button asChild>
+          <Link to="/portal">返回您的周年申報</Link>
+        </Button>
       </main>
     );
   }
 
   if (casesQuery.isPending) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading your filings...</div>;
+    return <div className="p-6 text-sm text-muted-foreground">正在載入您的周年申報…</div>;
   }
 
   const cases = casesQuery.isError ? [] : (casesQuery.data ?? []);
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader
-        eyebrow="Client portal"
-        title="Your annual returns"
-        subtitle="Filings we are preparing for your company"
-      />
+      <PageHeader eyebrow="客戶入口" title="您的周年申報" subtitle="我們正為貴公司準備的周年申報" />
       {casesQuery.isError ? (
         <p role="alert">
-          未能讀取你的案件。<button onClick={() => void casesQuery.refetch()}>重試</button>
+          未能讀取您的周年申報。
+          <Button variant="link" onClick={() => void casesQuery.refetch()}>
+            重試
+          </Button>
         </p>
       ) : null}
       {cases.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          There are no annual returns on file for your company yet. Your company secretary will be
-          in touch when one is due.
+          貴公司暫未有周年申報記錄。申報到期前，您的公司秘書會與您聯絡。
         </p>
       ) : (
         <ul className="space-y-3">
@@ -688,24 +681,20 @@ function ClientPortalView({ caseId }: { caseId?: string }) {
                   {caseItem.companyName} — {caseItem.returnYear}
                 </p>
                 <StatusPill tone={clientPortalStatusTone(caseItem.currentStatus)}>
-                  {caseItem.currentStatus}
+                  {annualReturnStatusLabel(caseItem.currentStatus)}
                 </StatusPill>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                Due {formatDate(caseItem.filingDueDate)}
+                到期日 {formatDate(caseItem.filingDueDate)}
                 {caseItem.outstandingRequiredItems > 0
-                  ? ` · ${caseItem.outstandingRequiredItems} document${
-                      caseItem.outstandingRequiredItems === 1 ? "" : "s"
-                    } still needed from you`
-                  : " · nothing outstanding from you"}
+                  ? ` · 尚需您提供 ${caseItem.outstandingRequiredItems} 份文件`
+                  : " · 您毋須再提供文件"}
               </p>
-              <Link
-                className="mt-3 inline-flex rounded-md border px-3 py-2 text-sm"
-                to="/portal"
-                search={{ caseId: caseItem.id }}
-              >
-                Open
-              </Link>
+              <Button asChild className="mt-3">
+                <Link to="/portal" search={{ caseId: caseItem.id }}>
+                  開啟
+                </Link>
+              </Button>
             </li>
           ))}
         </ul>
@@ -719,9 +708,9 @@ function ProductionPortalCaseView({ caseItem }: { caseItem: ProductionAnnualRetu
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader
-        eyebrow="Client portal"
+        eyebrow="客戶入口"
         title={caseItem.companyName}
-        subtitle={`Production annual return ${caseItem.returnYear}`}
+        subtitle={`${caseItem.returnYear} 年度周年申報`}
       />
       <ProductionDocumentPanel
         companyId={caseItem.companyId}
@@ -827,7 +816,7 @@ function ScopedDocumentPanel({
         ...current,
         [key]: {
           state: "failed",
-          message: error instanceof Error ? error.message : "Upload failed.",
+          message: error instanceof Error ? error.message : "上載失敗。",
         },
       }));
     }
@@ -851,7 +840,7 @@ function ScopedDocumentPanel({
   async function handleDownload(documentId: string) {
     try {
       const response = await downloadDocument({ data: { documentId } });
-      if (!response.ok) throw new Error(`Download failed (${response.status}).`);
+      if (!response.ok) throw new Error(`下載失敗（${response.status}）。`);
       const href = URL.createObjectURL(await response.blob());
       const anchor = document.createElement("a");
       anchor.href = href;
@@ -859,7 +848,7 @@ function ScopedDocumentPanel({
       anchor.click();
       URL.revokeObjectURL(href);
     } catch (error) {
-      onWarning(error instanceof Error ? error.message : "Unable to download document.");
+      onWarning(error instanceof Error ? error.message : "未能下載文件。");
     }
   }
 
@@ -867,24 +856,24 @@ function ScopedDocumentPanel({
     <section className="rounded-lg border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Production document upload</h2>
+          <h2 className="text-lg font-semibold">上載文件</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Files are uploaded to private storage and remain quarantined until staff scanning.
+            檔案會上載至私人儲存空間，並在完成安全掃描前保持隔離。
           </p>
         </div>
-        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">Private upload</span>
+        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">私人上載</span>
       </div>
       {!productionReady ? (
         <p className="mt-4 rounded-md bg-muted px-3 py-3 text-sm text-muted-foreground">
-          This demo case is not connected to production company and case IDs yet.
+          此示範案件尚未連接正式的公司及案件 ID。
         </p>
       ) : (
         <>
           <div className="mt-4 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_auto] md:items-end">
             <label className="grid gap-1 text-sm">
-              Category
-              <select
-                className="rounded-md border bg-background px-3 py-2"
+              類別
+              <Select
+                className="w-full"
                 value={category}
                 onChange={(event) => setCategory(event.target.value as DocumentCategory)}
               >
@@ -893,51 +882,49 @@ function ScopedDocumentPanel({
                     {labelValue(item)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             {requirements.length > 0 ? (
               <label className="grid gap-1 text-sm">
                 回應哪一項要求
-                <select
-                  aria-label="Which requirement this answers"
-                  className="rounded-md border bg-background px-3 py-2"
+                <Select
+                  aria-label="回應哪一項要求"
+                  className="w-full"
                   value={checklistItemId}
                   onChange={(event) => setChecklistItemId(event.target.value)}
                 >
-                  <option value="">未指定（由職員配對）</option>
+                  <option value="">未指定（由我們的同事配對）</option>
                   {requirements.map((requirement) => (
                     <option key={requirement.id} value={requirement.id}>
-                      {requirement.itemLabel}
+                      {checklistItemText(requirement.itemLabel)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
             ) : null}
             <label className="grid gap-1 text-sm">
-              File
+              檔案
               <input
                 className="rounded-md border bg-background px-3 py-2"
                 type="file"
                 multiple
                 accept=".pdf,.png,.jpg,.jpeg"
-                aria-label="Documents to upload"
+                aria-label="要上載的文件"
                 onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
               />
             </label>
-            <button
-              className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+            <Button
+              variant="primary"
               disabled={files.length === 0 || uploading}
               onClick={() => void uploadAll(files)}
               type="button"
             >
-              {uploading
-                ? "Uploading..."
-                : `Upload securely${files.length > 1 ? ` (${files.length})` : ""}`}
-            </button>
+              {uploading ? "上載中…" : `安全上載${files.length > 1 ? `（${files.length}）` : ""}`}
+            </Button>
           </div>
 
           {files.length > 0 ? (
-            <ul aria-label="Upload results" className="mt-3 space-y-1">
+            <ul aria-label="上載結果" className="mt-3 space-y-1">
               {files.map((candidate) => {
                 const outcome = outcomes[fileKey(candidate)];
                 return (
@@ -949,13 +936,9 @@ function ScopedDocumentPanel({
                     <span className="flex items-center gap-2">
                       <UploadOutcomeLabel outcome={outcome} />
                       {outcome?.state === "failed" ? (
-                        <button
-                          className="rounded-md border px-2 py-1 text-xs"
-                          onClick={() => void uploadOne(candidate)}
-                          type="button"
-                        >
+                        <Button size="sm" onClick={() => void uploadOne(candidate)} type="button">
                           重試
-                        </button>
+                        </Button>
                       ) : null}
                     </span>
                   </li>
@@ -965,10 +948,10 @@ function ScopedDocumentPanel({
           ) : null}
           <div className="mt-4 divide-y">
             {documentsQuery.error ? (
-              <p className="py-3 text-sm text-status-yellow">Production documents unavailable.</p>
+              <p className="py-3 text-sm text-status-yellow-text">無法載入文件。</p>
             ) : null}
             {!documentsQuery.isLoading && !documentsQuery.error && documentRows.length === 0 ? (
-              <p className="py-3 text-sm text-muted-foreground">No production documents yet.</p>
+              <p className="py-3 text-sm text-muted-foreground">暫未有文件。</p>
             ) : null}
             {documentRows.map((document) => (
               <div
@@ -985,25 +968,21 @@ function ScopedDocumentPanel({
                   </p>
                 </div>
                 {document.uploadStatus === "available" && document.reviewStatus === "verified" ? (
-                  <button
-                    className="inline-flex items-center gap-2 rounded-md border px-3 py-2"
-                    onClick={() => handleDownload(document.id)}
-                    type="button"
-                  >
-                    <Download className="h-4 w-4" /> Download
-                  </button>
+                  <Button onClick={() => handleDownload(document.id)} type="button">
+                    <Download /> 下載
+                  </Button>
                 ) : null}
               </div>
             ))}
             {documentsQuery.hasNextPage ? (
-              <button
+              <Button
                 type="button"
-                className="min-h-11 rounded border px-3"
+                className="min-h-11"
                 disabled={documentsQuery.isFetchingNextPage}
                 onClick={() => void documentsQuery.fetchNextPage({ cancelRefetch: false })}
               >
                 載入更多文件
-              </button>
+              </Button>
             ) : null}
           </div>
         </>
@@ -1030,33 +1009,15 @@ function bytesToBase64(bytes: Uint8Array): string {
   }
   return btoa(binary);
 }
-function labelValue(value: string): string {
-  return value
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function formatTimestamp(value: string): string {
-  return new Date(value).toLocaleString("en-HK", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function primaryActionLabel(action: ClientPortalRequiredAction): string {
-  if (action.kind === "document") return action.documentAction === "replace" ? "Replace" : "Upload";
+  if (action.kind === "document") return action.documentAction === "replace" ? "更換" : "上載";
   if (action.kind === "payment-proof") {
-    return action.paymentProofAction === "replace"
-      ? "Replace payment proof"
-      : "Upload payment proof";
+    return action.paymentProofAction === "replace" ? "更換付款證明" : "上載付款證明";
   }
-  if (action.kind === "payment") return "Acknowledge payment";
-  if (action.kind === "packet") return "Approve packet";
-  return "View receipt";
+  if (action.kind === "payment") return "確認付款";
+  if (action.kind === "packet") return "批核交件套件";
+  return "查看收據";
 }
 
 /**
@@ -1084,10 +1045,10 @@ function UploadOutcomeLabel({ outcome }: { outcome?: UploadOutcome }) {
     return <span className="text-xs text-muted-foreground">上載中…</span>;
   }
   if (outcome.state === "received") {
-    return <span className="text-xs text-status-green">已收到，等待掃描</span>;
+    return <span className="text-xs text-status-green-text">已收到，等待掃描</span>;
   }
   return (
-    <span className="text-xs text-status-red" title={outcome.message}>
+    <span className="text-xs text-status-red-text" title={outcome.message}>
       失敗：{outcome.message}
     </span>
   );

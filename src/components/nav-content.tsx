@@ -1,5 +1,7 @@
+import { roleLabel } from "@/features/auth/role-labels";
 import { Link } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth-context-neon";
@@ -74,18 +76,20 @@ export function AccountBlock() {
       </div>
       <div className="min-w-0 flex-1 leading-tight">
         <div className="truncate text-xs font-semibold text-foreground">
-          {session?.name ?? "Signed in"}
+          {session?.name ?? "已登入"}
         </div>
-        <div className="truncate text-[10px] text-muted-foreground">{session?.role ?? "User"}</div>
+        <div className="truncate text-[10px] text-muted-foreground">{roleLabel(session?.role)}</div>
       </div>
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={signOut}
-        aria-label="Sign out"
-        title="Sign out"
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground"
+        aria-label="登出"
+        title="登出"
+        className="h-11 w-11 text-muted-foreground hover:text-foreground"
       >
         <LogOut className="h-4 w-4" />
-      </button>
+      </Button>
     </div>
   );
 }

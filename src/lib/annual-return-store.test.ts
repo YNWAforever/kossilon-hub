@@ -86,14 +86,14 @@ describe("annual return derived helpers", () => {
   it("normalizes blockers across documents, payment, signatures, and review", () => {
     expect(getBlockers(baseCase).map((blocker) => blocker.label)).toEqual([
       "Signed NAR1",
-      "Payment pending",
-      "Signature missing",
-      "Internal review not started",
+      "待付款",
+      "欠缺簽署",
+      "內部覆核未開始",
     ]);
   });
 
   it("selects the most useful next action", () => {
-    expect(getNextAction(baseCase, new Date("2026-07-07T00:00:00"))).toBe("Request Signed NAR1");
+    expect(getNextAction(baseCase, new Date("2026-07-07T00:00:00"))).toBe("索取 Signed NAR1");
   });
 
   it("aggregates command center metrics", () => {
@@ -106,7 +106,7 @@ describe("annual return derived helpers", () => {
       caseId: "ar-test",
       companyName: "Test Company Limited",
       owner: "Iris Wong",
-      title: "Request Signed NAR1",
+      title: "索取 Signed NAR1",
     });
   });
 
@@ -214,7 +214,7 @@ describe("annual return filing packet helpers", () => {
 
     expect(canSendFollowUp(filedCase, draft)).toEqual({
       ok: false,
-      reason: "Filed cases cannot send follow-ups",
+      reason: "已遞交的案件不能發送跟進",
     });
   });
 });

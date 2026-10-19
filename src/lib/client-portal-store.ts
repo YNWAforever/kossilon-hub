@@ -44,13 +44,13 @@ export type ClientPortalActionType =
 export type ClientPortalDocumentReviewDecision = "accepted" | "rejected";
 
 export const clientPortalReviewReasons = [
-  { code: "wrong-file", label: "Wrong document uploaded" },
-  { code: "expired", label: "Document is expired or outdated" },
-  { code: "unclear-scan", label: "Scan is unreadable or incomplete" },
-  { code: "name-mismatch", label: "Name or company details do not match" },
-  { code: "missing-signature", label: "Required signature is missing" },
-  { code: "missing-page", label: "Required page or attachment is missing" },
-  { code: "other", label: "Other issue" },
+  { code: "wrong-file", label: "上載了錯誤的文件" },
+  { code: "expired", label: "文件已過期或並非最新版本" },
+  { code: "unclear-scan", label: "掃描不清晰或不完整" },
+  { code: "name-mismatch", label: "姓名或公司資料不符" },
+  { code: "missing-signature", label: "缺少必要簽署" },
+  { code: "missing-page", label: "缺少必要頁面或附件" },
+  { code: "other", label: "其他問題" },
 ] as const;
 
 export type ClientPortalReviewReasonCode = (typeof clientPortalReviewReasons)[number]["code"];
@@ -76,14 +76,38 @@ export type ClientPortalPaymentProofStatus =
   | "superseded";
 
 export const clientPortalPaymentProofReviewReasons = [
-  { code: "unreadable", label: "Proof is unclear, cropped, or incomplete" },
-  { code: "amount-mismatch", label: "Paid amount does not match" },
-  { code: "payer-mismatch", label: "Payer or company details do not match" },
-  { code: "missing-reference", label: "Transaction reference is missing" },
-  { code: "wrong-case", label: "Proof belongs to another company or filing" },
-  { code: "duplicate-proof", label: "Proof repeats a reviewed transaction" },
-  { code: "other", label: "Other issue" },
+  { code: "unreadable", label: "證明不清晰、被裁切或不完整" },
+  { code: "amount-mismatch", label: "付款金額不符" },
+  { code: "payer-mismatch", label: "付款人或公司資料不符" },
+  { code: "missing-reference", label: "缺少交易參考編號" },
+  { code: "wrong-case", label: "證明屬於另一間公司或另一宗申報" },
+  { code: "duplicate-proof", label: "證明與已覆核的交易重複" },
+  { code: "other", label: "其他問題" },
 ] as const;
+
+// The follow-up message previews below are the client-facing WhatsApp copy and
+// stay in English; the review reason labels above are UI copy and are not. The
+// messages therefore read the reason from this English phrase map, keyed by the
+// stable reason code, rather than interpolating the Chinese label.
+const followUpReasonPhrases: Record<string, string> = {
+  "wrong-file": "Wrong document uploaded",
+  expired: "Document is expired or outdated",
+  "unclear-scan": "Scan is unreadable or incomplete",
+  "name-mismatch": "Name or company details do not match",
+  "missing-signature": "Required signature is missing",
+  "missing-page": "Required page or attachment is missing",
+  unreadable: "Proof is unclear, cropped, or incomplete",
+  "amount-mismatch": "Paid amount does not match",
+  "payer-mismatch": "Payer or company details do not match",
+  "missing-reference": "Transaction reference is missing",
+  "wrong-case": "Proof belongs to another company or filing",
+  "duplicate-proof": "Proof repeats a reviewed transaction",
+  other: "Other issue",
+};
+
+function followUpReasonPhrase(code: string | undefined, label: string | undefined) {
+  return (code ? followUpReasonPhrases[code] : undefined) ?? label;
+}
 
 export type ClientPortalPaymentProofReviewReasonCode =
   (typeof clientPortalPaymentProofReviewReasons)[number]["code"];
@@ -292,9 +316,9 @@ const initialSnapshot: ClientPortalSnapshot = {
       createdAt: "2026-07-08T02:15:00.000Z",
       reviewedBy: "Operations",
       reviewedAt: "2026-07-08T06:40:00.000Z",
-      reviewSummary: "Rejected by Operations",
+      reviewSummary: "Operations 已退回",
       reviewReasonCode: "missing-signature",
-      reviewReasonLabel: "Required signature is missing",
+      reviewReasonLabel: "缺少必要簽署",
       reviewNote: "Director signature is missing on page 2.",
     },
     {
@@ -312,7 +336,7 @@ const initialSnapshot: ClientPortalSnapshot = {
       createdAt: "2026-07-08T02:18:00.000Z",
       reviewedBy: "Operations",
       reviewedAt: "2026-07-08T06:42:00.000Z",
-      reviewSummary: "Accepted by Operations",
+      reviewSummary: "Operations 已接納",
     },
   ],
   paymentProofs: [
@@ -328,9 +352,9 @@ const initialSnapshot: ClientPortalSnapshot = {
       uploadedAt: "2026-07-09T01:05:00.000Z",
       reviewedBy: "Operations",
       reviewedAt: "2026-07-09T03:20:00.000Z",
-      reviewSummary: "Rejected by Operations",
+      reviewSummary: "Operations 已退回",
       reviewReasonCode: "unreadable",
-      reviewReasonLabel: "Proof is unclear, cropped, or incomplete",
+      reviewReasonLabel: "證明不清晰、被裁切或不完整",
       reviewNote: "The reference number is not legible.",
     },
     {
@@ -346,7 +370,7 @@ const initialSnapshot: ClientPortalSnapshot = {
       supersedesProofId: "proof-delta-superseded",
       reviewedBy: "Operations",
       reviewedAt: "2026-07-09T05:00:00.000Z",
-      reviewSummary: "Accepted by Operations",
+      reviewSummary: "Operations 已接納",
     },
   ],
   actions: [],
@@ -486,28 +510,28 @@ function documentActionForCurrentDocument(
 }
 
 function requiredDocumentLabel(documentLabel: string, document?: ClientPortalDocument): string {
-  if (!document) return `Upload ${documentLabel}`;
-  if (document.status === "rejected") return `Replace ${documentLabel}`;
+  if (!document) return `上載 ${documentLabel}`;
+  if (document.status === "rejected") return `更換 ${documentLabel}`;
   return documentLabel;
 }
 
 function requiredDocumentDetail(documentLabel: string, document?: ClientPortalDocument): string {
   if (!document) {
-    return `${documentLabel} is required before the annual return filing can proceed.`;
+    return `須先提供 ${documentLabel}，周年申報才可繼續遞交。`;
   }
   if (document.status === "uploaded") {
-    return `${document.filename} is uploaded and waiting for staff review.`;
+    return `${document.filename} 已上載，等待我們覆核。`;
   }
   if (document.status === "accepted") {
-    const review = document.reviewSummary ? ` ${document.reviewSummary}.` : "";
-    return `${document.filename} has been accepted by staff.${review}`;
+    const review = document.reviewSummary ? `（${document.reviewSummary}）` : "";
+    return `${document.filename} 已獲接納${review}。`;
   }
   if (document.status === "rejected") {
-    const reason = document.reviewReasonLabel ? ` Reason: ${document.reviewReasonLabel}.` : "";
-    const note = document.reviewNote ? ` Note: ${document.reviewNote}` : "";
-    return `${document.filename} was rejected by staff.${reason}${note} Please upload a replacement.`;
+    const reason = document.reviewReasonLabel ? `原因：${document.reviewReasonLabel}。` : "";
+    const note = document.reviewNote ? `備註：${document.reviewNote}` : "";
+    return `${document.filename} 已被退回。${reason}${note}請重新上載。`;
   }
-  return `${documentLabel} is required before the annual return filing can proceed.`;
+  return `須先提供 ${documentLabel}，周年申報才可繼續遞交。`;
 }
 
 function paymentProofActionForCurrentProof(
@@ -519,27 +543,27 @@ function paymentProofActionForCurrentProof(
 }
 
 function requiredPaymentProofLabel(proof?: ClientPortalPaymentProof): string {
-  if (!proof) return "Upload payment proof";
-  if (proof.status === "rejected") return "Replace payment proof";
-  return "Payment proof";
+  if (!proof) return "上載付款證明";
+  if (proof.status === "rejected") return "更換付款證明";
+  return "付款證明";
 }
 
 function requiredPaymentProofDetail(proof?: ClientPortalPaymentProof): string {
   if (!proof) {
-    return "Upload payment proof so staff can verify the transfer before the filing proceeds.";
+    return "請上載付款證明，以便我們在遞交前核對轉賬。";
   }
   if (proof.status === "pending-review") {
-    return `${proof.filename} is uploaded and waiting for staff review.`;
+    return `${proof.filename} 已上載，等待我們覆核。`;
   }
   if (proof.status === "accepted") {
-    return `${proof.filename} was accepted by ${proof.reviewedBy ?? "staff"} on ${proof.reviewedAt ?? "the recorded review time"}.`;
+    return `${proof.filename} 已於 ${proof.reviewedAt ?? "記錄的覆核時間"} 由 ${proof.reviewedBy ?? "同事"} 接納。`;
   }
   if (proof.status === "rejected") {
-    const reason = proof.reviewReasonLabel ? ` Reason: ${proof.reviewReasonLabel}.` : "";
-    const note = proof.reviewNote ? ` Note: ${proof.reviewNote}` : "";
-    return `${proof.filename} was rejected by ${proof.reviewedBy ?? "staff"}.${reason}${note} Please upload a replacement.`;
+    const reason = proof.reviewReasonLabel ? `原因：${proof.reviewReasonLabel}。` : "";
+    const note = proof.reviewNote ? `備註：${proof.reviewNote}` : "";
+    return `${proof.filename} 已由 ${proof.reviewedBy ?? "同事"} 退回。${reason}${note}請重新上載。`;
   }
-  return `${proof.filename} is no longer the current payment proof.`;
+  return `${proof.filename} 已不再是目前的付款證明。`;
 }
 
 export function getClientPortalActivity(
@@ -585,10 +609,9 @@ export function getClientPortalRequiredActions(
           id: `action-${caseItem.id}-payment-acknowledgement`,
           caseId: caseItem.id,
           kind: "payment" as const,
-          label: "Acknowledge payment instructions",
+          label: "確認付款指示",
           status: isReadOnlyCase(caseItem) ? ("blocked" as const) : ("open" as const),
-          detail:
-            "Confirm the client has seen the payment instructions. Staff still controls payment status.",
+          detail: "請確認您已閱覽付款指示。付款狀態仍由我們的同事更新。",
         },
       ];
 
@@ -621,7 +644,7 @@ export function getClientPortalRequiredActions(
           id: `action-${caseItem.id}-packet-approval`,
           caseId: caseItem.id,
           kind: "packet" as const,
-          label: "Approve filing packet",
+          label: "批核交件套件",
           status:
             isReadOnlyCase(caseItem) ||
             getPacketApprovalBlockers(caseItem, currentSnapshot).length > 0
@@ -629,8 +652,8 @@ export function getClientPortalRequiredActions(
               : ("open" as const),
           detail:
             getPacketApprovalBlockers(caseItem, currentSnapshot).length > 0
-              ? "Required documents or payment proof still need staff review or replacement before packet approval is available."
-              : "Confirm the client has reviewed the prepared packet details.",
+              ? "所需文件或付款證明仍待覆核或更換，完成後才可批核交件套件。"
+              : "請確認您已細閱我們擬備的交件套件內容。",
         },
       ];
 
@@ -641,9 +664,9 @@ export function getClientPortalRequiredActions(
             id: `action-${caseItem.id}-receipt-view`,
             caseId: caseItem.id,
             kind: "receipt" as const,
-            label: "View filing receipt",
+            label: "查看遞交收據",
             status: "open" as const,
-            detail: `Receipt ${caseItem.receipt.receiptNumber} is ready to view.`,
+            detail: `收據 ${caseItem.receipt.receiptNumber} 已可查看。`,
           },
         ]
       : [];
@@ -689,8 +712,8 @@ export function getClientPortalProgress(
     percentage: total === 0 ? 100 : Math.round((completed / total) * 100),
     nextAction:
       nextAction?.status === "pending-review"
-        ? "Waiting for staff review"
-        : (nextAction?.label ?? "No client action needed"),
+        ? "等待我們覆核"
+        : (nextAction?.label ?? "毋須客戶採取行動"),
     isReadOnly: isReadOnlyCase(caseItem),
   };
 }
@@ -762,7 +785,7 @@ function generatedRowsForCase(
       caseId: caseItem.id,
       companyName: caseItem.companyName,
       contactName: caseItem.contactName,
-      title: "Client packet approval",
+      title: "客戶批核交件套件",
       filename: `${caseItem.id}-client-packet-approval.txt`,
       category: "packet",
       source: "client-portal",
@@ -780,7 +803,7 @@ function generatedRowsForCase(
       caseId: caseItem.id,
       companyName: caseItem.companyName,
       contactName: caseItem.contactName,
-      title: "Filing submission reference",
+      title: "遞交參考編號",
       filename: `${caseItem.submission.reference}.txt`,
       category: "submission",
       source: "filing-submission",
@@ -798,7 +821,7 @@ function generatedRowsForCase(
       caseId: caseItem.id,
       companyName: caseItem.companyName,
       contactName: caseItem.contactName,
-      title: "Companies Registry receipt",
+      title: "公司註冊處收據",
       filename: `${caseItem.receipt.receiptNumber}.pdf`,
       category: "receipt",
       source: "filing-receipt",
@@ -848,8 +871,9 @@ function documentReviewFollowUpMessage(
   caseItem: AnnualReturnCase,
   document: ClientPortalDocument,
 ): string {
-  const reason = document.reviewReasonLabel
-    ? `the ${document.reviewReasonLabel.charAt(0).toLowerCase()}${document.reviewReasonLabel.slice(1)}`
+  const reasonPhrase = followUpReasonPhrase(document.reviewReasonCode, document.reviewReasonLabel);
+  const reason = reasonPhrase
+    ? `the ${reasonPhrase.charAt(0).toLowerCase()}${reasonPhrase.slice(1)}`
     : "the document needs changes";
   const note = document.reviewNote ? ` Note: ${document.reviewNote}` : "";
 
@@ -857,7 +881,7 @@ function documentReviewFollowUpMessage(
 }
 
 function followUpBlockedReason(caseItem: AnnualReturnCase): string | undefined {
-  return isReadOnlyCase(caseItem) ? "Filed cases cannot send follow-ups" : undefined;
+  return isReadOnlyCase(caseItem) ? "已遞交的案件不能發送跟進" : undefined;
 }
 
 export function getDocumentReviewFollowUpDrafts(
@@ -900,7 +924,7 @@ export function getDocumentReviewFollowUpDrafts(
         reasonCode: document.reviewReasonCode,
         reasonLabel: document.reviewReasonLabel,
         note: document.reviewNote,
-        suggestedTiming: "Send now",
+        suggestedTiming: "立即發送",
         messagePreview: documentReviewFollowUpMessage(caseItem, document),
         status: sent ? "sent" : blockedReason ? "blocked" : "draft",
         blockedReason,
@@ -928,8 +952,9 @@ function paymentProofFollowUpMessage(
   caseItem: AnnualReturnCase,
   proof: ClientPortalPaymentProof,
 ): string {
-  const reason = proof.reviewReasonLabel
-    ? `${proof.reviewReasonLabel.charAt(0).toLowerCase()}${proof.reviewReasonLabel.slice(1)}`
+  const reasonPhrase = followUpReasonPhrase(proof.reviewReasonCode, proof.reviewReasonLabel);
+  const reason = reasonPhrase
+    ? `${reasonPhrase.charAt(0).toLowerCase()}${reasonPhrase.slice(1)}`
     : "the payment proof needs changes";
   const note = proof.reviewNote ? ` Note: ${proof.reviewNote}` : "";
 
@@ -974,7 +999,7 @@ export function getPaymentProofFollowUpDrafts(
         reasonCode: proof.reviewReasonCode,
         reasonLabel: proof.reviewReasonLabel,
         note: proof.reviewNote,
-        suggestedTiming: "Send now",
+        suggestedTiming: "立即發送",
         messagePreview: paymentProofFollowUpMessage(caseItem, proof),
         status: sent ? "sent" : blockedReason ? "blocked" : "draft",
         blockedReason,
@@ -993,18 +1018,18 @@ function getPacketApprovalBlockers(
     .flatMap((document) => {
       const current = getCurrentClientDocument(caseItem.id, document.id, currentSnapshot);
       if (!current) return [document.label];
-      if (current.status === "uploaded") return [`${document.label} pending staff review`];
-      if (current.status === "rejected") return [`${document.label} rejected`];
+      if (current.status === "uploaded") return [`${document.label} 待覆核`];
+      if (current.status === "rejected") return [`${document.label} 已退回`];
       if (current.status !== "accepted") return [document.label];
       return [];
     });
   const currentPaymentProof = getCurrentPaymentProof(caseItem.id, currentSnapshot);
   const paymentProofBlocker = !currentPaymentProof
-    ? "Payment proof required"
+    ? "須提供付款證明"
     : currentPaymentProof.status === "pending-review"
-      ? "Payment proof pending staff review"
+      ? "付款證明待覆核"
       : currentPaymentProof.status === "rejected"
-        ? "Payment proof rejected"
+        ? "付款證明已退回"
         : undefined;
 
   return paymentProofBlocker ? [...documentBlockers, paymentProofBlocker] : documentBlockers;

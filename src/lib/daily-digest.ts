@@ -1,11 +1,22 @@
 import type { RiskLevel } from "@/features/annual-return/types";
 import type { DashboardCase } from "@/features/dashboard/types";
+import { annualReturnStatusLabel } from "@/features/annual-return/labels";
 import { daysBetween } from "@/lib/date-math";
 import { hongKongBusinessDate } from "@/lib/hong-kong-time";
 import type { StatusTone } from "@/lib/status";
 
 export type DailyDigestSeverity = "critical" | "high" | "medium";
 export type DailyDigestKind = "annual-return";
+
+export const DAILY_DIGEST_SEVERITY_LABELS: Record<DailyDigestSeverity, string> = {
+  critical: "緊急",
+  high: "高",
+  medium: "中",
+};
+
+export const DAILY_DIGEST_KIND_LABELS: Record<DailyDigestKind, string> = {
+  "annual-return": "周年申報",
+};
 
 export type DailyDigestRoute = { to: "/annual-returns/$id"; params: { id: string } };
 
@@ -55,10 +66,10 @@ function daysUntil(dueDate: string, now: Date): number {
 }
 
 function dueLabel(daysLeft: number): string {
-  if (daysLeft < 0) return `${Math.abs(daysLeft)}d overdue`;
-  if (daysLeft === 0) return "due today";
-  if (daysLeft === 1) return "due tomorrow";
-  return `due in ${daysLeft}d`;
+  if (daysLeft < 0) return `已逾期 ${Math.abs(daysLeft)} 日`;
+  if (daysLeft === 0) return "今日到期";
+  if (daysLeft === 1) return "明日到期";
+  return `${daysLeft} 日後到期`;
 }
 
 function annualReturnRiskWeight(riskLevel: RiskLevel): number {
@@ -112,18 +123,15 @@ function annualReturnItem(case_: DashboardCase, now: Date): DailyDigestItem | nu
     return null;
   }
 
-  const missingDetail =
-    missingRequired > 0
-      ? `${missingRequired} evidence ${missingRequired === 1 ? "item" : "items"} outstanding`
-      : "evidence complete";
+  const missingDetail = missingRequired > 0 ? `${missingRequired} 項證明文件未齊` : "證明文件齊全";
 
   return {
     id: `annual-return:${case_.id}`,
     kind: "annual-return",
     severity,
-    title: `Escalate ${case_.companyName} annual return`,
-    detail: `${case_.currentStatus}; ${dueLabel(daysLeft)}; ${missingDetail}.`,
-    actionLabel: "Open case",
+    title: `升級處理 ${case_.companyName} 的周年申報`,
+    detail: `${annualReturnStatusLabel(case_.currentStatus)}；${dueLabel(daysLeft)}；${missingDetail}。`,
+    actionLabel: "開啟案件",
     route: { to: "/annual-returns/$id", params: { id: case_.id } },
     score:
       severityWeight[severity] +
@@ -173,8 +181,8 @@ export function buildDailyDigest({
   return {
     headline:
       totalPriorityCount > 0
-        ? `${totalPriorityCount} priority ${totalPriorityCount === 1 ? "action" : "actions"} before close of business`
-        : "No priority actions detected",
+        ? `今日下班前有 ${totalPriorityCount} 項優先工作`
+        : "未發現需優先處理的工作",
     items: candidates.slice(0, maxItems),
     counts,
     totalCandidateCount: candidates.length,

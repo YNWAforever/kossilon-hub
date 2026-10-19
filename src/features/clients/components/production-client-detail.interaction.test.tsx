@@ -118,7 +118,7 @@ describe("production client detail", () => {
     serverFns.getClient.mockResolvedValue(null);
     renderDetail();
 
-    expect(await screen.findByText("Client not found")).toBeTruthy();
+    expect(await screen.findByText("找不到客戶")).toBeTruthy();
   });
 
   it("shows a fixed message on failure and never the raw server error", async () => {
@@ -127,8 +127,29 @@ describe("production client detail", () => {
 
     const alert = await screen.findByRole("alert");
 
-    expect(alert.textContent).toContain("Client data is unavailable.");
+    expect(alert.textContent).toContain("客戶資料暫時無法載入");
     expect(alert.textContent).not.toContain("ECONNREFUSED");
+  });
+
+  it("retries a failed load and shows the client once it arrives", async () => {
+    serverFns.getClient.mockRejectedValueOnce(new Error("boom")).mockResolvedValue(makeClient());
+    renderDetail();
+
+    fireEvent.click(await screen.findByRole("button", { name: "重試" }));
+
+    expect(await screen.findByText("Acme Company Limited")).toBeTruthy();
+  });
+
+  it("treats a malformed link as not found without asking the server", () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ProductionClientDetail clientId="not-a-client" />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole("heading", { name: "找不到客戶" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "返回客戶" })).toBeTruthy();
+    expect(serverFns.getClient).not.toHaveBeenCalled();
   });
 
   it("renders each contact and removes one on click", async () => {
@@ -151,7 +172,7 @@ describe("production client detail", () => {
     renderDetail();
 
     await screen.findByText("Ivy Wong");
-    fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+    fireEvent.click(screen.getByRole("button", { name: "移除" }));
 
     await waitFor(() =>
       expect(serverFns.removeClientContact).toHaveBeenCalledWith({
@@ -182,13 +203,13 @@ describe("production client detail", () => {
     renderDetail();
 
     await screen.findByText("Ivy Wong");
-    fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+    fireEvent.click(screen.getByRole("button", { name: "移除" }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
 
     const [message] = vi.mocked(toast.error).mock.calls[0];
     expect(message).not.toContain("ECONNREFUSED");
-    expect(message).toBe("Unable to remove the contact. Try again.");
+    expect(message).toBe("未能移除聯絡人，請再試一次。");
     // The contact remains, since the removal failed.
     expect(screen.getByText("Ivy Wong")).toBeTruthy();
   });
@@ -209,8 +230,8 @@ describe("production client detail", () => {
     );
     renderDetail();
 
-    expect(await screen.findByText("Return year 2026")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Open case" })).toBeTruthy();
+    expect(await screen.findByText("申報年度 2026")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "開啟案件" })).toBeTruthy();
   });
 
   it("shows a status message when assignment options fail to load, and Edit stays hidden", async () => {
@@ -220,8 +241,8 @@ describe("production client detail", () => {
 
     await screen.findByText("Acme Company Limited");
     const status = await screen.findByRole("status");
-    expect(status.textContent).toMatch(/options are unavailable/i);
-    expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+    expect(status.textContent).toMatch(/選項暫時無法載入/);
+    expect(screen.queryByRole("button", { name: "編輯客戶" })).toBeNull();
   });
 
   it("renders officers and shareholdings, and ceases an officer on click", async () => {
@@ -262,7 +283,7 @@ describe("production client detail", () => {
 
     // Both the officer and shareholding rows render a "Cease" button (neither is ceased);
     // the officer section is listed first in the JSX, so index [0] is the officer's button.
-    fireEvent.click(screen.getAllByRole("button", { name: "Cease" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "終止" })[0]);
 
     await waitFor(() =>
       expect(serverFns.ceaseClientOfficer).toHaveBeenCalledWith({
@@ -307,7 +328,7 @@ describe("production client detail", () => {
     await screen.findByText("Jane Controller");
     expect(screen.getByText("Officer Lee")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Cease" }));
+    fireEvent.click(screen.getByRole("button", { name: "終止" }));
 
     await waitFor(() =>
       expect(serverFns.ceaseClientController).toHaveBeenCalledWith({

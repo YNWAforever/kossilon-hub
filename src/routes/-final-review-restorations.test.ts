@@ -45,9 +45,9 @@ describe("final review architecture restorations", () => {
   });
 
   it("exposes the operational routes in labeled desktop and mobile navigation", () => {
-    expect(sidebarSource).toContain('<nav aria-label="Primary navigation"');
-    expect(mobileNavSource).toContain('aria-label="Open navigation menu"');
-    expect(mobileNavSource).toContain('<nav aria-label="Primary navigation"');
+    expect(sidebarSource).toContain('<nav aria-label="主要導覽"');
+    expect(mobileNavSource).toContain('aria-label="開啟導覽選單"');
+    expect(mobileNavSource).toContain('<nav aria-label="主要導覽"');
     expect(rootRouteSource).toContain("<AppMobileNav />");
 
     // Desktop and mobile render the same NavList, so the shared config is the
@@ -83,7 +83,7 @@ describe("final review architecture restorations", () => {
     expect(dashboardSource).toContain("loadDashboardData(");
     expect(dashboardSource).toContain('context.dataMode === "demo"');
     expect(dashboardSource).toContain("buildDailyDigest");
-    expect(dashboardSource).toContain("Priority queue");
+    expect(dashboardSource).toContain("優先處理");
     // Phase C: no AI claim over a deterministic ranker.
     expect(dashboardSource).not.toContain("AI daily digest");
     expect(dashboardSource).toContain("annualReturnDataAvailable");
@@ -92,7 +92,7 @@ describe("final review architecture restorations", () => {
   it("restores editable settings while retaining the knowledge base", () => {
     expect(settingsSource).toContain("updateChecklistTemplate");
     expect(settingsSource).toContain("createChecklistTemplate");
-    expect(settingsSource).toContain("Service packages");
+    expect(settingsSource).toContain("服務套餐");
     expect(settingsSource).toContain("WOZTELL WhatsApp API");
     expect(settingsSource).toContain("<KnowledgeBaseSection />");
   });
@@ -103,6 +103,6 @@ describe("final review architecture restorations", () => {
     expect(knowledgeBaseSectionSource).toContain('type="file"');
     expect(knowledgeBaseSectionSource).toContain("parseFaqImport");
     expect(knowledgeBaseSectionSource).toContain("kbStore.importFaqs");
-    expect(knowledgeBaseSectionSource).toContain("Indexed content preview");
+    expect(knowledgeBaseSectionSource).toContain("索引內容預覽");
   });
 });

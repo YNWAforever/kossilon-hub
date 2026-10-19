@@ -2,10 +2,16 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/field";
 import { PageHeader } from "@/components/page-header";
 import { CreateCorporateChangeRequestDialog } from "@/components/corporate-changes/create-corporate-change-request-dialog";
 import { listCorporateChangeRequests } from "@/features/corporate-changes/server-fns";
 import { listClientPage } from "@/features/clients/server-fns";
+import {
+  CORPORATE_CHANGE_STATUS_LABELS,
+  CORPORATE_CHANGE_TYPE_LABELS,
+} from "@/features/corporate-changes/labels";
 
 export function ProductionCorporateChangeList() {
   const queryClient = useQueryClient();
@@ -30,7 +36,7 @@ export function ProductionCorporateChangeList() {
     return (
       <div className="flex min-h-64 items-center justify-center p-6 text-sm text-muted-foreground">
         <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />
-        Loading corporate change requests
+        載入公司變更申請中
       </div>
     );
   }
@@ -38,9 +44,9 @@ export function ProductionCorporateChangeList() {
   if (requestsQuery.isError) {
     return (
       <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="Operations" title="Corporate changes" />
+        <PageHeader eyebrow="案件與客戶" title="公司變更" />
         <p role="alert" className="text-sm text-destructive">
-          Corporate change request data is unavailable. Try again shortly.
+          公司變更申請資料暫時無法載入，請稍後再試。
         </p>
       </main>
     );
@@ -55,24 +61,20 @@ export function ProductionCorporateChangeList() {
   return (
     <main className="flex-1 space-y-6 p-4 md:p-6">
       <PageHeader
-        eyebrow="Operations"
-        title="Corporate changes"
-        subtitle="Name changes, share transfers, officer changes, and registered-office changes."
+        eyebrow="案件與客戶"
+        title="公司變更"
+        subtitle="公司名稱變更、股份轉讓、高級人員變更及註冊辦事處變更。"
         actions={
-          <button
-            type="button"
-            onClick={() => setIsCreateOpen(true)}
-            className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            New request
-          </button>
+          <Button variant="primary" onClick={() => setIsCreateOpen(true)}>
+            新增申請
+          </Button>
         }
       />
 
       <label className="block text-sm">
         搜尋可選公司
-        <input
-          className="min-h-11 ml-2 rounded border px-3"
+        <Input
+          className="min-h-11 ml-2"
           value={companySearch}
           onChange={(event) => setCompanySearch(event.target.value)}
         />
@@ -81,22 +83,22 @@ export function ProductionCorporateChangeList() {
         </span>
       </label>
       {clientsQuery.isError ? (
-        <p role="status" className="text-sm text-status-yellow">
-          Company options are unavailable. Starting a new request is disabled until this loads.
+        <p role="status" className="text-sm text-status-yellow-text">
+          公司選項暫時無法載入，載入前未能新增申請。
         </p>
       ) : null}
 
       <section className="rounded-lg border bg-card">
         {requests.length === 0 ? (
-          <p className="p-6 text-sm text-muted-foreground">No corporate change requests yet.</p>
+          <p className="p-6 text-sm text-muted-foreground">尚未有公司變更申請。</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-muted-foreground">
-                <th className="p-3 font-medium">Company</th>
-                <th className="p-3 font-medium">Type</th>
-                <th className="p-3 font-medium">Status</th>
-                <th className="p-3 font-medium">Quoted fee</th>
+                <th className="p-3 font-medium">公司</th>
+                <th className="p-3 font-medium">類別</th>
+                <th className="p-3 font-medium">狀態</th>
+                <th className="p-3 font-medium">報價</th>
               </tr>
             </thead>
             <tbody>
@@ -111,8 +113,12 @@ export function ProductionCorporateChangeList() {
                       {request.companyName}
                     </Link>
                   </td>
-                  <td className="p-3">{request.changeType.replace("_", " ")}</td>
-                  <td className="p-3">{request.status}</td>
+                  <td className="p-3">
+                    {CORPORATE_CHANGE_TYPE_LABELS[request.changeType] ?? request.changeType}
+                  </td>
+                  <td className="p-3">
+                    {CORPORATE_CHANGE_STATUS_LABELS[request.status] ?? request.status}
+                  </td>
                   <td className="p-3">HKD {request.quotedFee.toLocaleString()}</td>
                 </tr>
               ))}

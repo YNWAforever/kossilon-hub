@@ -19,6 +19,7 @@ company-creation insert directly rather than importing across feature slices.
 ## Task 1: Migration and schema.sql
 
 **Files:**
+
 - Create: `db/migrations/0017_incorporation_intake.sql`
 - Modify: `src/server/db/schema.sql`
 
@@ -106,6 +107,7 @@ git commit -m "feat: add incorporation_cases and incorporation_checklist_items t
 ## Task 2: Types
 
 **Files:**
+
 - Create: `src/features/incorporation/types.ts`
 
 - [x] **Step 1: Write the types**
@@ -213,6 +215,7 @@ git commit -m "feat: add incorporation intake types"
 ## Task 3: Pure workflow logic
 
 **Files:**
+
 - Create: `src/features/incorporation/workflow.ts`
 - Test: `src/features/incorporation/workflow.test.ts`
 
@@ -309,6 +312,7 @@ git commit -m "feat: add incorporation intake status transition and date logic"
 ## Task 4: Repository layer
 
 **Files:**
+
 - Create: `src/features/incorporation/repository.ts`
 
 Read `src/features/annual-return/repository.ts` lines 838-945 (the `createCase`
@@ -522,7 +526,10 @@ export function createIncorporationRepository(
     return rows[0]?.team_id ?? null;
   }
 
-  async function hydrateOrThrow(tx: TransactionSqlClient, caseId: string): Promise<IncorporationCase> {
+  async function hydrateOrThrow(
+    tx: TransactionSqlClient,
+    caseId: string,
+  ): Promise<IncorporationCase> {
     const result = await hydrateCase(tx, caseId);
     if (!result) throw new Error("Incorporation case not found.");
     return result;
@@ -588,7 +595,9 @@ export function createIncorporationRepository(
     if (rows.length === 0) throw new Error("Checklist item not found for this case.");
   }
 
-  async function updateChecklistItem(input: UpdateIncorporationChecklistItemInput): Promise<IncorporationCase> {
+  async function updateChecklistItem(
+    input: UpdateIncorporationChecklistItemInput,
+  ): Promise<IncorporationCase> {
     return withTransaction(sql, async (tx) => {
       await assertActor(tx, input.actorId);
       await assertItemBelongsToCase(tx, input.caseId, input.itemId);
@@ -609,7 +618,9 @@ export function createIncorporationRepository(
     });
   }
 
-  async function updateCaseStatus(input: UpdateIncorporationCaseStatusInput): Promise<IncorporationCase> {
+  async function updateCaseStatus(
+    input: UpdateIncorporationCaseStatusInput,
+  ): Promise<IncorporationCase> {
     return withTransaction(sql, async (tx) => {
       await assertActor(tx, input.actorId);
 
@@ -710,6 +721,7 @@ git commit -m "feat: add incorporation intake repository"
 ## Task 5: Repository integration tests
 
 **Files:**
+
 - Create: `src/features/incorporation/repository.test.ts`
 
 **Critical, non-optional first step** — see the design spec's explicit callout:
@@ -1099,6 +1111,7 @@ describe.skipIf(!databaseUrl)("incorporation intake integration", () => {
 npx eslint --fix src/features/incorporation/repository.test.ts
 npx vitest run src/features/incorporation/repository.test.ts
 ```
+
 Expected: skipped locally (no `TEST_DATABASE_URL`), no syntax errors.
 
 - [x] **Step 3: Commit**
@@ -1113,6 +1126,7 @@ git commit -m "test: add incorporation intake repository integration tests"
 ## Task 6: Authorization
 
 **Files:**
+
 - Create: `src/features/incorporation/authorization.ts`
 
 Read `src/features/clients/authorization.ts` in full first — this mirrors its
@@ -1178,6 +1192,7 @@ git commit -m "feat: add incorporation intake authorization"
 ## Task 7: Server functions
 
 **Files:**
+
 - Create: `src/features/incorporation/server-fns.ts`
 
 Read `src/features/clients/server-fns.ts` in full first for the
@@ -1349,6 +1364,7 @@ git commit -m "feat: add incorporation intake server functions"
 ## Task 8: Create-case dialog
 
 **Files:**
+
 - Create: `src/components/incorporation/create-incorporation-case-dialog.tsx`
 - Create: `src/components/incorporation/create-incorporation-case-dialog.test.tsx`
 
@@ -1394,7 +1410,10 @@ type FormState = {
   targetCompletionDate: string;
 };
 
-function emptyForm(owners: ClientAssignmentOptions["owners"], teams: ClientAssignmentOptions["teams"]): FormState {
+function emptyForm(
+  owners: ClientAssignmentOptions["owners"],
+  teams: ClientAssignmentOptions["teams"],
+): FormState {
   return {
     proposedCompanyNameEn: "",
     proposedCompanyNameZh: "",
@@ -1489,8 +1508,7 @@ export function CreateIncorporationCaseDialog({
         <DialogHeader>
           <DialogTitle>Start incorporation</DialogTitle>
           <DialogDescription>
-            Track a new HK company's incorporation from intake through Companies Registry
-            approval.
+            Track a new HK company's incorporation from intake through Companies Registry approval.
           </DialogDescription>
         </DialogHeader>
 
@@ -1842,6 +1860,7 @@ git commit -m "feat: add CreateIncorporationCaseDialog"
 ## Task 9: Demo notice component
 
 **Files:**
+
 - Create: `src/features/incorporation/components/demo-incorporation-notice.tsx`
 
 Read `src/features/clients/components/demo-client-notice.tsx` first — this is a
@@ -1900,6 +1919,7 @@ git commit -m "feat: add incorporation demo-mode notice"
 ## Task 10: List page component and route
 
 **Files:**
+
 - Create: `src/features/incorporation/components/production-incorporation-list.tsx`
 - Create: `src/routes/incorporation.tsx`
 
@@ -2090,6 +2110,7 @@ git commit -m "feat: add /incorporation list route"
 ## Task 11: Detail page component and route
 
 **Files:**
+
 - Create: `src/features/incorporation/components/production-incorporation-detail.tsx`
 - Create: `src/routes/incorporation.$id.tsx`
 
@@ -2304,7 +2325,10 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
             className="grid grid-cols-1 gap-4 md:grid-cols-3"
           >
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-muted-foreground" htmlFor="complete-cr">
+              <label
+                className="text-[10px] uppercase tracking-wider text-muted-foreground"
+                htmlFor="complete-cr"
+              >
                 CR number
               </label>
               <input
@@ -2318,7 +2342,10 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
               />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-muted-foreground" htmlFor="complete-br">
+              <label
+                className="text-[10px] uppercase tracking-wider text-muted-foreground"
+                htmlFor="complete-br"
+              >
                 BR number
               </label>
               <input
@@ -2413,6 +2440,7 @@ git commit -m "feat: add /incorporation/\$id detail route"
 ## Task 12: Navigation entry
 
 **Files:**
+
 - Modify: `src/components/navigation.ts`
 
 - [x] **Step 1: Add the nav item**
@@ -2525,7 +2553,7 @@ done.
   row, exactly the class of bug this codebase already fixed twice
   (`appointOfficer`'s secretary/DR race, `annual-return/repository.ts`'s
   `createCase`). Fixed by adding `select id from incorporation_cases where id =
-  ${input.caseId} for update` as the first statement inside `completeCase`'s
+${input.caseId} for update` as the first statement inside `completeCase`'s
   transaction, and Task 5's test file now includes a genuine two-connection
   race test for it (added after Task 4 committed, before Task 1's constraint
   fix and Task 2's naming fix were also folded in) — both fixes are reflected

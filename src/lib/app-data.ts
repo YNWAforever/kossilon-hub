@@ -6,6 +6,23 @@ export type EnquiryIntent =
   | "KYC"
   | "General";
 
+/** Display labels (docs/ui-language.md); the values above are what code compares. */
+export const enquiryIntentLabels: Record<EnquiryIntent, string> = {
+  "Annual Return": "周年申報",
+  Incorporation: "公司註冊",
+  Payment: "付款",
+  Deregistration: "撤銷註冊",
+  KYC: "KYC",
+  General: "一般查詢",
+};
+
+export const enquiryStatusLabels: Record<Enquiry["status"], string> = {
+  New: "新查詢",
+  "In progress": "處理中",
+  "Waiting client": "等待客戶回覆",
+  Converted: "已轉為案件",
+};
+
 export type Enquiry = {
   id: string;
   clientId?: string;

@@ -2,11 +2,12 @@ const ROLES = ["ADMIN", "MANAGER", "STAFF", "CLIENT_A", "CLIENT_B"] as const;
 const PRODUCTION_HOSTS = new Set(["kossilon-hub.vercel.app", "www.kossilon-hub.vercel.app"]);
 export type AuditAccount = (typeof ROLES)[number];
 export const AUDIT_ACCOUNT_ROLES = {
-  ADMIN: "Admin",
-  MANAGER: "Manager",
-  STAFF: "Staff",
-  CLIENT_A: "Client",
-  CLIENT_B: "Client",
+  // The role as the account block displays it (src/features/auth/role-labels.ts).
+  ADMIN: "管理員",
+  MANAGER: "經理",
+  STAFF: "同事",
+  CLIENT_A: "客戶",
+  CLIENT_B: "客戶",
 } as const;
 /** Fails before Playwright can contact a target; no existing storageState. */
 export function auditStagingTarget(env: Record<string, string | undefined>) {

@@ -177,7 +177,7 @@ describe("production annual return command center", () => {
     expect(
       await screen.findByText("未取得當前範圍統計。請重新載入；已讀取案件仍可查閱。"),
     ).toBeTruthy();
-    expect(screen.getByText("Cases in scope").parentElement?.textContent).toContain("—");
+    expect(screen.getByText("範圍內案件").parentElement?.textContent).toContain("—");
     expect(screen.queryByText("private db error")).toBeNull();
   });
   beforeEach(() => {
@@ -225,7 +225,7 @@ describe("production annual return command center", () => {
 
     const alert = await screen.findByRole("alert");
 
-    expect(alert.textContent).toContain("Annual return data is unavailable.");
+    expect(alert.textContent).toContain("周年申報資料暫時無法載入");
     expect(alert.textContent).not.toContain("ECONNREFUSED");
     expect(screen.queryByText(/10\.0\.0\.4/)).toBeNull();
   });
@@ -239,14 +239,14 @@ describe("production annual return command center", () => {
 
     await screen.findByRole("alert");
 
-    expect(screen.queryByText("No annual return cases match these filters.")).toBeNull();
+    expect(screen.queryByText("沒有符合篩選條件的周年申報案件。")).toBeNull();
   });
 
   it("shows the empty state when the query succeeds with no cases", async () => {
     serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [], nextCursor: null });
     renderBoard();
 
-    expect(await screen.findByText("No annual return cases match these filters.")).toBeTruthy();
+    expect(await screen.findByText("沒有符合篩選條件的周年申報案件。")).toBeTruthy();
   });
 
   it("surfaces a work queue failure as a banner instead of silent per-row text", async () => {
@@ -262,7 +262,7 @@ describe("production annual return command center", () => {
           .getAllByRole("status")
           .map((node) => node.textContent ?? "")
           .join(" "),
-      ).toContain("Assignment and SLA data is unavailable."),
+      ).toContain("分配及 SLA 資料暫時無法載入"),
     );
   });
 
@@ -478,7 +478,7 @@ describe("production annual return command center", () => {
   it("does not offer fixture diagnostics without the Admin capability", async () => {
     serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [], nextCursor: null });
     renderBoard();
-    await screen.findByText("No annual return cases match these filters.");
+    await screen.findByText("沒有符合篩選條件的周年申報案件。");
     expect(screen.queryByRole("checkbox", { name: "包含測試資料（Admin 診斷）" })).toBeNull();
   });
 });

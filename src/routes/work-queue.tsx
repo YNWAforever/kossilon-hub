@@ -1,8 +1,14 @@
+import { pageTitle } from "@/lib/page-title";
+import { describeWorkItemTitle } from "@/features/work-items/title";
+import { formatDateTime } from "@/lib/format-date";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
+import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Input, Select, Textarea } from "@/components/ui/field";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import type { BulkFilters } from "@/features/bulk-operations/types";
 import {
@@ -20,6 +26,11 @@ import {
   activeAssignmentOptions,
   type AssignmentOption,
 } from "@/features/work-items/assignment-labels";
+import {
+  ESCALATION_STATE_LABELS,
+  WORK_ITEM_STATUS_LABELS,
+  workTypeLabel,
+} from "@/features/work-items/labels";
 import type { PersistedWorkItem } from "@/features/work-items/repository";
 import {
   acknowledgeWorkItemEscalation,
@@ -56,6 +67,7 @@ export function caseDetailLinkFor(item: PersistedWorkItem): CaseDetailLink | nul
 }
 
 export const Route = createFileRoute("/work-queue")({
+  head: () => ({ meta: [{ title: pageTitle("工作隊列") }] }),
   validateSearch: (search: Record<string, unknown>) => ({
     view:
       search.view === "team" || search.view === "breached"
@@ -103,6 +115,7 @@ export function WorkQueueRoute() {
   const queueQuery = useQuery({
     queryKey: ["work-queue", view, actorScope],
     queryFn: () => listWorkQueue({ data: filters }),
+    enabled: dataMode === "production",
   });
   const items = useMemo(() => queueQuery.data ?? [], [queueQuery.data]);
   const owners = useMemo(
@@ -133,7 +146,9 @@ export function WorkQueueRoute() {
     return items.filter((item) => {
       const matchesQuery =
         !needle ||
-        `${item.title} ${item.workType} ${item.companyName ?? ""}`.toLowerCase().includes(needle);
+        `${describeWorkItemTitle(item.title)} ${item.workType} ${workTypeLabel(item.workType)} ${item.companyName ?? ""}`
+          .toLowerCase()
+          .includes(needle);
       const matchesOwner =
         owner === "all" || (owner === "unassigned" ? !item.ownerId : item.ownerId === owner);
       const matchesWorkType = workType === "all" || item.workType === workType;
@@ -177,28 +192,35 @@ export function WorkQueueRoute() {
     unassigned: items.filter((item) => !item.ownerId).length,
   };
 
+  if (dataMode !== "production") {
+    // Work items, SLA clocks and assignments exist only in Postgres; demo mode
+    // has no server data to read (docs/adr/0001-demo-mode-is-read-only.md).
+    return (
+      <main className="min-w-0 flex-1 space-y-4 p-4 md:p-6">
+        <PageHeader eyebrow="今日工作" title="工作隊列" subtitle="分配、工作量及 SLA 管控" />
+        <DemoUnavailable message="工作隊列讀取正式分配與 SLA 資料，示範模式沒有可讀取的工作項目。" />
+      </main>
+    );
+  }
+
   return (
     <>
       <main className="min-w-0 flex-1 p-4 md:p-6">
-        <PageHeader
-          eyebrow="Operations"
-          title="Work queue"
-          subtitle="Assignment, capacity, and SLA control"
-        />
+        <PageHeader eyebrow="今日工作" title="工作隊列" subtitle="分配、工作量及 SLA 管控" />
         <div className="mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4">
-          <Counter label="Due today" value={metrics.dueToday} />
-          <Counter label="At risk" value={metrics.atRisk} tone="warning" />
-          <Counter label="Breached" value={metrics.breached} tone="danger" />
-          <Counter label="Unassigned" value={metrics.unassigned} />
+          <Counter label="今日到期" value={metrics.dueToday} />
+          <Counter label="有風險" value={metrics.atRisk} tone="warning" />
+          <Counter label="已逾時" value={metrics.breached} tone="danger" />
+          <Counter label="未分配" value={metrics.unassigned} />
         </div>
 
         <div className="mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
-          <nav aria-label="Queue views" className="flex min-w-0 gap-1">
+          <nav aria-label="工作隊列檢視" className="flex min-w-0 gap-1">
             {(
               [
-                ["mine", "My work"],
-                ["team", "Team queue"],
-                ["breached", "Breached"],
+                ["mine", "我的工作"],
+                ["team", "團隊隊列"],
+                ["breached", "已逾時"],
               ] as const
             ).map(([value, label]) => (
               <Link
@@ -217,25 +239,25 @@ export function WorkQueueRoute() {
             ))}
           </nav>
           <label className="relative block w-full lg:w-80">
-            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <span className="sr-only">Search work queue</span>
-            <input
+            <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <span className="sr-only">搜尋工作隊列</span>
+            <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search case or work type"
-              className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm"
+              placeholder="搜尋案件或工作類型"
+              className="w-full pl-9"
             />
           </label>
         </div>
 
         <div className="grid gap-2 border-b border-border py-3 sm:grid-cols-2 xl:grid-cols-5">
           <FilterSelect
-            label="Filter by owner"
+            label="按負責同事篩選"
             value={owner}
             onChange={(value) => setFilter("owner", value)}
           >
-            <option value="all">All owners</option>
-            <option value="unassigned">Unassigned</option>
+            <option value="all">全部負責同事</option>
+            <option value="unassigned">未分配</option>
             {[...owners].map(([ownerId, label]) => (
               <option key={ownerId} value={ownerId}>
                 {label}
@@ -243,50 +265,50 @@ export function WorkQueueRoute() {
             ))}
           </FilterSelect>
           <FilterSelect
-            label="Filter by work type"
+            label="按工作類型篩選"
             value={workType}
             onChange={(value) => setFilter("workType", value)}
           >
-            <option value="all">All work types</option>
+            <option value="all">全部工作類型</option>
             {workTypes.map((value) => (
               <option key={value} value={value}>
-                {value}
+                {workTypeLabel(value)}
               </option>
             ))}
           </FilterSelect>
           <FilterSelect
-            label="Filter by SLA state"
+            label="按 SLA 狀態篩選"
             value={sla}
             onChange={(value) => setFilter("sla", value)}
           >
-            <option value="all">All SLA states</option>
-            <option value="none">On track</option>
-            <option value="warning">At risk</option>
-            <option value="breach">Breached</option>
-            <option value="acknowledged">Acknowledged</option>
+            <option value="all">全部 SLA 狀態</option>
+            <option value="none">{ESCALATION_STATE_LABELS.none}</option>
+            <option value="warning">{ESCALATION_STATE_LABELS.warning}</option>
+            <option value="breach">{ESCALATION_STATE_LABELS.breach}</option>
+            <option value="acknowledged">{ESCALATION_STATE_LABELS.acknowledged}</option>
           </FilterSelect>
           <FilterSelect
-            label="Filter by priority"
+            label="按優先次序篩選"
             value={priority}
             onChange={(value) => setFilter("priority", value)}
           >
-            <option value="all">All priorities</option>
-            <option value="high">High (70+)</option>
-            <option value="normal">Normal</option>
+            <option value="all">全部優先次序</option>
+            <option value="high">高（70 或以上）</option>
+            <option value="normal">一般</option>
           </FilterSelect>
           <FilterSelect
-            label="Filter by case status"
+            label="按狀態篩選"
             value={status}
             onChange={(value) => setFilter("status", value)}
           >
-            <option value="all">All case statuses</option>
-            <option value="open">Open</option>
-            <option value="in_progress">In progress</option>
-            <option value="blocked">Blocked</option>
+            <option value="all">全部狀態</option>
+            <option value="open">{WORK_ITEM_STATUS_LABELS.open}</option>
+            <option value="in_progress">{WORK_ITEM_STATUS_LABELS.in_progress}</option>
+            <option value="blocked">{WORK_ITEM_STATUS_LABELS.blocked}</option>
           </FilterSelect>
         </div>
 
-        {queueQuery.isLoading ? <QueueMessage>Loading work queue...</QueueMessage> : null}
+        {queueQuery.isLoading ? <QueueMessage>工作隊列載入中…</QueueMessage> : null}
         {dataMode === "production" &&
         actor?.active &&
         (actor.role === "Admin" || actor.role === "Manager") ? (
@@ -296,35 +318,35 @@ export function WorkQueueRoute() {
             filters={bulkFilters}
             page={pageItems.map((i) => ({
               id: i.id,
-              label: `${i.companyName ?? "Company unavailable"} · ${i.title}`,
+              label: `${i.companyName ?? "公司資料不詳"} · ${describeWorkItemTitle(i.title)}`,
             }))}
             total={queueQuery.isError || !queueQuery.data ? null : visibleItems.length}
           />
         ) : null}
         {queueQuery.isError ? (
-          <QueueMessage>Work queue could not be loaded. Refresh to try again.</QueueMessage>
+          <QueueMessage>無法載入工作隊列，請重新整理再試。</QueueMessage>
         ) : null}
         {!queueQuery.isLoading && !queueQuery.isError && visibleItems.length === 0 ? (
-          <QueueMessage>No work items match this view.</QueueMessage>
+          <QueueMessage>此檢視沒有符合的工作項目。</QueueMessage>
         ) : null}
 
         {visibleItems.length > 0 ? (
-          <section aria-label="Work items" className="mt-1">
-            <div role="table" aria-label="Work queue" className="hidden lg:block">
+          <section aria-label="工作項目" className="mt-1">
+            <div role="table" aria-label="工作隊列" className="hidden lg:block">
               <div role="rowgroup">
                 <div
                   role="row"
                   className="grid grid-cols-[1.4fr_110px_110px_110px_140px_90px_100px_110px] gap-3 border-b border-border px-3 py-3 text-xs font-medium uppercase text-muted-foreground"
                 >
                   {[
-                    "Company / work item",
-                    "Owner",
+                    "公司／工作項目",
+                    "負責同事",
                     "SLA",
-                    "業務 blocker",
-                    "SLA 到期 / 法定日",
-                    "Priority",
-                    "Status",
-                    "Actions",
+                    "業務阻礙事項",
+                    "SLA 到期／法定日",
+                    "優先次序",
+                    "狀態",
+                    "操作",
                   ].map((label) => (
                     <span key={label} role="columnheader">
                       {label}
@@ -344,7 +366,7 @@ export function WorkQueueRoute() {
                           prefix where the company name belongs, on the screen
                           staff are supposed to work from. */}
                       <p className="truncate text-xs text-muted-foreground">
-                        {item.companyName ?? "Company no longer on file"}
+                        {item.companyName ?? "公司已不在記錄中"}
                       </p>
                       {caseDetailLinkFor(item) ? (
                         <Link
@@ -352,22 +374,22 @@ export function WorkQueueRoute() {
                           params={caseDetailLinkFor(item)!.params}
                           className="font-medium hover:underline"
                         >
-                          {item.title}
+                          {describeWorkItemTitle(item.title)}
                         </Link>
                       ) : (
-                        <p className="font-medium">{item.title}</p>
+                        <p className="font-medium">{describeWorkItemTitle(item.title)}</p>
                       )}
                       <p className="truncate text-xs text-muted-foreground">
-                        {item.workType}
+                        {workTypeLabel(item.workType)}
                         {item.annualReturnCaseId
-                          ? ` · Case ${item.annualReturnCaseId.slice(0, 8)}`
+                          ? ` · 案件 ${item.annualReturnCaseId.slice(0, 8)}`
                           : ""}
                       </p>
                     </div>
                     <span role="cell" className="truncate">
-                      {/* "Unknown owner" and "Unassigned" are different facts: one
-                          is a person we cannot resolve, the other is nobody. */}
-                      {item.ownerName ?? (item.ownerId ? "Unknown owner" : "Unassigned")}
+                      {/* 「姓名待補」and「未分配」are different facts: one is a
+                          person we cannot resolve, the other is nobody. */}
+                      {item.ownerName ?? (item.ownerId ? "姓名待補" : "未分配")}
                     </span>
                     <span role="cell">
                       <SlaPill state={item.escalationState} />
@@ -376,16 +398,14 @@ export function WorkQueueRoute() {
                       <BusinessBlockers item={item} />
                     </span>
                     <span role="cell">
-                      SLA: {formatDateTime(item.slaDueAt)}
+                      SLA：{formatDateTime(item.slaDueAt)}
                       <br />
-                      法定日: {item.businessContext?.filingDueDate ?? "待確認"}
+                      法定日：{item.businessContext?.filingDueDate ?? "待確認"}
                     </span>
                     <span role="cell" className="tabular-nums">
                       {item.priority}
                     </span>
-                    <span role="cell" className="capitalize">
-                      {item.status.replace("_", " ")}
-                    </span>
+                    <span role="cell">{WORK_ITEM_STATUS_LABELS[item.status]}</span>
                     <span role="cell">
                       <QueueActions
                         item={item}
@@ -403,7 +423,7 @@ export function WorkQueueRoute() {
                 <article key={item.id} className="grid gap-3 px-3 py-4">
                   <div>
                     <p className="text-xs text-muted-foreground">
-                      {item.companyName ?? "Company no longer on file"}
+                      {item.companyName ?? "公司已不在記錄中"}
                     </p>
                     {caseDetailLinkFor(item) ? (
                       <Link
@@ -411,32 +431,32 @@ export function WorkQueueRoute() {
                         params={caseDetailLinkFor(item)!.params}
                         className="font-medium hover:underline"
                       >
-                        {item.title}
+                        {describeWorkItemTitle(item.title)}
                       </Link>
                     ) : (
-                      <p className="font-medium">{item.title}</p>
+                      <p className="font-medium">{describeWorkItemTitle(item.title)}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      {item.workType}
+                      {workTypeLabel(item.workType)}
                       {item.annualReturnCaseId
-                        ? ` · Case ${item.annualReturnCaseId.slice(0, 8)}`
+                        ? ` · 案件 ${item.annualReturnCaseId.slice(0, 8)}`
                         : ""}
                     </p>
                   </div>
-                  <QueueField label="Owner">
-                    {item.ownerName ?? (item.ownerId ? "姓名待補" : "Unassigned")}
+                  <QueueField label="負責同事">
+                    {item.ownerName ?? (item.ownerId ? "姓名待補" : "未分配")}
                   </QueueField>
                   <QueueField label="SLA">
                     <SlaPill state={item.escalationState} />
                   </QueueField>
-                  <QueueField label="業務 blocker">
+                  <QueueField label="業務阻礙事項">
                     <BusinessBlockers item={item} />
                   </QueueField>
                   <QueueField label="SLA 到期">{formatDateTime(item.slaDueAt)}</QueueField>
                   <QueueField label="法定申報日">
                     {item.businessContext?.filingDueDate ?? "待確認"}
                   </QueueField>
-                  <QueueField label="Priority">{item.priority}</QueueField>
+                  <QueueField label="優先次序">{item.priority}</QueueField>
                   <QueueActions
                     item={item}
                     canManage={canManage}
@@ -450,12 +470,12 @@ export function WorkQueueRoute() {
         ) : null}
       </main>
       {visibleItems.length > pageItems.length ? (
-        <button
-          className="m-4 rounded border px-3 py-2"
+        <Button
+          className="m-4"
           onClick={() => setLoadedScope({ scope: presentationScope, limit: visibleLimit + 50 })}
         >
-          載入更多工作（每次50筆）
-        </button>
+          載入更多工作（每次 50 項）
+        </Button>
       ) : null}
       {assignmentItem && items.some((i) => i.id === assignmentItem.id) ? (
         <AssignmentDialog
@@ -529,13 +549,13 @@ function AssignmentDialog({
       <DialogContent className="max-w-xl gap-0 p-0">
         <div className="border-b border-border px-5 py-4">
           <DialogHeader>
-            <DialogTitle>Assign work item</DialogTitle>
-            <DialogDescription>{item.title}</DialogDescription>
+            <DialogTitle>分配工作項目</DialogTitle>
+            <DialogDescription>{describeWorkItemTitle(item.title)}</DialogDescription>
           </DialogHeader>
         </div>
         <div className="max-h-[55vh] space-y-2 overflow-y-auto p-5">
-          <select
-            aria-label="Assignment responsibility"
+          <Select
+            aria-label="分配角色"
             value={target}
             onChange={(event) => {
               setTarget(event.target.value as "owner" | "reviewer");
@@ -543,12 +563,12 @@ function AssignmentDialog({
               setReason("");
             }}
           >
-            <option value="owner">Owner</option>
-            <option value="reviewer">Reviewer</option>
-          </select>
-          {recommendations.isError ? <p role="alert">可指派名單未能載入，請重新載入。</p> : null}
+            <option value="owner">負責同事</option>
+            <option value="reviewer">覆核人</option>
+          </Select>
+          {recommendations.isError ? <p role="alert">可分配名單未能載入，請重新載入。</p> : null}
           {recommendations.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading recommendations...</p>
+            <p className="text-sm text-muted-foreground">建議人選載入中…</p>
           ) : null}
           {options.map((option) => (
             <RecommendationOption
@@ -560,31 +580,27 @@ function AssignmentDialog({
             />
           ))}
           {requiresReason ? (
-            <textarea
-              aria-label="Override reason"
+            <Textarea
+              aria-label="例外理由"
               value={reason}
               onChange={(event) => setReason(event.target.value)}
-              placeholder="Reason for override or capacity exception"
-              className="mt-3 min-h-20 w-full rounded-md border border-input bg-background p-3 text-sm"
+              placeholder="不選首選人選或超出工作量的理由"
+              className="mt-3 min-h-20 w-full"
             />
           ) : null}
           {assign.isError ? (
-            <p className="text-sm text-destructive">
-              Assignment could not be saved. Refresh and try again.
-            </p>
+            <p className="text-sm text-destructive">未能儲存分配，請重新整理再試。</p>
           ) : null}
         </div>
         <DialogFooter className="border-t border-border px-5 py-4">
-          <button onClick={onClose} className="rounded-md border border-border px-4 py-2 text-sm">
-            Cancel
-          </button>
-          <button
+          <Button onClick={onClose}>取消</Button>
+          <Button
+            variant="primary"
             disabled={!selected || (requiresReason && !reason.trim()) || assign.isPending}
             onClick={() => assign.mutate()}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
-            Confirm assignment
-          </button>
+            確認分配
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -613,33 +629,31 @@ function AcknowledgementDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Acknowledge escalation</DialogTitle>
+          <DialogTitle>確認知悉升級</DialogTitle>
           <DialogDescription>
-            Record what was reviewed and the next action for {item.title}.
+            記錄已覆核的內容，以及「{describeWorkItemTitle(item.title)}」的下一步。
           </DialogDescription>
         </DialogHeader>
-        <textarea
+        <Textarea
           autoFocus
-          aria-label="Acknowledgement note"
+          aria-label="確認知悉備註"
           value={note}
           onChange={(event) => setNote(event.target.value)}
-          placeholder="Review outcome and next action"
-          className="min-h-24 w-full rounded-md border border-input bg-background p-3 text-sm"
+          placeholder="覆核結果及下一步"
+          className="min-h-24 w-full"
         />
         {acknowledge.isError ? (
-          <p className="text-sm text-destructive">Acknowledgement could not be saved.</p>
+          <p className="text-sm text-destructive">未能儲存確認知悉記錄。</p>
         ) : null}
         <DialogFooter>
-          <button onClick={onClose} className="rounded-md border border-border px-4 py-2 text-sm">
-            Cancel
-          </button>
-          <button
+          <Button onClick={onClose}>取消</Button>
+          <Button
+            variant="primary"
             disabled={!note.trim() || acknowledge.isPending}
             onClick={() => acknowledge.mutate()}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
-            Acknowledge
-          </button>
+            確認知悉
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -671,7 +685,7 @@ function RecommendationOption({
       <span>
         <span className="block text-sm font-medium">{label}</span>
         <span className="mt-1 block text-xs text-muted-foreground">
-          Skill {option.factors.skillProficiency}/5 · Load {option.factors.capacityUtilization}%
+          技能 {option.factors.skillProficiency}/5 · 工作量 {option.factors.capacityUtilization}%
         </span>
       </span>
       <span className="text-sm font-semibold tabular-nums">{option.score}</span>
@@ -684,15 +698,15 @@ function BusinessBlockers({ item }: { item: PersistedWorkItem }) {
   return (
     <div>
       <p className="text-xs">
-        SLA blocker: {item.status === "blocked" ? "工作狀態受阻" : "未記錄"}
+        SLA 阻礙事項：{item.status === "blocked" ? "工作狀態受阻" : "未記錄"}
       </p>
       {!context ? (
         <p>業務狀態待確認</p>
       ) : context.blockers.length === 0 ? (
-        <p>沒有業務 blocker</p>
+        <p>沒有業務阻礙事項</p>
       ) : (
         <details>
-          <summary>業務 blocker（{context.blockers.length}）</summary>
+          <summary>業務阻礙事項（{context.blockers.length}）</summary>
           <ul>
             {context.blockers.map((blocker, index) => (
               <li key={`${blocker.code}:${index}`}>
@@ -720,14 +734,15 @@ function FilterSelect({
   children: React.ReactNode;
 }) {
   return (
-    <select
+    <Select
+      size="sm"
       aria-label={label}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+      className="w-full"
     >
       {children}
-    </select>
+    </Select>
   );
 }
 
@@ -745,22 +760,14 @@ function QueueActions({
   return (
     <div className="flex justify-end gap-2">
       {canManage ? (
-        <button
-          title="Assign work item"
-          onClick={() => onAssign(item)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:bg-muted"
-        >
+        <Button size="icon" title="分配工作項目" onClick={() => onAssign(item)}>
           <UserRoundPlus className="h-4 w-4" />
-        </button>
+        </Button>
       ) : null}
       {canManage && (item.escalationState === "warning" || item.escalationState === "breach") ? (
-        <button
-          title="Acknowledge escalation"
-          onClick={() => onAcknowledge(item)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:bg-muted"
-        >
+        <Button size="icon" title="確認知悉升級" onClick={() => onAcknowledge(item)}>
           <Check className="h-4 w-4" />
-        </button>
+        </Button>
       ) : null}
     </div>
   );
@@ -810,13 +817,13 @@ function SlaPill({ state }: { state: PersistedWorkItem["escalationState"] }) {
   return (
     <span
       className={cn(
-        "inline-flex min-h-7 items-center gap-1 rounded-md border px-2 text-xs font-medium capitalize",
+        "inline-flex min-h-7 items-center gap-1 rounded-md border px-2 text-xs font-medium",
         state === "breach" && "border-destructive/40 bg-destructive/10 text-destructive",
         state === "warning" && "border-amber-300 bg-amber-50 text-amber-800",
       )}
     >
       {icon}
-      {state}
+      {ESCALATION_STATE_LABELS[state]}
     </span>
   );
 }
@@ -827,13 +834,6 @@ function QueueMessage({ children }: { children: React.ReactNode }) {
       {children}
     </div>
   );
-}
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("en-HK", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Hong_Kong",
-  }).format(new Date(value));
 }
 
 function hongKongDateKey(value: string | Date): string {

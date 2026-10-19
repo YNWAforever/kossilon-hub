@@ -15,6 +15,7 @@ merged and CI-confirmed green (PR #45, PR #46 + follow-up fix PR #47).
 ## Scope
 
 In scope:
+
 - A `significant_controllers` register per company: the four Q6 control tests
   (>25% shares, >25% votes, majority-board appointment right, significant influence),
   appointment/cessation-style lifecycle, and a staff-set register-update-due-date.
@@ -25,6 +26,7 @@ In scope:
   type selector.
 
 Out of scope (explicitly deferred):
+
 - DR renewal fee/subscription billing — owned by P1-8 ("per-company service
   subscriptions with actual catalogue fees ... DR HK$2,000/yr"). P1-6 tracks the
   compliance register and deadlines only, not billing, matching how P1-4 shipped pure
@@ -71,6 +73,7 @@ create index if not exists significant_controllers_company_idx on significant_co
 ```
 
 Notes:
+
 - `identification_type`/`identification_number` reuse the exact same nullable
   hkid/passport/br_number shape as `officers`, since a controller can be a corporate
   shareholder (br_number) as well as a natural person.
@@ -140,6 +143,7 @@ Extends the existing `src/features/clients/` slice (where officers/shareholdings
 already live) rather than a new feature module.
 
 **`types.ts`**:
+
 - `ControlBasis = "shares_over_25pct" | "votes_over_25pct" | "board_appointment_right" | "significant_influence"`
 - `SignificantController` type mirroring `Officer`'s shape plus `controlBases: ControlBasis[]` and `registerUpdateDueDate: string | null`.
 - `InspectionRequest` type: `id`, `companyId`, `requesterName`, `requesterAuthority`, `requestDate`, `resolutionNote: string | null`, `resolvedAt: string | null`.
@@ -148,14 +152,16 @@ already live) rather than a new feature module.
 - New input types: `RecordControllerInput`, `UpdateControllerParticularsInput`, `CeaseControllerInput`, `RecordInspectionRequestInput`, `ResolveInspectionRequestInput`.
 
 **`repository.ts`**:
+
 - `hydrateClient` fetches and maps both new tables, ordered `(cessation_date is not null), registered_date desc` for controllers and `request_date desc` for inspection requests — active/newest first, matching the existing officers/shareholdings ordering.
 - New methods: `recordController`, `updateControllerParticulars`, `ceaseController`, `assertControllerBelongsToCompany`, `recordInspectionRequest`, `resolveInspectionRequest`, `assertInspectionRequestBelongsToCompany` — same shape as the existing officer/shareholding methods (`for update` lock is NOT needed for these; the secretary/DR single-active-holder invariant is what needs the lock, not controllers or inspection requests, which have no such invariant).
 - `appointOfficer`'s existing secretary-sync branch (`officerType === "secretary"`) is extended to also cover `officerType === "designated_representative"`: same "cessate any prior active holder of this type, in the same transaction, behind the same `for update` lock on the company row" logic, generalized to key off `officerType` instead of being secretary-specific. This is the one behavioral change to existing code. `companies` has no `designated_representative` denormalized column to sync (unlike `company_secretary`), so this is strictly simpler than the secretary case — just the supersede-prior-holder part, no column sync.
 
 **`server-fns.ts`**:
+
 - `recordControllerSchema`, `updateControllerParticularsSchema` (with a `.refine()` requiring `identificationType`/`identificationNumber` both-null-or-both-set, matching `appointOfficerSchema`'s existing pattern), `ceaseControllerSchema`, `recordInspectionRequestSchema`, `resolveInspectionRequestSchema`.
 - `recordClientController`, `updateClientControllerParticulars`, `ceaseClientController`, `recordClientInspectionRequest`, `resolveClientInspectionRequest` — each `requireWritableCompany` + `withClientRepository`, matching the five existing officer/shareholding server fns exactly.
-- DR appointment/cessation reuses the *existing* `appointClientOfficer`/`ceaseClientOfficer` server fns unchanged (just a new valid `officerType` value flowing through the existing schema, which needs its enum widened).
+- DR appointment/cessation reuses the _existing_ `appointClientOfficer`/`ceaseClientOfficer` server fns unchanged (just a new valid `officerType` value flowing through the existing schema, which needs its enum widened).
 
 ## UI
 
@@ -201,6 +207,7 @@ already live) rather than a new feature module.
   both new sections and the DR officer-type option.
 
 **Acceptance criteria**:
+
 - A significant controller can be recorded with one or more control bases, edited
   in place, and ceased.
 - A DR can be appointed and appointing a new one cessates any prior active DR,

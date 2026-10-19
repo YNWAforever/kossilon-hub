@@ -29,6 +29,7 @@ the roadmap for P1-6 through P1-9.
 ## Scope
 
 **In scope:**
+
 - Add `case_type` + a per-type nullable FK column (`annual_return_case_id`) to `work_items`,
   replacing the single `case_id` column.
 - Update `EnsureWorkItemEvent`/`ensureWorkItemForEvent`, `PersistedWorkItem`, and the row
@@ -39,6 +40,7 @@ the roadmap for P1-6 through P1-9.
 - Update the work-items test fixtures affected by the shape change.
 
 **Out of scope, explicitly:**
+
 - No new case type is introduced. This is a pure generalization — the annual-return flow works
   identically after this lands; P1-6/7/9 each add their own case type, own migration, own FK
   column, on their own future roadmap turn.
@@ -73,6 +75,7 @@ reference, per existing convention).
 ## Types & repository layer
 
 `src/features/work-items/types.ts`:
+
 ```ts
 export type WorkItemCaseType = "annual_return";
 ```
@@ -86,6 +89,7 @@ this codebase already leans on (e.g. `Record<ClientPaymentStatus, StatusTone>` i
 register).
 
 `src/features/work-items/repository.ts`:
+
 - `PersistedWorkItem`: replace `caseId: string` with `caseType: WorkItemCaseType` and
   `annualReturnCaseId: string | null`.
 - `EnsureWorkItemEvent`: replace `caseId: string` with `caseType: WorkItemCaseType` and
@@ -102,9 +106,9 @@ register).
 ## Consumers
 
 - **`src/routes/work-queue.tsx`**: the two `<Link to="/annual-returns/$id" params={{ id:
-  item.caseId }}>` blocks (desktop row, mobile card) are replaced by a shared
+item.caseId }}>` blocks (desktop row, mobile card) are replaced by a shared
   `caseDetailLinkFor(item: PersistedWorkItem)` helper returning `{ to: string; params: { id:
-  string } } | null`, built from an exhaustive `switch (item.caseType)` with one case
+string } } | null`, built from an exhaustive `switch (item.caseType)` with one case
   (`"annual_return"` → `/annual-returns/$id`, `params: { id: item.annualReturnCaseId }`) and a
   compile-time exhaustiveness check (an unreachable `default` assigning to `never`) so a
   future case type without a matching branch fails the build rather than silently rendering

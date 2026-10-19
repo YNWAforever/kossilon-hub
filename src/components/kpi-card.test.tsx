@@ -28,6 +28,6 @@ describe("KpiCard", () => {
     const rendered = html.match(/data-testid="kpi-value"[^>]*>([^<]*)</)?.[1] ?? "";
 
     expect(rendered).not.toMatch(/\d/);
-    expect(html).toContain("Unavailable");
+    expect(html).toContain("無法載入");
   });
 });

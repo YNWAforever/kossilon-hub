@@ -1,6 +1,7 @@
 import { createCsrfMiddleware, createMiddleware, createStart } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
+import { serializationAdapters } from "./lib/serialization-adapters";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -24,4 +25,5 @@ const csrfMiddleware = createCsrfMiddleware({
 export const startInstance = createStart(() => ({
   defaultSsr: false,
   requestMiddleware: [csrfMiddleware, errorMiddleware],
+  serializationAdapters: [...serializationAdapters],
 }));

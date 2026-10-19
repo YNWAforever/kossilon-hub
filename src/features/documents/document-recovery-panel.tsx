@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/field";
 import {
   createDocumentUploadIntent,
   finalizeDocumentUpload,
@@ -67,7 +69,7 @@ export function DocumentRecoveryPanel({
     );
   if (upload.isError)
     return (
-      <p role="alert" className="text-sm text-status-orange">
+      <p role="alert" className="text-sm text-status-orange-text">
         補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。
         {intentId ? ` 上載 ID：${intentId}` : ""}
       </p>
@@ -75,14 +77,9 @@ export function DocumentRecoveryPanel({
   return (
     <div className="space-y-2 text-sm">
       {!preview.data ? (
-        <button
-          type="button"
-          className="rounded-md border px-3 py-2"
-          disabled={preview.isPending}
-          onClick={() => preview.mutate()}
-        >
+        <Button type="button" disabled={preview.isPending} onClick={() => preview.mutate()}>
           預覽受控補傳
-        </button>
+        </Button>
       ) : null}
       {preview.isError ? <p role="alert">無法取得已授權預覽，請重新核對權限及來源。</p> : null}
       {preview.data && preview.data.availability !== "available" ? (
@@ -104,18 +101,18 @@ export function DocumentRecoveryPanel({
           </label>
           <label className="block">
             核對原因
-            <textarea
+            <Textarea
               aria-label="核對原因"
               maxLength={500}
               value={reason}
               disabled={attempted}
               onChange={(event) => setReason(event.target.value)}
-              className="mt-1 w-full rounded-md border bg-background p-2"
+              className="mt-1 w-full"
             />
           </label>
-          <button
+          <Button
             type="button"
-            className="rounded-md border px-3 py-2 disabled:opacity-50"
+            variant="primary"
             disabled={!file || !reason.trim() || attempted}
             onClick={() => {
               setAttempted(true);
@@ -123,7 +120,7 @@ export function DocumentRecoveryPanel({
             }}
           >
             批准並補傳
-          </button>
+          </Button>
         </div>
       ) : null}
       {preview.data?.availability === "available" ? (

@@ -22,7 +22,7 @@ change is additive — no existing exported function's signature or behavior cha
 ## Context for every task below
 
 - Design spec: `docs/superpowers/specs/2026-08-20-annual-return-case-creation-design.md` — read this
-  first if anything below is unclear about *why*. It records two real gaps found while writing this
+  first if anything below is unclear about _why_. It records two real gaps found while writing this
   plan (every case needs a payments row; the only template-read path is Admin-only) and one
   correction to the original brainstormed design (a case has no `team_id` column of its own — team
   is always derived live from its company, so it can't be overridden the way owner can).
@@ -41,12 +41,13 @@ change is additive — no existing exported function's signature or behavior cha
 ### Task 1: `annual-return/workflow.ts` — a small, reusable date-offset helper — ✅ DONE (commit `086b2cc`)
 
 **Files:**
+
 - Modify: `src/features/annual-return/workflow.ts`
 - Modify: `src/features/annual-return/workflow.test.ts`
 
 `calculateFilingDueDate` already offsets a date-only string by a fixed number of days (42). Task 4
 needs the same operation with a per-item, possibly-negative offset (a checklist item's due date is
-the filing due date *minus* the template's `daysBeforeDue`). Rather than duplicating the
+the filing due date _minus_ the template's `daysBeforeDue`). Rather than duplicating the
 parse/offset/format logic, this generalizes it into one exported helper that `calculateFilingDueDate`
 itself is rewritten to use — a pure "extract and reuse," not a behavior change (verified by the
 existing `calculateFilingDueDate` test continuing to pass unchanged).
@@ -89,22 +90,22 @@ import {
 Then replace:
 
 ```typescript
-  it("calculates the filing due date as 42 days after the basis date", () => {
-    expect(calculateFilingDueDate("2026-07-01")).toBe("2026-08-12");
-  });
+it("calculates the filing due date as 42 days after the basis date", () => {
+  expect(calculateFilingDueDate("2026-07-01")).toBe("2026-08-12");
+});
 ```
 
 With:
 
 ```typescript
-  it("calculates the filing due date as 42 days after the basis date", () => {
-    expect(calculateFilingDueDate("2026-07-01")).toBe("2026-08-12");
-  });
+it("calculates the filing due date as 42 days after the basis date", () => {
+  expect(calculateFilingDueDate("2026-07-01")).toBe("2026-08-12");
+});
 
-  it("offsets a date-only string forward and backward", () => {
-    expect(offsetDateOnly("2026-08-12", -14)).toBe("2026-07-29");
-    expect(offsetDateOnly("2026-07-01", 42)).toBe("2026-08-12");
-  });
+it("offsets a date-only string forward and backward", () => {
+  expect(offsetDateOnly("2026-08-12", -14)).toBe("2026-07-29");
+  expect(offsetDateOnly("2026-07-01", 42)).toBe("2026-08-12");
+});
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -156,6 +157,7 @@ git commit -m "feat: add offsetDateOnly, reuse it in calculateFilingDueDate"
 ### Task 2: `annual-return/permissions.ts` — authorization for creating a case — ✅ DONE (commit `567fc29`; code-quality review flagged `"create_case"` as apparently-unused in isolation, verified against Task 4 below where it's actually consumed via `writeAuditEvent` — no fix needed)
 
 **Files:**
+
 - Modify: `src/features/annual-return/permissions.ts`
 - Modify: `src/features/annual-return/permissions.test.ts`
 
@@ -360,6 +362,7 @@ git commit -m "feat: add assertAnnualReturnCaseCreatable"
 ### Task 3: `checklist-templates/server-fns.ts` — a staff-readable template list for the picker — ✅ DONE (commits `39e4035`, `1dadd8b`)
 
 **Files:**
+
 - Modify: `src/features/checklist-templates/server-fns.ts`
 - Modify: `src/features/checklist-templates/server-fns.test.ts`
 
@@ -431,7 +434,9 @@ describe("listActiveAnnualReturnTemplatesForActor", () => {
 
     await expect(
       listActiveAnnualReturnTemplatesForActor(staffActor, {}, { repository }),
-    ).resolves.toEqual([{ id: sampleTemplate.id, name: sampleTemplate.name, serviceType: sampleTemplate.serviceType }]);
+    ).resolves.toEqual([
+      { id: sampleTemplate.id, name: sampleTemplate.name, serviceType: sampleTemplate.serviceType },
+    ]);
   });
 
   it("rejects a Client actor", async () => {
@@ -599,6 +604,7 @@ git commit -m "feat: add staff-readable active-templates list for case creation"
 ### Task 4: `annual-return/repository.ts` — `listCompaniesEligibleForCase` and `createCase` — ✅ DONE (commits `3aa2574`, `19e81c8`)
 
 **Files:**
+
 - Modify: `src/features/annual-return/repository.ts`
 - Modify: `src/features/annual-return/repository.test.ts`
 
@@ -1071,7 +1077,7 @@ against the real schema types before writing the integration test.
 - [ ] **Step 8: Write a DB-integration test**
 
 This repo's DB-integration tests (`describe.skipIf(!databaseUrl)`) only run when
-`TEST_DATABASE_URL` is set, against a migrated *and seeded* database — `db:seed` creates reference
+`TEST_DATABASE_URL` is set, against a migrated _and seeded_ database — `db:seed` creates reference
 rows this test can reuse (existing `repository.test.ts` already defines `USER_AMY_ID` and
 `TEAM_ANNUAL_RETURN_ID` constants pointing at seeded rows — reuse those rather than inventing new
 ones). Add this as a new `describe` block at the end of `repository.test.ts` (after the existing
@@ -1199,43 +1205,51 @@ describe.skipIf(!databaseUrl)("createCase", () => {
     INTEGRATION_TEST_TIMEOUT_MS,
   );
 
-  it("rejects an inactive checklist template", async () => {
-    await seedCompanyAndTemplate("2026-07-01");
-    const sql = sqlForTests();
-    await sql`update checklist_templates set active = false where id = ${TEST_TEMPLATE_ID}`;
-    const repository = repositoryFor();
+  it(
+    "rejects an inactive checklist template",
+    async () => {
+      await seedCompanyAndTemplate("2026-07-01");
+      const sql = sqlForTests();
+      await sql`update checklist_templates set active = false where id = ${TEST_TEMPLATE_ID}`;
+      const repository = repositoryFor();
 
-    await expect(
-      repository.createCase({
+      await expect(
+        repository.createCase({
+          companyId: TEST_COMPANY_ID,
+          templateId: TEST_TEMPLATE_ID,
+          ownerId: USER_AMY_ID,
+          invoiceNumber: "INV-TEST-0004",
+          feeAmount: 2800,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow("Checklist template not found or inactive.");
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "lists the new company as eligible before creating a case, and not after",
+    async () => {
+      await seedCompanyAndTemplate("2026-09-15");
+      const repository = repositoryFor();
+
+      const beforeCreate = await repository.listCompaniesEligibleForCase();
+      expect(beforeCreate.some((company) => company.id === TEST_COMPANY_ID)).toBe(true);
+
+      await repository.createCase({
         companyId: TEST_COMPANY_ID,
         templateId: TEST_TEMPLATE_ID,
         ownerId: USER_AMY_ID,
-        invoiceNumber: "INV-TEST-0004",
+        invoiceNumber: "INV-TEST-0005",
         feeAmount: 2800,
         actorId: USER_AMY_ID,
-      }),
-    ).rejects.toThrow("Checklist template not found or inactive.");
-  }, INTEGRATION_TEST_TIMEOUT_MS);
+      });
 
-  it("lists the new company as eligible before creating a case, and not after", async () => {
-    await seedCompanyAndTemplate("2026-09-15");
-    const repository = repositoryFor();
-
-    const beforeCreate = await repository.listCompaniesEligibleForCase();
-    expect(beforeCreate.some((company) => company.id === TEST_COMPANY_ID)).toBe(true);
-
-    await repository.createCase({
-      companyId: TEST_COMPANY_ID,
-      templateId: TEST_TEMPLATE_ID,
-      ownerId: USER_AMY_ID,
-      invoiceNumber: "INV-TEST-0005",
-      feeAmount: 2800,
-      actorId: USER_AMY_ID,
-    });
-
-    const afterCreate = await repository.listCompaniesEligibleForCase();
-    expect(afterCreate.some((company) => company.id === TEST_COMPANY_ID)).toBe(false);
-  }, INTEGRATION_TEST_TIMEOUT_MS);
+      const afterCreate = await repository.listCompaniesEligibleForCase();
+      expect(afterCreate.some((company) => company.id === TEST_COMPANY_ID)).toBe(false);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 });
 ```
 
@@ -1252,8 +1266,8 @@ Run: `npx vitest run src/features/annual-return/repository.test.ts`
 If `TEST_DATABASE_URL` is not set in this environment, these four new tests will report as
 **skipped**, not failed — that's expected and matches this repo's own established convention
 (P3-6 in the roadmap already names this as a known gap: these tests only run in CI, which sets
-`TEST_DATABASE_URL`). If it *is* set, expect all four to pass. Either way, run the full file and
-confirm no *other* test in it broke.
+`TEST_DATABASE_URL`). If it _is_ set, expect all four to pass. Either way, run the full file and
+confirm no _other_ test in it broke.
 
 - [ ] **Step 10: Commit**
 
@@ -1267,6 +1281,7 @@ git commit -m "feat: add createCase and listCompaniesEligibleForCase to AnnualRe
 ### Task 5: `annual-return/server-fns.ts` — the `*ForActor` functions and server fns — ✅ DONE (commit `4f76a82`)
 
 **Files:**
+
 - Modify: `src/features/annual-return/server-fns.ts`
 - Modify: `src/features/annual-return/server-fns.authorization.test.ts`
 
@@ -1576,6 +1591,7 @@ git commit -m "feat: add createAnnualReturnCase and listCompaniesEligibleForCase
 ### Task 6: `create-case-dialog.tsx` — the new UI component — ✅ DONE (commits `73e8fa9`, `530b503`; required `isLoading` prop added — see Task 7's usage below, already updated)
 
 **Files:**
+
 - Create: `src/features/annual-return/components/create-case-dialog.tsx`
 
 Requires Task 3 (`ActiveChecklistTemplateSummary` type) and Task 5 (`createAnnualReturnCase` server
@@ -1856,6 +1872,7 @@ git commit -m "feat: add the New case dialog component"
 ### Task 7: Wire the dialog into the production command center — ✅ DONE (commits `3a33601`, `d1db295` error-state fix, `fbd555a` team-scoping fix)
 
 **Files:**
+
 - Modify: `src/features/annual-return/components/production-command-center.tsx`
 - Modify: `src/routes/-annual-returns-data-mode.test.tsx`
 
@@ -1917,52 +1934,52 @@ import { CreateCaseDialog } from "./create-case-dialog";
 Replace:
 
 ```typescript
-  const today = hongKongBusinessDate();
+const today = hongKongBusinessDate();
 
-  const filters = boardFiltersFromSearch(search, BOARD_PAGE_SIZE);
+const filters = boardFiltersFromSearch(search, BOARD_PAGE_SIZE);
 
-  const casesQuery = useQuery({
-    queryKey: annualReturnQueryKeys.list(filters),
-    queryFn: () => listAnnualReturnCases({ data: filters }),
-    retry: false,
-  });
+const casesQuery = useQuery({
+  queryKey: annualReturnQueryKeys.list(filters),
+  queryFn: () => listAnnualReturnCases({ data: filters }),
+  retry: false,
+});
 ```
 
 With:
 
 ```typescript
-  const today = hongKongBusinessDate();
-  const queryClient = useQueryClient();
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+const today = hongKongBusinessDate();
+const queryClient = useQueryClient();
+const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  const filters = boardFiltersFromSearch(search, BOARD_PAGE_SIZE);
+const filters = boardFiltersFromSearch(search, BOARD_PAGE_SIZE);
 
-  const casesQuery = useQuery({
-    queryKey: annualReturnQueryKeys.list(filters),
-    queryFn: () => listAnnualReturnCases({ data: filters }),
-    retry: false,
-  });
+const casesQuery = useQuery({
+  queryKey: annualReturnQueryKeys.list(filters),
+  queryFn: () => listAnnualReturnCases({ data: filters }),
+  retry: false,
+});
 
-  // Only fetched once the dialog is actually open — these are cheap reads, but
-  // there is no reason to fire them on every board load when most visits never
-  // open the dialog at all.
-  const eligibleCompaniesQuery = useQuery({
-    queryKey: ["annual-returns", "eligible-companies"],
-    queryFn: () => listCompaniesEligibleForCase(),
-    enabled: isCreateOpen,
-  });
+// Only fetched once the dialog is actually open — these are cheap reads, but
+// there is no reason to fire them on every board load when most visits never
+// open the dialog at all.
+const eligibleCompaniesQuery = useQuery({
+  queryKey: ["annual-returns", "eligible-companies"],
+  queryFn: () => listCompaniesEligibleForCase(),
+  enabled: isCreateOpen,
+});
 
-  const activeTemplatesQuery = useQuery({
-    queryKey: ["checklist-templates", "active-annual-return"],
-    queryFn: () => listActiveAnnualReturnTemplates(),
-    enabled: isCreateOpen,
-  });
+const activeTemplatesQuery = useQuery({
+  queryKey: ["checklist-templates", "active-annual-return"],
+  queryFn: () => listActiveAnnualReturnTemplates(),
+  enabled: isCreateOpen,
+});
 
-  const assignmentOptionsQuery = useQuery({
-    queryKey: ["clients", "assignment-options"],
-    queryFn: () => listClientAssignmentOptions(),
-    enabled: isCreateOpen,
-  });
+const assignmentOptionsQuery = useQuery({
+  queryKey: ["clients", "assignment-options"],
+  queryFn: () => listClientAssignmentOptions(),
+  enabled: isCreateOpen,
+});
 ```
 
 - [ ] **Step 3: Add the button and the dialog**
@@ -2129,7 +2146,7 @@ Run: `npm run build` — expected: exit 0.
 - [ ] **Step 3: Manual browser smoke test (demo mode only — see note)**
 
 **Note on scope:** `resolveDataMode` (`src/features/runtime/data-mode.ts`) only returns `"production"`
-when `VITE_ENABLE_DEMO_AUTH` is *not* `"true"` — and without demo auth, reaching any page requires
+when `VITE_ENABLE_DEMO_AUTH` is _not_ `"true"` — and without demo auth, reaching any page requires
 signing in through real Neon Auth (Google OAuth or magic link), which needs live credentials this
 environment does not have (the same known, pre-existing limitation as the "Verify Google/Neon Auth
 round trip" task — not something to work around here). So this manual step covers demo mode only;
@@ -2141,6 +2158,7 @@ Start the dev server: `VITE_ENABLE_DEMO_AUTH=true npm run dev -- --port 5173`
 
 Using the browser tool, sign in as the Admin demo identity and visit `/annual-returns` (this renders
 in demo mode) and confirm:
+
 - No "New case" button appears anywhere on the board (matching acceptance criterion 4).
 - The board otherwise renders exactly as it did before this branch — no console errors, no visual
   regression from the `useState`/`useQueryClient` additions to `production-command-center.tsx`

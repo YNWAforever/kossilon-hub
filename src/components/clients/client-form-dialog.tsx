@@ -1,5 +1,13 @@
+import {
+  BR_NUMBER_MESSAGE,
+  CR_NUMBER_MESSAGE,
+  isValidBrNumber,
+  isValidCrNumber,
+} from "@/features/clients/identifiers";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -75,8 +83,6 @@ function formFor(client: ClientDetail): FormState {
   };
 }
 
-const inputClass =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none";
 const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
 /** ClientWriteError fields this dialog renders an inline message for. Anything else toasts. */
@@ -99,7 +105,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
 
   // `listAssignmentOptions()` only returns active users/teams, so if the company's
   // currently-assigned owner or team has since been deactivated it will not appear in
-  // `options`. A <select> whose value matches no <option> renders blank or silently falls
+  // `options`. A <Select> whose value matches no <option> renders blank or silently falls
   // back to the browser's first option, so saving the form could silently reassign the
   // company. When editing, append a synthetic "(inactive)" option for the current owner
   // and team so the select always has a matching option and reflects the true value.
@@ -110,7 +116,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
 
     return [
       ...options.owners,
-      { id: client.ownerId, name: `${client.ownerName} (inactive)`, teamId: null },
+      { id: client.ownerId, name: `${client.ownerName}（已停用）`, teamId: null },
     ];
   }, [client, options.owners]);
 
@@ -119,7 +125,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
       return options.teams;
     }
 
-    return [...options.teams, { id: client.teamId, name: `${client.teamName} (inactive)` }];
+    return [...options.teams, { id: client.teamId, name: `${client.teamName}（已停用）` }];
   }, [client, options.teams]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
@@ -128,6 +134,17 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setFieldError(null);
+
+    // Checked here as well as on the server so the message lands on the field
+    // being typed in, before a round trip.
+    if (!client && !isValidCrNumber(form.crNumber)) {
+      setFieldError({ field: "crNumber", message: CR_NUMBER_MESSAGE });
+      return;
+    }
+    if (!client && !isValidBrNumber(form.brNumber)) {
+      setFieldError({ field: "brNumber", message: BR_NUMBER_MESSAGE });
+      return;
+    }
     setSaving(true);
 
     try {
@@ -142,7 +159,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
             teamId: form.teamId,
           },
         });
-        toast.success("Client updated.");
+        toast.success("已更新客戶資料。");
         onSaved(saved.id);
       } else {
         const hasContact = form.contactName.trim().length > 0;
@@ -170,14 +187,14 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
               : [],
           },
         });
-        toast.success("Client added.");
+        toast.success("已新增客戶。");
         onSaved(saved.id);
       }
 
       onOpenChange(false);
     } catch (error) {
       const field = (error as { field?: string }).field;
-      const message = error instanceof Error ? error.message : "Unable to save the client.";
+      const message = error instanceof Error ? error.message : "未能儲存客戶資料。";
 
       // Only these fields have somewhere to render an inline error. Anything else falls back
       // to a toast — without this the message would be swallowed entirely, because a truthy
@@ -196,22 +213,23 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit client" : "Add client"}</DialogTitle>
+          <DialogTitle>{isEdit ? "編輯客戶" : "新增客戶"}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Update the company record. Changes are recorded on the company timeline."
-              : "Create a company in the register. CR and BR numbers must be unique."}
+              ? "更新公司紀錄，所有變更會記錄在公司時間線。"
+              : "在客戶名冊新增公司，CR 及 BR 號碼不得重複。"}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label className={labelClass} htmlFor="client-name">
-              Company name
+              公司名稱
             </label>
-            <input
+            <Input
               id="client-name"
-              className={inputClass}
+              size="sm"
+              className="w-full"
               value={form.companyName}
               onChange={(event) => set("companyName", event.target.value)}
               required
@@ -222,42 +240,57 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className={labelClass} htmlFor="client-cr">
-                  CR number
+                  CR 號碼
                 </label>
-                <input
+                <Input
                   id="client-cr"
-                  className={inputClass}
+                  size="sm"
+                  aria-invalid={fieldError?.field === "crNumber"}
+                  aria-describedby={
+                    fieldError?.field === "crNumber" ? "client-cr-error" : undefined
+                  }
+                  className="w-full"
                   value={form.crNumber}
                   onChange={(event) => set("crNumber", event.target.value)}
                   required
                 />
                 {fieldError?.field === "crNumber" && (
-                  <p className="mt-1 text-xs text-destructive">{fieldError.message}</p>
+                  <p id="client-cr-error" className="mt-1 text-xs text-destructive">
+                    {fieldError.message}
+                  </p>
                 )}
               </div>
               <div>
                 <label className={labelClass} htmlFor="client-br">
-                  BR number
+                  BR 號碼
                 </label>
-                <input
+                <Input
                   id="client-br"
-                  className={inputClass}
+                  size="sm"
+                  aria-invalid={fieldError?.field === "brNumber"}
+                  aria-describedby={
+                    fieldError?.field === "brNumber" ? "client-br-error" : undefined
+                  }
+                  className="w-full"
                   value={form.brNumber}
                   onChange={(event) => set("brNumber", event.target.value)}
                   required
                 />
                 {fieldError?.field === "brNumber" && (
-                  <p className="mt-1 text-xs text-destructive">{fieldError.message}</p>
+                  <p id="client-br-error" className="mt-1 text-xs text-destructive">
+                    {fieldError.message}
+                  </p>
                 )}
               </div>
               <div>
                 <label className={labelClass} htmlFor="client-incorporated">
-                  Incorporation date
+                  成立日期
                 </label>
-                <input
+                <Input
                   id="client-incorporated"
                   type="date"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.incorporationDate}
                   onChange={(event) => set("incorporationDate", event.target.value)}
                   required
@@ -265,12 +298,13 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
               </div>
               <div>
                 <label className={labelClass} htmlFor="client-basis">
-                  Annual return basis date
+                  周年申報基準日
                 </label>
-                <input
+                <Input
                   id="client-basis"
                   type="date"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.annualReturnBasisDate}
                   onChange={(event) => set("annualReturnBasisDate", event.target.value)}
                   required
@@ -281,11 +315,12 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
 
           <div>
             <label className={labelClass} htmlFor="client-office">
-              Registered office
+              註冊辦事處
             </label>
-            <input
+            <Input
               id="client-office"
-              className={inputClass}
+              size="sm"
+              className="w-full"
               value={form.registeredOffice}
               onChange={(event) => set("registeredOffice", event.target.value)}
               required
@@ -295,11 +330,12 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className={labelClass} htmlFor="client-owner">
-                Owner
+                負責同事
               </label>
-              <select
+              <Select
                 id="client-owner"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.ownerId}
                 onChange={(event) => set("ownerId", event.target.value)}
               >
@@ -308,15 +344,16 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                     {owner.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label className={labelClass} htmlFor="client-team">
-                Team
+                團隊
               </label>
-              <select
+              <Select
                 id="client-team"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.teamId}
                 onChange={(event) => set("teamId", event.target.value)}
               >
@@ -325,102 +362,108 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                     {team.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
 
           {isEdit && (
             <div>
               <label className={labelClass} htmlFor="client-status">
-                Status
+                狀態
               </label>
-              <select
+              <Select
                 id="client-status"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.status}
                 onChange={(event) => set("status", event.target.value as "active" | "inactive")}
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+                <option value="active">有效</option>
+                <option value="inactive">已停用</option>
+              </Select>
               <p className="mt-1 text-xs text-muted-foreground">
-                Clients are deactivated, never deleted — deleting a company would remove its annual
-                return history.
+                客戶只會停用而不會刪除——刪除公司會一併移除其周年申報紀錄。
               </p>
             </div>
           )}
 
           {!isEdit && (
             <div className="rounded-lg border border-border p-4">
-              <p className="mb-3 text-xs font-medium text-foreground">Primary contact (optional)</p>
+              <p className="mb-3 text-xs font-medium text-foreground">主要聯絡人（選填）</p>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <label className={labelClass} htmlFor="contact-name">
-                    Name
+                    姓名
                   </label>
-                  <input
+                  <Input
                     id="contact-name"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.contactName}
                     onChange={(event) => set("contactName", event.target.value)}
                   />
                 </div>
                 <div>
                   <label className={labelClass} htmlFor="contact-role">
-                    Role
+                    職位
                   </label>
-                  <input
+                  <Input
                     id="contact-role"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.contactRole}
                     onChange={(event) => set("contactRole", event.target.value)}
                   />
                 </div>
                 <div>
                   <label className={labelClass} htmlFor="contact-email">
-                    Email
+                    電郵
                   </label>
-                  <input
+                  <Input
                     id="contact-email"
+                    aria-invalid={fieldError?.field === "contact"}
+                    aria-describedby={
+                      fieldError?.field === "contact" ? "client-contact-error" : undefined
+                    }
                     type="email"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.contactEmail}
                     onChange={(event) => set("contactEmail", event.target.value)}
                   />
                 </div>
                 <div>
                   <label className={labelClass} htmlFor="contact-phone">
-                    Phone
+                    電話
                   </label>
-                  <input
+                  <Input
                     id="contact-phone"
-                    className={inputClass}
+                    aria-invalid={fieldError?.field === "contact"}
+                    aria-describedby={
+                      fieldError?.field === "contact" ? "client-contact-error" : undefined
+                    }
+                    size="sm"
+                    className="w-full"
                     value={form.contactPhone}
                     onChange={(event) => set("contactPhone", event.target.value)}
                   />
                 </div>
               </div>
               {fieldError?.field === "contact" && (
-                <p className="mt-2 text-xs text-destructive">{fieldError.message}</p>
+                <p id="client-contact-error" className="mt-2 text-xs text-destructive">
+                  {fieldError.message}
+                </p>
               )}
             </div>
           )}
 
           <DialogFooter>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-            >
-              {saving ? "Saving…" : isEdit ? "Save changes" : "Add client"}
-            </button>
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+              取消
+            </Button>
+            <Button type="submit" variant="primary" size="sm" disabled={saving}>
+              {saving ? "儲存中…" : isEdit ? "儲存變更" : "新增客戶"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

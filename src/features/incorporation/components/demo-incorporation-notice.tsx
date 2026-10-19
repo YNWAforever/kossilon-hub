@@ -1,3 +1,4 @@
+import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
 
 type Props = {
@@ -6,14 +7,12 @@ type Props = {
 
 const COPY: Record<Props["variant"], { title: string; message: string }> = {
   list: {
-    title: "Incorporation",
-    message:
-      "Incorporation intake tracks live case data and has no demo fixtures. Sign in to a production environment to use it.",
+    title: "公司註冊",
+    message: "公司註冊受理追蹤實時案件資料，並無示範資料。請登入正式環境使用。",
   },
   detail: {
-    title: "Incorporation case",
-    message:
-      "Incorporation case detail reads live case data and has no demo fixtures. Sign in to a production environment to view one.",
+    title: "公司註冊案件",
+    message: "公司註冊案件詳情讀取實時案件資料，並無示範資料。請登入正式環境查看。",
   },
 };
 
@@ -22,10 +21,8 @@ export function DemoIncorporationNotice({ variant }: Props) {
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Operations" title={copy.title} />
-      <section className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
-        {copy.message}
-      </section>
+      <PageHeader eyebrow="案件與客戶" title={copy.title} />
+      <DemoUnavailable message={copy.message} />
     </main>
   );
 }

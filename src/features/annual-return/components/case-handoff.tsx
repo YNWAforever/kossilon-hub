@@ -5,9 +5,9 @@ import { handoffFactLabel } from "../handoff";
 import { DocumentPicker } from "./scoped-pickers";
 import { DOCUMENT_CATEGORIES } from "@/features/documents/types";
 import { annualReturnQueryKeys } from "../query-keys";
+import { Button } from "@/components/ui/button";
+import { Input, Select, Textarea } from "@/components/ui/field";
 const categories = DOCUMENT_CATEGORIES;
-const control = "mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm";
-const button = "rounded-md border px-3 py-2 text-sm disabled:opacity-50";
 export function CaseHandoff({
   caseId,
   locked,
@@ -41,7 +41,8 @@ export function CaseHandoff({
     [withdrawNote, setWithdrawNote] = useState("");
   const data = workflow.data,
     p = data?.preview,
-    h = data?.handoffs.find((x) => x.id === selected) ?? data?.handoffs[0];
+    h = data?.handoffs.find((x) => x.id === selected) ?? data?.handoffs[0],
+    openBlockers = p?.blockers.filter((b) => b.stage !== "transmit").length ?? 0;
   useEffect(() => {
     setConfirmed(false);
   }, [p?.sourceVersion]);
@@ -93,7 +94,7 @@ export function CaseHandoff({
       <p className="text-sm text-muted-foreground">
         匯出不等於提交。人工紀錄是操作員陳述；目的地收據亦不等於監管已受理。所有寫入重新核對權限及當前版本。
       </p>
-      <p className="text-sm text-status-yellow">
+      <p className="text-sm text-status-yellow-text">
         未配置外部交件連接器；現時只提供人工流程，未驗證系統傳送。
       </p>
       {workflow.isPending ? (
@@ -109,13 +110,16 @@ export function CaseHandoff({
             <p className="break-all text-xs">
               當前 manifest SHA256：{p?.manifestSha256 ?? "未有可批准套件"}
             </p>
-            {p?.blockers
-              .filter((b) => b.stage !== "transmit")
-              .map((b) => (
-                <p key={`${b.code}-${b.message}`} className="text-sm text-status-yellow">
-                  {b.message}
-                </p>
-              ))}
+            {/* The packet section lists every blocker with a link to fix it;
+                repeating the list here doubled the page. */}
+            {openBlockers > 0 ? (
+              <p className="text-sm text-status-yellow-text">
+                尚有 {openBlockers} 項事項須先處理，未能批准。
+                <a href="#case-blockers" className="ml-1 underline">
+                  查看交件阻礙事項
+                </a>
+              </p>
+            ) : null}
             <label className="flex gap-2 text-sm">
               <input
                 type="checkbox"
@@ -125,9 +129,8 @@ export function CaseHandoff({
               />
               已核對當前文件、付款及 manifest，批准此版本
             </label>
-            <button
+            <Button
               type="button"
-              className={button}
               disabled={disabled || !confirmed || !p?.sourceVersion || !p.manifestSha256}
               onClick={() =>
                 command.mutate({
@@ -139,15 +142,15 @@ export function CaseHandoff({
               }
             >
               批准當前套件
-            </button>
+            </Button>
           </div>
           {data?.handoffs.length ? (
             <>
               <label className="block text-sm">
                 交件套件
-                <select
+                <Select
                   aria-label="交件套件"
-                  className={control}
+                  className="mt-1 w-full"
                   value={h?.id ?? ""}
                   onChange={(e) => {
                     setSelected(e.target.value);
@@ -160,7 +163,7 @@ export function CaseHandoff({
                       {handoffFactLabel(row.deliveryFact)} · {row.createdAt}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <p className="text-sm">{handoffFactLabel(h?.deliveryFact ?? null)}</p>
               <p className="break-all text-xs">
@@ -172,9 +175,8 @@ export function CaseHandoff({
                   {h.manualRecordedAt} · 參考：{h.manualReference} · {h.manualNote}
                 </p>
               ) : null}
-              <button
+              <Button
                 type="button"
-                className={button}
                 disabled={
                   disabled ||
                   !current ||
@@ -185,7 +187,7 @@ export function CaseHandoff({
                 onClick={() => archive.mutate()}
               >
                 匯出已批准 ZIP（未提交）
-              </button>
+              </Button>
               {h?.status === "prepared" ? (
                 <>
                   <form
@@ -207,31 +209,31 @@ export function CaseHandoff({
                     <h3 className="font-medium">人手外部上載後，記錄操作證明</h3>
                     <label className="block text-sm">
                       實際提交時間
-                      <input
+                      <Input
                         required
                         type="datetime-local"
                         step="1"
-                        className={control}
+                        className="mt-1 w-full"
                         value={occurredAt}
                         onChange={(e) => setOccurredAt(e.target.value)}
                       />
                     </label>
                     <label className="block text-sm">
                       人工提交參考
-                      <input
+                      <Input
                         required
                         maxLength={200}
-                        className={control}
+                        className="mt-1 w-full"
                         value={reference}
                         onChange={(e) => setReference(e.target.value)}
                       />
                     </label>
                     <label className="block text-sm">
                       操作說明
-                      <textarea
+                      <Textarea
                         required
                         maxLength={1000}
-                        className={control}
+                        className="mt-1 w-full"
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
                       />
@@ -253,8 +255,8 @@ export function CaseHandoff({
                       onChange={setEvidenceId}
                       disabled={disabled}
                     />
-                    <button
-                      className={button}
+                    <Button
+                      type="submit"
                       disabled={
                         disabled ||
                         !current ||
@@ -264,20 +266,19 @@ export function CaseHandoff({
                       }
                     >
                       記錄人工提交（無系統收據）
-                    </button>
+                    </Button>
                   </form>
                   <label className="block text-sm">
                     撤回未提交套件原因
-                    <input
+                    <Input
                       maxLength={1000}
-                      className={control}
+                      className="mt-1 w-full"
                       value={withdrawNote}
                       onChange={(e) => setWithdrawNote(e.target.value)}
                     />
                   </label>
-                  <button
+                  <Button
                     type="button"
-                    className={button}
                     disabled={disabled || !withdrawNote.trim() || !p?.sourceVersion}
                     onClick={() =>
                       command.mutate({
@@ -289,7 +290,7 @@ export function CaseHandoff({
                     }
                   >
                     撤回此批准，重新覆核
-                  </button>
+                  </Button>
                 </>
               ) : null}
               {h?.manualRecordedAt || h?.providerAccepted ? (
@@ -325,33 +326,33 @@ export function CaseHandoff({
                   <p className="text-sm">
                     先在文件頁上載回件；附件會留在掃描隔離流程。核對不會自動記付款、已交件或結案。
                   </p>
-                  <a className="text-sm underline" href={`/documents?caseId=${caseId}`}>
-                    上載及覆核回件附件
-                  </a>
+                  <Button asChild variant="link" className="underline">
+                    <a href={`/documents?caseId=${caseId}`}>上載及覆核回件附件</a>
+                  </Button>
                   <label className="block text-sm">
                     回件指向的 manifest SHA256
-                    <input
+                    <Input
                       required
                       pattern="[a-f0-9]{64}"
-                      className={control}
+                      className="mt-1 w-full"
                       value={returnHash}
                       onChange={(e) => setReturnHash(e.target.value)}
                     />
                   </label>
                   <label className="block text-sm">
                     回件參考
-                    <input
+                    <Input
                       required
                       maxLength={200}
-                      className={control}
+                      className="mt-1 w-full"
                       value={returnReference}
                       onChange={(e) => setReturnReference(e.target.value)}
                     />
                   </label>
                   <label className="block text-sm">
                     回件結果
-                    <select
-                      className={control}
+                    <Select
+                      className="mt-1 w-full"
                       value={outcome}
                       onChange={(e) => setOutcome(e.target.value as typeof outcome)}
                     >
@@ -359,14 +360,14 @@ export function CaseHandoff({
                       <option value="partial">部分回件</option>
                       <option value="accepted">對方聲稱接收（待核對）</option>
                       <option value="unmatched">未能匹配</option>
-                    </select>
+                    </Select>
                   </label>
                   <label className="block text-sm">
                     原始回件說明
-                    <textarea
+                    <Textarea
                       required
                       maxLength={2000}
-                      className={control}
+                      className="mt-1 w-full"
                       value={detail}
                       onChange={(e) => setDetail(e.target.value)}
                     />
@@ -389,12 +390,12 @@ export function CaseHandoff({
                     requireVerified={false}
                     disabled={disabled}
                   />
-                  <button
-                    className={button}
+                  <Button
+                    type="submit"
                     disabled={disabled || (!!returnDocId && !evidence(returnDocId))}
                   >
                     登記人工回件，待核對
-                  </button>
+                  </Button>
                 </form>
               ) : null}
             </>
@@ -421,18 +422,17 @@ export function CaseHandoff({
                 <>
                   <label className="block text-sm">
                     核對說明
-                    <textarea
+                    <Textarea
                       maxLength={1000}
-                      className={control}
+                      className="mt-1 w-full"
                       value={reconciliationNotes[r.id] ?? ""}
                       onChange={(e) =>
                         setReconciliationNotes({ ...reconciliationNotes, [r.id]: e.target.value })
                       }
                     />
                   </label>
-                  <button
+                  <Button
                     type="button"
-                    className={button}
                     disabled={
                       disabled ||
                       !(reconciliationNotes[r.id] ?? "").trim() ||
@@ -447,7 +447,7 @@ export function CaseHandoff({
                     }
                   >
                     核對原 manifest 及回件證據
-                  </button>
+                  </Button>
                 </>
               )}
             </div>

@@ -18,6 +18,7 @@ officers/shareholders, appoint/record new ones, cease existing ones). Company cr
 extended to also seed an initial secretary officer record.
 
 **Out of scope, explicitly:**
+
 - NAR1 form generation or any other document output — this pass is the data substrate only,
   the same way P1-4 generalized `work_items` without introducing a second case type.
 - A demo-mode fixture tier — `/clients` already has none, by design (P1-3's decision); these
@@ -89,10 +90,11 @@ corresponding `AppointOfficerInput`, `CeaseOfficerInput`, `RecordShareholdingInp
 sorted by appointment/allotment date descending (current first).
 
 **New repository methods** (`ClientRepository`):
+
 - `appointOfficer(input)` — inserts an officer row. If `officerType === "secretary"`, in the
   same transaction: cease any currently-active secretary (`cessation_date` = the new officer's
   `appointment_date`) and update `companies.company_secretary` to the new name. This becomes
-  the *only* path that changes the secretary column — `updateClient` stops accepting a
+  the _only_ path that changes the secretary column — `updateClient` stops accepting a
   `companySecretary` field (it has no rendered input in `client-form-dialog.tsx` today, so this
   removes dead API surface rather than changing any observable behavior).
 - `ceaseOfficer(input)` — sets `cessation_date`. No side effects on `companies`.

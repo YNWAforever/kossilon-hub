@@ -88,28 +88,28 @@ describe("clients route across data modes", () => {
   it("renders the production register at /clients in production mode", async () => {
     const html = await renderRoute("/clients", "production");
 
-    expect(html).toContain("Search company, CR or BR number");
-    expect(html).not.toContain("no demo fixtures");
+    expect(html).toContain("搜尋公司名稱、CR 或 BR 號碼");
+    expect(html).not.toContain("並無示範資料");
   });
 
   it("renders the demo notice at /clients in demo mode", async () => {
     const html = await renderRoute("/clients", "demo");
 
-    expect(html).toContain("no demo fixtures");
-    expect(html).not.toContain("Search company, CR or BR number");
+    expect(html).toContain("並無示範資料");
+    expect(html).not.toContain("搜尋公司名稱、CR 或 BR 號碼");
   });
 
   it("renders the production detail screen at /clients/$id in production mode", async () => {
     const html = await renderRoute("/clients/11111111-1111-4111-8111-111111111111", "production");
 
-    expect(html).toContain("Loading client");
-    expect(html).not.toContain("no demo fixtures");
+    expect(html).toContain("載入客戶資料中");
+    expect(html).not.toContain("並無示範資料");
   });
 
   it("renders the demo notice at /clients/$id in demo mode", async () => {
     const html = await renderRoute("/clients/11111111-1111-4111-8111-111111111111", "demo");
 
-    expect(html).toContain("no demo fixtures");
-    expect(html).not.toContain("Loading client");
+    expect(html).toContain("並無示範資料");
+    expect(html).not.toContain("載入客戶資料中");
   });
 });

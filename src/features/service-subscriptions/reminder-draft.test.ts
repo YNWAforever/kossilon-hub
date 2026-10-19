@@ -21,7 +21,7 @@ describe("buildServiceSubscriptionReminderDraft", () => {
       "2026-08-16",
     );
     expect(draft).toContain("Harbour Trading Ltd");
-    expect(draft).toContain("Designated Representative");
+    expect(draft).toContain("指定代表服務");
     expect(draft).toContain("2026-09-15");
     expect(draft).toContain("HK$2,000");
     expect(draft).toContain("距離現時尚餘 30 天");

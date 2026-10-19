@@ -26,23 +26,24 @@ All paths below are relative to the repo root. Work on branch `codex/live-email-
 
 ## File structure
 
-| File | Change | Responsibility |
-|---|---|---|
-| `src/server/runtime-env.ts` | Modify | Add `ResendConfig` type + `getResendConfig()`, independent of `REQUIRED_BINDINGS` |
-| `src/server/runtime-env.test.ts` | Modify | Test `getResendConfig` |
-| `src/features/notifications/types.ts` | Modify | Gains `notificationPayload()`, relocated from `dispatcher.ts` |
-| `src/features/notifications/resend-transport.ts` | **Create** | The new email transport, matching `local-transport.ts`/`simulated-transport.ts`'s one-file-per-transport pattern |
-| `src/features/notifications/resend-transport.test.ts` | **Create** | Tests for the transport in isolation |
-| `src/features/notifications/dispatcher.ts` | Modify | `notificationPayload` now imported from `./types`; `createNotificationTransport`'s live branch becomes a channel-routing composite |
-| `src/features/notifications/dispatcher.test.ts` | Modify | New tests for the composite routing |
-| `src/features/notifications/runtime-dispatch.ts` | Modify | Wires `getResendConfig()` through to `createNotificationTransport`, live-mode-only, mirroring how `getLiveConfig()` already works |
-| `src/features/notifications/runtime-dispatch.test.ts` | Modify | Fix one existing exact-match assertion that breaks the moment `resendConfig` is added to the call; add coverage for the new wiring |
+| File                                                  | Change     | Responsibility                                                                                                                     |
+| ----------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `src/server/runtime-env.ts`                           | Modify     | Add `ResendConfig` type + `getResendConfig()`, independent of `REQUIRED_BINDINGS`                                                  |
+| `src/server/runtime-env.test.ts`                      | Modify     | Test `getResendConfig`                                                                                                             |
+| `src/features/notifications/types.ts`                 | Modify     | Gains `notificationPayload()`, relocated from `dispatcher.ts`                                                                      |
+| `src/features/notifications/resend-transport.ts`      | **Create** | The new email transport, matching `local-transport.ts`/`simulated-transport.ts`'s one-file-per-transport pattern                   |
+| `src/features/notifications/resend-transport.test.ts` | **Create** | Tests for the transport in isolation                                                                                               |
+| `src/features/notifications/dispatcher.ts`            | Modify     | `notificationPayload` now imported from `./types`; `createNotificationTransport`'s live branch becomes a channel-routing composite |
+| `src/features/notifications/dispatcher.test.ts`       | Modify     | New tests for the composite routing                                                                                                |
+| `src/features/notifications/runtime-dispatch.ts`      | Modify     | Wires `getResendConfig()` through to `createNotificationTransport`, live-mode-only, mirroring how `getLiveConfig()` already works  |
+| `src/features/notifications/runtime-dispatch.test.ts` | Modify     | Fix one existing exact-match assertion that breaks the moment `resendConfig` is added to the call; add coverage for the new wiring |
 
 ---
 
 ## Task 1: `getResendConfig` — an independent config accessor
 
 **Files:**
+
 - Modify: `src/server/runtime-env.ts`
 - Modify: `src/server/runtime-env.test.ts`
 
@@ -137,6 +138,7 @@ git commit -m "feat(notifications): add an independent Resend config accessor"
 ## Task 2: The Resend notification transport
 
 **Files:**
+
 - Modify: `src/features/notifications/types.ts`
 - Modify: `src/features/notifications/dispatcher.ts`
 - Create: `src/features/notifications/resend-transport.ts`
@@ -164,6 +166,7 @@ export function notificationPayload(
 ```
 
 In `src/features/notifications/dispatcher.ts`:
+
 - Remove the `notificationPayload` function definition entirely — currently the last thing in the file (lines 141-152):
   ```typescript
   export function notificationPayload(
@@ -431,6 +434,7 @@ git commit -m "feat(notifications): add the Resend email transport"
 ## Task 3: Composite routing in `createNotificationTransport`
 
 **Files:**
+
 - Modify: `src/features/notifications/dispatcher.ts`
 - Modify: `src/features/notifications/dispatcher.test.ts`
 
@@ -618,6 +622,7 @@ git commit -m "feat(notifications): route email notifications to Resend in live 
 ## Task 4: Wire `getResendConfig` through the runtime dispatch path
 
 **Files:**
+
 - Modify: `src/features/notifications/runtime-dispatch.ts`
 - Modify: `src/features/notifications/runtime-dispatch.test.ts`
 
@@ -628,11 +633,11 @@ Read `src/features/notifications/runtime-dispatch.test.ts` in full first.
 The test `"selects simulated mode without requesting live configuration"` (currently asserting `expect(createTransport).toHaveBeenCalledWith({ providerMode: "simulated", config: undefined });`) uses an exact-match assertion. Once `resendConfig` is added to every call `dispatchDueNotificationsWithDependencies` makes to `createTransport`, this exact object will gain an extra key and the assertion will fail — not because anything is wrong, but because the assertion was written before `resendConfig` existed. Update it now, in this same step, before writing any new test:
 
 ```typescript
-    expect(createTransport).toHaveBeenCalledWith({
-      providerMode: "simulated",
-      config: undefined,
-      resendConfig: undefined,
-    });
+expect(createTransport).toHaveBeenCalledWith({
+  providerMode: "simulated",
+  config: undefined,
+  resendConfig: undefined,
+});
 ```
 
 The other existing assertion in this file, `expect(createTransport).toHaveBeenCalledWith(expect.objectContaining({ providerMode: "live", config: expect.any(Object) }));`, uses `objectContaining` and does **not** need to change — `objectContaining` ignores extra keys.
@@ -645,49 +650,49 @@ Expected: still PASS at this point — you have only corrected an assertion to m
 Append to the same file:
 
 ```typescript
-  it("passes the resend config through only in live mode", async () => {
-    const repo = repository([row]);
-    const createTransport = vi.fn(() => ({
-      dispatch: vi.fn(async () => ({ providerMessageId: "test-id" })),
-    }));
-    const getResendConfig = vi.fn(() => ({ apiKey: "re_test_key", from: "auth@example.test" }));
+it("passes the resend config through only in live mode", async () => {
+  const repo = repository([row]);
+  const createTransport = vi.fn(() => ({
+    dispatch: vi.fn(async () => ({ providerMessageId: "test-id" })),
+  }));
+  const getResendConfig = vi.fn(() => ({ apiKey: "re_test_key", from: "auth@example.test" }));
 
-    await dispatchDueNotificationsWithDependencies(
-      { now: "2026-07-14T09:00:00.000Z" },
-      {
-        currentProviderMode: () => "live",
-        createRepository: () => repo,
-        createTransport,
-        getLiveConfig: () => ({
-          provider: "woztell",
-          apiBaseUrl: "https://example.test",
-          accessToken: "test-token",
-          channelId: "channel-1",
-          webhookSecret: "test-secret-value",
-        }),
-        getResendConfig,
-      },
-    );
-
-    expect(getResendConfig).toHaveBeenCalledTimes(1);
-    expect(createTransport).toHaveBeenCalledWith(
-      expect.objectContaining({
-        resendConfig: { apiKey: "re_test_key", from: "auth@example.test" },
+  await dispatchDueNotificationsWithDependencies(
+    { now: "2026-07-14T09:00:00.000Z" },
+    {
+      currentProviderMode: () => "live",
+      createRepository: () => repo,
+      createTransport,
+      getLiveConfig: () => ({
+        provider: "woztell",
+        apiBaseUrl: "https://example.test",
+        accessToken: "test-token",
+        channelId: "channel-1",
+        webhookSecret: "test-secret-value",
       }),
-    );
-  });
+      getResendConfig,
+    },
+  );
 
-  it("does not request the resend config outside live mode", async () => {
-    const repo = repository([row]);
-    const getResendConfig = vi.fn(() => ({ apiKey: "re_test_key", from: "auth@example.test" }));
+  expect(getResendConfig).toHaveBeenCalledTimes(1);
+  expect(createTransport).toHaveBeenCalledWith(
+    expect.objectContaining({
+      resendConfig: { apiKey: "re_test_key", from: "auth@example.test" },
+    }),
+  );
+});
 
-    await dispatchDueNotificationsWithDependencies(
-      { now: "2026-07-14T09:00:00.000Z" },
-      { currentProviderMode: () => "local", createRepository: () => repo, getResendConfig },
-    );
+it("does not request the resend config outside live mode", async () => {
+  const repo = repository([row]);
+  const getResendConfig = vi.fn(() => ({ apiKey: "re_test_key", from: "auth@example.test" }));
 
-    expect(getResendConfig).not.toHaveBeenCalled();
-  });
+  await dispatchDueNotificationsWithDependencies(
+    { now: "2026-07-14T09:00:00.000Z" },
+    { currentProviderMode: () => "local", createRepository: () => repo, getResendConfig },
+  );
+
+  expect(getResendConfig).not.toHaveBeenCalled();
+});
 ```
 
 Run: `npm run test -- src/features/notifications/runtime-dispatch.test.ts -t "resend config"`

@@ -7,11 +7,11 @@ for (const account of ["ADMIN", "MANAGER", "STAFF", "CLIENT_A", "CLIENT_B"] as c
   test(`fresh controlled${account} signs in to its authorised landing`, async ({ page }) => {
     try {
       await page.goto("/login");
-      await page.getByLabel("Email", { exact: true }).fill(process.env[`AUDIT_${account}_EMAIL`]!);
+      await page.getByLabel("電郵", { exact: true }).fill(process.env[`AUDIT_${account}_EMAIL`]!);
       await page
-        .getByLabel("Password", { exact: true })
+        .getByLabel("密碼", { exact: true })
         .fill(process.env[`AUDIT_${account}_PASSWORD`]!);
-      await page.getByRole("button", { name: "Sign in", exact: true }).click();
+      await page.getByRole("button", { name: "登入", exact: true }).click();
     } catch {
       // Do not publish Playwright fill errors/traces containing credentials.
       throw new Error(

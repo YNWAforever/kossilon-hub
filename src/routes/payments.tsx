@@ -1,7 +1,10 @@
+import { pageTitle } from "@/lib/page-title";
 import { ProductionPaymentReview } from "@/features/annual-return/components/production-payment-review";
-import { type ReactNode, useState } from "react";
+import { type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 
 import {
   type AnnualReturnCase,
@@ -11,22 +14,21 @@ import {
   useAnnualReturnCases,
 } from "../lib/annual-return-store";
 import {
-  clientPortalPaymentProofReviewReasons,
   getCurrentPaymentProof,
   getPaymentProofsForCase,
   useClientPortalSnapshot,
   type ClientPortalPaymentProof,
-  type ClientPortalPaymentProofReviewReasonCode,
 } from "../lib/client-portal-store";
 
 export const Route = createFileRoute("/payments")({
+  head: () => ({ meta: [{ title: pageTitle("付款") }] }),
   component: PaymentsRoute,
 });
 
 const paymentLabels: Record<AnnualReturnPaymentStatus, string> = {
-  pending: "Pending",
-  paid: "Paid",
-  overdue: "Overdue",
+  pending: "待付款",
+  paid: "已付款",
+  overdue: "逾期未付",
 };
 
 function PaymentsRoute() {
@@ -54,16 +56,22 @@ function DemoPaymentsRoute() {
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Operations" title="Payments" />
+      <PageHeader eyebrow="文件與付款" title="付款" />
+      <p
+        className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
+        role="status"
+      >
+        唯讀示範。付款證明須在正式環境上載及覆核。
+      </p>
 
       <section className="rounded-lg border bg-card">
         <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_120px_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(200px,1fr)] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
-          <span>Company</span>
-          <span>Owner / due</span>
-          <span>Payment</span>
-          <span>Current proof</span>
-          <span>Review outcome</span>
-          <span>Actions</span>
+          <span>公司</span>
+          <span>負責同事／到期日</span>
+          <span>付款</span>
+          <span>目前證明</span>
+          <span>覆核結果</span>
+          <span>操作</span>
         </div>
 
         <div className="divide-y">
@@ -88,152 +96,92 @@ type PaymentReviewRowProps = {
 };
 
 function PaymentReviewRow({ caseItem, proof, history }: PaymentReviewRowProps) {
-  const [reasonCode, setReasonCode] =
-    useState<ClientPortalPaymentProofReviewReasonCode>("unreadable");
-  const [note, setNote] = useState("");
-  const [warning, setWarning] = useState<string | undefined>();
-  const [isRejecting, setIsRejecting] = useState(false);
-  const isReadOnly = caseItem.status === "filed" || getPacketStatus(caseItem) === "accepted";
+  const isClosed = caseItem.status === "filed" || getPacketStatus(caseItem) === "accepted";
   const previousProofs = history.filter((candidate) => candidate.id !== proof?.id);
 
-  function handleAttach(_filename: string) {
-    setWarning("Demo payment proof upload is read-only.");
-  }
-
-  function handleAccept() {
-    setWarning("Demo payment proof review is read-only.");
-  }
-
-  function handleReject() {
-    setWarning("Demo payment proof review is read-only.");
-  }
-
   return (
-    <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[minmax(0,1.4fr)_120px_120px_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(200px,1fr)] lg:items-start">
-      <div className="min-w-0">
+    <div className="grid grid-cols-2 gap-3 px-4 py-4 text-sm lg:grid-cols-[minmax(0,1.4fr)_120px_120px_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(200px,1fr)] lg:items-start">
+      <div className="col-span-2 min-w-0 lg:col-span-1">
         <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
-          Company
+          公司
         </p>
         <p className="truncate font-medium">{caseItem.companyName}</p>
         <p className="truncate text-muted-foreground">{caseItem.contactName}</p>
       </div>
-      <Field label="Owner / due" value={`${caseItem.owner} | ${caseItem.dueDate}`} />
       <Field
-        label="Payment"
-        value={`${paymentLabels[caseItem.paymentStatus]} | ${getReadinessScore(caseItem)}% ready`}
+        label="負責同事／到期日"
+        value={
+          <>
+            <p>{caseItem.owner}</p>
+            <p className="text-xs text-muted-foreground">到期日 {formatDate(caseItem.dueDate)}</p>
+          </>
+        }
+      />
+      <Field
+        label="付款"
+        value={
+          <>
+            <p
+              className={
+                caseItem.paymentStatus === "overdue"
+                  ? "font-medium text-red-700"
+                  : caseItem.paymentStatus === "paid"
+                    ? "text-green-700"
+                    : undefined
+              }
+            >
+              {paymentLabels[caseItem.paymentStatus]}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              案件完成度 {getReadinessScore(caseItem)}%
+            </p>
+          </>
+        }
       />
       <ProofCell proof={proof} previousProofs={previousProofs} />
-      <ReviewOutcome proof={proof} />
+      <ReviewOutcome proof={proof} closed={isClosed} />
 
-      <div className="min-w-0">
+      <div className="col-span-2 min-w-0 lg:col-span-1">
         <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
-          Actions
+          操作
         </p>
-        {!proof ? (
-          <button
-            aria-label={`Attach payment proof for ${caseItem.companyName}`}
-            className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={isReadOnly}
-            onClick={() => handleAttach(`${caseItem.id}-payment-proof.png`)}
-            type="button"
-          >
-            Attach proof
-          </button>
-        ) : proof.status === "rejected" ? (
-          <button
-            aria-label={`Attach replacement payment proof for ${caseItem.companyName}`}
-            className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={isReadOnly}
-            onClick={() => handleAttach(`${caseItem.id}-payment-proof-replacement.png`)}
-            type="button"
-          >
-            Attach replacement
-          </button>
-        ) : proof.status === "pending-review" ? (
-          <div className="space-y-2">
-            <div className="flex flex-wrap gap-2">
-              <button
-                aria-label={`Accept payment proof for ${caseItem.companyName}`}
-                className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={isReadOnly}
-                onClick={handleAccept}
-                type="button"
-              >
-                Accept
-              </button>
-              <button
-                aria-label={`Reject payment proof for ${caseItem.companyName}`}
-                className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={isReadOnly}
-                onClick={() => setIsRejecting((current) => !current)}
-                type="button"
-              >
-                Reject
-              </button>
-            </div>
-            {isRejecting ? (
-              <div className="space-y-2">
-                <div className="space-y-1">
-                  <label
-                    className="text-xs font-medium text-muted-foreground"
-                    htmlFor={`payment-proof-reason-${proof.id}`}
-                  >
-                    Rejection reason
-                  </label>
-                  <select
-                    aria-label="Payment proof rejection reason"
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                    disabled={isReadOnly}
-                    id={`payment-proof-reason-${proof.id}`}
-                    onChange={(event) =>
-                      setReasonCode(event.target.value as ClientPortalPaymentProofReviewReasonCode)
-                    }
-                    value={reasonCode}
-                  >
-                    {clientPortalPaymentProofReviewReasons.map((reason) => (
-                      <option key={reason.code} value={reason.code}>
-                        {reason.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label
-                    className="text-xs font-medium text-muted-foreground"
-                    htmlFor={`payment-proof-note-${proof.id}`}
-                  >
-                    Client-visible note
-                  </label>
-                  <input
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                    disabled={isReadOnly}
-                    id={`payment-proof-note-${proof.id}`}
-                    onChange={(event) => setNote(event.target.value)}
-                    value={note}
-                  />
-                </div>
-                <button
-                  aria-label={`Confirm payment proof rejection for ${caseItem.companyName}`}
-                  className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={isReadOnly}
-                  onClick={handleReject}
-                  type="button"
-                >
-                  Confirm rejection
-                </button>
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">No further payment proof action.</p>
-        )}
-        {warning ? (
-          <p className="mt-2 text-sm text-destructive" role="alert">
-            {warning}
+        {isClosed && (!proof || proof.status === "rejected") ? (
+          // A closed case takes no new proof. A greyed-out button with no reason
+          // read as broken; say why there is nothing to do.
+          <p className="text-sm text-muted-foreground">
+            {caseItem.status === "filed" ? "周年申報已遞交" : "交件套件已接納"}，毋須付款證明。
           </p>
-        ) : null}
+        ) : (
+          // The demo is read-only (docs/adr/0001-demo-mode-is-read-only.md): the
+          // action is shown so the workflow reads true, but it is disabled and the
+          // page says why once, rather than each click answering with a warning.
+          <div className="flex flex-wrap gap-2">
+            {!proof ? (
+              <DemoAction label={`為 ${caseItem.companyName} 上載付款證明`}>上載證明</DemoAction>
+            ) : proof.status === "rejected" ? (
+              <DemoAction label={`為 ${caseItem.companyName} 重新上載付款證明`}>
+                重新上載
+              </DemoAction>
+            ) : proof.status === "pending-review" ? (
+              <>
+                <DemoAction label={`接納 ${caseItem.companyName} 的付款證明`}>接納</DemoAction>
+                <DemoAction label={`退回 ${caseItem.companyName} 的付款證明`}>退回</DemoAction>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">付款證明毋須進一步處理。</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+function DemoAction({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Button aria-label={label} disabled type="button">
+      {children}
+    </Button>
   );
 }
 
@@ -247,32 +195,32 @@ function ProofCell({
   return (
     <div className="min-w-0">
       <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
-        Current proof
+        目前證明
       </p>
       {proof ? (
         <>
           <p className="truncate font-medium">{proof.filename}</p>
-          <p className="text-muted-foreground">{`Attached by ${proof.uploadedBy}`}</p>
+          <p className="text-muted-foreground">{`上載者：${proof.uploadedBy}`}</p>
         </>
       ) : (
-        <p className="text-muted-foreground">No proof attached</p>
+        <p className="text-muted-foreground">未有上載證明</p>
       )}
       {previousProofs.length > 0 ? (
         <p className="mt-1 truncate text-xs text-muted-foreground">
-          {`History: ${previousProofs.map((candidate) => candidate.filename).join(", ")}`}
+          {`記錄：${previousProofs.map((candidate) => candidate.filename).join("、")}`}
         </p>
       ) : null}
     </div>
   );
 }
 
-function ReviewOutcome({ proof }: { proof?: ClientPortalPaymentProof }) {
-  const label = proof ? paymentProofStatusLabel(proof.status) : "Awaiting proof";
+function ReviewOutcome({ proof, closed }: { proof?: ClientPortalPaymentProof; closed: boolean }) {
+  const label = proof ? paymentProofStatusLabel(proof.status) : closed ? "毋須提供" : "等待證明";
 
   return (
     <div className="min-w-0">
       <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
-        Review outcome
+        覆核結果
       </p>
       <p className="font-medium">{proof?.reviewSummary ?? label}</p>
       {proof?.reviewReasonLabel ? (
@@ -280,7 +228,7 @@ function ReviewOutcome({ proof }: { proof?: ClientPortalPaymentProof }) {
       ) : null}
       {proof?.reviewNote ? <p className="text-muted-foreground">{proof.reviewNote}</p> : null}
       {proof?.reviewedAt ? (
-        <p className="text-xs text-muted-foreground">{`Reviewed ${formatTimestamp(proof.reviewedAt)}`}</p>
+        <p className="text-xs text-muted-foreground">{`覆核時間：${formatDateTime(proof.reviewedAt)}`}</p>
       ) : null}
     </div>
   );
@@ -299,19 +247,9 @@ function Field({ label, value }: { label: string; value: ReactNode }) {
 
 function paymentProofStatusLabel(status: ClientPortalPaymentProof["status"]): string {
   return {
-    "pending-review": "Pending review",
-    accepted: "Accepted",
-    rejected: "Rejected",
-    superseded: "Superseded",
+    "pending-review": "待覆核",
+    accepted: "已接納",
+    rejected: "已退回",
+    superseded: "已被取代",
   }[status];
-}
-
-function formatTimestamp(value: string): string {
-  return new Date(value).toLocaleString("en-HK", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }

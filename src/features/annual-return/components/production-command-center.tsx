@@ -1,9 +1,14 @@
+import { StatusPill } from "@/components/status-pill";
+import { LoadingRows } from "@/components/ui/skeleton";
+import { formatDate, formatDueDate } from "@/lib/format-date";
 import { useMemo, useState } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import { listActiveAnnualReturnTemplates } from "@/features/checklist-templates/server-fns";
 import { listClientAssignmentOptions } from "@/features/clients/server-fns";
@@ -26,22 +31,20 @@ import {
 import { daysBetween, hongKongBusinessDate } from "../workflow";
 import { CreateCaseDialog } from "./create-case-dialog";
 import { dataOriginLabel } from "@/features/clients/data-origin";
+import { labelValue } from "@/lib/format-label";
+import { annualReturnStatusLabel, paymentStatusLabel, riskLevelLabel } from "../labels";
 
 const BOARD_PAGE_SIZE = 50;
 
 // One template, defined once, with real floors on both flexible tracks. A track
 // of minmax(0, …) collapses to zero and lets its text draw over the neighbouring
 // column, which is what happened on the demo board.
+// Risk sits over status and reminders under payment, so the tracks, gaps and
+// padding come to ~900px and the board fits a 1280px laptop beside the sidebar.
+// The 1200px floor it replaces hid 提醒 and 開啟 behind a sideways scroll there.
 const BOARD_GRID_COLUMNS =
-  "lg:grid-cols-[minmax(220px,1.6fr)_140px_150px_96px_minmax(130px,1fr)_110px_120px_90px_72px]";
-const BOARD_GRID_MIN_WIDTH = "lg:min-w-[1200px]";
-
-const riskToneClasses: Record<RiskLevel, string> = {
-  red: "bg-red-100 text-red-700",
-  orange: "bg-orange-100 text-orange-700",
-  yellow: "bg-yellow-100 text-yellow-800",
-  green: "bg-green-100 text-green-700",
-};
+  "lg:grid-cols-[minmax(180px,1.6fr)_128px_120px_minmax(96px,1fr)_96px_104px_72px]";
+const BOARD_GRID_MIN_WIDTH = "lg:min-w-[900px]";
 
 export function ProductionAnnualReturnCommandCenter({
   search,
@@ -167,31 +170,28 @@ export function ProductionAnnualReturnCommandCenter({
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader
-        eyebrow="Operations"
-        title="Annual returns"
+        eyebrow="案件與客戶"
+        title="周年申報"
         actions={
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setIsCreateOpen(true)}
-              className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              New case
-            </button>
-            <Link
-              to="/work-queue"
-              search={{
-                view: "team",
-                owner: "all",
-                workType: "all",
-                sla: "all",
-                priority: "all",
-                status: "all",
-              }}
-              className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
-            >
-              Open work queue
-            </Link>
+            <Button variant="primary" onClick={() => setIsCreateOpen(true)}>
+              新增案件
+            </Button>
+            <Button asChild>
+              <Link
+                to="/work-queue"
+                search={{
+                  view: "team",
+                  owner: "all",
+                  workType: "all",
+                  sla: "all",
+                  priority: "all",
+                  status: "all",
+                }}
+              >
+                開啟工作隊列
+              </Link>
+            </Button>
           </div>
         }
       />
@@ -240,13 +240,13 @@ export function ProductionAnnualReturnCommandCenter({
           with host and port, or the DATABASE_URL message. */}
       {casesQuery.isError && !casesQuery.data ? (
         <p role="alert" className="text-sm text-destructive">
-          Annual return data is unavailable. Try again shortly.
+          周年申報資料暫時無法載入，請稍後再試。
         </p>
       ) : null}
 
       {workItemsQuery.isError ? (
-        <p role="status" className="text-sm text-status-yellow">
-          Assignment and SLA data is unavailable. Case details below are unaffected.
+        <p role="status" className="text-sm text-status-yellow-text">
+          分配及 SLA 資料暫時無法載入，下方案件資料不受影響。
         </p>
       ) : null}
 
@@ -265,18 +265,18 @@ export function ProductionAnnualReturnCommandCenter({
         </p>
       ) : null}
       <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-8">
-        <Metric label="Due in 7 days" value={totals?.dueIn7 ?? null} />
-        <Metric label="Due in 30 days" value={totals?.dueIn30 ?? null} />
+        <Metric label="7 日內到期" value={totals?.dueIn7 ?? null} />
+        <Metric label="30 日內到期" value={totals?.dueIn30 ?? null} />
         <Metric label="逾期未完成（案）" value={totals?.overdueCases ?? null} />
-        <Metric label="High risk (scope)" value={totals?.highRisk ?? null} />
+        <Metric label="高風險（範圍內）" value={totals?.highRisk ?? null} />
         <Metric label="待核對文件（份）" value={totals?.missingDocumentCount ?? null} />
         <Metric label="有待核對文件（案）" value={totals?.casesWithMissingDocuments ?? null} />
-        <Metric label="Payment pending" value={totals?.paymentPending ?? null} />
-        <Metric label="Cases in scope" value={totals?.total ?? null} />
+        <Metric label="待付款" value={totals?.paymentPending ?? null} />
+        <Metric label="範圍內案件" value={totals?.total ?? null} />
       </div>
       <p className="text-xs text-muted-foreground">
         統計覆蓋目前完整授權及篩選範圍；未完成指標排除
-        Filed／Completed。待核對包括已收到但未覆核文件，追件原因以案件 readiness 為準。
+        已遞交／已完成。待核對包括已收到但未覆核文件，追件原因以案件完成度為準。
       </p>
       <p className="text-sm text-muted-foreground">
         {includeFixtures
@@ -295,67 +295,70 @@ export function ProductionAnnualReturnCommandCenter({
       ) : null}
 
       <section className="rounded-lg border bg-card">
-        <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto_auto]">
-          <input
-            aria-label="Search company"
-            className="rounded-md border bg-background px-3 py-2 text-sm"
-            placeholder="Search company"
+        <div className="grid gap-3 border-b p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]">
+          <Input
+            aria-label="搜尋公司"
+            className="w-full"
+            placeholder="搜尋公司"
             value={search.q ?? ""}
             onChange={(event) => update({ q: event.target.value })}
           />
-          <label>
-            搜尋負責同事
-            <input
+          <div className="min-w-0">
+            <Input
               aria-label="搜尋負責同事"
-              className="min-h-11 rounded border px-3"
+              aria-describedby="owner-search-hint"
+              className="w-full"
+              placeholder="搜尋負責同事"
               value={ownerSearch}
               onChange={(event) => setOwnerSearch(event.target.value)}
             />
-            <span className="block text-xs">最多200項；搜尋涵蓋全部獲授權同事。</span>
-          </label>
-          <select
-            aria-label="Filter by owner"
-            className="rounded-md border bg-background px-3 py-2 text-sm"
+            <p id="owner-search-hint" className="mt-1 text-xs text-muted-foreground">
+              最多200項；涵蓋全部獲授權同事。
+            </p>
+          </div>
+          <Select
+            aria-label="按負責同事篩選"
+            className="w-full"
             value={search.ownerId ?? ""}
             onChange={(event) => update({ ownerId: event.target.value || undefined })}
           >
-            <option value="">All owners</option>
+            <option value="">全部負責同事</option>
             {search.ownerId && !owners.some((o) => o.id === search.ownerId) ? (
-              <option value={search.ownerId}>已選負責人（搜尋其他同事不會改變篩選）</option>
+              <option value={search.ownerId}>已選負責同事（搜尋其他同事不會改變篩選）</option>
             ) : null}
             {owners.map((owner) => (
               <option key={owner.id} value={owner.id}>
                 {owner.name}
               </option>
             ))}
-          </select>
-          <select
-            aria-label="Filter by status"
-            className="rounded-md border bg-background px-3 py-2 text-sm"
+          </Select>
+          <Select
+            aria-label="按狀態篩選"
+            className="w-full"
             value={search.status ?? ""}
             onChange={(event) =>
               update({ status: (event.target.value as AnnualReturnStatus) || undefined })
             }
           >
-            <option value="">All statuses</option>
+            <option value="">全部狀態</option>
             {ANNUAL_RETURN_STATUSES.map((status) => (
               <option key={status} value={status}>
-                {status}
+                {annualReturnStatusLabel(status)}
               </option>
             ))}
-          </select>
-          <select
-            aria-label="Filter by risk"
-            className="rounded-md border bg-background px-3 py-2 text-sm"
+          </Select>
+          <Select
+            aria-label="按風險篩選"
+            className="w-full"
             value={search.risk ?? ""}
             onChange={(event) => update({ risk: (event.target.value as RiskLevel) || undefined })}
           >
-            <option value="">All risk levels</option>
-            <option value="red">Red</option>
-            <option value="orange">Orange</option>
-            <option value="yellow">Yellow</option>
-            <option value="green">Green</option>
-          </select>
+            <option value="">全部風險級別</option>
+            <option value="red">{riskLevelLabel("red")}</option>
+            <option value="orange">{riskLevelLabel("orange")}</option>
+            <option value="yellow">{riskLevelLabel("yellow")}</option>
+            <option value="green">{riskLevelLabel("green")}</option>
+          </Select>
         </div>
 
         <div className="overflow-x-auto">
@@ -363,15 +366,13 @@ export function ProductionAnnualReturnCommandCenter({
             <div
               className={`hidden gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid ${BOARD_GRID_COLUMNS}`}
             >
-              <span>Company</span>
-              <span>Due</span>
-              <span>Status</span>
-              <span>Risk</span>
-              <span>Owner</span>
-              <span>Checklist</span>
-              <span>Payment</span>
-              <span>Reminders</span>
-              <span className="text-right">Open</span>
+              <span>公司</span>
+              <span>到期日</span>
+              <span>狀態</span>
+              <span>負責同事</span>
+              <span>清單</span>
+              <span>付款</span>
+              <span className="text-right">開啟</span>
             </div>
 
             <div className="divide-y">
@@ -388,9 +389,7 @@ export function ProductionAnnualReturnCommandCenter({
           </div>
         </div>
 
-        {casesQuery.isPending ? (
-          <p className="px-4 py-6 text-sm text-muted-foreground">Loading annual return cases...</p>
-        ) : null}
+        {casesQuery.isPending ? <LoadingRows label="正在載入周年申報案件…" rows={5} /> : null}
 
         {/* Gated on isError as well as isPending. payments.tsx omits the isError
             half and so renders "unavailable" and "nothing to review" together. */}
@@ -401,23 +400,21 @@ export function ProductionAnnualReturnCommandCenter({
                 未能載入下一頁，請重試。
               </p>
             ) : null}
-            <button
-              className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+            <Button
               disabled={casesQuery.isFetchingNextPage}
               onClick={() => void casesQuery.fetchNextPage({ cancelRefetch: false })}
-              type="button"
             >
               {casesQuery.isFetchingNextPage
                 ? "載入中…"
                 : casesQuery.isFetchNextPageError
                   ? "重試下一頁"
                   : "載入更多"}
-            </button>
+            </Button>
           </div>
         ) : null}
         {!casesQuery.isPending && !casesQuery.isError && visibleCases.length === 0 ? (
           <p className="px-4 py-6 text-sm text-muted-foreground">
-            No annual return cases match these filters.
+            沒有符合篩選條件的周年申報案件。
           </p>
         ) : null}
       </section>
@@ -448,41 +445,54 @@ function BoardRow({
           {dataOriginLabel(caseItem.dataOrigin)}
         </span>
         <p className="truncate text-sm text-muted-foreground">
-          {caseItem.returnYear} · made up {caseItem.madeUpDate}
+          {caseItem.returnYear} · 結算日 {formatDate(caseItem.madeUpDate)}
         </p>
         <p className="truncate text-xs text-muted-foreground">
           SLA:{" "}
           {workItemsUnavailable
-            ? "Unavailable"
+            ? "無法載入"
             : workItem
-              ? workItem.escalationState
-              : "No work item"}
+              ? labelValue(workItem.escalationState)
+              : "沒有工作項目"}
         </p>
       </div>
-      <Field label="Due" value={formatDue(caseItem.filingDueDate, daysRemaining)} />
-      <Field label="Status" value={caseItem.currentStatus} />
       <Field
-        label="Risk"
+        label="到期日"
         value={
-          <span
-            className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${riskToneClasses[caseItem.riskLevel]}`}
-          >
-            {caseItem.riskLevel}
-          </span>
+          <>
+            <p>{formatDate(caseItem.filingDueDate)}</p>
+            <p className="text-xs text-muted-foreground">
+              {formatDueDate(caseItem.filingDueDate, daysRemaining).split(" · ")[1]}
+            </p>
+          </>
         }
       />
-      <Field label="Owner" value={caseItem.ownerName} />
-      <Field label="Checklist" value={`${verified.length}/${required.length} verified`} />
-      <Field label="Payment" value={caseItem.payment?.status ?? "Not invoiced"} />
-      <Field label="Reminders" value={`${caseItem.remindersSent}`} />
+      <Field
+        label="狀態"
+        value={
+          <div className="space-y-1">
+            <StatusPill tone={caseItem.riskLevel}>{riskLevelLabel(caseItem.riskLevel)}</StatusPill>
+            <p>{annualReturnStatusLabel(caseItem.currentStatus)}</p>
+          </div>
+        }
+      />
+      <Field label="負責同事" value={caseItem.ownerName} />
+      <Field label="清單" value={`已核對 ${verified.length}/${required.length}`} />
+      <Field
+        label="付款"
+        value={
+          <>
+            <p>{paymentStatusLabel(caseItem.payment?.status ?? "Not invoiced")}</p>
+            <p className="text-xs text-muted-foreground">已提醒 {caseItem.remindersSent} 次</p>
+          </>
+        }
+      />
       <div className="flex justify-start lg:justify-end">
-        <Link
-          className="rounded-md border px-3 py-1.5 text-sm"
-          to="/annual-returns/$id"
-          params={{ id: caseItem.id }}
-        >
-          Open
-        </Link>
+        <Button asChild size="sm">
+          <Link to="/annual-returns/$id" params={{ id: caseItem.id }}>
+            開啟
+          </Link>
+        </Button>
       </div>
     </div>
   );
@@ -504,9 +514,4 @@ function Metric({ label, value }: { label: string; value: number | null }) {
       <p className="mt-2 text-lg font-semibold">{value ?? "—"}</p>
     </div>
   );
-}
-
-function formatDue(dueDate: string, daysRemaining: number): string {
-  if (daysRemaining < 0) return `${dueDate} (${Math.abs(daysRemaining)}d overdue)`;
-  return `${dueDate} (${daysRemaining}d)`;
 }

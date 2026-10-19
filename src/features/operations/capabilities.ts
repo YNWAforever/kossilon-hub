@@ -254,88 +254,88 @@ export function capabilityStatuses(input: {
       id: "database",
       capability: "資料庫結構",
       implemented: true,
-      owner: "DB／Release owner",
-      nextAction: "核對 ledger、檔案 hash 和實體 DDL；只按批准的部署包處理差異。",
+      owner: "資料庫／發佈負責人",
+      nextAction: "核對遷移記錄、檔案雜湊值及實際資料庫結構；只按已批准的部署套件處理差異。",
       approval: true,
     },
     {
       id: "auth-provider",
       capability: "Neon Auth 新登入及角色",
       implemented: true,
-      owner: "Auth owner",
-      nextAction: "以受控帳戶完成 fresh magic-link／Google 及角色隔離測試。",
+      owner: "登入系統負責人",
+      nextAction: "以受控帳戶完成全新 magic link／Google 登入及角色隔離測試。",
       approval: true,
     },
     {
       id: "document-storage",
       capability: "R2 私人文件儲存",
       implemented: true,
-      owner: "Storage owner",
-      nextAction: "驗證授權 sample 的私人 object roundtrip 與版本授權。",
+      owner: "儲存負責人",
+      nextAction: "以已授權樣本驗證私人檔案的寫入及讀取，以及版本授權。",
       approval: true,
     },
     {
       id: "malware-scanner-provider",
       capability: "文件惡意軟件掃描",
       implemented: true,
-      owner: "Security／Scanner owner",
-      nextAction: "確認已批准供應商、binding、條款及綁定目前版本的實際 sample verdict。",
+      owner: "保安／掃描負責人",
+      nextAction: "確認已批准的供應商、綁定配置、條款，以及目前版本的實際樣本掃描結果。",
       approval: true,
     },
     {
       id: "document-text-extraction",
       capability: "PDF 文字層及內容規則",
       implemented: true,
-      owner: "Document pipeline owner",
-      nextAction: "核對通過掃描的版本擷取記錄及引用；程式測試不代替部署執行。",
+      owner: "文件處理負責人",
+      nextAction: "核對已通過掃描版本的擷取記錄及引用；程式測試不能代替部署環境的實際執行。",
       approval: false,
     },
     {
       id: "document-ocr",
       capability: "掃描檔／相片 OCR",
       implemented: false,
-      owner: "OCR provider owner",
-      nextAction: "提供已批准 OCR 協議及 golden samples；未確認時人手核對。",
+      owner: "OCR 供應商負責人",
+      nextAction: "提供已批准的 OCR 協議及標準樣本；未確認前由人手核對。",
       approval: true,
     },
     {
       id: "ai-provider",
       capability: "AI 可引用審閱建議",
       implemented: true,
-      owner: "AI provider owner",
-      nextAction: "確認供應商批准、endpoint／key presence、實際 grounded sample；AI 不作批准。",
+      owner: "AI 供應商負責人",
+      nextAction: "確認供應商已獲批准、端點及金鑰已設定，並有實際可引用的樣本；AI 不作批准。",
       approval: true,
     },
     {
       id: "whatsapp-transport",
       capability: "WOZTELL 訊息及 webhook",
       implemented: true,
-      owner: "Messaging owner",
-      nextAction: "核對四項 binding、受控收件人及 acceptance／delivery 證據；unknown 不盲目重試。",
+      owner: "訊息負責人",
+      nextAction: "核對四項綁定配置、受控收件人，以及送出／送達證據；結果未知時不要盲目重試。",
       approval: true,
     },
     {
       id: "whatsapp-media-download",
       capability: "WhatsApp 附件入件",
       implemented: false,
-      owner: "Messaging／Storage owner",
-      nextAction: "提供正式 media download 協議及 scoped token；檔案須 quarantine／scan。",
+      owner: "訊息／儲存負責人",
+      nextAction: "提供正式的附件下載協議及限定範圍的存取權杖；檔案須先隔離及掃描。",
       approval: true,
     },
     {
       id: "external-handoff-destination",
-      capability: "內部 server 交件／回件",
+      capability: "內部伺服器交件／回件",
       implemented: false,
-      owner: "Internal-server owner",
-      nextAction: "提供真實 transport／receipt 協議；保留人手上載及提交證明，匯出不算交件。",
+      owner: "內部伺服器負責人",
+      nextAction: "提供真實的傳送及回條協議；保留人手上載及提交證明，匯出不算交件。",
       approval: true,
     },
     {
       id: "deployment-runtime",
       capability: "五分鐘排程",
       implemented: true,
-      owner: "Operations／Release owner",
-      nextAction: "核對單一 owner 及執行範圍；用 platform logs／DB correlation 驗證3次真正排程。",
+      owner: "系統運作／發佈負責人",
+      nextAction: "核對單一負責人及執行範圍；以平台日誌及資料庫關聯編號驗證 3 次真正排程。",
       approval: true,
     },
   ];
@@ -344,8 +344,8 @@ export function capabilityStatuses(input: {
     let health: CapabilityHealth = probe?.health ?? "unknown",
       lastVerifiedAt = probe?.lastVerifiedAt ?? null;
     let summary = probe
-      ? "狀態來自已記錄驗證；批准 gate 保留。"
-      : "尚無可用 runtime 驗證，配置存在亦不代表健康。";
+      ? "狀態來自已記錄的驗證；批准要求維持不變。"
+      : "尚未有運行驗證；已配置亦不代表健康。";
     if (item.id === "deployment-runtime" && input.maintenance) {
       health =
         input.maintenance.state === "healthy"
@@ -361,10 +361,10 @@ export function capabilityStatuses(input: {
     if (item.id === "database" && input.schemaReady !== undefined) {
       health = input.schemaReady === null ? "unknown" : input.schemaReady ? "healthy" : "degraded";
       summary =
-        "已核對 ledger 及 outbox dispatch marker 的 column／index；其他實體 DDL、hash 及歷史 ID 仍需部署 review。";
+        "已核對遷移記錄及通知派送標記的欄位與索引；其他資料庫結構、雜湊值及歷史編號仍須在部署時覆核。";
     }
     if (item.id === "document-text-extraction" && input.textLayerObserved)
-      summary = "已見文字層記錄；實際 runtime、版本及 sample 驗證仍需核對。";
+      summary = "已見文字層記錄；實際運行、版本及樣本驗證仍須核對。";
     return {
       id: item.id,
       capability: item.capability,

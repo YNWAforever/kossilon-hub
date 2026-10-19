@@ -38,31 +38,31 @@ export const toneClasses: Record<
 > = {
   green: {
     bg: "bg-status-green-soft",
-    text: "text-status-green",
+    text: "text-status-green-text",
     ring: "ring-status-green/20",
     dot: "bg-status-green",
   },
   yellow: {
     bg: "bg-status-yellow-soft",
-    text: "text-status-yellow",
+    text: "text-status-yellow-text",
     ring: "ring-status-yellow/20",
     dot: "bg-status-yellow",
   },
   orange: {
     bg: "bg-status-orange-soft",
-    text: "text-status-orange",
+    text: "text-status-orange-text",
     ring: "ring-status-orange/20",
     dot: "bg-status-orange",
   },
   red: {
     bg: "bg-status-red-soft",
-    text: "text-status-red",
+    text: "text-status-red-text",
     ring: "ring-status-red/20",
     dot: "bg-status-red",
   },
   blue: {
     bg: "bg-status-blue-soft",
-    text: "text-status-blue",
+    text: "text-status-blue-text",
     ring: "ring-status-blue/20",
     dot: "bg-status-blue",
   },
@@ -75,8 +75,7 @@ export const toneClasses: Record<
 };
 
 export const formatDaysLeft = (daysLeft: number) => {
-  if (daysLeft < 0) return `${Math.abs(daysLeft)}d overdue`;
-  if (daysLeft === 0) return "Due today";
-  if (daysLeft === 1) return "1 day left";
-  return `${daysLeft} days left`;
+  if (daysLeft < 0) return `已逾期 ${Math.abs(daysLeft)} 日`;
+  if (daysLeft === 0) return "今日到期";
+  return `尚餘 ${daysLeft} 日`;
 };

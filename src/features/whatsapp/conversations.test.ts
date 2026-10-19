@@ -110,9 +110,7 @@ describe("conversationContactLabel", () => {
   });
 
   it("never renders an empty label when neither identity is present", () => {
-    expect(conversationContactLabel({ displayName: null, phoneE164: null })).toBe(
-      "Unknown contact",
-    );
+    expect(conversationContactLabel({ displayName: null, phoneE164: null })).toBe("未知聯絡人");
   });
 });
 
