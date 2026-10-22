@@ -1,0 +1,13 @@
+{
+  "mode": "read-only demo",
+  "projects": [
+    "mobile390",
+    "desktop1280"
+  ],
+  "historical_byte_guard": "9 unchanged",
+  "authenticated_runtime": false,
+  "result": "12 passed",
+  "browser": "Edge155.0.4283.62",
+  "original_browser_root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-F8TElT",
+  "copied_evidence": "evidence/local-demo-browser"
+}

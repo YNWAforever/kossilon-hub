@@ -1,0 +1,47 @@
+{
+  "copy": "evidence/browser-e8ecf3f",
+  "result": "12 passed",
+  "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+  "historical_byte_guard": "9 unchanged",
+  "mode": "read-only demo",
+  "original_run_root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-tIPFJd",
+  "files": [
+    {
+      "path": "results.json",
+      "sha256": "ff84d396b614b99355495e678933cc0e9ab5d258bb476b27135cfe5fded691b9"
+    },
+    {
+      "path": "artifacts\\.last-run.json",
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "artifacts\\local-ux-Admin-daily-entry-87113--settings-and-touch-targets-desktop1280\\navigation.png",
+      "sha256": "625735c5f1ff53222048b06734ee003d58e920609092aba97906d9ec7ece6242"
+    },
+    {
+      "path": "artifacts\\local-ux-Admin-daily-entry-87113--settings-and-touch-targets-desktop1280\\settings.png",
+      "sha256": "a4547d72af5518d20d666a945836b5aae042c1a7b93037129adfdf38c8e08578"
+    },
+    {
+      "path": "artifacts\\local-ux-Admin-daily-entry-87113--settings-and-touch-targets-mobile390\\navigation.png",
+      "sha256": "5ee22838cecd79c3662f0a51c7cbe904c445a5c3d242866116c8ee3395588c92"
+    },
+    {
+      "path": "artifacts\\local-ux-Admin-daily-entry-87113--settings-and-touch-targets-mobile390\\settings.png",
+      "sha256": "c0ddcda0ac797d71246372189eb2eccb4aff633c8d2ffcb312be1e0e2c6dd8dc"
+    },
+    {
+      "path": "artifacts\\performance-captures-actua-7dd74-d-parser-network-boundaries-desktop1280\\browser-performance.json",
+      "sha256": "b38b8ec5a4f9db804354fcaa83d7536b64ce7af1a66506ac2ef08686539dc169"
+    },
+    {
+      "path": "artifacts\\performance-captures-actua-7dd74-d-parser-network-boundaries-mobile390\\browser-performance.json",
+      "sha256": "7645db7cf7428a664e6477a2b02fad663478115f98425219bebdc3e84f598d8b"
+    }
+  ],
+  "auth_runtime_verified": false,
+  "projects": [
+    "mobile390",
+    "desktop1280"
+  ]
+}

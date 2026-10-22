@@ -1,0 +1,638 @@
+
+> test
+> vitest run --project unit src/features/annual-return/components/payment-pagination.test.tsx src/routes/-payments.interaction.test.tsx --maxWorkers 1 --reporter=dot
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+··x·············xxx·····
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > proof101 remains reachable without loading case pages
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:47:21
+     45|   expect(within(proof.closest("article")!).getByRole("button", { name:…
+     46|   expect(screen.queryByRole("button", { name: "載入更多付款憑證" })).toBeNull(…
+     47|   expect(f.getCase).toHaveBeenCalledTimes(1);
+       |                     ^
+     48| });
+     49| it("offers debt case links without any proof and shows trusted partial…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > allows only one simultaneous record submission with exact source version
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <main
+        class="flex-1 space-y-6 p-6"
+      >
+        <div
+          class="flex flex-wrap items-start justify-between gap-3"
+        >
+          <div
+            class="min-w-0 space-y-1"
+          >
+            <p
+              class="text-sm font-medium text-muted-foreground"
+            >
+              文件與付款
+            </p>
+            <h1
+              class="font-display text-2xl font-semibold text-foreground"
+            >
+              付款
+            </h1>
+          </div>
+        </div>
+        <p>
+          先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+        </p>
+        <section
+          aria-label="付款憑證覆核"
+          class="divide-y border-y"
+        >
+          <h2
+            class="py-3 font-semibold"
+          >
+            付款憑證覆核
+          </h2>
+          <article
+            class="grid gap-4 p-4 lg:grid-cols-2"
+          >
+            <div>
+              <a
+                href="/annual-returns/40000000-0000-4000-8000-000000000201"
+              >
+                QA Case 201
+              </a>
+              <p>
+                qa-proof-201.pdf
+                 · 
+                Available
+                 /
+                 
+                待付款
+              </p>
+              <p>
+                應收：
+                HK$1,800.00
+                 · 已核對：
+                HK$600.00
+                 · 餘額：
+                HK$1,200.00
+              </p>
+              <p>
+                全付日期：
+                待補
+              </p>
+              <p>
+                狀態：
+                待付款
+              </p>
+              <div>
+                <button
+                  class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+                  type="button"
+                >
+                  預覽當前付款憑證
+                </button>
+              </div>
+            </div>
+            <div
+              class="space-y-2"
+            >
+              <p>
+                憑證金額及收款日期：待補；以下由人手從文件記錄。
+              </p>
+              <label
+                class="block"
+              >
+                文件所示金額（HKD）
+                <input
+                  aria-label="憑證金額"
+                  class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"
+                  inputmode="decimal"
+                  value="600"
+                />
+              </label>
+              <label
+                class="block"
+              >
+                文件所示收款日期
+                <input
+                  aria-label="憑證收款日期"
+                  class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"
+                  type="date"
+                  value="2026-10-23"
+                />
+              </label>
+              <label
+                class="block"
+              >
+                交易識別／備註
+                <input
+                  aria-label="憑證交易參考"
+                  class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"
+                  value=""
+                />
+              </label>
+              <button
+                class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+                disabled=""
+                type="button"
+              >
+                儲存憑證資料
+              </button>
+              <label
+                class="block"
+              >
+                退回原因
+                <select
+                  aria-label="退回原因類別"
+                  class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+                >
+                  <option
+                    value="unreadable"
+                  >
+                    無法閱讀
+                  </option>
+                  <option
+                    value="amount_mismatch"
+                  >
+                    金額不符
+                  </option>
+                  <option
+                    value="date_mismatch"
+                  >
+                    日期不符
+                  </option>
+                  <option
+                    value="duplicate_proof"
+                  >
+                    重複憑證
+                  </option>
+                  <option
+                    value="wrong_account"
+                  >
+                    收款帳戶錯誤
+                  </option>
+                  <option
+                    value="other"
+                  >
+                    其他
+                  </option>
+                </select>
+              </label>
+              <textarea
+                aria-label="具體退回原因"
+                class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto min-h-20 px-3 py-2 text-sm block w-full"
+                placeholder="指出需要補回或修正的內容"
+              />
+              <button
+                class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+                disabled=""
+                type="button"
+              >
+                退回補傳
+              </button>
+            </div>
+          </article>
+        </section>
+        <section
+          aria-label="待收款案件"
+          class="divide-y border-y"
+        >
+          <h2
+            class="py-3 font-semibold"
+          >
+            待收款案件
+          </h2>
+          <p
+            class="py-2 text-sm"
+          >
+            未有憑證亦可開啟案件跟進付款及補傳文件。
+          </p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:124:40
+
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > allows only one simultaneous verified submission with exact source version
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <main
+        class="flex-1 space-y-6 p-6"
+      >
+        <div
+          class="flex flex-wrap items-start justify-between gap-3"
+        >
+          <div
+            class="min-w-0 space-y-1"
+          >
+            <p
+              class="text-sm font-medium text-muted-foreground"
+            >
+              文件與付款
+            </p>
+            <h1
+              class="font-display text-2xl font-semibold text-foreground"
+            >
+              付款
+            </h1>
+          </div>
+        </div>
+        <p>
+          先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+        </p>
+        <section
+          aria-label="付款憑證覆核"
+          class="divide-y border-y"
+        >
+          <h2
+            class="py-3 font-semibold"
+          >
+            付款憑證覆核
+          </h2>
+          <article
+            class="grid gap-4 p-4 lg:grid-cols-2"
+          >
+            <div>
+              <a
+                href="/annual-returns/40000000-0000-4000-8000-000000000201"
+              >
+                QA Case 201
+              </a>
+              <p>
+                qa-proof-201.pdf
+                 · 
+                Available
+                 /
+                 
+                待付款
+              </p>
+              <p>
+                應收：
+                HK$1,800.00
+                 · 已核對：
+                HK$600.00
+                 · 餘額：
+                HK$1,200.00
+              </p>
+              <p>
+                全付日期：
+                待補
+              </p>
+              <p>
+                狀態：
+                待付款
+              </p>
+              <div>
+                <button
+                  class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+                  type="button"
+                >
+                  預覽當前付款憑證
+                </button>
+              </div>
+            </div>
+            <div
+              class="space-y-2"
+            >
+              <p>
+                已存憑證金額：
+                HK$600.00
+                 · 收款日期：
+                2026-10-23
+              </p>
+              <p>
+                憑證記錄：
+                待付款
+              </p>
+              <button
+                class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+                disabled=""
+                type="button"
+              >
+                批准此筆憑證金額
+              </button>
+              <label
+                class="block"
+              >
+                退回原因
+                <select
+                  aria-label="退回原因類別"
+                  class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+                >
+                  <option
+                    value="unreadable"
+                  >
+                    無法閱讀
+                  </option>
+                  <option
+                    value="amount_mismatch"
+                  >
+                    金額不符
+                  </option>
+                  <option
+                    value="date_mismatch"
+                  >
+                    日期不符
+                  </option>
+                  <option
+                    value="duplicate_proof"
+                  >
+                    重複憑證
+                  </option>
+                  <option
+                    value="wrong_account"
+                  >
+                    收款帳戶錯誤
+                  </option>
+                  <option
+                    value="other"
+                  >
+                    其他
+                  </option>
+                </select>
+              </label>
+              <textarea
+                aria-label="具體退回原因"
+                class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto min-h-20 px-3 py-2 text-sm block w-full"
+                placeholder="指出需要補回或修正的內容"
+              />
+              <button
+                class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+                disabled=""
+                type="button"
+              >
+                退回補傳
+              </button>
+            </div>
+          </article>
+        </section>
+        <section
+          aria-label="待收款案件"
+          class="divide-y border-y"
+        >
+          <h2
+            class="py-3 font-semibold"
+          >
+            待收款案件
+          </h2>
+          <p
+            class="py-2 text-sm"
+          >
+            未有憑證亦可開啟案件跟進付款及補傳文件。
+          </p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:124:40
+
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > allows only one simultaneous rejected submission with exact source version
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <main
+        class="flex-1 space-y-6 p-6"
+      >
+        <div
+          class="flex flex-wrap items-start justify-between gap-3"
+        >
+          <div
+            class="min-w-0 space-y-1"
+          >
+            <p
+              class="text-sm font-medium text-muted-foreground"
+            >
+              文件與付款
+            </p>
+            <h1
+              class="font-display text-2xl font-semibold text-foreground"
+            >
+              付款
+            </h1>
+          </div>
+        </div>
+        <p>
+          先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+        </p>
+        <section
+          aria-label="付款憑證覆核"
+          class="divide-y border-y"
+        >
+          <h2
+            class="py-3 font-semibold"
+          >
+            付款憑證覆核
+          </h2>
+          <article
+            class="grid gap-4 p-4 lg:grid-cols-2"
+          >
+            <div>
+              <a
+                href="/annual-returns/40000000-0000-4000-8000-000000000201"
+              >
+                QA Case 201
+              </a>
+              <p>
+                qa-proof-201.pdf
+                 · 
+                Available
+                 /
+                 
+                待付款
+              </p>
+              <p>
+                應收：
+                HK$1,800.00
+                 · 已核對：
+                HK$600.00
+                 · 餘額：
+                HK$1,200.00
+              </p>
+              <p>
+                全付日期：
+                待補
+              </p>
+              <p>
+                狀態：
+                待付款
+              </p>
+              <div>
+                <button
+                  class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+                  type="button"
+                >
+                  預覽當前付款憑證
+                </button>
+              </div>
+            </div>
+            <div
+              class="space-y-2"
+            >
+              <p>
+                憑證金額及收款日期：待補；以下由人手從文件記錄。
+              </p>
+              <label
+                class="block"
+              >
+                文件所示金額（HKD）
+                <input
+                  aria-label="憑證金額"
+                  class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"
+                  inputmode="decimal"
+                  value=""
+                />
+              </label>
+              <label
+                class="block"
+              >
+                文件所示收款日期
+                <input
+                  aria-label="憑證收款日期"
+                  class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"
+                  type="date"
+                  value=""
+                />
+              </label>
+              <label
+                class="block"
+              >
+                交易識別／備註
+                <input
+                  aria-label="憑證交易參考"
+                  class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"
+                  value=""
+                />
+              </label>
+              <button
+                class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+                disabled=""
+                type="button"
+              >
+                儲存憑證資料
+              </button>
+              <label
+                class="block"
+              >
+                退回原因
+                <select
+                  aria-label="退回原因類別"
+                  class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+                >
+                  <option
+                    value="unreadable"
+                  >
+                    無法閱讀
+                  </option>
+                  <option
+                    value="amount_mismatch"
+                  >
+                    金額不符
+                  </option>
+                  <option
+                    value="date_mismatch"
+                  >
+                    日期不符
+                  </option>
+                  <option
+                    value="duplicate_proof"
+                  >
+                    重複憑證
+                  </option>
+                  <option
+                    value="wrong_account"
+                  >
+                    收款帳戶錯誤
+                  </option>
+                  <option
+                    value="other"
+                  >
+                    其他
+                  </option>
+                </select>
+              </label>
+              <textarea
+                aria-label="具體退回原因"
+                class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto min-h-20 px-3 py-2 text-sm block w-full"
+                placeholder="指出需要補回或修正的內容"
+              >
+                Unreadable reference
+              </textarea>
+              <button
+                class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+                disabled=""
+                type="button"
+              >
+                退回補傳
+              </button>
+            </div>
+          </article>
+        </section>
+        <section
+          aria-label="待收款案件"
+          class="divide-y border-y"
+        >
+          <h2
+            class="py-3 font-semibold"
+          >
+            待收款案件
+          </h2>
+          <p
+            class="py-2 text-sm"
+          >
+            未有憑證亦可開啟案件跟進付款及補傳文件。
+          </p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:124:40
+
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  4 failed | 20 passed (24)
+   Start at  04:57:05
+   Duration  13.93s (transform 496ms, setup 0ms, import 1.70s, tests 8.05s, environment 3.20s)
+

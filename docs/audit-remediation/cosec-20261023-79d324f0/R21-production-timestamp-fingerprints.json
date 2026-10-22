@@ -1,0 +1,21 @@
+{
+  "phase": "production-timestamp-fix-unit-green-real-sql-pending",
+  "head": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "files": [
+    {
+      "path": "src/features/whatsapp/repository.ts",
+      "sha256": "D0CC726645E5861587668C228773DD4CA88118E3DC9E056D07FB18BE0A169B63"
+    },
+    {
+      "path": "src/features/whatsapp/history-pagination.test.ts",
+      "sha256": "D61C6DA591F21374AE73DB6B2049D37FB89BC149DDD61AF2ACE90722849EE08A"
+    },
+    {
+      "path": "src/features/whatsapp/history-pagination.integration.test.ts",
+      "sha256": "C754A5F60011B0B271A917ABE33BF46B52B52D00566C9F0D8EAD4D75BAEAC2CA"
+    }
+  ],
+  "databaseExecutedByThisWorker": false,
+  "unitResult": "9 passed",
+  "integrationFixtureUnchanged": true
+}

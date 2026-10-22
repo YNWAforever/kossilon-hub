@@ -1,0 +1,88 @@
+
+> test
+> vitest run --project unit src/features/work-items/queue-page.test.ts --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/work-items/queue-page.test.ts (4 tests | 4 failed) 26ms
+     × accepts the full safe filter contract and preserves filters after actor scoping 8ms
+     × rejects inactive actors before any queue access 6ms
+     × UC132 uses the same Chinese, original title and company search vocabulary 7ms
+     × bounds SQL before hydration and emits a cursor only when another row exists 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/work-items/queue-page.test.ts > R16 / R28 bounded authorized queue > accepts the full safe filter contract and preserves filters after actor scoping
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "q",
+      "workType",
+      "priority",
+      "status",
+      "limit"
+    ],
+    "path": [],
+    "message": "Unrecognized key(s) in object: 'q', 'workType', 'priority', 'status', 'limit'"
+  }
+]
+ ❯ Object.get error [as error] node_modules/zod/v3/types.js:39:31
+ ❯ ZodDefault.parse node_modules/zod/v3/types.js:114:22
+ ❯ src/features/work-items/queue-page.test.ts:8:44
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |unit| src/features/work-items/queue-page.test.ts > R16 / R28 bounded authorized queue > rejects inactive actors before any queue access
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/features/work-items/queue-page.test.ts:12:142
+     10|   });
+     11|   it("rejects inactive actors before any queue access", () => {
+     12|     expect(() => queueFiltersForActor({ authUserId: "auth", userId: "u…
+       |                                                                                                                                              ^
+     13|   });
+     14|   it("UC132 uses the same Chinese, original title and company search v…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |unit| src/features/work-items/queue-page.test.ts > R16 / R28 bounded authorized queue > UC132 uses the same Chinese, original title and company search vocabulary
+Error: Cannot find module '/src/features/work-items/queue-query' imported from C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/work-items/queue-page.test.ts
+ ❯ src/features/work-items/queue-page.test.ts:15:62
+     13|   });
+     14|   it("UC132 uses the same Chinese, original title and company search v…
+     15|     const { workItemSearchNeedles, matchesWorkItemSearch } = await imp…
+       |                                                              ^
+     16|     const item = { title: "Review document: NAR1", workType: "document…
+     17|     for (const q of ["覆核文件", "Review document", "香港測試"]) expect(matche…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |unit| src/features/work-items/queue-page.test.ts > R16 / R28 bounded authorized queue > bounds SQL before hydration and emits a cursor only when another row exists
+TypeError: repo.listQueuePage is not a function
+ ❯ src/features/work-items/queue-page.test.ts:25:23
+     23|     const query = vi.fn(async () => []);
+     24|     const repo = createWorkItemRepository({ sql: query as unknown as S…
+     25|     expect(await repo.listQueuePage({ limit: 50, q: "覆核文件" })).toEqual…
+       |                       ^
+     26|     const [parts, ...values] = query.mock.calls[0] as unknown as [Temp…
+     27|     expect(parts.join("?")).toMatch(/limit/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  04:53:54
+   Duration  1.77s (transform 831ms, setup 0ms, import 1.30s, tests 26ms, environment 0ms)
+

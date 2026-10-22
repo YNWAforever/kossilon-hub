@@ -1,0 +1,2 @@
+Reusable SQL regression static lint:
+Prettier check exit: 0; ESLint exit: 0

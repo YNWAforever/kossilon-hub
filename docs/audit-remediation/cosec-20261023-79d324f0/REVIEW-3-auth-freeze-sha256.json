@@ -1,0 +1,34 @@
+[
+  {
+    "Path": "src/features/auth/auth-context-neon.tsx",
+    "Hash": "4C303A4AE3FC32E28FC87BCAAE3309D99D818AB350CE5D2A71F7B5295DA80ED4"
+  },
+  {
+    "Path": "src/routes/__root.tsx",
+    "Hash": "612DFE1E92CE5F906B341D11E5D5DAD421167E36AC317B61F2ABE8E6C4066C60"
+  },
+  {
+    "Path": "src/routes/login.tsx",
+    "Hash": "DB7AD6BBF11047943F40527BBD8A662ACD467E3B9D5E08DF407A3D914505C735"
+  },
+  {
+    "Path": "src/features/auth/auth-router-recovery.test.tsx",
+    "Hash": "C139FBDC135EB33B75B1FB79B0234F639FD5885EE297E348BD0E380608AA28C6"
+  },
+  {
+    "Path": "src/features/auth/auth-context-neon.test.tsx",
+    "Hash": "534835DC769DEB9321EE673D70B125EA9A268CABFCAD61FB59CE476D6442AF44"
+  },
+  {
+    "Path": "src/features/auth/auth-signout-remount.test.tsx",
+    "Hash": "6ED8EA870FA5DE65B50A4579D694A2925CE44032FDE7B15859882E0F7D5BDEA6"
+  },
+  {
+    "Path": "docs/audit-remediation/cosec-20261023-79d324f0/REVIEW-1.md",
+    "Hash": "BF232B3DE97B87604029DB820E66ED8FA47054F673CDA2E4E5B042166C2A75B1"
+  },
+  {
+    "Path": "docs/audit-remediation/cosec-20261023-79d324f0/REVIEW-3.md",
+    "Hash": "E19A78A5D7C153FBD7710DC8408519E004A891F43187D05EE6274EA18ADF1F0D"
+  }
+]

@@ -1,0 +1,44 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/features/auth/auth-router-recovery.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+ ❯ |unit| src/features/auth/auth-router-recovery.test.tsx (7 tests | 3 failed) 850ms
+     × finishes denied recovery after rejected and reaches B's safe destination 126ms
+     × finishes denied recovery after returned error and reaches B's safe destination 90ms
+     × finishes denied recovery after timeout and reaches B's safe destination 84ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/auth/auth-router-recovery.test.tsx > REVIEW-3 actual router auth recovery > finishes denied recovery after rejected and reaches B's safe destination
+ FAIL  |unit| src/features/auth/auth-router-recovery.test.tsx > REVIEW-3 actual router auth recovery > finishes denied recovery after returned error and reaches B's safe destination
+ FAIL  |unit| src/features/auth/auth-router-recovery.test.tsx > REVIEW-3 actual router auth recovery > finishes denied recovery after timeout and reaches B's safe destination
+AssertionError: expected '/today' to be '/documents' // Object.is equality
+
+Expected: "/documents"
+Received: "/today"
+
+ ❯ src/features/auth/auth-router-recovery.test.tsx:160:46
+    158|     try {
+    159|       await screen.findByText("Private account staff-B");
+    160|       expect(router.state.location.pathname).toBe("/documents");
+       |                                              ^
+    161|       expect(new URLSearchParams(window.location.search).get("from")).…
+    162|       expect(new URLSearchParams(window.location.search).has("denied")…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 passed (7)
+   Start at  05:55:07
+   Duration  3.16s (transform 492ms, setup 0ms, import 1.13s, tests 850ms, environment 967ms)
+

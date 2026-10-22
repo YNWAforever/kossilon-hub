@@ -1,0 +1,82 @@
+[
+  {
+    "path": "src/features/documents/list-filters.ts",
+    "sha256": "11f47b7cbfe2842c24b2e178fb5369e9408027b2e377d00599df7a846215cf5e"
+  },
+  {
+    "path": "src/features/documents/repository.ts",
+    "sha256": "6946251b63930e888bdd8e15c5ca328a24bddf2426b390b8e7c05f1bf55760d7"
+  },
+  {
+    "path": "src/features/documents/server-fns.ts",
+    "sha256": "2c1b58ef9ee2dc79d30525bd0a402f493c8f0c9acd42782ed4eea157a683da25"
+  },
+  {
+    "path": "src/features/documents/document-list.unit.test.ts",
+    "sha256": "eabd3224daf0e903505fb2b455759aa6f266f5095e1c5d43610319414f6ff473"
+  },
+  {
+    "path": "src/features/documents/server-fns.test.ts",
+    "sha256": "3130adf0e497619101bbcf729ef773e63b40e94f9457445ac7cc684607bc6577"
+  },
+  {
+    "path": "src/features/documents/repository.integration.test.ts",
+    "sha256": "93dee7e4753bc40564238fe1e3c9a13ab6f25a430d97a51e727dd87f8a07fa75"
+  },
+  {
+    "path": "src/features/documents/company-document-register.integration.test.ts",
+    "sha256": "b93d76e5751028326e770e9a375df5eb9e816ea661589e2331f1964d0909fb63"
+  },
+  {
+    "path": "src/routes/documents.tsx",
+    "sha256": "83d4b971546514d281f4124a1083925f90328d53b99f91cef3c72e9a031d7c5e"
+  },
+  {
+    "path": "src/routes/-documents-production-data.test.tsx",
+    "sha256": "dc57e5ff54ca25e37c190af80dcd67199c0fb0aeb5fd67671bef1835f8a3f6a7"
+  },
+  {
+    "path": "src/routes/-documents-search.interaction.test.tsx",
+    "sha256": "857341ac549415232b9281a07f8675c80e9e80e3434b6168b0b000435fe3e14f"
+  },
+  {
+    "path": "src/features/clients/company-work.ts",
+    "sha256": "acf2e99c20662dd6d44e893e98141dfb0d4e03a2c8a8f0c8be725264b77777d6"
+  },
+  {
+    "path": "src/features/clients/company-work-server-fns.ts",
+    "sha256": "50b9dc7e7a11c0ddfa0602a590870ab823b709113c18c7f47ba4c4afd2544c9e"
+  },
+  {
+    "path": "src/features/clients/company-work.unit.test.ts",
+    "sha256": "ab055608bedd054718fbff705dcc5a247beaafdcfa354502d1bfb54a2f6a5059"
+  },
+  {
+    "path": "src/features/clients/components/client-work-overview.tsx",
+    "sha256": "eb9f31ce98b0f8ab047730c3c3c6f7cd764d6eed6ea23d4652af60e44e89a830"
+  },
+  {
+    "path": "src/features/clients/components/production-client-detail.tsx",
+    "sha256": "98f246ee2df037a83054ff6e526b7b921c891dcba380836d2e210abe6771a511"
+  },
+  {
+    "path": "src/features/clients/components/production-client-detail.interaction.test.tsx",
+    "sha256": "af1c7a656970060646c913026cc6de68a684b67c8327620e2d812a6a29242d38"
+  },
+  {
+    "path": "src/routes/clients.$id.tsx",
+    "sha256": "48c80ea8c3c533a685860e930421e5a4fd0871f131e0139544bb935d369b239b"
+  },
+  {
+    "path": "src/features/bulk-operations/repository.ts",
+    "sha256": "ce2e54427552e9db93107f804d8a28efc43b9f1f8772150d40264db0be56f97f"
+  },
+  {
+    "path": "src/features/bulk-operations/types.ts",
+    "sha256": "d225d39fdbec8654d3669ca257dbc36c2f91f043ec17dad726b9d4f43b853afd"
+  },
+  {
+    "path": "src/test/db-integration-files.ts",
+    "sha256": "c1511f69a2a1ba6357e5da21fb9b3569ab2e53bd1d66463df3d1b290c594a04e"
+  }
+]

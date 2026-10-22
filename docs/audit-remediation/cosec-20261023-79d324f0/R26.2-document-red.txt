@@ -1,0 +1,23 @@
+
+> test
+> vitest run --configLoader runner --project unit src/features/documents/document-list.unit.test.ts --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/documents/document-list.unit.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/documents/document-list.unit.test.ts [ src/features/documents/document-list.unit.test.ts ]
+Error: EPERM: operation not permitted, rename 'C:\Users\laich\AppData\Local\Packages\sandbox.{1aa32076-b298-42e9-b369-4586e2fc10d7}\AC\Temp\mk42ZDG5KunDI8n8iwOTI\ssr\.tmp-1792702482236-147t66n982gb' -> 'C:\Users\laich\AppData\Local\Packages\sandbox.{1aa32076-b298-42e9-b369-4586e2fc10d7}\AC\Temp\mk42ZDG5KunDI8n8iwOTI\ssr\37fa85b79a198dfecadf3334bd4f18d1992a9f96'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  04:54:41
+   Duration  350ms (transform 0ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

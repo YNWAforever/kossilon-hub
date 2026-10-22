@@ -1,0 +1,8 @@
+{
+  "command": "npm test -- --project unit --maxWorkers 2",
+  "started_utc": "2026-10-22T22:10:29.3905035Z",
+  "db_provider_env_cleared": true,
+  "source_sha": "8bc1e0dea88c5796c37b2f32a781fac7aab31774",
+  "finished_utc": "2026-10-22T22:13:13.6665281Z",
+  "exit_code": 1
+}

@@ -1,0 +1,65 @@
+{
+  "status": "PASS_PARENT_ISOLATED_SQL_SOURCE_FROZEN",
+  "head": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "branch": "codex/cosec-20261023",
+  "parentLog": "R21-db-green.txt",
+  "parentReceipt": "R21-history-pagination-r21-9fb8c923-4562-4806-a418-7cbb12874112.json",
+  "parentRunId": "r21-9fb8c923-4562-4806-a418-7cbb12874112",
+  "parentDatabaseTestResult": "1 file / 1 test passed",
+  "precision": [
+    {
+      "phase": "initial",
+      "checkedCount": 303,
+      "mismatchIds": []
+    },
+    {
+      "phase": "late",
+      "checkedCount": 2,
+      "mismatchIds": []
+    }
+  ],
+  "conversationPages": [
+    100,
+    1
+  ],
+  "messagePages": [
+    200,
+    1
+  ],
+  "uniqueConversationIds": 101,
+  "uniqueMessageIds": 201,
+  "rollbackVerified": true,
+  "remainingExactIdCount": 0,
+  "files": [
+    {
+      "path": "src/features/whatsapp/repository.ts",
+      "sqlGreenSha256": "D0CC726645E5861587668C228773DD4CA88118E3DC9E056D07FB18BE0A169B63",
+      "currentSha256": "D0CC726645E5861587668C228773DD4CA88118E3DC9E056D07FB18BE0A169B63",
+      "unchangedSinceSqlGreen": true,
+      "comparison": "Unchanged"
+    },
+    {
+      "path": "src/features/whatsapp/history-pagination.test.ts",
+      "sqlGreenSha256": "D61C6DA591F21374AE73DB6B2049D37FB89BC149DDD61AF2ACE90722849EE08A",
+      "currentSha256": "D61C6DA591F21374AE73DB6B2049D37FB89BC149DDD61AF2ACE90722849EE08A",
+      "unchangedSinceSqlGreen": true,
+      "comparison": "Unchanged"
+    },
+    {
+      "path": "src/features/whatsapp/history-pagination.integration.test.ts",
+      "sqlGreenSha256": "C754A5F60011B0B271A917ABE33BF46B52B52D00566C9F0D8EAD4D75BAEAC2CA",
+      "currentSha256": "BDAC90DDEE72B3C04251A7001CF648574A5ABED58D49CA143A43B12BE37FBE1B",
+      "unchangedSinceSqlGreen": false,
+      "comparison": "Exact prior hash reproduced by removing only parent Set<string> annotation in memory"
+    }
+  ],
+  "aggregateVerification": "Parent-owned; full unit run and aggregate results pending",
+  "parentPostSqlGreenEdit": "Test-only Set<string> annotation; exact-only-change verified by source hash",
+  "workerDuringFreeze": {
+    "sourceOrTestEdits": false,
+    "formatting": false,
+    "testRuns": false,
+    "databaseClientsOrRuns": false,
+    "writes": "Documentation and evidence only"
+  }
+}

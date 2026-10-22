@@ -1,0 +1,39 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/operations/schema-health.test.ts (0 test)
+ ❯ |unit| src/features/operations/release-compatibility.test.ts (0 test)
+ ❯ |unit| src/server/maintenance-trigger.test.ts (0 test)
+ ❯ |unit| src/features/operations/schema-readiness.test.ts (0 test)
+ ❯ |unit| src/server/maintenance-http.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/server/maintenance-http.test.ts [ src/server/maintenance-http.test.ts ]
+Error: EPERM: operation not permitted, rename 'C:\Users\laich\AppData\Local\Packages\sandbox.{59f967d5-b435-450a-8a9f-e70066e13521}\AC\Temp\1B9nkSTLtdLyfDjp63wdh\ssr\.tmp-1792702404586-h770fgvqbs6' -> 'C:\Users\laich\AppData\Local\Packages\sandbox.{59f967d5-b435-450a-8a9f-e70066e13521}\AC\Temp\1B9nkSTLtdLyfDjp63wdh\ssr\c47646d022ab5fea4c6da666f1b5b10c7a5f12a6'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |unit| src/server/maintenance-trigger.test.ts [ src/server/maintenance-trigger.test.ts ]
+Error: EPERM: operation not permitted, rename 'C:\Users\laich\AppData\Local\Packages\sandbox.{59f967d5-b435-450a-8a9f-e70066e13521}\AC\Temp\1B9nkSTLtdLyfDjp63wdh\ssr\.tmp-1792702403654-tuwnkih3pu' -> 'C:\Users\laich\AppData\Local\Packages\sandbox.{59f967d5-b435-450a-8a9f-e70066e13521}\AC\Temp\1B9nkSTLtdLyfDjp63wdh\ssr\0ec183d5dfaa394b5af190039003eaff815d7ee8'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |unit| src/features/operations/release-compatibility.test.ts [ src/features/operations/release-compatibility.test.ts ]
+Error: EPERM: operation not permitted, rename 'C:\Users\laich\AppData\Local\Packages\sandbox.{59f967d5-b435-450a-8a9f-e70066e13521}\AC\Temp\1B9nkSTLtdLyfDjp63wdh\ssr\.tmp-1792702403339-8z23nkufdgj' -> 'C:\Users\laich\AppData\Local\Packages\sandbox.{59f967d5-b435-450a-8a9f-e70066e13521}\AC\Temp\1B9nkSTLtdLyfDjp63wdh\ssr\d52b2eb8c5ad45fedc338c7fafcfff2faa7afc0c'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |unit| src/features/operations/schema-health.test.ts [ src/features/operations/schema-health.test.ts ]
+Error: EPERM: operation not permitted, rename 'C:\Users\laich\AppData\Local\Packages\sandbox.{59f967d5-b435-450a-8a9f-e70066e13521}\AC\Temp\1B9nkSTLtdLyfDjp63wdh\ssr\.tmp-1792702403063-canw3673ewh' -> 'C:\Users\laich\AppData\Local\Packages\sandbox.{59f967d5-b435-450a-8a9f-e70066e13521}\AC\Temp\1B9nkSTLtdLyfDjp63wdh\ssr\ec39c9040ab037469547a03725801bca227bed7d'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |unit| src/features/operations/schema-readiness.test.ts [ src/features/operations/schema-readiness.test.ts ]
+Error: EPERM: operation not permitted, rename 'C:\Users\laich\AppData\Local\Packages\sandbox.{59f967d5-b435-450a-8a9f-e70066e13521}\AC\Temp\1B9nkSTLtdLyfDjp63wdh\ssr\.tmp-1792702404018-0exrtfyc9zmm' -> 'C:\Users\laich\AppData\Local\Packages\sandbox.{59f967d5-b435-450a-8a9f-e70066e13521}\AC\Temp\1B9nkSTLtdLyfDjp63wdh\ssr\36e85364f88b204dcb8730b2fa186a3aec9c0a07'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  5 failed (5)
+      Tests  no tests
+   Start at  04:53:22
+   Duration  1.85s (transform 0ms, setup 0ms, import 0ms, tests 0ms, environment 1ms)
+

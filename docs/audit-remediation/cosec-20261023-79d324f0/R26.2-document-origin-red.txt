@@ -1,0 +1,71 @@
+
+> test
+> vitest run --configLoader runner --project unit src/features/documents/document-list.unit.test.ts --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/documents/document-list.unit.test.ts (10 tests | 1 failed) 32ms
+     × keeps fixture metadata out of the ordinary register like the bulk snapshot 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/documents/document-list.unit.test.ts > document register query contract (no database) > keeps fixture metadata out of the ordinary register like the bulk snapshot
+AssertionError: expected '\n      with page as materialized (\n…' to contain 'c.data_origin<>\'fixture\''
+
+- Expected
++ Received
+
+- c.data_origin<>'fixture'
++
++       with page as materialized (
++       select d.* from documents d join companies c on c.id=d.company_id
++       where (?::uuid is null or d.id = ?)
++         and (?::uuid is null or d.company_id = ?)
++         and (?::uuid is null or d.case_id = ?)
++         and 
++     (?::text is null or d.file_name ilike ? escape '\' or c.company_name ilike ? escape '\')
++     and (?::text is null or d.file_type=?)
++     and (?::text is null or d.upload_source=?)
++     and (?::text is null or
++       (case when d.reviewed_document_version_id=(select v.id from document_versions v
++         where v.document_id=d.id and v.superseded_by_version_id is null
++         order by v.version_number desc limit 1)
++         then d.verification_status else 'pending' end)=?)
++         -- Send the boundary as text: postgres.js serializes timestamptz through JS Date, losing microseconds.
++         and (? or d.uploaded_at<?::text::timestamptz or (d.uploaded_at=?::text::timestamptz and d.id>?::uuid))
++         and (
++           (?::uuid is null and ?::uuid is null)
++           or c.assigned_team_id = ?::uuid
++           or exists(select 1 from annual_return_cases a where a.id=d.case_id and a.company_id=d.company_id
++             and (a.owner_id=?::uuid or a.reviewer_id=?::uuid))
++         )
++       order by d.uploaded_at desc, d.id limit ?)
++       select d.*, d.uploaded_at::text as cursor_uploaded_at, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,
++         i.scan_verdict_source,i.scan_document_version_id,v.id current_version_id,i.id intent_id,v.verified_checksum_sha256,
++         md5(jsonb_build_object('document',to_jsonb(d),'version',to_jsonb(v),'intent',to_jsonb(i))::text) version_token
++       from page d left join lateral (
++         select * from document_versions where document_id=d.id and superseded_by_version_id is null order by version_number desc limit 1
++       ) v on true
++       left join document_upload_intents i on i.id=v.intent_id and i.document_id=d.id
++         and i.company_id=d.company_id and i.case_id is not distinct from d.case_id and i.object_key=v.storage_url and v.storage_url=d.storage_url
++       order by d.uploaded_at desc,d.id
+
+ ❯ src/features/documents/document-list.unit.test.ts:117:34
+    115|     const { sql, queries } = recordingSql([]);
+    116|     await createDocumentRepository({ sql }).listDocumentPage();
+    117|     expect(queries.at(-1)!.text).toContain("c.data_origin<>'fixture'");
+       |                                  ^
+    118|   });
+    119| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  05:00:53
+   Duration  1.32s (transform 773ms, setup 0ms, import 1.09s, tests 32ms, environment 0ms)
+

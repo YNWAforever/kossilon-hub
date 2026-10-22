@@ -1,0 +1,42 @@
+
+> test
+> vitest run --project unit src/features/annual-return/components/payment-pagination.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/annual-return/components/payment-pagination.test.tsx (2 tests | 1 failed) 193ms
+   × F15 / UC109: a proof for case 201 must be actionable without paging unrelated cases 26ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > F15 / UC109: a proof for case 201 must be actionable without paging unrelated cases
+AssertionError: expected <p></p> to be null
+
+- Expected:
+null
+
++ Received:
+<p>
+  qa-proof-201.pdf
+  ：先載入所屬案件資料；暫不可審核。
+</p>
+
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:30:48
+     28|  await screen.findByText(/qa-proof-201.pdf/);
+     29|  // Either a joined read model or a targeted case fetch must resolve t…
+     30|  expect(screen.queryByText(/先載入所屬案件資料；暫不可審核/)).toBeNull();
+       |                                                ^
+     31|  expect(screen.getByText('QA Case 201')).toBeTruthy();
+     32| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  04:53:01
+   Duration  3.47s (transform 314ms, setup 0ms, import 993ms, tests 193ms, environment 1.94s)
+

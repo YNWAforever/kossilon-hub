@@ -1,0 +1,7 @@
+{"rawExpected":"2000-01-02T00:00:00.123456Z","inferredTimestampDateSerialization":"2000-01-02T00:00:00.123Z","textStagingSource":"2000-01-02T00:00:00.123456Z"}
+{"rawExpected":"2000-01-02T00:00:00.123455Z","inferredTimestampDateSerialization":"2000-01-02T00:00:00.123Z","textStagingSource":"2000-01-02T00:00:00.123455Z"}
+{"rawExpected":"2000-01-02T00:00:00.123454Z","inferredTimestampDateSerialization":"2000-01-02T00:00:00.123Z","textStagingSource":"2000-01-02T00:00:00.123454Z"}
+{"rawExpected":"2000-01-01T00:00:00.654321Z","inferredTimestampDateSerialization":"2000-01-01T00:00:00.654Z","textStagingSource":"2000-01-01T00:00:00.654321Z"}
+{"rawExpected":"2001-01-01T00:00:00.000001Z","inferredTimestampDateSerialization":"2001-01-01T00:00:00.000Z","textStagingSource":"2001-01-01T00:00:00.000001Z"}
+PASS static AST/source checks: no test module import, no DB client constructed, no SQL executed; both message batches use JSON text timestamp staging; original precision assertions retained; exact-ID rollback unchanged.
+ExitCode=0

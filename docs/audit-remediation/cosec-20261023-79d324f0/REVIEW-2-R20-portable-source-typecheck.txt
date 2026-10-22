@@ -1,0 +1,1 @@
+Focused SQL test TypeScript semantic/source check passed with repo compiler options, repo ambient declarations and existing Node test types. No test or DB client module imported/executed. Separate workspace diagnostics remain.

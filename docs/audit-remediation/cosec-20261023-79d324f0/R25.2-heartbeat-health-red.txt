@@ -1,0 +1,52 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/operations/health.test.ts (19 tests | 2 failed) 16ms
+     × describes an all-skipped replay as an observed non-success, keeping the previous true success 5ms
+     × does not describe skipped prior-unknown work as successfully performed or as known job failures 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/operations/health.test.ts > maintenanceHealthOf > describes an all-skipped replay as an observed non-success, keeping the previous true success
+AssertionError: expected 'failing' to be 'degraded' // Object.is equality
+
+Expected: "degraded"
+Received: "failing"
+
+ ❯ src/features/operations/health.test.ts:99:26
+     97|       now: NOW, toleranceSeconds: TOLERANCE, lastScheduledSuccessAt: "…
+     98|     });
+     99|     expect(health.state).toBe("degraded");
+       |                          ^
+    100|     expect(health.lastRunAt).toBe("2026-09-11T09:58:04.000Z");
+    101|     expect(health.lastSuccessAt).toBe("2026-09-11T09:40:00.000Z");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| src/features/operations/health.test.ts > maintenanceHealthOf > does not describe skipped prior-unknown work as successfully performed or as known job failures
+AssertionError: expected '最近一次排程執行未能完成，沒有任何一個環節的結果。' to match /未知/
+
+- Expected:
+/未知/
+
++ Received:
+"最近一次排程執行未能完成，沒有任何一個環節的結果。"
+
+ ❯ src/features/operations/health.test.ts:114:28
+    112|     expect(health.state).toBe("failing");
+    113|     expect(health.lastSuccessAt).toBeNull();
+    114|     expect(health.summary).toMatch(/未知/);
+       |                            ^
+    115|     expect(health.summary).toMatch(/略過/);
+    116|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 17 passed (19)
+   Start at  05:57:32
+   Duration  343ms (transform 76ms, setup 0ms, import 110ms, tests 16ms, environment 0ms)
+

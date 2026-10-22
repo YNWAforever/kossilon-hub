@@ -1,0 +1,8 @@
+{
+  "free_disk_bytes": 46403850240,
+  "observed_utc": "2026-10-22T21:57:11.1898397Z",
+  "demo_port": 5180,
+  "no_unrelated_process_stopped": true,
+  "free_memory_kib": 6549448,
+  "demo_listeners": []
+}

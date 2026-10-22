@@ -1,0 +1,8 @@
+{
+  "gzip_sha256": "0897037d1f9e39ac03fa3c8a534b4226c7d51d82b03be2b32ed15c1bfbeaedd0",
+  "raw_sha256": "33c87aece62b00da3ff68f7c326e60c9a48fc9f7670a4d379e11765d3484339b",
+  "roundtrip_verified": true,
+  "raw_preserved_in_ignored_cache": true,
+  "raw_relative_path": "node_modules/.cache/cosec-sql-logs/e8ecf3f-db-candidate-sql.log",
+  "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de"
+}

@@ -1,0 +1,6 @@
+{
+  "finished_utc": "2026-10-22T21:52:33.1036099Z",
+  "exit_code": 0,
+  "container_id": "4f5c362905d14782f4bc2c4bf74af3fc8f2b4e76259342e873bfd1ea78424580",
+  "command": "npm test -- --project db <13 impacted registered files> --maxWorkers 1"
+}

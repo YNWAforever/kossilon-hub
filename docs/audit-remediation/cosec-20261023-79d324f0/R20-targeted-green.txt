@@ -1,0 +1,15 @@
+
+> test
+> vitest run --project unit --maxWorkers 1 src/features/incorporation/case-list-page.test.ts src/features/incorporation/components/case-lists.test.tsx src/features/incorporation/components/production-incorporation-detail.test.tsx src/features/corporate-changes/components/production-corporate-change-detail.test.tsx src/components/incorporation/create-incorporation-case-dialog.test.tsx src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx src/features/incorporation/authorization.test.ts src/features/incorporation/read.test.ts src/features/incorporation/repository-read.test.ts src/features/corporate-changes/read.test.ts
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+
+ Test Files  10 passed (10)
+      Tests  98 passed (98)
+   Start at  05:07:03
+   Duration  23.27s (transform 1.11s, setup 0ms, import 4.97s, tests 4.56s, environment 9.54s)
+

@@ -1,0 +1,233 @@
+{
+  "run_id": "cosec-20261023-79d324f0",
+  "repository": "https://github.com/YNWAforever/kossilon-hub",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+  "base_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "source_commits": [
+    "8bc1e0dea88c5796c37b2f32a781fac7aab31774",
+    "e8ecf3fad979adc4321a58eb64a90d0927e175de"
+  ],
+  "candidate_root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "phase": "LOCAL_IMPLEMENTATION_VERIFIED_NATIVE_ACCEPTANCE_BLOCKED",
+  "release_gate": "NO_GO",
+  "auth_runtime_verified": false,
+  "source_manifest": "source-candidate-final.json",
+  "source_manifest_sha256": "640ba5bc024b6d1ad70b547a509ed0abbe358f13f83bff3a89538012c2dcb434",
+  "source_diff": "source.patch",
+  "remote_main_rechecked": "remote-main-final.json",
+  "production": {
+    "accessed": false,
+    "current_verified": false,
+    "sha_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215"
+  },
+  "checks": {
+    "node": {
+      "skipped": 0,
+      "passed": 21,
+      "failed": 0,
+      "log": "node-candidate-final.txt"
+    },
+    "build": {
+      "exit_code": 0,
+      "deployed": false,
+      "log": "build-candidate-final.txt",
+      "preset": "cloudflare-module",
+      "manifest": "build-artifact-manifest.json"
+    },
+    "db": {
+      "passed": 146,
+      "readback": "db-readback-summary.json",
+      "identity": "db-candidate-target.json",
+      "log": "db-candidate-final.txt",
+      "skipped": 0,
+      "sql": "db-candidate-sql.log.gz",
+      "files": 16,
+      "sql_integrity": "db-sql-log-integrity.json",
+      "failed": 0
+    },
+    "browser": {
+      "native_auth": false,
+      "log": "browser-candidate-final.txt",
+      "projects": [
+        "mobile390",
+        "desktop1280"
+      ],
+      "copy": "browser-evidence-copy.json",
+      "historical_bytes_unchanged": 9,
+      "browser": "Edge155.0.4283.62",
+      "passed": 12,
+      "mode": "read-only demo",
+      "failed": 0
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 1,
+      "mode": "full lint plus changed-path reruns; source fingerprints checked",
+      "logs": [
+        "lint-candidate-final.txt",
+        "lint-auth-final-freeze.txt",
+        "aggregate-failures-lint.txt"
+      ]
+    },
+    "typecheck": {
+      "exit_code": 0,
+      "log": "typecheck-aggregate-repair.txt",
+      "content_identical_to_source_sha": true
+    },
+    "acceptance_integrity": {
+      "native_passes": 0,
+      "release_gate": "NO_GO",
+      "records": 184,
+      "log": "delivery-integrity-final.txt"
+    },
+    "unit": {
+      "skipped": 0,
+      "passed": 2464,
+      "failed": 0,
+      "log": "unit-candidate-final.txt",
+      "files": 265
+    }
+  },
+  "isolated_target": {
+    "container_id": "4f5c362905d14782f4bc2c4bf74af3fc8f2b4e76259342e873bfd1ea78424580",
+    "port": 60953,
+    "image_id": "sha256:f4c66b820c6f974249089d3d16d86a3698eae11e8746eb6644b2271031e91232",
+    "memory_bytes": 536870912,
+    "tmpfs": true,
+    "removed": true,
+    "database": "cosec_79d324f0",
+    "host": "127.0.0.1",
+    "cleanup": "cleanup-result.json",
+    "mounts": [],
+    "production_data_copied": false
+  },
+  "originals": {
+    "R": 15,
+    "historical_results_retained": true,
+    "native_result_counts": {
+      "NOT_RUN": 114,
+      "PASS": 0,
+      "BLOCKED": 70
+    },
+    "UC": 100,
+    "raw_sources": "source-inputs",
+    "LA": 34,
+    "input_hashes": "input-hashes.json",
+    "F": 35
+  },
+  "runtime_limits": [
+    "SQL uses supplied actors/repository policy under owned DB connection; no native Auth cookie/app-role/RLS/HTTP/reload acceptance",
+    "Demo Edge viewport checks are not Safari, physical-device, 200-percent zoom or full native journeys",
+    "Current production artifact/SBOM/registry, restore, three native ticks, provider/cost/corpus/recipient/filing receipts and full100UC/34LA remain unverified",
+    "500-row NAR RPC boundary verified; isolated durable NAR suite includes100 rows, not a500-row native import",
+    "Single local SQL/payload observations do not establish HTTP cold/warm p95"
+  ],
+  "tooling": {
+    "npm": "11.16.0",
+    "bun_installed": "1.3.14",
+    "dependency_locks_changed": false,
+    "bun_package_pin": "1.4.2",
+    "node": "24.18.0",
+    "pin_mismatch_retained_as_limit": true
+  },
+  "actions": {
+    "deploy": false,
+    "paid_services_called": false,
+    "push": false,
+    "merge": false,
+    "real_messages_or_payments_or_filings": false,
+    "production_data_or_accounts_changed": false,
+    "production_migration": false,
+    "main_auto_deploy_enabled": false
+  },
+  "reviews": [
+    "REVIEW-1.md",
+    "REVIEW-1-auth-fix.md",
+    "REVIEW-2.md",
+    "REVIEW-2-queue-disposition.md",
+    "REVIEW-2-R20.md",
+    "REVIEW-2-today-fix.md",
+    "R19-review2-return-context.md",
+    "REVIEW-3.md",
+    "REVIEW-3-disposition.md",
+    "REVIEW-4-evidence.md"
+  ],
+  "blockers": "blockers.md",
+  "result_receipts": {
+    "browser": {
+      "mode": "read-only demo",
+      "ci_no_reuse": true,
+      "exit_code": 0,
+      "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+      "auth_runtime_verified": false,
+      "channel": "msedge",
+      "finished_utc": "2026-10-22T22:20:41.735508Z",
+      "command": "npm run test:e2e:local"
+    },
+    "unit": {
+      "temp_mode": "normal OS temp; no node_modules override",
+      "started_utc": "2026-10-22T22:16:17.0107117Z",
+      "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+      "exit_code": 0,
+      "db_provider_env_cleared": true,
+      "command": "npm test -- --project unit --maxWorkers 2",
+      "finished_utc": "2026-10-22T22:18:41.0793245Z"
+    },
+    "build": {
+      "db_provider_env_cleared": true,
+      "command": "npm run build",
+      "demo_server_stopped_before_build": true,
+      "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+      "free_memory_kib_before": 6235896,
+      "finished_utc": "2026-10-22T22:21:47.1742835Z",
+      "deployment": false,
+      "exit_code": 0,
+      "started_utc": "2026-10-22T22:21:30.3819491Z",
+      "demo_auth": false
+    },
+    "db": {
+      "run_id": "cosec-20261023-79d324f0",
+      "test_exit_code": 0,
+      "files": [
+        "src/features/work-items/queue.integration.test.ts",
+        "src/features/work-items/repository.test.ts",
+        "src/features/bulk-operations/repository.integration.test.ts",
+        "src/features/bulk-operations/actions.integration.test.ts",
+        "src/features/documents/company-document-register.integration.test.ts",
+        "src/features/documents/repository.integration.test.ts",
+        "src/features/documents/document-volume.integration.test.ts",
+        "src/features/annual-return/work-views-other.integration.test.ts",
+        "src/features/annual-return/readiness.integration.test.ts",
+        "src/features/annual-return/payment-review.integration.test.ts",
+        "src/features/incorporation/read-page.integration.test.ts",
+        "src/features/incorporation/repository.test.ts",
+        "src/features/corporate-changes/repository.test.ts",
+        "src/features/whatsapp/history-pagination.integration.test.ts",
+        "src/features/admin/repository.integration.test.ts",
+        "src/features/nar-import/apply.integration.test.ts"
+      ],
+      "native_ticks": false,
+      "finished_utc": "2026-10-22T22:18:51.5017547Z",
+      "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+      "started_utc": "2026-10-22T22:16:34.4114686Z",
+      "auth_runtime_verified": false,
+      "postread_exit_code": 0,
+      "provider_calls": false,
+      "container_id": "4f5c362905d14782f4bc2c4bf74af3fc8f2b4e76259342e873bfd1ea78424580"
+    },
+    "node": {
+      "exit_code": 0,
+      "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+      "command": "node --test src/features/incorporation/incorporation-boundary.unit.cjs",
+      "finished_utc": "2026-10-22T22:21:05.0759214Z"
+    }
+  },
+  "finalized_utc": "2026-10-22T22:24:52.3606207Z",
+  "documentation_only_followup": true,
+  "build_warnings": [
+    "chunk-size above500kB",
+    "inlineDynamicImports ignored when codeSplitting specified"
+  ],
+  "evidence_manifest": "evidence-manifest.json"
+}

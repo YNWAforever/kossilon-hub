@@ -1,0 +1,85 @@
+
+> test
+> vitest run --configLoader runner --project unit src/features/clients/components/client-case-return-context.test.tsx src/features/clients/components/production-client-detail.interaction.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+ ❯ |unit| src/features/clients/components/client-case-return-context.test.tsx (7 tests | 3 failed) 2710ms
+     × retains the exact client and register context through 'annual_return' 1195ms
+     × retains the exact client and register context through 'incorporation' 147ms
+     × retains the exact client and register context through 'corporate_change' 1118ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/clients/components/client-case-return-context.test.tsx > Review2 finding6: client -> case -> exact client return > retains the exact client and register context through 'annual_return'
+ FAIL  |unit| src/features/clients/components/client-case-return-context.test.tsx > Review2 finding6: client -> case -> exact client return > retains the exact client and register context through 'corporate_change'
+AssertionError: expected { returnTo: '/annual-returns' } to match object { Object (returnTo) }
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <p>
+        Case route reached
+      </p>
+    </div>
+  </body>
+</html>...
+
+- Expected
++ Received
+
+  {
+-   "returnTo": "/clients/10000000-0000-0000-0000-000000000001?returnTo=%2Fclients%3Fq%3DAcme%26status%3Dinactive%26team%3D10000000-0000-0000-0000-000000000002%26includeFixtures%3Dfalse%26cursor%3D%2522%255B%255C%2522Acme%255C%2522%252C%255C%252210000000-0000-0000-0000-000000000001%255C%2522%255D%2522",
++   "returnTo": "/annual-returns",
+  }
+
+ ❯ src/features/clients/components/client-case-return-context.test.tsx:172:53
+    170|       fireEvent.click(link);
+    171|       await waitFor(() =>
+    172|         expect(router.state.matches.at(-1)?.search).toMatchObject({ re…
+       |                                                     ^
+    173|       );
+    174|       const back = caseReturnPath(router.state.matches.at(-1)?.search.…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |unit| src/features/clients/components/client-case-return-context.test.tsx > Review2 finding6: client -> case -> exact client return > retains the exact client and register context through 'incorporation'
+AssertionError: expected '/annual-returns' to be '/clients/10000000-0000-0000-0000-0000…' // Object.is equality
+
+Expected: "/clients/10000000-0000-0000-0000-000000000001?returnTo=%2Fclients%3Fq%3DAcme%26status%3Dinactive%26team%3D10000000-0000-0000-0000-000000000002%26includeFixtures%3Dfalse%26cursor%3D%2522%255B%255C%2522Acme%255C%2522%252C%255C%252210000000-0000-0000-0000-000000000001%255C%2522%255D%2522"
+Received: "/annual-returns"
+
+ ❯ src/features/clients/components/client-case-return-context.test.tsx:175:20
+    173|       );
+    174|       const back = caseReturnPath(router.state.matches.at(-1)?.search.…
+    175|       expect(back).toBe(clientPath);
+       |                    ^
+    176|       await act(async () => {
+    177|         await router.navigate({ href: back });
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 21 passed (24)
+   Start at  05:28:57
+   Duration  8.29s (transform 572ms, setup 0ms, import 1.72s, tests 4.06s, environment 2.11s)
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+

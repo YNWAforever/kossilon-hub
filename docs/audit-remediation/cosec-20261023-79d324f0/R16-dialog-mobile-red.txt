@@ -1,0 +1,147 @@
+
+> test
+> vitest run --project unit src/routes/-work-queue.interaction.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/routes/-work-queue.interaction.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+ ❯ |unit| src/routes/-work-queue.interaction.test.tsx (4 tests | 2 failed) 1241ms
+     × retains successful rows when the next cursor fails, and clears them across actors 671ms
+     × keeps the same return context on desktop and mobile case links 100ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > retains successful rows when the next cursor fails, and clears them across actors
+AssertionError: expected <div role="dialog" …(7)>…(4)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  aria-describedby="radix-_r_2_"
+  aria-labelledby="radix-_r_1_"
+  class="fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-w-lg"
+  data-state="open"
+  id="radix-_r_0_"
+  role="dialog"
+  style="pointer-events: auto;"
+  tabindex="-1"
+>
+  <div
+    class="flex flex-col space-y-1.5 text-center sm:text-left"
+  >
+    <h2
+      class="text-lg font-semibold leading-none tracking-tight"
+      id="radix-_r_1_"
+    >
+      確認知悉升級
+    </h2>
+    <p
+      class="text-sm text-muted-foreground"
+      id="radix-_r_2_"
+    >
+      記錄已覆核的內容，以及「
+      Owned previous page
+      」的下一步。
+    </p>
+  </div>
+  <textarea
+    aria-label="確認知悉備註"
+    class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm min-h-24 w-full"
+    placeholder="覆核結果及下一步"
+  />
+  <div
+    class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"
+  >
+    <button
+      class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+      type="button"
+    >
+      取消
+    </button>
+    <button
+      class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+      disabled=""
+      type="button"
+    >
+      確認知悉
+    </button>
+  </div>
+  <button
+    class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+    type="button"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-x h-4 w-4"
+      fill="none"
+      height="24"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+      width="24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M18 6 6 18"
+      />
+      <path
+        d="m6 6 12 12"
+      />
+    </svg>
+    <span
+      class="sr-only"
+    >
+      Close
+    </span>
+  </button>
+</div>
+
+ ❯ src/routes/-work-queue.interaction.test.tsx:83:42
+
+     81|     view.rerender(renderView());
+     82|     await waitFor(() => expect(screen.queryByText("Owned previous page…
+     83|     expect(screen.queryByRole("dialog")).toBeNull();
+       |                                          ^
+     84|   });
+     85|   it("keeps the same return context on desktop and mobile case links",…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > keeps the same return context on desktop and mobile case links
+ Test Files  1 failed (1)
+AssertionError: expected null to be '香港' // Object.is equality
+      Tests  2 failed | 2 passed (4)
+
+   Start at  05:17:43
+- Expected:
+   Duration  4.76s (transform 914ms, setup 0ms, import 1.89s, tests 1.24s, environment 1.34s)
+"香港"
+
++ Received:
+null
+
+ ❯ src/routes/-work-queue.interaction.test.tsx:91:132
+     89|     const links = await screen.findAllByRole("link", { name: "Context …
+     90|     expect(links).toHaveLength(2);
+     91|     for (const link of links) expect(new URL(link.getAttribute("data-r…
+       |                                                                                                                                    ^
+     92|   });
+     93|   it("shows real identity, payment blocker with on-track SLA, and curr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+

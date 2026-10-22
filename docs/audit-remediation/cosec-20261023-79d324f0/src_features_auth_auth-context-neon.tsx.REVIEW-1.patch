@@ -1,0 +1,210 @@
+diff --git "a/docs\\audit-remediation\\cosec-20261023-79d324f0\\src_features_auth_auth-context-neon.tsx.before.txt" b/src/features/auth/auth-context-neon.tsx
+index 3996b37..a5322f1 100644
+--- "a/docs\\audit-remediation\\cosec-20261023-79d324f0\\src_features_auth_auth-context-neon.tsx.before.txt"
++++ b/src/features/auth/auth-context-neon.tsx
+@@ -79,6 +79,35 @@ type AuthContextValue = {
+ 
+ const AuthContext = createContext<AuthContextValue | null>(null);
+ 
++type SignOutMarker = {
++  state: "pending" | "failed" | "signed-out";
++  message?: string;
++  completion?: Promise<void>;
++};
++type AuthLifecycle = {
++  marker: SignOutMarker | null;
++  current: { current: SignOutMarker | null };
++  update: (marker: SignOutMarker | null) => void;
++};
++const AuthLifecycleContext = createContext<AuthLifecycle | null>(null);
++
++/** Keep explicit sign-out intent above the verified actor's keyed provider. */
++export function AuthSessionBoundary({ children }: { children: ReactNode }) {
++  const inherited = useContext(AuthLifecycleContext);
++  const current = useRef<SignOutMarker | null>(null);
++  const [marker, setMarker] = useState<SignOutMarker | null>(null);
++  const update = useCallback((next: SignOutMarker | null) => {
++    current.current = next;
++    setMarker(next);
++  }, []);
++  const lifecycle = useMemo(() => ({ marker, current, update }), [marker, update]);
++  return (
++    <AuthLifecycleContext.Provider value={inherited ?? lifecycle}>
++      {children}
++    </AuthLifecycleContext.Provider>
++  );
++}
++
+ export function AuthProvider({
+   children,
+   queryClient,
+@@ -90,7 +119,11 @@ export function AuthProvider({
+     return <DemoAuthProvider>{children}</DemoAuthProvider>;
+   }
+ 
+-  return <NeonAuthBootstrap queryClient={queryClient}>{children}</NeonAuthBootstrap>;
++  return (
++    <AuthSessionBoundary>
++      <NeonAuthBootstrap queryClient={queryClient}>{children}</NeonAuthBootstrap>
++    </AuthSessionBoundary>
++  );
+ }
+ 
+ function NeonAuthBootstrap({
+@@ -203,9 +236,32 @@ function NeonAuthProvider({
+   const [isHydrated, setIsHydrated] = useState(false);
+   const [authIssue, setAuthIssue] = useState<AuthIssue | null>(null);
+   const sessionVersion = useRef(0);
++  const {
++    marker,
++    current: signOutMarker,
++    update: updateSignOut,
++  } = useContext(AuthLifecycleContext)!;
++  const publishSignOut = useCallback((attempt: SignOutMarker) => {
++    setSession(null);
++    setIsHydrated(attempt.state !== "pending");
++    setAuthIssue(
++      attempt.state === "failed" ? { kind: "service", message: attempt.message! } : null,
++    );
++  }, []);
+ 
+   const refreshSession = useCallback(async (): Promise<AuthActionResult> => {
+     const version = ++sessionVersion.current;
++    if (signOutMarker.current) {
++      publishSignOut(signOutMarker.current);
++      return {
++        ok: false,
++        error:
++          signOutMarker.current.message ??
++          (signOutMarker.current.state === "signed-out"
++            ? "已登出，請重新登入。"
++            : "正在登出，請稍候。"),
++      };
++    }
+     setIsHydrated(false);
+     setAuthIssue(null);
+     try {
+@@ -240,7 +296,13 @@ function NeonAuthProvider({
+     } finally {
+       if (version === sessionVersion.current) setIsHydrated(true);
+     }
+-  }, [client, queryClient]);
++  }, [client, publishSignOut, queryClient, signOutMarker]);
++
++  useEffect(() => {
++    if (!marker) return;
++    sessionVersion.current++;
++    publishSignOut(marker);
++  }, [marker, publishSignOut]);
+ 
+   useEffect(() => {
+     void refreshSession();
+@@ -253,6 +315,8 @@ function NeonAuthProvider({
+ 
+   const login = useCallback(
+     async (email: string, password: string): Promise<AuthActionResult> => {
++      if (signOutMarker.current && signOutMarker.current.state !== "signed-out")
++        return { ok: false, error: "登出尚未確認，請先重試登出。" };
+       const version = sessionVersion.current;
+       const result = await client.signIn.email({ email, password });
+       if (version !== sessionVersion.current)
+@@ -261,12 +325,16 @@ function NeonAuthProvider({
+         return { ok: false, error: result.error.message ?? "登入失敗。" };
+       }
+ 
++      // Only a new, explicit successful sign-in may clear confirmed sign-out.
++      if (signOutMarker.current?.state === "signed-out") updateSignOut(null);
+       return refreshSession();
+     },
+-    [client, refreshSession],
++    [client, refreshSession, signOutMarker, updateSignOut],
+   );
+   const loginWithMagicLink = useCallback(
+     async (email: string): Promise<AuthActionResult> => {
++      if (signOutMarker.current && signOutMarker.current.state !== "signed-out")
++        return { ok: false, error: "登出尚未確認，請先重試登出。" };
+       const normalizedEmail = email.trim().toLowerCase();
+       const result = await client.signIn.magicLink({
+         email: normalizedEmail,
+@@ -280,9 +348,11 @@ function NeonAuthProvider({
+ 
+       return { ok: true, message: "請查看電郵中的登入連結。" };
+     },
+-    [client],
++    [client, signOutMarker],
+   );
+   const loginWithGoogle = useCallback(async (): Promise<AuthActionResult> => {
++    if (signOutMarker.current && signOutMarker.current.state !== "signed-out")
++      return { ok: false, error: "登出尚未確認，請先重試登出。" };
+     const result = await client.signIn.social({
+       provider: "google",
+       callbackURL: `${window.location.origin}/login`,
+@@ -298,7 +368,7 @@ function NeonAuthProvider({
+     // the response carries {url, redirect: true}, which signIn.social's success
+     // response always does). There is nothing further to do here.
+     return { ok: true };
+-  }, [client]);
++  }, [client, signOutMarker]);
+   const demoUnavailable = useCallback(
+     async (): Promise<AuthActionResult> => ({
+       ok: false,
+@@ -307,21 +377,42 @@ function NeonAuthProvider({
+     [],
+   );
+   const signOut = useCallback(async () => {
++    if (signOutMarker.current?.state === "pending") return signOutMarker.current.completion;
+     sessionVersion.current++;
+-    setSession(null);
+-    setAuthIssue(null);
+-    setIsHydrated(true);
+-    if (queryClient) await ensureActorQueryScope(queryClient, null);
+-    const result = await readAuthWithTimeout(() => client.signOut());
+-    if (result.error) throw new Error(classifyAuthFailure(result.error).message);
+-  }, [client, queryClient]);
++    const attempt: SignOutMarker = { state: "pending" };
++    updateSignOut(attempt);
++    publishSignOut(attempt);
++    attempt.completion = (async () => {
++      try {
++        if (queryClient) await ensureActorQueryScope(queryClient, null);
++        const result = await readAuthWithTimeout(() => client.signOut());
++        if (result.error) throw result.error;
++        updateSignOut({ state: "signed-out" });
++      } catch {
++        const message = "未能確認登出，請重試登出；暫不恢復帳戶內容。";
++        updateSignOut({ state: "failed", message });
++        throw new Error(message);
++      }
++    })();
++    return attempt.completion;
++  }, [client, publishSignOut, queryClient, signOutMarker, updateSignOut]);
++  const retrySession = useCallback(async (): Promise<AuthActionResult> => {
++    if (signOutMarker.current?.state === "failed") {
++      try {
++        await signOut();
++      } catch {
++        return { ok: false, error: signOutMarker.current?.message ?? "未能確認登出。" };
++      }
++    }
++    return refreshSession();
++  }, [refreshSession, signOut, signOutMarker]);
+ 
+   const value = useMemo<AuthContextValue>(
+     () => ({
+       session,
+       isHydrated,
+       authIssue,
+-      retrySession: refreshSession,
++      retrySession,
+       demoUsers: [],
+       isCurrentUserAdmin: isAdmin(session),
+       login,
+@@ -338,7 +429,7 @@ function NeonAuthProvider({
+       login,
+       loginWithGoogle,
+       loginWithMagicLink,
+-      refreshSession,
++      retrySession,
+       session,
+       signOut,
+     ],

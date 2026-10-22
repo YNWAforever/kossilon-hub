@@ -1,0 +1,169 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/annual-return/work-views-today.test.tsx (5 tests | 1 failed) 665ms
+     × keeps numeric search and both cursors on every business detail link 511ms
+ ❯ |unit| src/features/annual-return/work-views-other.test.ts (11 tests | 2 failed) 14ms
+     × incorporation keeps a fully verified Documents pending case on explicit manual follow-up 6ms
+     × corporate_change keeps a fully verified Documents pending case on explicit manual follow-up 1ms
+ ❯ |unit| src/features/annual-return/daily-view-state.test.ts (4 tests | 3 failed) 14ms
+     × retains search 12345 and both continuation strings on detail return and reload 9ms
+     × retains search ["中文公司",2026] and both continuation strings on detail return and reload 2ms
+     × retains search 海港公司 and both continuation strings on detail return and reload 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/daily-view-state.test.ts > Today return search through the real router serializers > retains search 12345 and both continuation strings on detail return and reload
+AssertionError: expected { view: 'returnsAndExceptions', …(3) } to deeply equal { view: 'returnsAndExceptions', …(4) }
+
+- Expected
++ Received
+
+  {
+-   "cursor": "[\"company\",\"2026-10-23\",\"海港公司\",\"00000000-0000-0000-0000-000000000001\"]",
+-   "otherCursor": "{\"context\":\"owned-page-3\",\"id\":\"00000000-0000-0000-0000-000000000002\"}",
+-   "q": "12345",
++   "cursor": [
++     "company",
++     "2026-10-23",
++     "海港公司",
++     "00000000-0000-0000-0000-000000000001",
++   ],
++   "q": 12345,
+    "sort": "company",
+    "view": "returnsAndExceptions",
+  }
+
+ ❯ src/features/annual-return/daily-view-state.test.ts:20:22
+     18|       const safeReturn = caseReturnPath(detailSearch.returnTo);
+     19|       const parsed = defaultParseSearch(new URL(safeReturn, "https://l…
+     20|       expect(parsed).toEqual(expected);
+       |                      ^
+     21|       expect(dailyViewSearch(parsed)).toEqual(expected);
+     22|       expect(defaultParseSearch(defaultStringifySearch(dailyViewSearch…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |unit| src/features/annual-return/daily-view-state.test.ts > Today return search through the real router serializers > retains search ["中文公司",2026] and both continuation strings on detail return and reload
+AssertionError: expected { view: 'returnsAndExceptions', …(3) } to deeply equal { view: 'returnsAndExceptions', …(4) }
+
+- Expected
++ Received
+
+  {
+-   "cursor": "[\"company\",\"2026-10-23\",\"海港公司\",\"00000000-0000-0000-0000-000000000001\"]",
+-   "otherCursor": "{\"context\":\"owned-page-3\",\"id\":\"00000000-0000-0000-0000-000000000002\"}",
+-   "q": "[\"中文公司\",2026]",
++   "cursor": [
++     "company",
++     "2026-10-23",
++     "海港公司",
++     "00000000-0000-0000-0000-000000000001",
++   ],
++   "q": [
++     "中文公司",
++     2026,
++   ],
+    "sort": "company",
+    "view": "returnsAndExceptions",
+  }
+
+ ❯ src/features/annual-return/daily-view-state.test.ts:20:22
+     18|       const safeReturn = caseReturnPath(detailSearch.returnTo);
+     19|       const parsed = defaultParseSearch(new URL(safeReturn, "https://l…
+     20|       expect(parsed).toEqual(expected);
+       |                      ^
+     21|       expect(dailyViewSearch(parsed)).toEqual(expected);
+     22|       expect(defaultParseSearch(defaultStringifySearch(dailyViewSearch…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |unit| src/features/annual-return/daily-view-state.test.ts > Today return search through the real router serializers > retains search 海港公司 and both continuation strings on detail return and reload
+AssertionError: expected { view: 'returnsAndExceptions', …(3) } to deeply equal { view: 'returnsAndExceptions', …(4) }
+
+- Expected
++ Received
+
+  {
+-   "cursor": "[\"company\",\"2026-10-23\",\"海港公司\",\"00000000-0000-0000-0000-000000000001\"]",
+-   "otherCursor": "{\"context\":\"owned-page-3\",\"id\":\"00000000-0000-0000-0000-000000000002\"}",
++   "cursor": [
++     "company",
++     "2026-10-23",
++     "海港公司",
++     "00000000-0000-0000-0000-000000000001",
++   ],
+    "q": "海港公司",
+    "sort": "company",
+    "view": "returnsAndExceptions",
+  }
+
+ ❯ src/features/annual-return/daily-view-state.test.ts:20:22
+     18|       const safeReturn = caseReturnPath(detailSearch.returnTo);
+     19|       const parsed = defaultParseSearch(new URL(safeReturn, "https://l…
+     20|       expect(parsed).toEqual(expected);
+       |                      ^
+     21|       expect(dailyViewSearch(parsed)).toEqual(expected);
+     22|       expect(defaultParseSearch(defaultStringifySearch(dailyViewSearch…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-other.test.ts > Today other-business read projection > incorporation keeps a fully verified Documents pending case on explicit manual follow-up
+ FAIL  |unit| src/features/annual-return/work-views-other.test.ts > Today other-business read projection > corporate_change keeps a fully verified Documents pending case on explicit manual follow-up
+AssertionError: expected '交件資格尚待個案證據核實' to match /未完成/
+
+- Expected:
+/未完成/
+
++ Received:
+"交件資格尚待個案證據核實"
+
+ ❯ src/features/annual-return/work-views-other.test.ts:82:28
+     80|       expect(row).not.toBeNull();
+     81|       expect(row!.caseId).toBe(source.id);
+     82|       expect(row!.blocker).toMatch(/未完成/);
+       |                            ^
+     83|       expect(row!.nextStep).toMatch(/人手/);
+     84|       expect(row!.readyForApproval).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-today.test.tsx > Today incorporation and corporate change work > keeps numeric search and both cursors on every business detail link
+AssertionError: expected { view: 'chaseToday', q: 12345, …(2) } to deeply equal { Object (view, q, ...) }
+
+- Expected
++ Received
+
+  {
+-   "cursor": "[\"company\",\"2026-10-23\",\"12345\",\"00000000-0000-0000-0000-000000000001\"]",
+-   "otherCursor": "owned-other-page-3",
+-   "q": "12345",
++   "cursor": [
++     "company",
++     "2026-10-23",
++     "12345",
++     "00000000-0000-0000-0000-000000000001",
++   ],
++   "q": 12345,
+    "sort": "company",
+    "view": "chaseToday",
+  }
+
+ ❯ src/features/annual-return/work-views-today.test.tsx:124:24
+    122|       expect(typeof returnTo).toBe("string");
+    123|       const restored = defaultParseSearch(new URL(returnTo, "https://l…
+    124|       expect(restored).toEqual(state.search);
+       |                        ^
+    125|     }
+    126|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  6 failed | 14 passed (20)
+   Start at  05:27:01
+   Duration  4.18s (transform 619ms, setup 0ms, import 1.34s, tests 693ms, environment 1.35s)
+

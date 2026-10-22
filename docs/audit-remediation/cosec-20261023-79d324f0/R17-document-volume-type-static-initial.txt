@@ -1,0 +1,22 @@
+[96msrc/features/documents/document-volume.integration.test.ts[0m:[93m3[0m:[93m28[0m - [91merror[0m[90m TS2307: [0mCannot find module 'node:crypto' or its corresponding type declarations.
+
+[7m3[0m import { randomUUID } from "node:crypto";
+[7m [0m [91m                           ~~~~~~~~~~~~~[0m
+[96msrc/features/documents/document-volume.integration.test.ts[0m:[93m4[0m:[93m34[0m - [91merror[0m[90m TS2307: [0mCannot find module 'node:fs/promises' or its corresponding type declarations.
+
+[7m4[0m import { mkdir, writeFile } from "node:fs/promises";
+[7m [0m [91m                                 ~~~~~~~~~~~~~~~~~~[0m
+[96msrc/features/documents/document-volume.integration.test.ts[0m:[93m5[0m:[93m22[0m - [91merror[0m[90m TS2307: [0mCannot find module 'node:path' or its corresponding type declarations.
+
+[7m5[0m import { join } from "node:path";
+[7m [0m [91m                     ~~~~~~~~~~~[0m
+[96msrc/features/documents/document-volume.integration.test.ts[0m:[93m16[0m:[93m21[0m - [91merror[0m[90m TS2591: [0mCannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+
+[7m16[0m const databaseUrl = process.env.TEST_DATABASE_URL;
+[7m  [0m [91m                    ~~~~~~~[0m
+[96msrc/features/documents/document-volume.integration.test.ts[0m:[93m154[0m:[93m25[0m - [91merror[0m[90m TS2591: [0mCannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+
+[7m154[0m     const evidenceDir = process.env.COSEC_EVIDENCE_DIR;
+[7m   [0m [91m                        ~~~~~~~[0m
+
+ExitCode=1

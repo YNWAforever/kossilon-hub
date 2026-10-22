@@ -1,0 +1,23 @@
+
+> test
+> vitest run --project unit src/features/annual-return/components/payment-pagination.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/annual-return/components/payment-pagination.test.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx [ src/features/annual-return/components/payment-pagination.test.tsx ]
+Error: EPERM: operation not permitted, rename 'C:\Users\laich\AppData\Local\Packages\sandbox.{e30d8b1f-db28-4cd4-ba9b-143cfd99491c}\AC\Temp\BY4Z_y_4zWuAcal0QR_pL\client\.tmp-1792702367956-nn7m0k3t56' -> 'C:\Users\laich\AppData\Local\Packages\sandbox.{e30d8b1f-db28-4cd4-ba9b-143cfd99491c}\AC\Temp\BY4Z_y_4zWuAcal0QR_pL\client\f84aa45f035248965c577b82a4e3a33d3346d4a9'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  04:52:45
+   Duration  2.10s (transform 0ms, setup 0ms, import 0ms, tests 0ms, environment 1.77s)
+

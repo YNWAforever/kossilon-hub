@@ -1,0 +1,6 @@
+
+C:\Users\laich\Documents\kossilon-hub\cosec-20261023\scripts\cosec-delivery.ts
+  121:11  error  Unexpected control character(s) in regular expression: \x00, \x1f  no-control-regex
+
+✖ 1 problem (1 error, 0 warnings)
+

@@ -1,0 +1,30 @@
+{
+  "postread_exit_code": 0,
+  "files": [
+    "src/features/work-items/queue.integration.test.ts",
+    "src/features/work-items/repository.test.ts",
+    "src/features/bulk-operations/repository.integration.test.ts",
+    "src/features/bulk-operations/actions.integration.test.ts",
+    "src/features/documents/company-document-register.integration.test.ts",
+    "src/features/documents/repository.integration.test.ts",
+    "src/features/documents/document-volume.integration.test.ts",
+    "src/features/annual-return/work-views-other.integration.test.ts",
+    "src/features/annual-return/readiness.integration.test.ts",
+    "src/features/annual-return/payment-review.integration.test.ts",
+    "src/features/incorporation/read-page.integration.test.ts",
+    "src/features/incorporation/repository.test.ts",
+    "src/features/corporate-changes/repository.test.ts",
+    "src/features/whatsapp/history-pagination.integration.test.ts",
+    "src/features/admin/repository.integration.test.ts",
+    "src/features/nar-import/apply.integration.test.ts"
+  ],
+  "run_id": "cosec-20261023-79d324f0",
+  "container_id": "4f5c362905d14782f4bc2c4bf74af3fc8f2b4e76259342e873bfd1ea78424580",
+  "auth_runtime_verified": false,
+  "native_ticks": false,
+  "finished_utc": "2026-10-22T22:14:17.1692468Z",
+  "source_sha": "8bc1e0dea88c5796c37b2f32a781fac7aab31774",
+  "test_exit_code": 0,
+  "started_utc": "2026-10-22T22:11:41.1435316Z",
+  "provider_calls": false
+}

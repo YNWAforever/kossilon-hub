@@ -1,0 +1,567 @@
+
+> test
+> vitest run --project unit --maxWorkers 1 src/features/incorporation/components/case-lists.test.tsx
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/incorporation/components/case-lists.test.tsx (4 tests | 4 failed) 4217ms
+     × searches existing cases independently from the create company picker 1149ms
+     × restores filters from the URL and permits clearing a failed cursor 1030ms
+     × searches existing cases independently from the create company picker 1017ms
+     × restores filters from the URL and permits clearing a failed cursor 1019ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/incorporation/components/case-lists.test.tsx > incorporation > searches existing cases independently from the create company picker
+TestingLibraryElementError: Unable to find a label with the text of: 搜尋既有案件
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            公司註冊
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            新香港公司註冊受理，由開立案件至公司註冊處批核。
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+            type="button"
+          >
+            開始公司註冊
+          </button>
+        </div>
+      </div>
+      <section
+        class="rounded-lg border bg-card p-4"
+      >
+        <div
+          class="divide-y"
+        >
+          <p
+            class="py-3 text-sm text-muted-foreground"
+          >
+            尚未有公司註冊案件。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            公司註冊
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            新香港公司註冊受理，由開立案件至公司註冊處批核。
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+            type="button"
+          >
+            開始公司註冊
+          </button>
+        </div>
+      </div>
+      <section
+        class="rounded-lg border bg-card p-4"
+      >
+        <div
+          class="divide-y"
+        >
+          <p
+            class="py-3 text-sm text-muted-foreground"
+          >
+            尚未有公司註冊案件。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/incorporation/components/case-lists.test.tsx:35:33
+     33|   it("searches existing cases independently from the create company pi…
+     34|     mount();
+     35|     const search = await screen.findByLabelText("搜尋既有案件");
+       |                                 ^
+     36|     fireEvent.change(search, { target: { value: "新創" } });
+     37|     fireEvent.submit(screen.getByRole("form", { name: "案件篩選" }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |unit| src/features/incorporation/components/case-lists.test.tsx > incorporation > restores filters from the URL and permits clearing a failed cursor
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            公司註冊
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            新香港公司註冊受理，由開立案件至公司註冊處批核。
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+            type="button"
+          >
+            開始公司註冊
+          </button>
+        </div>
+      </div>
+      <section
+        class="rounded-lg border bg-card p-4"
+      >
+        <div
+          class="divide-y"
+        >
+          <p
+            class="py-3 text-sm text-muted-foreground"
+          >
+            尚未有公司註冊案件。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            公司註冊
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            新香港公司註冊受理，由開立案件至公司註冊處批核。
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+            type="button"
+          >
+            開始公司註冊
+          </button>
+        </div>
+      </div>
+      <section
+        class="rounded-lg border bg-card p-4"
+      >
+        <div
+          class="divide-y"
+        >
+          <p
+            class="py-3 text-sm text-muted-foreground"
+          >
+            尚未有公司註冊案件。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/incorporation/components/case-lists.test.tsx:46:18
+     44|     (name === "incorporation" ? state.incorporation : state.changes).m…
+     45|     mount();
+     46|     await screen.findByRole("alert");
+       |                  ^
+     47|     expect((screen.getByLabelText("搜尋既有案件") as HTMLInputElement).value…
+     48|     fireEvent.click(screen.getByRole("button", { name: "重新整理列表" }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |unit| src/features/incorporation/components/case-lists.test.tsx > corporate changes > searches existing cases independently from the create company picker
+TestingLibraryElementError: Unable to find a label with the text of: 搜尋既有案件
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            公司變更
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            公司名稱變更、股份轉讓、高級人員變更及註冊辦事處變更。
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+            type="button"
+          >
+            新增申請
+          </button>
+        </div>
+      </div>
+      <label
+        class="block text-sm"
+      >
+        搜尋可選公司
+        <input
+          class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"
+          value=""
+        />
+        <span
+          class="block text-xs text-muted-foreground"
+        >
+          最多顯示200項；搜尋涵蓋授權公司。
+        </span>
+      </label>
+      <section
+        class="rounded-lg border bg-card"
+      >
+        <p
+          class="p-6 text-sm text-muted-foreground"
+        >
+          尚未有公司變更申請。
+        </p>
+      </section>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            公司變更
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            公司名稱變更、股份轉讓、高級人員變更及註冊辦事處變更。
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+            type="button"
+          >
+            新增申請
+          </button>
+        </div>
+      </div>
+      <label
+        class="block text-sm"
+      >
+        搜尋可選公司
+        <input
+          class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"
+          value=""
+        />
+        <span
+          class="block text-xs text-muted-foreground"
+        >
+          最多顯示200項；搜尋涵蓋授權公司。
+        </span>
+      </label>
+      <section
+        class="rounded-lg border bg-card"
+      >
+        <p
+          class="p-6 text-sm text-muted-foreground"
+        >
+          尚未有公司變更申請。
+        </p>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/incorporation/components/case-lists.test.tsx:35:33
+     33|   it("searches existing cases independently from the create company pi…
+     34|     mount();
+     35|     const search = await screen.findByLabelText("搜尋既有案件");
+       |                                 ^
+     36|     fireEvent.change(search, { target: { value: "新創" } });
+     37|     fireEvent.submit(screen.getByRole("form", { name: "案件篩選" }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |unit| src/features/incorporation/components/case-lists.test.tsx > corporate changes > restores filters from the URL and permits clearing a failed cursor
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            公司變更
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            公司名稱變更、股份轉讓、高級人員變更及註冊辦事處變更。
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+            type="button"
+          >
+            新增申請
+          </button>
+        </div>
+      </div>
+      <label
+        class="block text-sm"
+      >
+        搜尋可選公司
+        <input
+          class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"
+          value=""
+        />
+        <span
+          class="block text-xs text-muted-foreground"
+        >
+          最多顯示200項；搜尋涵蓋授權公司。
+        </span>
+      </label>
+      <section
+        class="rounded-lg border bg-card"
+      >
+        <p
+          class="p-6 text-sm text-muted-foreground"
+        >
+          尚未有公司變更申請。
+        </p>
+      </section>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            公司變更
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            公司名稱變更、股份轉讓、高級人員變更及註冊辦事處變更。
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+            type="button"
+          >
+            新增申請
+          </button>
+        </div>
+      </div>
+      <label
+        class="block text-sm"
+      >
+        搜尋可選公司
+        <input
+          class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"
+          value=""
+        />
+        <span
+          class="block text-xs text-muted-foreground"
+        >
+          最多顯示200項；搜尋涵蓋授權公司。
+        </span>
+      </label>
+      <section
+        class="rounded-lg border bg-card"
+      >
+        <p
+          class="p-6 text-sm text-muted-foreground"
+        >
+          尚未有公司變更申請。
+        </p>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/incorporation/components/case-lists.test.tsx:46:18
+     44|     (name === "incorporation" ? state.incorporation : state.changes).m…
+     45|     mount();
+     46|     await screen.findByRole("alert");
+       |                  ^
+     47|     expect((screen.getByLabelText("搜尋既有案件") as HTMLInputElement).value…
+     48|     fireEvent.click(screen.getByRole("button", { name: "重新整理列表" }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  05:00:19
+   Duration  10.37s (transform 342ms, setup 0ms, import 1.92s, tests 4.22s, environment 3.70s)
+

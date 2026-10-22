@@ -1,0 +1,17 @@
+{
+  "Id": "4f5c362905d14782f4bc2c4bf74af3fc8f2b4e76259342e873bfd1ea78424580",
+  "Image": "sha256:f4c66b820c6f974249089d3d16d86a3698eae11e8746eb6644b2271031e91232",
+  "Mounts": [],
+  "labels": {
+    "codex.repo": "kossilon-hub",
+    "codex.run": "cosec-20261023-79d324f0"
+  },
+  "ports": {
+    "5432/tcp": [
+      {
+        "HostIp": "127.0.0.1",
+        "HostPort": "60953"
+      }
+    ]
+  }
+}

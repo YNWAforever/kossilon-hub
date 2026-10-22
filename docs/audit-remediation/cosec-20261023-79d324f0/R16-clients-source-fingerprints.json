@@ -1,0 +1,30 @@
+[
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\clients\\register-view-state.ts",
+    "Hash": "D4E085D4AE7555FC9D7C6504245C89249C6F0628DC58CAD07EA99909EB25F79B"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\clients\\register-view-state.test.ts",
+    "Hash": "1AE3D1A20E0C938814AB7BACE2F8CCE9A3BE0F329E5D54AEF78A8719346F83F2"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\clients\\components\\production-client-register.tsx",
+    "Hash": "63EC2C0DFEF0916A2816E7A3839EC0169D4F8DB3ABE234EE7ADC0233CB869763"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\clients\\components\\production-client-register.interaction.test.tsx",
+    "Hash": "87277186A4CB7AA35CC6583D84B8EDFE5EE6B186C4CF320EE4575E8B8954BE8C"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\routes\\clients.tsx",
+    "Hash": "9B9E1C5A4DC4D0BF2B7AFF191B907F69E5B27BCA46F7EE671989D4D008D21F74"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\routes\\clients.$id.tsx",
+    "Hash": "48C80EA8C3C533A685860E930421E5A4FD0871F131E0139544BB935D369B239B"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\routes\\-clients-url-context.test.tsx",
+    "Hash": "72E5E280452FC445ADE96331D5BA9164666663FAEA6709BA20692FC48B59AF05"
+  }
+]

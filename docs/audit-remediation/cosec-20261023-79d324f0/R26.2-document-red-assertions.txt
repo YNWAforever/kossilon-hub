@@ -1,0 +1,52 @@
+
+> test
+> vitest run --configLoader runner --project unit src/features/documents/document-list.unit.test.ts --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/documents/document-list.unit.test.ts (8 tests | 2 failed) 24ms
+     × accepts source and current-version review filters without changing the page protocol 11ms
+     × binds all global filters before the page limit and treats wildcard input literally 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/documents/document-list.unit.test.ts > document register query contract (no database) > accepts source and current-version review filters without changing the page protocol
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/features/documents/document-list.unit.test.ts:54:28
+     52|   it("accepts source and current-version review filters without changi…
+     53|     const result = documentListPageSchema.safeParse({ source: "client"…
+     54|     expect(result.success).toBe(true);
+       |                            ^
+     55|     expect(documentListPageSchema.safeParse({ source: "invented" }).su…
+     56|     expect(documentListPageSchema.safeParse({ reviewStatus: "approved"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| src/features/documents/document-list.unit.test.ts > document register query contract (no database) > binds all global filters before the page limit and treats wildcard input literally
+AssertionError: expected [ null, null, null, null, null, …(16) ] to include 'client'
+ ❯ src/features/documents/document-list.unit.test.ts:64:26
+     62|     await repository.listDocumentPage({ q: "  A_50%  ", category: "pay…
+     63|     const query = queries.at(-1)!;
+     64|     expect(query.values).toContain("client");
+       |                          ^
+     65|     expect(query.values).toContain("pending");
+     66|     expect(query.values).toContain("payment");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  04:55:15
+   Duration  859ms (transform 323ms, setup 0ms, import 528ms, tests 24ms, environment 0ms)
+

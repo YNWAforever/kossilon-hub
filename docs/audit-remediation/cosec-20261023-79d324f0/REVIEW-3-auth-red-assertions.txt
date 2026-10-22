@@ -1,0 +1,402 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/features/auth/auth-router-recovery.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+ ❯ |unit| src/features/auth/auth-router-recovery.test.tsx (7 tests | 7 failed) 3671ms
+     × retains sign-out through root error Retry while remote sign-out is pending 217ms
+     × retains sign-out through root error Retry while remote sign-out is rejected 53ms
+     × retains sign-out through root error Retry while remote sign-out is timeout 60ms
+     × finishes denied recovery after rejected and reaches B's safe destination 1098ms
+     × finishes denied recovery after returned error and reaches B's safe destination 1080ms
+     × finishes denied recovery after timeout and reaches B's safe destination 1121ms
+     × waits for the actual auth provider before automatic denied sign-out on a direct login entry 40ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/auth/auth-router-recovery.test.tsx > REVIEW-3 actual router auth recovery > retains sign-out through root error Retry while remote sign-out is pending
+ FAIL  |unit| src/features/auth/auth-router-recovery.test.tsx > REVIEW-3 actual router auth recovery > retains sign-out through root error Retry while remote sign-out is rejected
+ FAIL  |unit| src/features/auth/auth-router-recovery.test.tsx > REVIEW-3 actual router auth recovery > retains sign-out through root error Retry while remote sign-out is timeout
+AssertionError: expected <p></p> to be null
+
+- Expected:
+null
+
++ Received:
+<p>
+  Private account 
+  staff-A
+</p>
+
+ ❯ src/features/auth/auth-router-recovery.test.tsx:127:61
+    125|       await waitFor(() => expect(rpc.configuration.mock.calls.length).…
+    126|       await act(async () => undefined);
+    127|       expect(screen.queryByText("Private account staff-A")).toBeNull();
+       |                                                             ^
+    128|       expect(queryClient.getQueryData(["private"])).toBeUndefined();
+    129|       if (outcome !== "pending") expect(screen.getByRole("alert").text…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |unit| src/features/auth/auth-router-recovery.test.tsx > REVIEW-3 actual router auth recovery > finishes denied recovery after rejected and reaches B's safe destination
+ FAIL  |unit| src/features/auth/auth-router-recovery.test.tsx > REVIEW-3 actual router auth recovery > finishes denied recovery after returned error and reaches B's safe destination
+ FAIL  |unit| src/features/auth/auth-router-recovery.test.tsx > REVIEW-3 actual router auth recovery > finishes denied recovery after timeout and reaches B's safe destination
+TestingLibraryElementError: Unable to find an element with the text: Private account staff-B. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex min-h-screen bg-background text-foreground"
+    >
+      <section
+        class="hidden min-h-screen flex-1 flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex"
+      >
+        <div
+          class="flex items-center gap-3"
+        >
+          <div
+            class="flex h-10 w-10 items-center justify-center rounded-md bg-primary-foreground text-primary"
+          >
+            <span
+              class="font-display text-base font-bold"
+            >
+              K
+            </span>
+          </div>
+          <div>
+            <div
+              class="font-display text-lg font-semibold"
+            >
+              Kossilon
+            </div>
+            <div
+              class="text-xs uppercase tracking-wider text-primary-foreground/70"
+            >
+              公司秘書營運系統
+            </div>
+          </div>
+        </div>
+        <div
+          class="max-w-xl"
+        >
+          <p
+            class="text-sm uppercase tracking-[0.2em] text-primary-foreground/80"
+          >
+            Compliance Core
+          </p>
+          <h1
+            class="mt-4 font-display text-4xl font-semibold leading-tight"
+          >
+            安全處理申報遞交、客戶證明文件、提醒及團隊運作。
+          </h1>
+          <p
+            class="mt-4 text-sm leading-6 text-primary-foreground/75"
+          >
+            在同一系統統籌周年申報、WhatsApp 查詢、文件追收及審批。
+          </p>
+        </div>
+        <div
+          class="grid grid-cols-3 gap-3 text-xs text-primary-foreground/90"
+        >
+          <div
+            class="rounded-md bg-primary-foreground/10 p-3"
+          >
+            周年申報流程
+          </div>
+          <div
+            class="rounded-md bg-primary-foreground/10 p-3"
+          >
+            按角色分配的工作區
+          </div>
+          <div
+            class="rounded-md bg-primary-foreground/10 p-3"
+          >
+            合規狀況一目了然
+          </div>
+        </div>
+      </section>
+      <section
+        class="flex min-h-screen w-full items-center justify-center px-6 py-10 lg:w-[500px]"
+      >
+        <div
+          class="w-full max-w-sm"
+        >
+          <div
+            class="mb-8 flex items-center gap-3 lg:hidden"
+          >
+            <div
+              class="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground"
+            >
+              <span
+                class="font-display text-base font-bold"
+              >
+                K
+              </span>
+            </div>
+            <div>
+              <div
+                class="font-display text-lg font-semibold"
+              >
+                Kossilon
+              </div>
+              <div
+                class="text-xs uppercase tracking-wider text-muted-foreground"
+              >
+                公司秘書營運系統
+              </div>
+            </div>
+          </div>
+          <div>
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-blue-soft text-status-blue-text ring-status-blue/20"
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full bg-status-blue"
+              />
+              安全登入
+            </span>
+            <h1
+              class="mt-4 font-display text-2xl font-semibold"
+            >
+              登入 Compliance Core
+            </h1>
+            <p
+              class="mt-1 text-sm leading-6 text-muted-foreground"
+            >
+              請使用貴公司的 Neon Auth 帳戶登入。
+            </p>
+          </div>
+          <div
+            class="mt-6 rounded-md border border-status-red/30 bg-status-red-soft px-3 py-2 text-xs text-status-red-text"
+            role="alert"
+          >
+            此帳戶未獲授權使用 Kossilon Hub。請聯絡管理員開通權限，或於下方改用其他帳戶登入。
+          </div>
+          <div
+            aria-label="登入方式"
+            class="mt-6 grid grid-cols-2 gap-1 rounded-md border border-border bg-muted/40 p-1"
+            role="group"
+          >
+            <button
+              aria-pressed="true"
+              class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 px-3 text-xs h-auto min-h-9 whitespace-normal py-2"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-key-round h-3.5 w-3.5"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <pat...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex min-h-screen bg-background text-foreground"
+    >
+      <section
+        class="hidden min-h-screen flex-1 flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex"
+      >
+        <div
+          class="flex items-center gap-3"
+        >
+          <div
+            class="flex h-10 w-10 items-center justify-center rounded-md bg-primary-foreground text-primary"
+          >
+            <span
+              class="font-display text-base font-bold"
+            >
+              K
+            </span>
+          </div>
+          <div>
+            <div
+              class="font-display text-lg font-semibold"
+            >
+              Kossilon
+            </div>
+            <div
+              class="text-xs uppercase tracking-wider text-primary-foreground/70"
+            >
+              公司秘書營運系統
+            </div>
+          </div>
+        </div>
+        <div
+          class="max-w-xl"
+        >
+          <p
+            class="text-sm uppercase tracking-[0.2em] text-primary-foreground/80"
+          >
+            Compliance Core
+          </p>
+          <h1
+            class="mt-4 font-display text-4xl font-semibold leading-tight"
+          >
+            安全處理申報遞交、客戶證明文件、提醒及團隊運作。
+          </h1>
+          <p
+            class="mt-4 text-sm leading-6 text-primary-foreground/75"
+          >
+            在同一系統統籌周年申報、WhatsApp 查詢、文件追收及審批。
+          </p>
+        </div>
+        <div
+          class="grid grid-cols-3 gap-3 text-xs text-primary-foreground/90"
+        >
+          <div
+            class="rounded-md bg-primary-foreground/10 p-3"
+          >
+            周年申報流程
+          </div>
+          <div
+            class="rounded-md bg-primary-foreground/10 p-3"
+          >
+            按角色分配的工作區
+          </div>
+          <div
+            class="rounded-md bg-primary-foreground/10 p-3"
+          >
+            合規狀況一目了然
+          </div>
+        </div>
+      </section>
+      <section
+        class="flex min-h-screen w-full items-center justify-center px-6 py-10 lg:w-[500px]"
+      >
+        <div
+          class="w-full max-w-sm"
+        >
+          <div
+            class="mb-8 flex items-center gap-3 lg:hidden"
+          >
+            <div
+              class="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground"
+            >
+              <span
+                class="font-display text-base font-bold"
+              >
+                K
+              </span>
+            </div>
+            <div>
+              <div
+                class="font-display text-lg font-semibold"
+              >
+                Kossilon
+              </div>
+              <div
+                class="text-xs uppercase tracking-wider text-muted-foreground"
+              >
+                公司秘書營運系統
+              </div>
+            </div>
+          </div>
+          <div>
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-blue-soft text-status-blue-text ring-status-blue/20"
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full bg-status-blue"
+              />
+              安全登入
+            </span>
+            <h1
+              class="mt-4 font-display text-2xl font-semibold"
+            >
+              登入 Compliance Core
+            </h1>
+            <p
+              class="mt-1 text-sm leading-6 text-muted-foreground"
+            >
+              請使用貴公司的 Neon Auth 帳戶登入。
+            </p>
+          </div>
+          <div
+            class="mt-6 rounded-md border border-status-red/30 bg-status-red-soft px-3 py-2 text-xs text-status-red-text"
+            role="alert"
+          >
+            此帳戶未獲授權使用 Kossilon Hub。請聯絡管理員開通權限，或於下方改用其他帳戶登入。
+          </div>
+          <div
+            aria-label="登入方式"
+            class="mt-6 grid grid-cols-2 gap-1 rounded-md border border-border bg-muted/40 p-1"
+            role="group"
+          >
+            <button
+              aria-pressed="true"
+              class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 px-3 text-xs h-auto min-h-9 whitespace-normal py-2"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-key-round h-3.5 w-3.5"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <pat...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/auth/auth-router-recovery.test.tsx:159:20
+    157|     fireEvent.click(screen.getByRole("button", { name: "登入", exact: tr…
+    158|     try {
+    159|       await screen.findByText("Private account staff-B");
+       |                    ^
+    160|       expect(router.state.location.pathname).toBe("/documents");
+    161|       expect(new URLSearchParams(window.location.search).get("from")).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |unit| src/features/auth/auth-router-recovery.test.tsx > REVIEW-3 actual router auth recovery > waits for the actual auth provider before automatic denied sign-out on a direct login entry
+AssertionError: expected <p></p> to be null
+
+- Expected:
+null
+
++ Received:
+<p>
+  Private account 
+  staff-A
+</p>
+
+ ❯ src/features/auth/auth-router-recovery.test.tsx:172:59
+    170|     await mountRouter("/login?denied=1&redirect=%2Fdocuments");
+    171|     await act(async () => undefined);
+    172|     expect(screen.queryByText("Private account staff-A")).toBeNull();
+       |                                                           ^
+    173|     expect(new URLSearchParams(window.location.search).get("denied")).…
+    174|     expect(rpc.client.signOut).toHaveBeenCalledOnce();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  05:54:01
+   Duration  6.64s (transform 463ms, setup 0ms, import 1.20s, tests 3.67s, environment 1.52s)
+

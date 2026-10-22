@@ -1,0 +1,50 @@
+
+> test
+> vitest run --project unit src/routes/-clients-url-context.test.tsx src/features/clients/register-view-state.test.ts src/features/clients/components/production-client-register.interaction.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/routes/-clients-url-context.test.tsx (15 tests | 1 failed) 2420ms
+   × persists next page and carries a safe exact returnTo to detail 220ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-clients-url-context.test.tsx > persists next page and carries a safe exact returnTo to detail
+AssertionError: expected last "vi.fn()" call to have been called with [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
++     "actorScope": {
++       "active": true,
++       "authUserId": "admin-auth",
++       "role": "Admin",
++       "teamId": "33333333-3333-4333-8333-333333333333",
++       "userId": "22222222-2222-4222-8222-222222222222",
++     },
+      "clientId": "11111111-1111-4111-8111-111111111111",
+-     "returnTo": "/clients?q=Acme&status=inactive&team=33333333-3333-4333-8333-333333333333&includeFixtures=true&cursor=%22%5B%5C%22Beta%5C%22%2C%5C%2211111111-1111-4111-8111-111111111111%5C%22%5D%22",
+    },
+  ]
+
+ ❯ src/routes/-clients-url-context.test.tsx:77:20
+     75|   await act(async () => { await router.navigate({ href: open.getAttrib…
+     76|   await screen.findByText("Client detail boundary");
+     77|   expect(f.detail).toHaveBeenLastCalledWith(expect.objectContaining({ …
+       |                    ^
+     78|   await act(async () => { await router.navigate({ href: returnTo }); }…
+     79|   await screen.findByRole("link", { name: "開啟" });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 46 passed (47)
+   Start at  05:10:26
+   Duration  17.50s (transform 1.40s, setup 0ms, import 5.59s, tests 3.50s, environment 6.79s)
+

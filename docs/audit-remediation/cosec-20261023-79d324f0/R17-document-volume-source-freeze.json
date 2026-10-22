@@ -1,0 +1,76 @@
+{
+  "status": "SOURCE_FROZEN_READY_FOR_PARENT_EXCLUSIVE_SQL_RUN",
+  "recordedAtUtc": "2026-10-22T22:00:54.3354853Z",
+  "head": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "branch": "codex/cosec-20261023",
+  "ownedSource": [
+    {
+      "path": "src/features/documents/document-volume.integration.test.ts",
+      "sha256": "5324367AF6E5825C8E860DC320EBBE85EF911F26D8A83EA37A8F289D8509E0AA"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "sha256": "3CAA1C24D5AFBC4E91AB7A65BF75C17281674F085A51D419B3A584AAF2F5EC2C"
+    }
+  ],
+  "readDependencies": [
+    {
+      "path": "src/features/documents/repository.ts",
+      "sha256": "6946251B63930E888BDD8E15C5CA328A24BDDF2426B390B8E7C05F1BF55760D7",
+      "workerEdited": false
+    },
+    {
+      "path": "src/features/documents/server-fns.ts",
+      "sha256": "2C1B58EF9EE2DC79D30525BD0A402F493C8F0C9ACD42782ED4EEA157A683DA25",
+      "workerEdited": false
+    },
+    {
+      "path": "src/features/documents/list-filters.ts",
+      "sha256": "11F47B7CBFE2842C24B2E178FB5369E9408027B2E377D00599DF7A846215CF5E",
+      "workerEdited": false
+    },
+    {
+      "path": "src/features/bulk-operations/repository.ts",
+      "sha256": "CE2E54427552E9DB93107F804D8A28EFC43B9F1F8772150D40264DB0BE56F97F",
+      "workerEdited": false
+    }
+  ],
+  "expectedOwnDocuments": 1000,
+  "foreignControlDocuments": 10,
+  "expectedAllPages": [
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    37,
+    1
+  ],
+  "expectedScenarios": 15,
+  "expectedExactPostreadTables": 8,
+  "sqlExecutedByThisWorker": false,
+  "databaseClientConstructedByThisWorker": false,
+  "aggregateAndTargetIdentityOwner": "parent",
+  "freeze": "No further worker source/test edits or formatting pending parent result; docs/evidence only"
+}

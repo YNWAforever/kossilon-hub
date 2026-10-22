@@ -1,0 +1,35 @@
+
+> test
+> vitest run --project unit src/features/whatsapp/history-pagination.test.ts --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/whatsapp/history-pagination.test.ts (9 tests | 2 failed) 26ms
+     × listConversations binds cursor and cutoff strings as text before timestamp conversion 5ms
+     × listConversationMessages binds cursor and cutoff strings as text before timestamp conversion 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/whatsapp/history-pagination.test.ts > scoped WhatsApp history pages (unit) > listConversations binds cursor and cutoff strings as text before timestamp conversion
+ FAIL  |unit| src/features/whatsapp/history-pagination.test.ts > scoped WhatsApp history pages (unit) > listConversationMessages binds cursor and cutoff strings as text before timestamp conversion
+AssertionError: Target cannot be null or undefined.
+ ❯ src/features/whatsapp/history-pagination.test.ts:196:60
+    194|       // Parameter type inference must choose text; timestamptz parame…
+    195|       // the driver's Date serializer and truncate these microsecond s…
+    196|       expect(calls[0].sql.match(/\?::text::timestamptz/g)).toHaveLengt…
+       |                                                            ^
+    197|       expect(calls[0].values.filter((value) => value === at)).toHaveLe…
+    198|       expect(calls[0].values.filter((value) => value === asOf)).toHave…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  05:44:15
+   Duration  1.22s (transform 437ms, setup 0ms, import 861ms, tests 26ms, environment 0ms)
+
+ExitCode=1

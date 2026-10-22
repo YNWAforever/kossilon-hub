@@ -1,0 +1,16 @@
+{
+  "preserved_worktrees_unchanged": true,
+  "current_native_statuses": [
+    {
+      "Name": "BLOCKED",
+      "Count": 70
+    },
+    {
+      "Name": "NOT_RUN",
+      "Count": 114
+    }
+  ],
+  "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+  "originals": 184,
+  "source_clean": true
+}

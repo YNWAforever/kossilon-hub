@@ -1,0 +1,348 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/annual-return/work-views-today.test.tsx (4 tests | 1 failed) 1581ms
+     × shows both domain links, context, first action and explicit unknown deadline/reviewer 1131ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-today.test.tsx > Today incorporation and corporate change work > shows both domain links, context, first action and explicit unknown deadline/reviewer
+TestingLibraryElementError: Unable to find an element with the text: 海港註冊. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            今日工作
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            今日工作
+          </h1>
+        </div>
+      </div>
+      <div
+        class="flex flex-wrap gap-3"
+      >
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          搜尋今日工作
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+            value="海港"
+          />
+        </label>
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          排列
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+          >
+            <option
+              value="deadline"
+            >
+              到期日先後
+            </option>
+            <option
+              value="company"
+            >
+              公司名稱
+            </option>
+          </select>
+        </label>
+      </div>
+      <div
+        aria-live="polite"
+        class="space-y-3 p-4"
+        role="status"
+      >
+        <span
+          class="sr-only"
+        >
+          正在載入今日工作…
+        </span>
+        <div
+          class="flex items-center gap-3"
+        >
+          <div
+            aria-hidden="true"
+            class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+          />
+          <div
+            class="min-w-0 flex-1 space-y-2"
+          >
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-2/5"
+            />
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-3/4"
+            />
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-3"
+        >
+          <div
+            aria-hidden="true"
+            class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+          />
+          <div
+            class="min-w-0 flex-1 space-y-2"
+          >
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-1/3"
+            />
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-2/3"
+            />
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-3"
+        >
+          <div
+            aria-hidden="true"
+            class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+          />
+          <div
+            class="min-w-0 flex-1 space-y-2"
+          >
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-2/5"
+            />
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-3/4"
+            />
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-3"
+        >
+          <div
+            aria-hidden="true"
+            class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+          />
+          <div
+            class="min-w-0 flex-1 space-y-2"
+          >
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-1/3"
+            />
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-2/3"
+            />
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-3"
+        >
+          <div
+            aria-hidden="true"
+            class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+          />
+          <div
+            class="min-w-0 flex-1 space-y-2"
+          >
+            <div
+            ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            今日工作
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            今日工作
+          </h1>
+        </div>
+      </div>
+      <div
+        class="flex flex-wrap gap-3"
+      >
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          搜尋今日工作
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+            value="海港"
+          />
+        </label>
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          排列
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+          >
+            <option
+              value="deadline"
+            >
+              到期日先後
+            </option>
+            <option
+              value="company"
+            >
+              公司名稱
+            </option>
+          </select>
+        </label>
+      </div>
+      <div
+        aria-live="polite"
+        class="space-y-3 p-4"
+        role="status"
+      >
+        <span
+          class="sr-only"
+        >
+          正在載入今日工作…
+        </span>
+        <div
+          class="flex items-center gap-3"
+        >
+          <div
+            aria-hidden="true"
+            class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+          />
+          <div
+            class="min-w-0 flex-1 space-y-2"
+          >
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-2/5"
+            />
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-3/4"
+            />
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-3"
+        >
+          <div
+            aria-hidden="true"
+            class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+          />
+          <div
+            class="min-w-0 flex-1 space-y-2"
+          >
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-1/3"
+            />
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-2/3"
+            />
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-3"
+        >
+          <div
+            aria-hidden="true"
+            class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+          />
+          <div
+            class="min-w-0 flex-1 space-y-2"
+          >
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-2/5"
+            />
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-3/4"
+            />
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-3"
+        >
+          <div
+            aria-hidden="true"
+            class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+          />
+          <div
+            class="min-w-0 flex-1 space-y-2"
+          >
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-1/3"
+            />
+            <div
+              aria-hidden="true"
+              class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-2/3"
+            />
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-3"
+        >
+          <div
+            aria-hidden="true"
+            class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+          />
+          <div
+            class="min-w-0 flex-1 space-y-2"
+          >
+            <div
+            ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/work-views-today.test.tsx:101:18
+     99|   it("shows both domain links, context, first action and explicit unkn…
+    100|     await mount();
+    101|     await screen.findByText("海港註冊");
+       |                  ^
+    102|     expect(screen.getByRole("link", { name: "開啟公司註冊" }).getAttribute("…
+    103|       "/incorporation/inc-a?",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 7 passed (8)
+   Start at  05:08:08
+   Duration  11.35s (transform 1.19s, setup 0ms, import 2.60s, tests 2.22s, environment 5.61s)
+

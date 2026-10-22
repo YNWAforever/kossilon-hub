@@ -1,0 +1,876 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+stderr | src/features/annual-return/work-views-today.test.tsx > Today incorporation and corporate change work > shows both domain links, context, first action and explicit unknown deadline/reviewer
+A component suspended inside an `act` scope, but the `act` call was not awaited. When testing React components that depend on asynchronous data, you must await the result:
+
+await act(() => ...)
+
+ ❯ |unit| src/features/annual-return/work-views-today.test.tsx (4 tests | 4 failed) 4159ms
+     × shows both domain links, context, first action and explicit unknown deadline/reviewer 1037ms
+     × keeps read failures separate from zero work and offers retry 1088ms
+     × requests a bounded page and uses an independent continuation 1017ms
+     × clears the prior team rows while the new actor read is pending 1015ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-today.test.tsx > Today incorporation and corporate change work > shows both domain links, context, first action and explicit unknown deadline/reviewer
+TestingLibraryElementError: Unable to find an element with the text: 海港註冊. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div />
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div />
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/work-views-today.test.tsx:44:18
+     42|   it("shows both domain links, context, first action and explicit unkn…
+     43|     mount();
+     44|     await screen.findByText("海港註冊");
+       |                  ^
+     45|     expect(screen.getByRole("link", { name: "開啟公司註冊" }).getAttribute("…
+     46|     const change = screen.getByRole("link", { name: "開啟公司變更" }).getAtt…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-today.test.tsx > Today incorporation and corporate change work > keeps read failures separate from zero work and offers retry
+TestingLibraryElementError: Unable to find an element with the text: /公司註冊及公司變更未能載入/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            今日工作
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            今日工作
+          </h1>
+        </div>
+      </div>
+      <div
+        class="flex flex-wrap gap-3"
+      >
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          搜尋今日工作
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+            value="海港"
+          />
+        </label>
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          排列
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+          >
+            <option
+              value="deadline"
+            >
+              到期日先後
+            </option>
+            <option
+              value="company"
+            >
+              公司名稱
+            </option>
+          </select>
+        </label>
+      </div>
+      <nav
+        aria-label="今日工作分類"
+        class="flex flex-wrap gap-2"
+      >
+        <button
+          aria-pressed="true"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          今日要追
+           (0)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          新收到文件
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          等我覆核
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          可準備交件
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          回件與異常
+           (undefined)
+        </button>
+      </nav>
+      <section
+        class="rounded-lg border bg-card"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <h2
+            class="text-base font-semibold"
+          >
+            今日要追
+          </h2>
+          <p
+            class="mt-1 text-sm text-muted-foreground"
+          >
+            客戶仍未提供的文件，並且限期在三十天內。
+          </p>
+        </div>
+        <p
+          class="p-4 text-sm text-muted-foreground"
+        >
+          此搜尋沒有符合的工作。可清除搜尋或選擇另一分類。
+        </p>
+      </section>
+      <div
+        class="flex flex-wrap gap-3"
+      />
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            今日工作
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            今日工作
+          </h1>
+        </div>
+      </div>
+      <div
+        class="flex flex-wrap gap-3"
+      >
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          搜尋今日工作
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+            value="海港"
+          />
+        </label>
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          排列
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+          >
+            <option
+              value="deadline"
+            >
+              到期日先後
+            </option>
+            <option
+              value="company"
+            >
+              公司名稱
+            </option>
+          </select>
+        </label>
+      </div>
+      <nav
+        aria-label="今日工作分類"
+        class="flex flex-wrap gap-2"
+      >
+        <button
+          aria-pressed="true"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          今日要追
+           (0)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          新收到文件
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          等我覆核
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          可準備交件
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          回件與異常
+           (undefined)
+        </button>
+      </nav>
+      <section
+        class="rounded-lg border bg-card"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <h2
+            class="text-base font-semibold"
+          >
+            今日要追
+          </h2>
+          <p
+            class="mt-1 text-sm text-muted-foreground"
+          >
+            客戶仍未提供的文件，並且限期在三十天內。
+          </p>
+        </div>
+        <p
+          class="p-4 text-sm text-muted-foreground"
+        >
+          此搜尋沒有符合的工作。可清除搜尋或選擇另一分類。
+        </p>
+      </section>
+      <div
+        class="flex flex-wrap gap-3"
+      />
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/work-views-today.test.tsx:56:18
+     54|   it("keeps read failures separate from zero work and offers retry", a…
+     55|     state.read.mockRejectedValue(new Error("unavailable")); mount();
+     56|     await screen.findByText(/公司註冊及公司變更未能載入/);
+       |                  ^
+     57|     expect(screen.queryByText("此分類沒有符合的公司註冊或公司變更工作。")).toBeNull();
+     58|     fireEvent.click(screen.getByRole("button", { name: "重試其他業務" }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-today.test.tsx > Today incorporation and corporate change work > requests a bounded page and uses an independent continuation
+TestingLibraryElementError: Unable to find an element with the text: 海港註冊. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            今日工作
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            今日工作
+          </h1>
+        </div>
+      </div>
+      <div
+        class="flex flex-wrap gap-3"
+      >
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          搜尋今日工作
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+            value="海港"
+          />
+        </label>
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          排列
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+          >
+            <option
+              value="deadline"
+            >
+              到期日先後
+            </option>
+            <option
+              value="company"
+            >
+              公司名稱
+            </option>
+          </select>
+        </label>
+      </div>
+      <nav
+        aria-label="今日工作分類"
+        class="flex flex-wrap gap-2"
+      >
+        <button
+          aria-pressed="true"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          今日要追
+           (0)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          新收到文件
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          等我覆核
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          可準備交件
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          回件與異常
+           (undefined)
+        </button>
+      </nav>
+      <section
+        class="rounded-lg border bg-card"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <h2
+            class="text-base font-semibold"
+          >
+            今日要追
+          </h2>
+          <p
+            class="mt-1 text-sm text-muted-foreground"
+          >
+            客戶仍未提供的文件，並且限期在三十天內。
+          </p>
+        </div>
+        <p
+          class="p-4 text-sm text-muted-foreground"
+        >
+          此搜尋沒有符合的工作。可清除搜尋或選擇另一分類。
+        </p>
+      </section>
+      <div
+        class="flex flex-wrap gap-3"
+      />
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            今日工作
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            今日工作
+          </h1>
+        </div>
+      </div>
+      <div
+        class="flex flex-wrap gap-3"
+      >
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          搜尋今日工作
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+            value="海港"
+          />
+        </label>
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          排列
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+          >
+            <option
+              value="deadline"
+            >
+              到期日先後
+            </option>
+            <option
+              value="company"
+            >
+              公司名稱
+            </option>
+          </select>
+        </label>
+      </div>
+      <nav
+        aria-label="今日工作分類"
+        class="flex flex-wrap gap-2"
+      >
+        <button
+          aria-pressed="true"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          今日要追
+           (0)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          新收到文件
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          等我覆核
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          可準備交件
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          回件與異常
+           (undefined)
+        </button>
+      </nav>
+      <section
+        class="rounded-lg border bg-card"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <h2
+            class="text-base font-semibold"
+          >
+            今日要追
+          </h2>
+          <p
+            class="mt-1 text-sm text-muted-foreground"
+          >
+            客戶仍未提供的文件，並且限期在三十天內。
+          </p>
+        </div>
+        <p
+          class="p-4 text-sm text-muted-foreground"
+        >
+          此搜尋沒有符合的工作。可清除搜尋或選擇另一分類。
+        </p>
+      </section>
+      <div
+        class="flex flex-wrap gap-3"
+      />
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/work-views-today.test.tsx:63:18
+     61|   it("requests a bounded page and uses an independent continuation", a…
+     62|     state.read.mockResolvedValue({ rows: [incorporation], nextCursor: …
+     63|     await screen.findByText("海港註冊");
+       |                  ^
+     64|     expect(state.read).toHaveBeenCalledWith({ data: { view: "chaseToda…
+     65|     fireEvent.click(screen.getByRole("button", { name: "下一頁其他業務" }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-today.test.tsx > Today incorporation and corporate change work > clears the prior team rows while the new actor read is pending
+TestingLibraryElementError: Unable to find an element with the text: 海港註冊. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            今日工作
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            今日工作
+          </h1>
+        </div>
+      </div>
+      <div
+        class="flex flex-wrap gap-3"
+      >
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          搜尋今日工作
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+            value="海港"
+          />
+        </label>
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          排列
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+          >
+            <option
+              value="deadline"
+            >
+              到期日先後
+            </option>
+            <option
+              value="company"
+            >
+              公司名稱
+            </option>
+          </select>
+        </label>
+      </div>
+      <nav
+        aria-label="今日工作分類"
+        class="flex flex-wrap gap-2"
+      >
+        <button
+          aria-pressed="true"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          今日要追
+           (0)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          新收到文件
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          等我覆核
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          可準備交件
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          回件與異常
+           (undefined)
+        </button>
+      </nav>
+      <section
+        class="rounded-lg border bg-card"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <h2
+            class="text-base font-semibold"
+          >
+            今日要追
+          </h2>
+          <p
+            class="mt-1 text-sm text-muted-foreground"
+          >
+            客戶仍未提供的文件，並且限期在三十天內。
+          </p>
+        </div>
+        <p
+          class="p-4 text-sm text-muted-foreground"
+        >
+          此搜尋沒有符合的工作。可清除搜尋或選擇另一分類。
+        </p>
+      </section>
+      <div
+        class="flex flex-wrap gap-3"
+      />
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            今日工作
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            今日工作
+          </h1>
+        </div>
+      </div>
+      <div
+        class="flex flex-wrap gap-3"
+      >
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          搜尋今日工作
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+            value="海港"
+          />
+        </label>
+        <label
+          class="flex flex-col gap-1 text-sm"
+        >
+          排列
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11"
+          >
+            <option
+              value="deadline"
+            >
+              到期日先後
+            </option>
+            <option
+              value="company"
+            >
+              公司名稱
+            </option>
+          </select>
+        </label>
+      </div>
+      <nav
+        aria-label="今日工作分類"
+        class="flex flex-wrap gap-2"
+      >
+        <button
+          aria-pressed="true"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          今日要追
+           (0)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          新收到文件
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          等我覆核
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          可準備交件
+           (undefined)
+        </button>
+        <button
+          aria-pressed="false"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+          type="button"
+        >
+          回件與異常
+           (undefined)
+        </button>
+      </nav>
+      <section
+        class="rounded-lg border bg-card"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <h2
+            class="text-base font-semibold"
+          >
+            今日要追
+          </h2>
+          <p
+            class="mt-1 text-sm text-muted-foreground"
+          >
+            客戶仍未提供的文件，並且限期在三十天內。
+          </p>
+        </div>
+        <p
+          class="p-4 text-sm text-muted-foreground"
+        >
+          此搜尋沒有符合的工作。可清除搜尋或選擇另一分類。
+        </p>
+      </section>
+      <div
+        class="flex flex-wrap gap-3"
+      />
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/work-views-today.test.tsx:70:50
+     68|   it("clears the prior team rows while the new actor read is pending",…
+     69|     const client = new QueryClient({ defaultOptions: { queries: { retr…
+     70|     const rendered = mount(client); await screen.findByText("海港註冊");
+       |                                                  ^
+     71|     state.actor = { ...state.actor, authUserId: "auth-b", teamId: "tea…
+     72|     state.read.mockImplementation(() => new Promise(() => {}));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  05:05:44
+   Duration  7.36s (transform 414ms, setup 0ms, import 774ms, tests 4.16s, environment 1.95s)
+

@@ -1,0 +1,14 @@
+
+> typecheck
+> tsc --noEmit
+
+src/features/annual-return/daily-view-state.test.ts(18,54): error TS2339: Property 'returnTo' does not exist on type 'AnySchema'.
+src/features/annual-return/work-views-today.test.tsx(141,58): error TS2339: Property 'returnTo' does not exist on type 'AnySchema'.
+src/features/clients/client-return-context.test.ts(14,48): error TS2339: Property 'returnTo' does not exist on type 'AnySchema'.
+src/features/clients/client-return-context.test.ts(39,46): error TS2339: Property 'returnTo' does not exist on type 'AnySchema'.
+src/features/clients/components/client-case-return-context.test.tsx(98,25): error TS2345: Argument of type 'Record<string, unknown>' is not assignable to parameter of type 'SearchSchemaInput & { returnTo?: unknown; }'.
+  Property '__TSearchSchemaInput__' is missing in type 'Record<string, unknown>' but required in type 'SearchSchemaInput'.
+src/features/clients/components/client-case-return-context.test.tsx(167,48): error TS2339: Property 'returnTo' does not exist on type 'AnySchema'.
+src/features/clients/components/client-case-return-context.test.tsx(172,71): error TS2339: Property 'returnTo' does not exist on type 'AnySchema | AnnualReturnBoardSearch | { status: "active" | "all" | "inactive"; team: string; q: string; includeFixtures: boolean; cursor?: string | undefined; } | ... 8 more ... | ({ ...; } & { ...; })'.
+  Property 'returnTo' does not exist on type 'AnySchema'.
+src/features/clients/components/client-case-return-context.test.tsx(233,48): error TS2339: Property 'returnTo' does not exist on type 'AnySchema'.

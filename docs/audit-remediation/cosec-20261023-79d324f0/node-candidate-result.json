@@ -1,0 +1,6 @@
+{
+  "exit_code": 0,
+  "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+  "command": "node --test src/features/incorporation/incorporation-boundary.unit.cjs",
+  "finished_utc": "2026-10-22T22:21:05.0759214Z"
+}

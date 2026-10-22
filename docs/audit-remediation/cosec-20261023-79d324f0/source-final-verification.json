@@ -1,0 +1,8 @@
+{
+  "verified_utc": "2026-10-22T22:24:11.9860395Z",
+  "manifest": "source-candidate-final.json",
+  "files": 676,
+  "manifest_sha256": "640ba5bc024b6d1ad70b547a509ed0abbe358f13f83bff3a89538012c2dcb434",
+  "all_content_unchanged_after_final_verification": true,
+  "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de"
+}
