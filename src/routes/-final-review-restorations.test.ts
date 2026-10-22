@@ -30,11 +30,14 @@ describe("final review architecture restorations", () => {
     expect(rootRouteSource).toContain("createRootRouteWithContext<RouterContext>()");
     expect(rootRouteSource).toContain("beforeLoad: async ({ context, location }) =>");
     expect(rootRouteSource).toContain("isPublicRoute(location.pathname)");
-    expect(rootRouteSource).toContain("await getAuthenticatedActor()");
+    expect(rootRouteSource).toContain("await readAuthWithTimeout(() => getAuthenticatedActor())");
     expect(rootRouteSource).toContain("const { dataMode } = context;");
     expect(rootRouteSource).toContain("throw redirect({");
     expect(rootRouteSource).toContain("<QueryClientProvider client={queryClient}>");
-    expect(rootRouteSource).toContain("<AuthProvider>");
+    expect(rootRouteSource).toContain("<AuthSessionBoundary queryClient={queryClient}>");
+    expect(rootRouteSource).toContain(
+      "<AuthProvider key={JSON.stringify(actor)} queryClient={queryClient}>",
+    );
     expect(rootRouteSource).toContain("<ProtectedAppShell />");
     expect(rootRouteSource).toContain("<Toaster />");
     expect(rootRouteSource).toContain("notFoundComponent: NotFoundComponent");
