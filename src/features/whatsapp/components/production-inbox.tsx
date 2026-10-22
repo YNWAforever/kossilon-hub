@@ -1,11 +1,13 @@
 import { LoadingRows } from "@/components/ui/skeleton";
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Paperclip } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/field";
+import { useAuth } from "@/features/auth/auth-context-neon";
 import { labelValue } from "@/lib/format-label";
 import { MessageIntake } from "./message-intake";
 import {
@@ -16,11 +18,13 @@ import {
   formatHongKongTimestamp,
   sortConversationMessagesOldestFirst,
   type WhatsAppConversation,
+  type WhatsAppConversationMessage,
+  type WhatsAppHistoryCursor,
 } from "../conversations";
 import {
   getWhatsAppIntegrationStatus,
-  listWhatsAppConversationMessages,
-  listWhatsAppConversations,
+  listWhatsAppConversationMessagePage,
+  listWhatsAppConversationPage,
 } from "../server-fns";
 
 const EMPTY_INBOX_MESSAGE = "您目前的權限範圍內未有 WhatsApp 對話記錄。";
@@ -49,21 +53,46 @@ type InboxConnection = "checking" | "unknown" | "blocked" | "simulated" | "live"
  *   per-message delivery status does, and is shown.
  */
 export function ProductionWhatsAppInbox() {
-  const [selectedContactId, setSelectedContactId] = useState<string | undefined>();
+  const { session } = useAuth();
+  const actorKey = JSON.stringify([session?.id, session?.role, session?.team]);
+  return <InboxWorkspace key={actorKey} actorKey={actorKey} />;
+}
 
-  const conversationsQuery = useQuery({
-    queryKey: ["whatsapp-conversations", CONVERSATION_PAGE_SIZE],
-    queryFn: () => listWhatsAppConversations({ data: { limit: CONVERSATION_PAGE_SIZE } }),
+function InboxWorkspace({ actorKey }: { actorKey: string }) {
+  const [selectedContactId, setSelectedContactId] = useState<string | undefined>();
+  const [search, setSearch] = useState("");
+  const transcript = useRef<HTMLDivElement>(null);
+  const olderAnchor = useRef<{ contactId: string | undefined; height: number; top: number } | null>(
+    null,
+  );
+
+  const conversationsQuery = useInfiniteQuery({
+    queryKey: ["whatsapp-conversations", actorKey, search],
+    initialPageParam: undefined as WhatsAppHistoryCursor | undefined,
+    queryFn: ({ pageParam }) =>
+      listWhatsAppConversationPage({
+        data: { limit: CONVERSATION_PAGE_SIZE, search, cursor: pageParam },
+      }),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     retry: false,
   });
 
   const integrationQuery = useQuery({
-    queryKey: ["whatsapp-integration-status"],
+    queryKey: ["whatsapp-integration-status", actorKey],
     queryFn: () => getWhatsAppIntegrationStatus(),
     retry: false,
   });
 
-  const conversations = useMemo(() => conversationsQuery.data ?? [], [conversationsQuery.data]);
+  const conversations = useMemo(() => {
+    const unique = new Map<string, WhatsAppConversation>();
+    for (const page of conversationsQuery.data?.pages ?? []) {
+      for (const row of page.items) if (!unique.has(row.contactId)) unique.set(row.contactId, row);
+    }
+    return [...unique.values()];
+  }, [conversationsQuery.data]);
+  useEffect(() => {
+    if (!selectedContactId && conversations[0]) setSelectedContactId(conversations[0].contactId);
+  }, [conversations, selectedContactId]);
 
   // No silent fallback to conversations[0]: once a contact has been chosen, losing
   // it from a refreshed page must not swap another client's thread in underneath
@@ -74,24 +103,52 @@ export function ProductionWhatsAppInbox() {
   const selectionDropped = Boolean(selectedContactId) && selected === undefined;
   const activeContactId = selected?.contactId;
 
-  const messagesQuery = useQuery({
-    queryKey: ["whatsapp-conversation-messages", activeContactId],
-    queryFn: () => {
+  const messagesQuery = useInfiniteQuery({
+    queryKey: ["whatsapp-conversation-messages", actorKey, activeContactId],
+    initialPageParam: undefined as WhatsAppHistoryCursor | undefined,
+    queryFn: ({ pageParam }) => {
       // Guard rather than assert, so the precondition lives with the call it
       // protects instead of being split across `enabled`.
       if (!activeContactId) throw new Error("No WhatsApp conversation is selected.");
-      return listWhatsAppConversationMessages({
-        data: { contactId: activeContactId, limit: CONVERSATION_MESSAGE_PAGE_SIZE },
+      return listWhatsAppConversationMessagePage({
+        data: {
+          contactId: activeContactId,
+          limit: CONVERSATION_MESSAGE_PAGE_SIZE,
+          cursor: pageParam,
+        },
       });
     },
     enabled: activeContactId !== undefined,
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     retry: false,
   });
 
-  const messages = useMemo(
-    () => sortConversationMessagesOldestFirst(messagesQuery.data ?? []),
-    [messagesQuery.data],
-  );
+  const messages = useMemo(() => {
+    const unique = new Map<string, WhatsAppConversationMessage>();
+    for (const page of messagesQuery.data?.pages ?? []) {
+      for (const row of page.items) if (!unique.has(row.id)) unique.set(row.id, row);
+    }
+    return sortConversationMessagesOldestFirst([...unique.values()]);
+  }, [messagesQuery.data]);
+
+  useLayoutEffect(() => {
+    const anchor = olderAnchor.current;
+    if (!anchor || messagesQuery.isFetchingNextPage) return;
+    if (transcript.current && anchor.contactId === activeContactId) {
+      transcript.current.scrollTop = anchor.top + transcript.current.scrollHeight - anchor.height;
+    }
+    olderAnchor.current = null;
+  }, [activeContactId, messages, messagesQuery.isFetchingNextPage]);
+
+  function loadOlderMessages() {
+    if (transcript.current)
+      olderAnchor.current = {
+        contactId: activeContactId,
+        height: transcript.current.scrollHeight,
+        top: transcript.current.scrollTop,
+      };
+    void messagesQuery.fetchNextPage();
+  }
 
   // A blocked provider cannot verify a webhook signature and a simulated one sends
   // nothing, so neither records inbound messages. A failed status check means the
@@ -117,11 +174,32 @@ export function ProductionWhatsAppInbox() {
           <p className="mt-2 text-xs text-muted-foreground">
             設定狀態只顯示伺服器綁定是否存在，連線健康及實際收訊尚未核實。
           </p>
+          <label className="mt-3 block text-xs text-muted-foreground">
+            搜尋對話
+            <Input
+              type="search"
+              value={search}
+              maxLength={200}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="聯絡人、電話或公司"
+              className="mt-1 w-full"
+            />
+          </label>
         </div>
 
         {conversationsQuery.isError ? (
           <p role="alert" className="p-4 text-sm text-destructive">
             {errorMessage(conversationsQuery.error)}
+            <Button
+              variant="link"
+              onClick={() =>
+                void (conversationsQuery.isFetchNextPageError
+                  ? conversationsQuery.fetchNextPage()
+                  : conversationsQuery.refetch())
+              }
+            >
+              {conversationsQuery.isFetchNextPageError ? "重試更多對話" : "重試對話"}
+            </Button>
           </p>
         ) : null}
 
@@ -210,6 +288,15 @@ export function ProductionWhatsAppInbox() {
               ) : null}
             </button>
           ))}
+          {conversationsQuery.hasNextPage && !conversationsQuery.isFetchNextPageError ? (
+            <Button
+              className="m-4"
+              disabled={conversationsQuery.isFetching}
+              onClick={() => void conversationsQuery.fetchNextPage()}
+            >
+              載入更多對話
+            </Button>
+          ) : null}
         </div>
       </section>
 
@@ -236,11 +323,38 @@ export function ProductionWhatsAppInbox() {
               </div>
             </div>
 
-            <div className="flex-1 space-y-3 p-6">
+            <div
+              key={activeContactId}
+              ref={transcript}
+              role="region"
+              aria-label="對話訊息"
+              tabIndex={0}
+              className="max-h-[70vh] flex-1 space-y-3 overflow-y-auto p-6 [overflow-anchor:none]"
+            >
               {messagesQuery.isError ? (
                 <p role="alert" className="text-sm text-destructive">
                   {errorMessage(messagesQuery.error)}
+                  <Button
+                    variant="link"
+                    onClick={() =>
+                      messagesQuery.isFetchNextPageError
+                        ? loadOlderMessages()
+                        : void messagesQuery.refetch()
+                    }
+                  >
+                    {messagesQuery.isFetchNextPageError ? "重試較舊訊息" : "重試訊息"}
+                  </Button>
                 </p>
+              ) : null}
+
+              {messagesQuery.hasNextPage && !messagesQuery.isFetchNextPageError ? (
+                <Button
+                  variant="outline"
+                  disabled={messagesQuery.isFetching}
+                  onClick={loadOlderMessages}
+                >
+                  載入較舊訊息
+                </Button>
               ) : null}
 
               {messagesQuery.isPending ? (

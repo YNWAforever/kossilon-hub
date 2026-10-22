@@ -98,6 +98,15 @@ function renderBoard(
 }
 
 describe("production annual return command center", () => {
+  it("bounds work context reads to the displayed cases instead of unrelated global work", async () => {
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [makeCase()], nextCursor: null });
+    renderBoard();
+    await waitFor(() =>
+      expect(serverFns.listWorkQueue).toHaveBeenCalledWith({
+        data: { view: "team", caseIds: [caseId], limit: 200 },
+      }),
+    );
+  });
   it("searches authorised owners beyond the first200 directory entries", async () => {
     serverFns.listAssignableStaff.mockImplementation(async ({ data } = { data: {} }) =>
       data.q === "201" ? [{ id: caseId, name: "Member201" }] : [],

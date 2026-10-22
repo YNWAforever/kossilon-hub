@@ -1,4 +1,5 @@
 import { checklistItemText } from "@/lib/checklist-item-label";
+import { caseReturnPath } from "@/features/annual-return/daily-view-state";
 import { ChecklistItemLabel } from "@/components/checklist-item-label";
 import { parseEntityId } from "@/lib/entity-id";
 import { LoadingRows } from "@/components/ui/skeleton";
@@ -45,11 +46,24 @@ function nextStatus(current: IncorporationStatus): IncorporationStatus | null {
 
 const REGISTRY_NUMBERS_ERROR = "必須填寫 CR 號碼及 BR 號碼。";
 
-export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
+export function ProductionIncorporationDetail({
+  caseId,
+  returnTo,
+}: {
+  caseId: string;
+  returnTo?: string;
+}) {
   // A malformed link can never name a case; asking the server only fails its
   // schema validation, which used to read as a temporary outage.
   if (parseEntityId(caseId) === null) return <IncorporationNotFound />;
-  return <IncorporationDetail caseId={caseId} />;
+  return (
+    <>
+      <Button asChild>
+        <a href={caseReturnPath(returnTo ?? "/incorporation")}>返回工作列表</a>
+      </Button>
+      <IncorporationDetail caseId={caseId} />
+    </>
+  );
 }
 
 function IncorporationNotFound() {

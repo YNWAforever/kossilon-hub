@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ANNUAL_RETURN_STATUSES } from "@/features/annual-return/types";
+import { documentSearchFields } from "@/features/documents/list-filters";
 export const resourceSchema = z.enum([
   "annual_return_case",
   "work_item",
@@ -39,6 +40,11 @@ export const scopeFiltersSchema = z
     unassigned: z.boolean().optional(),
     clientStatus: z.enum(["active", "inactive"]).optional(),
     caseId: z.string().uuid().optional(),
+    category: documentSearchFields.category,
+    source: documentSearchFields.source,
+    reviewStatus: documentSearchFields.reviewStatus,
+    // Exact displayed draft cases; [] means empty, never unrestricted.
+    draftCaseIds: z.array(z.string().uuid()).max(20000).optional(),
   })
   .strict();
 export const snapshotSchema = z
@@ -148,6 +154,12 @@ export type JobItemResult = {
 export type JobResult = {
   jobId: string;
   resource: BulkResource;
+  operation: "assignment" | MaintenanceActionKind;
+  assignmentTarget: "owner" | "reviewer" | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  payloadHash: string;
   state: "queued" | "running" | "completed" | "partial" | "cancelled";
   total: number;
   counts: Record<string, number>;

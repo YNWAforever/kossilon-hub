@@ -933,6 +933,9 @@ describe.skipIf(!databaseUrl)("document list and detail scope parity", () => {
     await expect(
       sqlForTests().begin(async (tx) => {
         const data = await fixture(tx as unknown as SqlClient);
+        // This scenario exercises the public client RPC for a real company.
+        // The seed is fixture-origin; reclassify only inside this rollback transaction.
+        await tx`update companies set data_origin='client' where id=${data.companyId}`;
         const [other] = await tx<
           { id: string }[]
         >`select id from companies where id<>${data.companyId} limit 1`;

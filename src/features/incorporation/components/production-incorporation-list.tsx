@@ -9,7 +9,8 @@ import { DeadlinePill } from "@/components/deadline-pill";
 import type { StatusTone } from "@/lib/status";
 import { CreateIncorporationCaseDialog } from "@/components/incorporation/create-incorporation-case-dialog";
 import { listClientAssignmentOptions } from "@/features/clients/server-fns";
-import { listIncorporationCases } from "../server-fns";
+import { listIncorporationCasePage } from "../server-fns";
+import { CaseListControls, CaseListPagination, useCaseListView } from "./case-list-controls";
 import type { IncorporationStatus } from "../types";
 import { INCORPORATION_STATUS_LABELS } from "../labels";
 
@@ -25,10 +26,11 @@ export function ProductionIncorporationList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const view = useCaseListView("/incorporation");
 
   const casesQuery = useQuery({
-    queryKey: ["incorporation-cases"],
-    queryFn: () => listIncorporationCases(),
+    queryKey: ["incorporation-cases", "page", view.query],
+    queryFn: () => listIncorporationCasePage({ data: view.query }),
     retry: false,
   });
 
@@ -38,27 +40,7 @@ export function ProductionIncorporationList() {
     retry: false,
   });
 
-  if (casesQuery.isPending) {
-    return (
-      <div className="flex min-h-64 items-center justify-center p-6 text-sm text-muted-foreground">
-        <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />
-        載入公司註冊案件中
-      </div>
-    );
-  }
-
-  if (casesQuery.isError) {
-    return (
-      <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="案件與客戶" title="公司註冊" />
-        <p role="alert" className="text-sm text-destructive">
-          公司註冊案件資料暫時無法載入，請稍後再試。
-        </p>
-      </main>
-    );
-  }
-
-  const cases = casesQuery.data ?? [];
+  const cases = casesQuery.data?.items ?? [];
 
   return (
     <main className="flex-1 space-y-6 p-4 md:p-6">
@@ -81,15 +63,40 @@ export function ProductionIncorporationList() {
         </p>
       ) : null}
 
-      <section className="rounded-lg border bg-card p-4">
+      <CaseListControls
+        query={view.query}
+        statuses={INCORPORATION_STATUS_LABELS}
+        owners={optionsQuery.data?.owners ?? []}
+        go={view.go}
+        onRefresh={() => {
+          void casesQuery.refetch();
+        }}
+        pending={casesQuery.isFetching}
+      />
+      {casesQuery.isPending ? (
+        <p role="status">
+          <Loader2 aria-hidden className="inline size-4 animate-spin" /> 載入公司註冊案件中
+        </p>
+      ) : null}
+      {casesQuery.isError ? (
+        <p role="alert" className="text-sm text-destructive">
+          公司註冊案件資料暫時無法載入，請重試或重新整理列表。
+        </p>
+      ) : null}
+      <section className="rounded-lg border bg-card p-4" aria-label="公司註冊案件">
         <div className="divide-y">
           {cases.map((incorporationCase) => (
             <div
               key={incorporationCase.id}
               className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
             >
-              <span className="min-w-0 truncate font-medium">
+              <span className="min-w-0 break-words font-medium">
                 {incorporationCase.proposedCompanyNameEn}
+                {incorporationCase.proposedCompanyNameZh ? (
+                  <span className="block text-muted-foreground">
+                    {incorporationCase.proposedCompanyNameZh}
+                  </span>
+                ) : null}
               </span>
               <StatusPill tone={statusTone[incorporationCase.status]}>
                 {INCORPORATION_STATUS_LABELS[incorporationCase.status]}
@@ -99,17 +106,27 @@ export function ProductionIncorporationList() {
               ) : null}
               <span className="text-muted-foreground">{incorporationCase.ownerName}</span>
               <Button asChild size="sm">
-                <Link to="/incorporation/$id" params={{ id: incorporationCase.id }}>
+                <Link
+                  to="/incorporation/$id"
+                  params={{ id: incorporationCase.id }}
+                  search={{ returnTo: view.returnTo }}
+                >
                   開啟
                 </Link>
               </Button>
             </div>
           ))}
-          {cases.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">尚未有公司註冊案件。</p>
+          {!casesQuery.isPending && !casesQuery.isError && cases.length === 0 ? (
+            <p className="py-3 text-sm text-muted-foreground">沒有符合篩選的公司註冊案件。</p>
           ) : null}
         </div>
       </section>
+      <CaseListPagination
+        query={view.query}
+        nextCursor={casesQuery.data?.nextCursor ?? null}
+        go={view.go}
+        pending={casesQuery.isFetching}
+      />
 
       {optionsQuery.data ? (
         <CreateIncorporationCaseDialog
@@ -121,7 +138,11 @@ export function ProductionIncorporationList() {
           hasError={false}
           onCreated={(caseId) => {
             void queryClient.invalidateQueries({ queryKey: ["incorporation-cases"] });
-            void navigate({ to: "/incorporation/$id", params: { id: caseId } });
+            void navigate({
+              to: "/incorporation/$id",
+              params: { id: caseId },
+              search: { returnTo: view.returnTo },
+            });
           }}
         />
       ) : null}

@@ -4,7 +4,9 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
@@ -23,12 +25,50 @@ import {
   type DemoUser,
 } from "./session";
 import type { AuthenticatedActor, VerifiedAuthUser } from "./types";
+import type { QueryClient } from "@tanstack/react-query";
+import { ensureActorQueryScope } from "./query-scope";
 
 type AuthActionResult = { ok: true; message?: string } | { ok: false; error: string };
+type AuthIssue = { kind: "unauthenticated" | "unauthorized" | "service"; message: string };
+
+// eslint-disable-next-line react-refresh/only-export-components -- Shared by the verified root guard.
+export function classifyAuthFailure(error: unknown): AuthIssue {
+  const failure = error as { status?: number; statusCode?: number; message?: unknown } | null;
+  const status = failure?.status ?? failure?.statusCode;
+  const message = typeof failure?.message === "string" ? failure.message : "";
+  if (status === 403 || message.startsWith("Forbidden:")) {
+    return {
+      kind: "unauthorized",
+      message: "此帳戶未獲授權使用 Kossilon Hub，請聯絡管理員或改用其他帳戶。",
+    };
+  }
+  if (status === 401 || message.startsWith("Unauthorized:")) {
+    return { kind: "unauthenticated", message: "登入連結已過期或會話已失效，請重新登入。" };
+  }
+  return { kind: "service", message: "登入服務暫時無法使用，請重試。" };
+}
+
+// eslint-disable-next-line react-refresh/only-export-components -- Both auth entry points use the same bound.
+export async function readAuthWithTimeout<T>(read: () => Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      Promise.resolve().then(read),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("Auth service timed out.")), 10_000);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 type AuthContextValue = {
   session: AuthSession | null;
   isHydrated: boolean;
+  authIssue: AuthIssue | null;
+  signOutState: SignOutMarker["state"] | null;
+  retrySession: () => Promise<AuthActionResult>;
   demoUsers: readonly DemoUser[];
   isCurrentUserAdmin: boolean;
   login: (email: string, password: string) => Promise<AuthActionResult>;
@@ -41,35 +81,118 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+type SignOutMarker = {
+  state: "pending" | "failed" | "signed-out";
+  message?: string;
+  completion?: Promise<void>;
+};
+type AuthLifecycle = {
+  marker: SignOutMarker | null;
+  current: { current: SignOutMarker | null };
+  update: (marker: SignOutMarker | null) => void;
+};
+const AuthLifecycleContext = createContext<AuthLifecycle | null>(null);
+
+function createAuthLifecycleStore() {
+  const current: AuthLifecycle["current"] = { current: null };
+  const listeners = new Set<() => void>();
+  return {
+    current,
+    snapshot: () => current.current,
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    update: (marker: SignOutMarker | null) => {
+      current.current = marker;
+      listeners.forEach((listener) => listener());
+    },
+  };
+}
+// Each router/request owns its QueryClient. Its lifecycle survives root error
+// presentation and cache clearing without sharing sign-out state with others.
+const authLifecycles = new WeakMap<QueryClient, ReturnType<typeof createAuthLifecycleStore>>();
+
+/** Keep explicit sign-out intent for the router/client's whole lifetime. */
+export function AuthSessionBoundary({
+  children,
+  queryClient,
+}: {
+  children: ReactNode;
+  queryClient?: QueryClient;
+}) {
+  const inherited = useContext(AuthLifecycleContext);
+  const [fallback] = useState(createAuthLifecycleStore);
+  let store = queryClient ? authLifecycles.get(queryClient) : fallback;
+  if (!store) {
+    store = createAuthLifecycleStore();
+    authLifecycles.set(queryClient!, store);
+  }
+  const marker = useSyncExternalStore(store.subscribe, store.snapshot, store.snapshot);
+  const lifecycle = useMemo(
+    () => ({ marker, current: store.current, update: store.update }),
+    [marker, store],
+  );
+  return (
+    <AuthLifecycleContext.Provider value={inherited ?? lifecycle}>
+      {children}
+    </AuthLifecycleContext.Provider>
+  );
+}
+
+export function AuthProvider({
+  children,
+  queryClient,
+}: {
+  children: ReactNode;
+  queryClient?: QueryClient;
+}) {
   if (isDemoAuthEnabled()) {
     return <DemoAuthProvider>{children}</DemoAuthProvider>;
   }
 
-  return <NeonAuthBootstrap>{children}</NeonAuthBootstrap>;
+  return (
+    <AuthSessionBoundary queryClient={queryClient}>
+      <NeonAuthBootstrap queryClient={queryClient}>{children}</NeonAuthBootstrap>
+    </AuthSessionBoundary>
+  );
 }
 
-function NeonAuthBootstrap({ children }: { children: ReactNode }) {
+function NeonAuthBootstrap({
+  children,
+  queryClient,
+}: {
+  children: ReactNode;
+  queryClient?: QueryClient;
+}) {
+  const lifecycle = useContext(AuthLifecycleContext);
   const [url, setUrl] = useState<string | null>(null);
   const [configurationError, setConfigurationError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-
-    void getNeonAuthClientConfiguration()
-      .then((configuration) => {
-        if (active) setUrl(configuration.url);
-      })
-      .catch((error: unknown) => {
-        if (active) {
-          setConfigurationError(error instanceof Error ? error.message : "登入服務暫時無法使用。");
-        }
-      });
-
-    return () => {
-      active = false;
-    };
+  const configurationVersion = useRef(0);
+  const retrySession = useCallback(async (): Promise<AuthActionResult> => {
+    const version = ++configurationVersion.current;
+    setConfigurationError(null);
+    try {
+      const configuration = await readAuthWithTimeout(() => getNeonAuthClientConfiguration());
+      if (version === configurationVersion.current) setUrl(configuration.url);
+      return { ok: true };
+    } catch {
+      const message = classifyAuthFailure(null).message;
+      if (version === configurationVersion.current) setConfigurationError(message);
+      return { ok: false, error: message };
+    }
   }, []);
+  useEffect(() => {
+    void retrySession();
+    return () => {
+      // Invalidate every pending attempt, including retries started after mount.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      configurationVersion.current++;
+    };
+  }, [retrySession]);
 
   const unavailable = useCallback(
     async (): Promise<AuthActionResult> => ({
@@ -82,6 +205,9 @@ function NeonAuthBootstrap({ children }: { children: ReactNode }) {
     () => ({
       session: null,
       isHydrated: configurationError !== null,
+      authIssue: configurationError ? { kind: "service", message: configurationError } : null,
+      signOutState: lifecycle?.marker?.state ?? null,
+      retrySession,
       demoUsers: [],
       isCurrentUserAdmin: false,
       login: unavailable,
@@ -89,9 +215,11 @@ function NeonAuthBootstrap({ children }: { children: ReactNode }) {
       loginWithGoogle: unavailable,
       loginDemo: unavailable,
       loginDemoUser: unavailable,
-      signOut: async () => undefined,
+      signOut: async () => {
+        throw new Error(configurationError ?? "登入服務載入中…");
+      },
     }),
-    [configurationError, unavailable],
+    [configurationError, lifecycle?.marker?.state, retrySession, unavailable],
   );
 
   // The useCallback/useMemo above must run unconditionally on every render —
@@ -100,7 +228,11 @@ function NeonAuthBootstrap({ children }: { children: ReactNode }) {
   // "still loading" render and the "url resolved" render below. The `value`
   // object is simply discarded on renders that take the NeonAuthProvider branch.
   if (url) {
-    return <NeonAuthProvider url={url}>{children}</NeonAuthProvider>;
+    return (
+      <NeonAuthProvider url={url} queryClient={queryClient}>
+        {children}
+      </NeonAuthProvider>
+    );
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -128,49 +260,119 @@ function toAuthSession(actor: AuthenticatedActor, user: VerifiedAuthUser): AuthS
   };
 }
 
-function NeonAuthProvider({ children, url }: { children: ReactNode; url: string }) {
+function NeonAuthProvider({
+  children,
+  url,
+  queryClient,
+}: {
+  children: ReactNode;
+  url: string;
+  queryClient?: QueryClient;
+}) {
   const client = useMemo(() => createNeonAuthClient(url), [url]);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [authIssue, setAuthIssue] = useState<AuthIssue | null>(null);
+  const sessionVersion = useRef(0);
+  const {
+    marker,
+    current: signOutMarker,
+    update: updateSignOut,
+  } = useContext(AuthLifecycleContext)!;
+  const publishSignOut = useCallback((attempt: SignOutMarker) => {
+    setSession(null);
+    setIsHydrated(attempt.state !== "pending");
+    setAuthIssue(
+      attempt.state === "failed" ? { kind: "service", message: attempt.message! } : null,
+    );
+  }, []);
 
-  const refreshSession = useCallback(async () => {
+  const refreshSession = useCallback(async (): Promise<AuthActionResult> => {
+    const version = ++sessionVersion.current;
+    if (signOutMarker.current) {
+      publishSignOut(signOutMarker.current);
+      return {
+        ok: false,
+        error:
+          signOutMarker.current.message ??
+          (signOutMarker.current.state === "signed-out"
+            ? "已登出，請重新登入。"
+            : "正在登出，請稍候。"),
+      };
+    }
     setIsHydrated(false);
-    const result = await client.getSession();
-
-    if (!result.data?.user) {
-      setSession(null);
-      setIsHydrated(true);
-      return;
-    }
-
+    setAuthIssue(null);
     try {
-      const actor = await getAuthenticatedActor();
-      setSession(toAuthSession(actor, result.data.user));
-    } catch {
-      setSession(null);
+      const verified = await readAuthWithTimeout(async () => {
+        const result = await client.getSession();
+        if (result.error) throw result.error;
+        if (!result.data?.user) return null;
+        const actor = await getAuthenticatedActor();
+        if (!actor.active) throw new Error("Forbidden: account is inactive.");
+        if (actor.authUserId !== result.data.user.id)
+          throw new Error("Auth session identity mismatch.");
+        return { actor, user: result.data.user };
+      });
+      if (version !== sessionVersion.current)
+        return { ok: false, error: "登入狀態已更新，請重試。" };
+      if (queryClient) await ensureActorQueryScope(queryClient, verified?.actor ?? null);
+      if (version !== sessionVersion.current)
+        return { ok: false, error: "登入狀態已更新，請重試。" };
+      setSession(verified ? toAuthSession(verified.actor, verified.user) : null);
+      if (!verified) return { ok: false, error: classifyAuthFailure({ status: 401 }).message };
+      return { ok: true };
+    } catch (error) {
+      const issue = classifyAuthFailure(error);
+      if (version === sessionVersion.current) {
+        if (queryClient && issue.kind !== "service") await ensureActorQueryScope(queryClient, null);
+        if (version === sessionVersion.current) {
+          setSession(null);
+          setAuthIssue(issue);
+        }
+      }
+      return { ok: false, error: issue.message };
     } finally {
-      setIsHydrated(true);
+      if (version === sessionVersion.current) setIsHydrated(true);
     }
-  }, [client]);
+  }, [client, publishSignOut, queryClient, signOutMarker]);
+
+  useEffect(() => {
+    if (!marker) return;
+    sessionVersion.current++;
+    publishSignOut(marker);
+  }, [marker, publishSignOut]);
 
   useEffect(() => {
     void refreshSession();
+    return () => {
+      // Invalidate every pending attempt, including retries started after mount.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      sessionVersion.current++;
+    };
   }, [refreshSession]);
 
   const login = useCallback(
     async (email: string, password: string): Promise<AuthActionResult> => {
+      if (signOutMarker.current && signOutMarker.current.state !== "signed-out")
+        return { ok: false, error: "登出尚未確認，請先重試登出。" };
+      const version = sessionVersion.current;
       const result = await client.signIn.email({ email, password });
+      if (version !== sessionVersion.current)
+        return { ok: false, error: "登入狀態已更新，請重試。" };
       if (result.error) {
         return { ok: false, error: result.error.message ?? "登入失敗。" };
       }
 
-      await refreshSession();
-      return { ok: true };
+      // Only a new, explicit successful sign-in may clear confirmed sign-out.
+      if (signOutMarker.current?.state === "signed-out") updateSignOut(null);
+      return refreshSession();
     },
-    [client, refreshSession],
+    [client, refreshSession, signOutMarker, updateSignOut],
   );
   const loginWithMagicLink = useCallback(
     async (email: string): Promise<AuthActionResult> => {
+      if (signOutMarker.current && signOutMarker.current.state !== "signed-out")
+        return { ok: false, error: "登出尚未確認，請先重試登出。" };
       const normalizedEmail = email.trim().toLowerCase();
       const result = await client.signIn.magicLink({
         email: normalizedEmail,
@@ -184,9 +386,11 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
 
       return { ok: true, message: "請查看電郵中的登入連結。" };
     },
-    [client],
+    [client, signOutMarker],
   );
   const loginWithGoogle = useCallback(async (): Promise<AuthActionResult> => {
+    if (signOutMarker.current && signOutMarker.current.state !== "signed-out")
+      return { ok: false, error: "登出尚未確認，請先重試登出。" };
     const result = await client.signIn.social({
       provider: "google",
       callbackURL: `${window.location.origin}/login`,
@@ -202,7 +406,7 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
     // the response carries {url, redirect: true}, which signIn.social's success
     // response always does). There is nothing further to do here.
     return { ok: true };
-  }, [client]);
+  }, [client, signOutMarker]);
   const demoUnavailable = useCallback(
     async (): Promise<AuthActionResult> => ({
       ok: false,
@@ -211,14 +415,43 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
     [],
   );
   const signOut = useCallback(async () => {
-    await client.signOut();
-    setSession(null);
-  }, [client]);
+    if (signOutMarker.current?.state === "pending") return signOutMarker.current.completion;
+    sessionVersion.current++;
+    const attempt: SignOutMarker = { state: "pending" };
+    updateSignOut(attempt);
+    publishSignOut(attempt);
+    attempt.completion = (async () => {
+      try {
+        if (queryClient) await ensureActorQueryScope(queryClient, null);
+        const result = await readAuthWithTimeout(() => client.signOut());
+        if (result.error) throw result.error;
+        updateSignOut({ state: "signed-out" });
+      } catch {
+        const message = "未能確認登出，請重試登出；暫不恢復帳戶內容。";
+        updateSignOut({ state: "failed", message });
+        throw new Error(message);
+      }
+    })();
+    return attempt.completion;
+  }, [client, publishSignOut, queryClient, signOutMarker, updateSignOut]);
+  const retrySession = useCallback(async (): Promise<AuthActionResult> => {
+    if (signOutMarker.current?.state === "failed") {
+      try {
+        await signOut();
+      } catch {
+        return { ok: false, error: signOutMarker.current?.message ?? "未能確認登出。" };
+      }
+    }
+    return refreshSession();
+  }, [refreshSession, signOut, signOutMarker]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
       isHydrated,
+      authIssue,
+      signOutState: marker?.state ?? null,
+      retrySession,
       demoUsers: [],
       isCurrentUserAdmin: isAdmin(session),
       login,
@@ -228,7 +461,18 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
       loginDemoUser: demoUnavailable,
       signOut,
     }),
-    [demoUnavailable, isHydrated, login, loginWithGoogle, loginWithMagicLink, session, signOut],
+    [
+      authIssue,
+      demoUnavailable,
+      isHydrated,
+      login,
+      loginWithGoogle,
+      loginWithMagicLink,
+      marker?.state,
+      retrySession,
+      session,
+      signOut,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -277,6 +521,9 @@ function DemoAuthProvider({ children }: { children: ReactNode }) {
     () => ({
       session,
       isHydrated,
+      authIssue: null,
+      signOutState: null,
+      retrySession: async () => ({ ok: true }),
       demoUsers,
       isCurrentUserAdmin: isAdmin(session),
       login,

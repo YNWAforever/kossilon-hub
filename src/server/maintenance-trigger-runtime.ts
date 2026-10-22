@@ -81,7 +81,11 @@ export async function runRuntimeMaintenanceTick(data: MaintenanceTickInput) {
           startedAt: startedAt.toISOString(),
           finishedAt: finishedAt.toISOString(),
           durationMs: finishedAt.getTime() - startedAt.getTime(),
-          outcome: failedPasses.length ? "partial" : "succeeded",
+          // The existing ledger has no skipped outcome, and partial requires a
+          // named failed pass. Use its non-success envelope without inventing
+          // job failures; passes.outcome/counts retain the exact skipped fact.
+          outcome:
+            result.outcome === "skipped" ? "failed" : failedPasses.length ? "partial" : "succeeded",
           passes: {
             ...result,
             executionScope: "safe-maintenance-only",
@@ -91,7 +95,10 @@ export async function runRuntimeMaintenanceTick(data: MaintenanceTickInput) {
             build: ref && /^[a-f0-9]{40}$/.test(ref) ? ref : "unknown",
           },
           failedPasses,
-          failureSummary: null,
+          failureSummary:
+            result.outcome === "skipped"
+              ? "Invocation skipped; no maintenance jobs were performed. Inspect prior durable job states."
+              : null,
           triggerSource: data.trigger,
         });
       },

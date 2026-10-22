@@ -114,12 +114,6 @@ export function ProductionAnnualReturnCommandCenter({
     retry: false,
   });
 
-  const workItemsQuery = useQuery({
-    queryKey: ["work-queue", "annual-return-board", actorScope],
-    queryFn: () => listWorkQueue({ data: { view: "team" } }),
-    retry: false,
-  });
-
   const cases = useMemo(
     () => [
       ...new Map(
@@ -131,6 +125,13 @@ export function ProductionAnnualReturnCommandCenter({
     [casesQuery.data],
   );
   const nextCursor = casesQuery.hasNextPage;
+  const contextCaseIds = cases.slice(0, 200).map((case_) => case_.id);
+  const workItemsQuery = useQuery({
+    queryKey: ["work-queue", "annual-return-board", actorScope, contextCaseIds],
+    queryFn: () => listWorkQueue({ data: { view: "team", caseIds: contextCaseIds, limit: 200 } }),
+    enabled: contextCaseIds.length > 0,
+    retry: false,
+  });
 
   const workItemsByCase = useMemo(() => {
     const map = new Map<string, PersistedWorkItem>();
@@ -382,7 +383,13 @@ export function ProductionAnnualReturnCommandCenter({
                   caseItem={case_}
                   today={today}
                   workItem={workItemsByCase.get(case_.id)}
-                  workItemsUnavailable={workItemsQuery.isError}
+                  workItemsUnavailable={
+                    workItemsQuery.isError ||
+                    (!workItemsByCase.has(case_.id) &&
+                      (workItemsQuery.isPending ||
+                        (workItemsQuery.data?.length ?? 0) >= 200 ||
+                        !contextCaseIds.includes(case_.id)))
+                  }
                 />
               ))}
             </div>
@@ -450,7 +457,7 @@ function BoardRow({
         <p className="truncate text-xs text-muted-foreground">
           SLA:{" "}
           {workItemsUnavailable
-            ? "無法載入"
+            ? "待確認，請開啟工作隊列核對"
             : workItem
               ? labelValue(workItem.escalationState)
               : "沒有工作項目"}

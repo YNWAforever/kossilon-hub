@@ -9,7 +9,17 @@ import {
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { AuthenticatedActor } from "@/features/auth/types";
-import { assertIncorporationCaseCreatable, assertIncorporationCaseWritable } from "./authorization";
+import {
+  assertIncorporationCaseCreatable,
+  assertIncorporationCaseWritable,
+  incorporationReadScope,
+} from "./authorization";
+import {
+  getIncorporationCaseForActor,
+  listIncorporationCasesForActor,
+  listIncorporationCasePageForActor,
+} from "./read";
+import { caseListQuerySchema } from "./case-list-query";
 import type { IncorporationRepository } from "./repository";
 import { INCORPORATION_STATUSES } from "./types";
 
@@ -93,18 +103,48 @@ const completeCaseSchema = z.object({
   incorporationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
-export const listIncorporationCases = createServerFn({ method: "GET" }).handler(async () => {
-  const { getRequest, requireStaffActor } = await loadDefaultIncorporationContext();
-  await requireStaffActor(getRequest());
-  return withIncorporationRepository((repository) => repository.listCases());
-});
+const listCasesSchema = z
+  .object({
+    teamId: z.string().uuid().optional(),
+    ownerId: z.string().uuid().optional(),
+    q: z.string().trim().max(200).optional(),
+    limit: z.number().int().min(1).max(500).optional(),
+    offset: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
+  })
+  .strict()
+  .optional();
+
+export const listIncorporationCases = createServerFn({ method: "GET" })
+  .validator(listCasesSchema)
+  .handler(async ({ data }) => {
+    const { getRequest, requireStaffActor } = await loadDefaultIncorporationContext();
+    const actor = await requireStaffActor(getRequest());
+    incorporationReadScope(actor, data?.teamId);
+    return withIncorporationRepository((repository) =>
+      listIncorporationCasesForActor(actor, data ?? {}, { repository }),
+    );
+  });
+
+export const listIncorporationCasePage = createServerFn({ method: "GET" })
+  .validator(caseListQuerySchema)
+  .handler(async ({ data }) => {
+    const { getRequest, requireStaffActor } = await loadDefaultIncorporationContext();
+    const actor = await requireStaffActor(getRequest());
+    incorporationReadScope(actor, data.teamId);
+    return withIncorporationRepository((repository) =>
+      listIncorporationCasePageForActor(actor, data, { repository }),
+    );
+  });
 
 export const getIncorporationCase = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
     const { getRequest, requireStaffActor } = await loadDefaultIncorporationContext();
-    await requireStaffActor(getRequest());
-    return withIncorporationRepository((repository) => repository.getCase(data.id));
+    const actor = await requireStaffActor(getRequest());
+    incorporationReadScope(actor);
+    return withIncorporationRepository((repository) =>
+      getIncorporationCaseForActor(actor, data.id, { repository }),
+    );
   });
 
 export const createIncorporationCase = createServerFn({ method: "POST" })

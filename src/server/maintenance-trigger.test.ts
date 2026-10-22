@@ -3,6 +3,9 @@ import {
   authorizeMaintenanceRequest,
   createMaintenanceTrigger,
   type MaintenanceJobStore,
+  type MaintenanceJobKind,
+  type PersistedJobState,
+  type MaintenanceTickResult,
 } from "./maintenance-trigger";
 
 const slot = "2026-10-01T05:00:00.000Z";
@@ -17,6 +20,62 @@ function store() {
   } satisfies MaintenanceJobStore;
 }
 describe("durable scheduler boundary", () => {
+  it("records a skipped heartbeat after jobs commit but the first summary write fails, without replay", async () => {
+    const states = new Map<MaintenanceJobKind, PersistedJobState>();
+    const durable: MaintenanceJobStore = {
+      async claim({ job }) {
+        if (states.has(job)) return null;
+        states.set(job, "claimed");
+        return { token: job };
+      },
+      async stateOf(_slot, job) {
+        return states.get(job) ?? null;
+      },
+      async begin(_slot, job) {
+        states.set(job, "started");
+        return true;
+      },
+      async finish(_slot, job, _token, outcome) {
+        states.set(job, outcome);
+        return true;
+      },
+      async close() {},
+    };
+    const effects: string[] = [],
+      receipts: MaintenanceTickResult[] = [];
+    let loseSummary = true;
+    const trigger = createMaintenanceTrigger({
+      store: durable,
+      runJob: async (job) => {
+        effects.push(job);
+        return {};
+      },
+      recordRun: async (result) => {
+        if (loseSummary) {
+          loseSummary = false;
+          throw new Error("summary acknowledgement lost");
+        }
+        receipts.push(result);
+      },
+    });
+    const tick = { trigger: "scheduled" as const, scheduledAt: slot, allowedJobs: [...jobs] };
+    await expect(
+      trigger.runMaintenanceTick({ ...tick, runId: "first-invocation" }),
+    ).rejects.toThrow("summary acknowledgement lost");
+    expect([...states.values()]).toEqual(["succeeded", "succeeded"]);
+    const replay = await trigger.runMaintenanceTick({ ...tick, runId: "replay-invocation" });
+    expect(effects).toEqual(["evaluateEscalations", "redactNotifications"]);
+    expect(replay).toMatchObject({
+      outcome: "skipped",
+      counts: { claimed: 0, completed: 0, failed: 0, unknown: 0, skipped: 2 },
+    });
+    expect(replay.jobs.map(({ state, priorState }) => [state, priorState])).toEqual([
+      ["skipped", "succeeded"],
+      ["skipped", "succeeded"],
+    ]);
+    expect(receipts).toEqual([replay]);
+    expect(receipts[0].runId).toBe("replay-invocation");
+  });
   it("rejects session/user-agent credentials and wrong method before any job", () => {
     const secret = "local-test-secret-with-enough-length";
     expect(

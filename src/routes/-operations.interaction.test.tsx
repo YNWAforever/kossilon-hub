@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Suspense } from "react";
@@ -163,6 +163,45 @@ describe("Operations trustworthy observation", () => {
     await flush();
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.getByText("正常", { exact: true })).toBeTruthy();
+  });
+
+  it.each(["status", "statusCode"])(
+    "retains stale numerical observations after a 503 (%s) and replaces them on retry",
+    async (key) => {
+      await mount();
+      await startClock();
+      state.query.mockRejectedValue(
+        Object.assign(new Error("Service unavailable"), { [key]: 503 }),
+      );
+      await flush(60_000);
+      await flush();
+      const previous = screen.getByRole("region", { name: "上次成功讀取（已過期）" });
+      expect(previous.textContent).toContain("待處理1");
+      expect(previous.textContent).toContain("50個遷移");
+      expect(within(previous).getAllByText(/2026-10-08 00:05/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByRole("alert").textContent).toContain("現時狀態未知");
+      expect(screen.queryByText("正常", { exact: true })).toBeNull();
+      const recovered = view();
+      recovered.queues!.documentScans = { ...recovered.queues!.documentScans, pending: 7 };
+      state.query.mockResolvedValue(recovered);
+      fireEvent.click(screen.getByRole("button", { name: "重新載入" }));
+      await flush();
+      await flush();
+      expect(screen.queryByRole("region", { name: "上次成功讀取（已過期）" })).toBeNull();
+      expect(screen.getByText("7", { exact: true })).toBeTruthy();
+      expect(screen.queryByRole("alert")).toBeNull();
+    },
+  );
+
+  it("does not disclose the cached observation after an access denial", async () => {
+    await mount();
+    await startClock();
+    state.query.mockRejectedValue(Object.assign(new Error("Access denied"), { status: 403 }));
+    await flush(60_000);
+    await flush();
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "上次成功讀取（已過期）" })).toBeNull();
+    expect(screen.queryByText("正常", { exact: true })).toBeNull();
   });
 
   it("shows pending state instead of an empty operational screen", async () => {

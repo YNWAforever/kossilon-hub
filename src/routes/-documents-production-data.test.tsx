@@ -115,6 +115,22 @@ async function render(options: {
 }
 
 describe("/documents against data the types say is impossible", () => {
+  it("offers global filename/category/source/review filters in production", async () => {
+    const html = await render({ documents: [], withCaseId: false });
+    expect(html).toContain('aria-label="搜尋正式文件"');
+    expect(html).toContain('aria-label="按來源篩選正式文件"');
+    expect(html).toContain('aria-label="按類別篩選正式文件"');
+    expect(html).toContain('aria-label="按覆核狀態篩選正式文件"');
+  });
+  it("never offers byte controls when provider metadata has no current version", async () => {
+    const html = await render({
+      documents: [{ ...baseDocument, scanVerdictSource: "provider", currentVersionId: null }],
+      withCaseId: false,
+    });
+    expect(html).toContain("director-passport.pdf");
+    expect(html).not.toContain("開啟原件");
+    expect(html).not.toContain("下載</button>");
+  });
   it.each(["123", "true", "null", "", "123&caseId=456"])(
     "rejects present invalid parsed caseId %s without reading cached all scope",
     async (caseId) => {

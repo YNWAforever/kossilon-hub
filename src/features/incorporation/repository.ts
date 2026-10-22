@@ -7,6 +7,13 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import { isAllowedIntakeStatusTransition, oneYearLater } from "./workflow";
+import type { IncorporationReadScope } from "./authorization";
+import {
+  caseListSearchPattern,
+  finishCaseListPage,
+  type PreparedCaseListQuery,
+  type CaseListPage,
+} from "./case-list-query";
 import type {
   ChecklistItemStatus,
   CompleteIncorporationCaseInput,
@@ -27,14 +34,28 @@ export type CreateIncorporationRepositoryOptions = CreateSqlClientOptions & {
 };
 
 export type IncorporationRepository = {
-  listCases(): Promise<IncorporationCaseSummary[]>;
-  getCase(id: string): Promise<IncorporationCase | null>;
+  listCasePage(
+    scope: IncorporationReadScope,
+    query: PreparedCaseListQuery,
+  ): Promise<CaseListPage<IncorporationCaseSummary>>;
+  listCases(
+    scope: IncorporationReadScope,
+    query?: IncorporationListQuery,
+  ): Promise<IncorporationCaseSummary[]>;
+  getCase(id: string, scope: IncorporationReadScope): Promise<IncorporationCase | null>;
   getCaseTeamId(caseId: string): Promise<string | null>;
   createCase(input: CreateIncorporationCaseInput): Promise<IncorporationCase>;
   updateChecklistItem(input: UpdateIncorporationChecklistItemInput): Promise<IncorporationCase>;
   updateCaseStatus(input: UpdateIncorporationCaseStatusInput): Promise<IncorporationCase>;
   completeCase(input: CompleteIncorporationCaseInput): Promise<IncorporationCase>;
   close(): Promise<void>;
+};
+
+export type IncorporationListQuery = {
+  q?: string;
+  ownerId?: string;
+  limit?: number;
+  offset?: number;
 };
 
 type CaseRow = {
@@ -138,7 +159,45 @@ export function createIncorporationRepository(
   const sql = options.sql ?? (databaseUrl ? createSqlClient(databaseUrl, options) : getSqlClient());
   const ownsClient = !options.sql && Boolean(databaseUrl);
 
-  async function listCases(): Promise<IncorporationCaseSummary[]> {
+  async function listCasePage(scope: IncorporationReadScope, query: PreparedCaseListQuery) {
+    const expression = sql.unsafe(
+      query.sort === "company"
+        ? 'lower(ic.proposed_company_name_en) collate "C"'
+        : query.sort === "due"
+          ? "coalesce(ic.target_completion_date::text, '9999-12-31')"
+          : `to_char(ic.created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US')`,
+    );
+    const direction = sql.unsafe(query.sort === "created" ? "desc" : "asc");
+    const comparison = sql.unsafe(query.sort === "created" ? "<" : ">");
+    const pattern = caseListSearchPattern(query.q);
+    const rows = await sql<(CaseRow & { sort_value: string })[]>`
+      select ic.*, u.name owner_name, t.name team_name, ${expression} sort_value
+      from incorporation_cases ic join users u on u.id = ic.owner_id join teams t on t.id = ic.team_id
+      where (${scope.kind === "all"} or ic.team_id = ${scope.teamId ?? null}::uuid)
+        and (${query.status ?? null}::text is null or ic.status = ${query.status ?? null})
+        and (${query.ownerId ?? null}::uuid is null or ic.owner_id = ${query.ownerId ?? null}::uuid)
+        and (${pattern}::text is null or (ic.proposed_company_name_en || ' ' || coalesce(ic.proposed_company_name_zh, '')) ilike ${pattern} escape '\\')
+        and (${query.dueFrom ?? null}::date is null or ic.target_completion_date >= ${query.dueFrom ?? null}::date)
+        and (${query.dueTo ?? null}::date is null or ic.target_completion_date <= ${query.dueTo ?? null}::date)
+        and (${query.cursor === null} or (${expression}, ic.id) ${comparison} (${query.cursor?.value ?? null}::text, ${query.cursor?.id ?? null}::uuid))
+      order by ${expression} ${direction}, ic.id ${direction}
+      limit ${query.limit + 1}
+    `;
+    return finishCaseListPage(rows, query, mapCaseSummary);
+  }
+
+  async function listCases(
+    scope: IncorporationReadScope,
+    query: IncorporationListQuery = {},
+  ): Promise<IncorporationCaseSummary[]> {
+    if (
+      (query.limit !== undefined &&
+        (!Number.isInteger(query.limit) || query.limit < 1 || query.limit > 500)) ||
+      (query.offset !== undefined && (!Number.isSafeInteger(query.offset) || query.offset < 0))
+    )
+      throw new Error("Invalid incorporation page bounds.");
+    const search = query.q?.trim();
+    const pattern = search ? `%${search.replace(/[\\%_]/g, (value) => `\\${value}`)}%` : null;
     const rows = await sql<CaseRow[]>`
       select
         ic.id, ic.proposed_company_name_en, ic.proposed_company_name_zh,
@@ -149,12 +208,21 @@ export function createIncorporationRepository(
       from incorporation_cases ic
       join users u on u.id = ic.owner_id
       join teams t on t.id = ic.team_id
-      order by ic.created_at desc
+      where (${scope.kind === "all"} or ic.team_id = ${scope.teamId ?? null}::uuid)
+        and (${query.ownerId ?? null}::uuid is null or ic.owner_id = ${query.ownerId ?? null}::uuid)
+        and (${pattern}::text is null or
+          (ic.proposed_company_name_en || ' ' || coalesce(ic.proposed_company_name_zh, '')) ilike ${pattern} escape '\\')
+      order by ic.created_at desc, ic.id desc
+      limit ${query.limit ?? null} offset ${query.offset ?? 0}
     `;
     return rows.map(mapCaseSummary);
   }
 
-  async function hydrateCase(client: QueryClient, id: string): Promise<IncorporationCase | null> {
+  async function hydrateCase(
+    client: QueryClient,
+    id: string,
+    scope: IncorporationReadScope,
+  ): Promise<IncorporationCase | null> {
     const caseRows = await client<CaseRow[]>`
       select
         ic.id, ic.proposed_company_name_en, ic.proposed_company_name_zh,
@@ -166,6 +234,7 @@ export function createIncorporationRepository(
       join users u on u.id = ic.owner_id
       join teams t on t.id = ic.team_id
       where ic.id = ${id}
+        and (${scope.kind === "all"} or ic.team_id = ${scope.teamId ?? null}::uuid)
       limit 1
     `;
 
@@ -176,6 +245,10 @@ export function createIncorporationRepository(
       select id, case_id, item_label, required, status, note, received_at, verified_at
       from incorporation_checklist_items
       where case_id = ${id}
+        and exists (
+          select 1 from incorporation_cases ic where ic.id = ${id}
+            and (${scope.kind === "all"} or ic.team_id = ${scope.teamId ?? null}::uuid)
+        )
       order by created_at asc
     `;
 
@@ -185,8 +258,11 @@ export function createIncorporationRepository(
     };
   }
 
-  async function getCase(id: string): Promise<IncorporationCase | null> {
-    return hydrateCase(sql, id);
+  async function getCase(
+    id: string,
+    scope: IncorporationReadScope,
+  ): Promise<IncorporationCase | null> {
+    return hydrateCase(sql, id, scope);
   }
 
   async function getCaseTeamId(caseId: string): Promise<string | null> {
@@ -200,7 +276,7 @@ export function createIncorporationRepository(
     tx: TransactionSqlClient,
     caseId: string,
   ): Promise<IncorporationCase> {
-    const result = await hydrateCase(tx, caseId);
+    const result = await hydrateCase(tx, caseId, { kind: "all" });
     if (!result) throw new Error("Incorporation case not found.");
     return result;
   }
@@ -362,6 +438,7 @@ export function createIncorporationRepository(
   }
 
   return {
+    listCasePage,
     listCases,
     getCase,
     getCaseTeamId,

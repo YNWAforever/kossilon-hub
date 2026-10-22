@@ -14,6 +14,8 @@ import {
   type CaseFilters,
 } from "@/features/annual-return/repository";
 import { hongKongBusinessDate } from "@/lib/hong-kong-time";
+import { boundedPageSize } from "@/server/db/pagination";
+import { readQueuePageCursor, workItemSearchPatterns } from "./queue-query";
 import {
   caseBusinessContext,
   type AssignmentOption,
@@ -72,6 +74,7 @@ export type PersistedWorkItem = {
 };
 
 type WorkItemRow = {
+  cursor_due_at?: string;
   id: string;
   company_id: string;
   /** Present only on reads that join them; optional so other reads still map. */
@@ -108,7 +111,16 @@ export type QueueFilters = {
   teamId?: string;
   statuses?: readonly WorkItemStatus[];
   escalationState?: EscalationState;
+  q?: string;
+  workType?: string;
+  unassigned?: boolean;
+  priority?: "high" | "normal";
+  sort?: "deadline" | "priority";
+  limit?: number;
+  cursor?: string;
+  caseIds?: string[];
 };
+export type WorkQueuePage = { items: PersistedWorkItem[]; nextCursor: string | null };
 export type AssignmentTarget = "owner" | "reviewer";
 export type AssignWorkItemInput = {
   workItemId: string;
@@ -441,6 +453,7 @@ export async function ensureWorkItemForEvent(
 
 export type WorkItemRepository = {
   listQueue(filters?: QueueFilters, businessScope?: CaseFilters): Promise<PersistedWorkItem[]>;
+  listQueuePage(filters?: QueueFilters, businessScope?: CaseFilters): Promise<WorkQueuePage>;
   get(id: string): Promise<PersistedWorkItem | null>;
   recommendAssignees(
     id: string,
@@ -476,11 +489,31 @@ export function createWorkItemRepository(
   const readNow = () =>
     typeof options.now === "function" ? options.now() : (options.now ?? new Date().toISOString());
 
-  const repository: WorkItemRepository = {
-    async listQueue(filters = {}, businessScope) {
-      const statuses = filters.statuses ?? ["open", "in_progress", "blocked"];
-      const rows = await sql<WorkItemRow[]>`
-        select w.*, c.company_name, owner.name as owner_name,ot.name owner_team_name,reviewer.name reviewer_name,rt.name reviewer_team_name
+  async function readQueue(filters: QueueFilters, businessScope?: CaseFilters, pageSize?: number) {
+    const statuses = filters.statuses ?? ["open", "in_progress", "blocked"];
+    const scope = JSON.stringify([
+      filters.teamId,
+      filters.ownerId,
+      statuses,
+      filters.escalationState,
+      filters.q,
+      filters.workType,
+      filters.unassigned,
+      filters.priority,
+      filters.sort,
+      filters.caseIds,
+    ]);
+    const cursor = readQueuePageCursor(filters.cursor, scope);
+    if (cursor) {
+      const anchor = await sql<
+        { version: number }[]
+      >`select version from work_items where id=${cursor.id}`;
+      if (anchor[0]?.version !== cursor.version)
+        throw new Error("Queue changed; refresh this list before continuing.");
+    }
+    const patterns = workItemSearchPatterns(filters.q);
+    const rows = await sql<WorkItemRow[]>`
+        select w.*, w.sla_due_at::text cursor_due_at, c.company_name, owner.name as owner_name,ot.name owner_team_name,reviewer.name reviewer_name,rt.name reviewer_team_name
         from work_items w
         left join companies c on c.id = w.company_id
         left join users owner on owner.id = w.owner_id
@@ -490,27 +523,62 @@ export function createWorkItemRepository(
         where w.status = any(${statuses as WorkItemStatus[]})
           and (${filters.ownerId ?? null}::uuid is null or w.owner_id = ${filters.ownerId ?? null})
           and (${filters.teamId ?? null}::uuid is null or w.team_id = ${filters.teamId ?? null})
+          and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id = ${filters.teamId ?? null})
+          and (${pageSize === undefined} or c.data_origin <> 'fixture')
+          and (${filters.caseIds ?? null}::uuid[] is null or w.annual_return_case_id=any(${filters.caseIds ?? null}::uuid[]))
           and (${filters.escalationState ?? null}::text is null
             or w.escalation_state = ${filters.escalationState ?? null})
-        order by (w.sla_breached_at is null), w.sla_due_at, w.priority desc, w.id
+          and (${filters.workType ?? null}::text is null or w.work_type=${filters.workType ?? null})
+          and (${filters.unassigned !== true} or w.owner_id is null)
+          and (${filters.priority ?? null}::text is null or (${filters.priority === "high"} and w.priority>=70) or (${filters.priority === "normal"} and w.priority<70))
+          and (${patterns.length === 0} or exists (select 1 from unnest(${patterns}::text[]) needle(pattern)
+            where (w.title||' '||w.work_type||' '||coalesce(c.company_name,'')) ilike needle.pattern escape '\\'))
+          and (${cursor === null} or (case when ${filters.sort === "priority"} then -w.priority else 0 end,case when w.sla_breached_at is null then 1 else 0 end,w.sla_due_at,-w.priority,w.id) > (${filters.sort === "priority" ? -(cursor?.priority ?? 0) : 0},${cursor?.rank ?? 0},${cursor?.due ?? null}::text::timestamptz,${-(cursor?.priority ?? 0)},${cursor?.id ?? null}::uuid))
+        order by case when ${filters.sort === "priority"} then -w.priority else 0 end, (w.sla_breached_at is null), w.sla_due_at, w.priority desc, w.id
+        limit ${pageSize === undefined ? null : pageSize + 1}
       `;
-      const items = rows.map(mapWorkItem);
-      if (!businessScope) return items;
-      const caseIds = [
-        ...new Set(items.flatMap((i) => (i.annualReturnCaseId ? [i.annualReturnCaseId] : []))),
-      ];
-      if (!caseIds.length) return items;
-      const annualReturn = createAnnualReturnRepository({ sql, today: readNow() });
-      const cases = await annualReturn.listAllCases({ ...businessScope, caseIds });
-      const contexts = new Map(
-        cases.map((c) => [c.id, caseBusinessContext(c, hongKongBusinessDate(new Date(readNow())))]),
-      );
-      return items.map((item) => ({
-        ...item,
-        businessContext: item.annualReturnCaseId
-          ? (contexts.get(item.annualReturnCaseId) ?? null)
-          : null,
-      }));
+    const pageRows = pageSize === undefined ? rows : rows.slice(0, pageSize);
+    let items = pageRows.map(mapWorkItem);
+    if (!businessScope) return { items, rows, scope };
+    const caseIds = [
+      ...new Set(items.flatMap((i) => (i.annualReturnCaseId ? [i.annualReturnCaseId] : []))),
+    ];
+    if (!caseIds.length) return { items, rows, scope };
+    const annualReturn = createAnnualReturnRepository({ sql, today: readNow() });
+    const cases = await annualReturn.listAllCases({ ...businessScope, caseIds });
+    const contexts = new Map(
+      cases.map((c) => [c.id, caseBusinessContext(c, hongKongBusinessDate(new Date(readNow())))]),
+    );
+    items = items.map((item) => ({
+      ...item,
+      businessContext: item.annualReturnCaseId
+        ? (contexts.get(item.annualReturnCaseId) ?? null)
+        : null,
+    }));
+    return { items, rows, scope };
+  }
+  const repository: WorkItemRepository = {
+    async listQueue(filters = {}, businessScope) {
+      return (await readQueue(filters, businessScope)).items;
+    },
+    async listQueuePage(filters = {}, businessScope) {
+      const size = boundedPageSize(filters.limit, 50);
+      const { items, rows, scope } = await readQueue(filters, businessScope, size);
+      const last = rows[size - 1];
+      return {
+        items,
+        nextCursor:
+          rows.length > size && last
+            ? JSON.stringify({
+                scope,
+                rank: last.sla_breached_at === null ? 1 : 0,
+                due: last.cursor_due_at ?? iso(last.sla_due_at),
+                priority: last.priority,
+                id: last.id,
+                version: last.version,
+              })
+            : null,
+      };
     },
     get(id) {
       return getWorkItem(sql, id);

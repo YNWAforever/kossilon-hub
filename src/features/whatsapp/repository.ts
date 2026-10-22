@@ -20,6 +20,7 @@ import {
   CONVERSATION_PAGE_SIZE,
   type WhatsAppConversation,
   type WhatsAppConversationMessage,
+  type WhatsAppHistoryCursor,
 } from "./conversations";
 import type {
   NormalizedInboundWhatsAppMessage,
@@ -142,12 +143,17 @@ const WHATSAPP_STATUS_RANK: Readonly<Record<string, number>> = {
 export type ListConversationsInput = {
   actor: AuthenticatedActor;
   limit?: number;
+  search?: string;
+  cursor?: WhatsAppHistoryCursor;
+  asOf?: string;
 };
 
 export type ListConversationMessagesInput = {
   actor: AuthenticatedActor;
   contactId: string;
   limit?: number;
+  cursor?: WhatsAppHistoryCursor;
+  asOf?: string;
 };
 
 type QueryClient = SqlClient | postgres.TransactionSql;
@@ -1318,6 +1324,12 @@ export function createWhatsAppRepository(
   async function listConversations(input: ListConversationsInput): Promise<WhatsAppConversation[]> {
     documentScopeForStaffActor(input.actor, "access");
     const limit = input.limit ?? CONVERSATION_PAGE_SIZE;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 501)
+      throw new Error("Invalid inbox page limit.");
+    const search = input.search?.trim() ?? "";
+    const pattern = `%${search.replace(/[\\%_]/g, "\\$&")}%`;
+    // Bind timestamp strings as text before PostgreSQL converts them; the
+    // driver's timestamptz serializer otherwise drops microseconds via Date.
     const rows = await sql<ConversationRow[]>`
       -- One pass over whatsapp_messages. Two distinct-on CTEs read the same rows
       -- twice, and the ordering expression is not cheap.
@@ -1356,6 +1368,7 @@ export function createWhatsAppRepository(
         left join companies scoped_company on scoped_company.id=m.company_id
         left join annual_return_cases scoped_case on scoped_case.id=m.case_id and scoped_case.company_id=m.company_id
         where m.contact_id is not null
+          and (${input.asOf ?? null}::text::timestamptz is null or coalesce(m.sent_at,m.received_at,m.created_at) <= ${input.asOf ?? null}::text::timestamptz)
           and (${input.actor.role === "Admin"} or scoped_company.assigned_team_id=${input.actor.teamId}::uuid
             or (m.case_id is not null and (scoped_case.owner_id=${input.actor.userId}::uuid or scoped_case.reviewer_id=${input.actor.userId}::uuid)))
       ),
@@ -1386,6 +1399,11 @@ export function createWhatsAppRepository(
       from latest
       join whatsapp_contacts contact on contact.id = latest.contact_id
       left join companies company on company.id = coalesce(latest.company_id, contact.company_id)
+      where (${search} = '' or contact.display_name ilike ${pattern}
+        or contact.phone_e164 ilike ${pattern} or company.company_name ilike ${pattern})
+        and (${input.cursor?.at ?? null}::text::timestamptz is null
+          or latest.occurred_at < ${input.cursor?.at ?? null}::text::timestamptz
+          or (latest.occurred_at = ${input.cursor?.at ?? null}::text::timestamptz and contact.id > ${input.cursor?.id ?? null}::uuid))
       order by latest.occurred_at desc, contact.id asc
       limit ${limit}
     `;
@@ -1398,6 +1416,8 @@ export function createWhatsAppRepository(
   ): Promise<WhatsAppConversationMessage[]> {
     documentScopeForStaffActor(input.actor, "access");
     const limit = input.limit ?? CONVERSATION_MESSAGE_PAGE_SIZE;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 501)
+      throw new Error("Invalid message page limit.");
     // Newest first so the limit keeps the most recent slice of a long thread;
     // sortConversationMessagesOldestFirst() restores reading order for display.
     const rows = await sql<ConversationMessageRow[]>`
@@ -1431,6 +1451,10 @@ export function createWhatsAppRepository(
         sent_at::text as sent_at
       from whatsapp_messages
       where contact_id = ${input.contactId}::uuid
+        and (${input.asOf ?? null}::text::timestamptz is null or coalesce(sent_at, received_at, created_at) <= ${input.asOf ?? null}::text::timestamptz)
+        and (${input.cursor?.at ?? null}::text::timestamptz is null
+          or coalesce(sent_at, received_at, created_at) < ${input.cursor?.at ?? null}::text::timestamptz
+          or (coalesce(sent_at, received_at, created_at) = ${input.cursor?.at ?? null}::text::timestamptz and id < ${input.cursor?.id ?? null}::uuid))
         and (${input.actor.role === "Admin"} or exists (
           select 1 from companies c left join annual_return_cases a on a.id=whatsapp_messages.case_id and a.company_id=c.id
           where c.id=whatsapp_messages.company_id and (c.assigned_team_id=${input.actor.teamId}::uuid

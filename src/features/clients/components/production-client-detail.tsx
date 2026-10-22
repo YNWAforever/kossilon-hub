@@ -20,6 +20,9 @@ import { InspectionRequestFormDialog } from "@/components/clients/inspection-req
 import { ResolveInspectionRequestDialog } from "@/components/clients/resolve-inspection-request-dialog";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { ServiceSubscriptionsSection } from "./service-subscriptions-section";
+import { ClientDocuments, ClientWorkOverview } from "./client-work-overview";
+import { clientDetailSearch } from "../register-view-state";
+import { clientCaseReturnPath } from "../client-return-context";
 import {
   ceaseClientController,
   ceaseClientOfficer,
@@ -37,7 +40,6 @@ import type {
 import {
   COMPANY_STATUS_LABELS,
   CONTROL_BASIS_LABELS,
-  DOCUMENT_VERIFICATION_LABELS,
   OFFICER_TYPE_LABELS,
   PAYMENT_STATUS_LABELS,
 } from "../labels";
@@ -52,12 +54,6 @@ const paymentStatusTone: Record<ClientPaymentStatus, StatusTone> = {
   "Payment pending": "yellow",
   "Payment received": "green",
   Overdue: "red",
-};
-
-const verificationTone: Record<"pending" | "verified" | "rejected", StatusTone> = {
-  pending: "yellow",
-  verified: "green",
-  rejected: "red",
 };
 
 const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
@@ -83,18 +79,35 @@ function today(): string {
   return `${datePart(parts, "year")}-${datePart(parts, "month")}-${datePart(parts, "day")}`;
 }
 
-export function ProductionClientDetail({ clientId }: { clientId: string }) {
+export function ProductionClientDetail({
+  clientId,
+  actorScope,
+  returnTo,
+}: {
+  clientId: string;
+  actorScope?: unknown;
+  returnTo?: string;
+}) {
   // A malformed link can never name a client; asking the server only fails
   // its schema validation, which used to read as a temporary outage.
-  if (parseEntityId(clientId) === null) return <ClientNotFound />;
-  return <ClientDetail clientId={clientId} />;
+  const safeReturnTo = clientDetailSearch({ returnTo }).returnTo;
+  if (parseEntityId(clientId) === null) return <ClientNotFound returnTo={safeReturnTo} />;
+  return <ClientDetail clientId={clientId} actorScope={actorScope} returnTo={safeReturnTo} />;
 }
 
-function ClientNotFound() {
-  return <RecordUnavailable title="找不到客戶" back={<Link to="/clients">返回客戶</Link>} />;
+function ClientNotFound({ returnTo }: { returnTo: string }) {
+  return <RecordUnavailable title="找不到客戶" back={<a href={returnTo}>返回客戶</a>} />;
 }
 
-function ClientDetail({ clientId }: { clientId: string }) {
+function ClientDetail({
+  clientId,
+  actorScope,
+  returnTo,
+}: {
+  clientId: string;
+  actorScope?: unknown;
+  returnTo: string;
+}) {
   const queryClient = useQueryClient();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [contactDialog, setContactDialog] = useState<{ open: boolean; contact?: CompanyContact }>({
@@ -211,7 +224,7 @@ function ClientDetail({ clientId }: { clientId: string }) {
       <RecordUnavailable
         title="客戶資料無法載入"
         message="客戶資料暫時無法載入，請稍後再試。"
-        back={<Link to="/clients">返回客戶</Link>}
+        back={<a href={returnTo}>返回客戶</a>}
         onRetry={() => void clientQuery.refetch()}
       />
     );
@@ -219,7 +232,7 @@ function ClientDetail({ clientId }: { clientId: string }) {
 
   const client = clientQuery.data;
 
-  if (!client) return <ClientNotFound />;
+  if (!client) return <ClientNotFound returnTo={returnTo} />;
 
   return (
     <main className="flex-1 space-y-6 p-4 md:p-6">
@@ -228,9 +241,18 @@ function ClientDetail({ clientId }: { clientId: string }) {
         title={client.companyName}
         subtitle={`CR ${client.crNumber} · BR ${client.brNumber}`}
         actions={
-          optionsQuery.data ? <Button onClick={() => setIsEditOpen(true)}>編輯客戶</Button> : null
+          <>
+            <Button asChild>
+              <a href={returnTo}>返回客戶清單</a>
+            </Button>
+            {optionsQuery.data ? (
+              <Button onClick={() => setIsEditOpen(true)}>編輯客戶</Button>
+            ) : null}
+          </>
         }
       />
+
+      <ClientWorkOverview companyId={clientId} actorScope={actorScope} returnTo={returnTo} />
 
       {optionsQuery.isError ? (
         <p role="status" className="text-sm text-status-yellow-text">
@@ -515,7 +537,11 @@ function ClientDetail({ clientId }: { clientId: string }) {
               </span>
               <span>{entry.currentStatus}</span>
               <Button asChild size="sm">
-                <Link to="/annual-returns/$id" params={{ id: entry.id }}>
+                <Link
+                  to="/annual-returns/$id"
+                  params={{ id: entry.id }}
+                  search={{ returnTo: clientCaseReturnPath(clientId, returnTo) }}
+                >
                   開啟案件
                 </Link>
               </Button>
@@ -527,30 +553,7 @@ function ClientDetail({ clientId }: { clientId: string }) {
         </div>
       </section>
 
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="mb-3 text-sm font-semibold">文件</h2>
-        <p className="mb-3 text-xs text-muted-foreground">
-          文件登記及業務覆核狀態；不代表儲存物件已核對或掃描安全。請在文件庫核對來源。
-        </p>
-        <div className="divide-y">
-          {client.documents.map((document) => (
-            <div
-              key={document.id}
-              className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
-            >
-              <span className="truncate">{document.fileName}</span>
-              <span className="text-muted-foreground">{document.fileType}</span>
-              <StatusPill tone={verificationTone[document.verificationStatus]}>
-                {DOCUMENT_VERIFICATION_LABELS[document.verificationStatus]}
-              </StatusPill>
-              <span className="text-muted-foreground">{document.uploadedAt.slice(0, 10)}</span>
-            </div>
-          ))}
-          {client.documents.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">未有文件紀錄。</p>
-          ) : null}
-        </div>
-      </section>
+      <ClientDocuments companyId={clientId} actorScope={actorScope} returnTo={returnTo} />
 
       <section className="rounded-lg border bg-card p-4">
         <h2 className="mb-3 text-sm font-semibold">時間線</h2>

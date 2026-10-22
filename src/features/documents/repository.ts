@@ -9,14 +9,19 @@ import {
 } from "@/server/db/client";
 import type postgres from "postgres";
 import { boundedPageSize, readTupleCursor, tupleCursor } from "@/server/db/pagination";
-export type DocumentListFilters = {
+import {
+  bindDocumentQuery,
+  documentSearchPredicate,
+  type DocumentSearchFilters,
+} from "./list-filters";
+export type DocumentListFilters = DocumentSearchFilters & {
   id?: string;
   companyId?: string;
   caseId?: string;
   teamId?: string;
   assignedUserId?: string;
-  q?: string;
-  category?: string;
+  /** Internal diagnostics retain fixture metadata; public list RPCs force false. */
+  includeFixtures?: boolean;
   cursor?: string;
   limit?: number;
 };
@@ -124,6 +129,7 @@ export type DocumentSummary = Omit<
   intentId?: string | null;
   /** Listing metadata does not check storage or prove that an object exists. */
   objectAvailability?: "not_checked";
+  uploadSource?: "staff" | "client" | "system";
 };
 
 export type DocumentUploadRequest = {
@@ -236,6 +242,7 @@ type DocumentRow = {
   expected_size_bytes: string | number | null;
   checksum_sha256: string | null;
   upload_status: DocumentStatus | null;
+  upload_source?: "staff" | "client" | "system";
   scan_verdict_source: ScanVerdictSource | null;
   current_version_id?: string | null;
   intent_id?: string | null;
@@ -361,6 +368,7 @@ function mapDocumentSummary(row: DocumentRow): DocumentSummary {
     intentId: row.intent_id ?? null,
     availability: availabilityOf(row),
     objectAvailability: "not_checked",
+    uploadSource: row.upload_source,
   };
 }
 
@@ -480,17 +488,14 @@ export function createDocumentRepository(
   ) {
     const limit = boundedPageSize(filters.limit),
       cursor = readTupleCursor(filters.cursor, 2);
-    const q = filters.q?.trim()
-      ? `%${filters.q.trim().replace(/[\\%_]/g, (c) => "\\" + c)}%`
-      : null;
-    return client<DocumentRow[]>`
+    const query = bindDocumentQuery`
       with page as materialized (
       select d.* from documents d join companies c on c.id=d.company_id
       where (${filters.id ?? null}::uuid is null or d.id = ${filters.id ?? null})
         and (${filters.companyId ?? null}::uuid is null or d.company_id = ${filters.companyId ?? null})
+        and (${filters.includeFixtures !== false} or c.data_origin<>'fixture')
         and (${filters.caseId ?? null}::uuid is null or d.case_id = ${filters.caseId ?? null})
-        and (${filters.category ?? null}::text is null or d.file_type=${filters.category ?? null})
-        and (${q}::text is null or d.file_name ilike ${q} escape '\\' or c.company_name ilike ${q} escape '\\')
+        and ${documentSearchPredicate(filters)}
         -- Send the boundary as text: postgres.js serializes timestamptz through JS Date, losing microseconds.
         and (${cursor === null} or d.uploaded_at<${cursor?.[0] ?? null}::text::timestamptz or (d.uploaded_at=${cursor?.[0] ?? null}::text::timestamptz and d.id>${cursor?.[1] ?? null}::uuid))
         and (
@@ -509,6 +514,7 @@ export function createDocumentRepository(
       left join document_upload_intents i on i.id=v.intent_id and i.document_id=d.id
         and i.company_id=d.company_id and i.case_id is not distinct from d.case_id and i.object_key=v.storage_url and v.storage_url=d.storage_url
       order by d.uploaded_at desc,d.id`;
+    return client<DocumentRow[]>(query.strings, ...(query.values as never[]));
   }
 
   async function lockRecoverySource(tx: Tx, id: string) {

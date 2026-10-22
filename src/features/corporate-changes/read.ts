@@ -4,6 +4,23 @@ import { assertCorporateChangeRequestReadable } from "./authorization";
 import { CorporateChangeRequestNotFoundError } from "./errors";
 import type { CorporateChangeRequestRepository } from "./repository";
 import type { CorporateChangeRequestDetail } from "./types";
+import { CORPORATE_CHANGE_STATUSES, CORPORATE_CHANGE_TYPES } from "./types";
+import { incorporationReadScope } from "@/features/incorporation/authorization";
+import { prepareCaseListQuery, type CaseListQuery } from "@/features/incorporation/case-list-query";
+
+export async function listCorporateChangeRequestPageForActor(
+  actor: AuthenticatedActor,
+  input: CaseListQuery,
+  dependencies: { repository: Pick<CorporateChangeRequestRepository, "listRequestPage"> },
+) {
+  const scope = incorporationReadScope(actor, input.teamId);
+  const query = prepareCaseListQuery(actor, "corporate-changes", input);
+  if (query.status && !(CORPORATE_CHANGE_STATUSES as readonly string[]).includes(query.status))
+    throw new Error("Invalid corporate change status.");
+  if (query.changeType && !(CORPORATE_CHANGE_TYPES as readonly string[]).includes(query.changeType))
+    throw new Error("Invalid corporate change type.");
+  return dependencies.repository.listRequestPage(scope, query);
+}
 
 /**
  * One request, if it exists and the actor may see it.
@@ -37,6 +54,8 @@ export async function getCorporateChangeRequestForActor(
  * read — an unscoped list would show them every team's requests.
  */
 export function corporateChangeListTeamScope(actor: AuthenticatedActor): string | undefined {
+  if (!actor.active || actor.role === "Client")
+    throw new Error("Forbidden: active staff access is required.");
   if (actor.role === "Admin") return undefined;
   if (!actor.teamId) throw new Error("Forbidden: staff actor has no assigned team.");
   return actor.teamId;

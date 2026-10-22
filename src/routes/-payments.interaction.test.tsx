@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const serverFns = vi.hoisted(() => ({
@@ -14,6 +14,10 @@ const serverFns = vi.hoisted(() => ({
 }));
 
 vi.mock("../features/annual-return/server-fns", () => ({
+  getAnnualReturnCase: async ({ data }: { data: { id: string } }) =>
+    (await serverFns.listAnnualReturnCases()).find(
+      (case_: { id: string }) => case_.id === data.id,
+    ) ?? null,
   listAnnualReturnCases: serverFns.listAnnualReturnCases,
   listAnnualReturnCasePage: async () => ({
     cases: await serverFns.listAnnualReturnCases(),
@@ -122,8 +126,8 @@ describe("production payments route", () => {
     Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: vi.fn() });
     serverFns.review.mockResolvedValue(case_);
     renderPayments();
-    await screen.findByText("Scoped Company");
-    expect(screen.getByText(/餘額：HK\$1,200.00/)).toBeTruthy();
+    const proofRow = (await screen.findByText("批准此筆憑證金額")).closest("article")!;
+    expect(within(proofRow).getByText(/餘額：HK\$1,200.00/)).toBeTruthy();
     expect((screen.getByText("退回補傳") as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByText("預覽當前付款憑證"));
     await waitFor(() =>
@@ -174,7 +178,7 @@ describe("production payments route", () => {
       },
     ]);
     renderPayments();
-    await screen.findByText("Unsafe case");
+    await screen.findByText("儲存憑證資料");
     expect(screen.queryByText("預覽當前付款憑證")).toBeNull();
     expect((screen.getByText("儲存憑證資料") as HTMLButtonElement).disabled).toBe(true);
     expect(serverFns.download).not.toHaveBeenCalled();
@@ -206,7 +210,7 @@ describe("production payments route", () => {
     ]);
     serverFns.review.mockResolvedValue(case_[0]);
     renderPayments();
-    await screen.findByText("Unreadable company");
+    await screen.findByText("儲存憑證資料");
     expect((screen.getByLabelText("憑證金額") as HTMLInputElement).value).toBe("");
     expect((screen.getByLabelText("憑證收款日期") as HTMLInputElement).value).toBe("");
     fireEvent.change(screen.getByLabelText("具體退回原因"), {

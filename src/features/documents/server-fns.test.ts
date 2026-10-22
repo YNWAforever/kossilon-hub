@@ -480,6 +480,7 @@ describe("listDocumentsForActor", () => {
     expect(deps.repository.listDocuments).toHaveBeenCalledWith({
       teamId: staffActor.teamId,
       assignedUserId: staffActor.userId,
+      includeFixtures: false,
     });
   });
 
@@ -496,6 +497,7 @@ describe("listDocumentsForActor", () => {
       companyId: "10000000-0000-0000-0000-000000000099",
       teamId: staffActor.teamId,
       assignedUserId: staffActor.userId,
+      includeFixtures: false,
     });
   });
 
@@ -504,7 +506,7 @@ describe("listDocumentsForActor", () => {
 
     await listDocumentsForActor(adminActor, {}, deps);
 
-    expect(deps.repository.listDocuments).toHaveBeenCalledWith({});
+    expect(deps.repository.listDocuments).toHaveBeenCalledWith({ includeFixtures: false });
   });
 
   it("still requires a company ID and authorization for a client", async () => {
@@ -519,7 +521,10 @@ describe("listDocumentsForActor", () => {
       actor,
       expect.objectContaining({ companyId }),
     );
-    expect(deps.repository.listDocuments).toHaveBeenCalledWith({ companyId });
+    expect(deps.repository.listDocuments).toHaveBeenCalledWith({
+      companyId,
+      includeFixtures: false,
+    });
   });
   it("rejects an inactive Client before any list/authorization side effects", async () => {
     const deps = dependencies();

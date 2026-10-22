@@ -34,6 +34,8 @@ type Props = {
   isLoading: boolean;
   hasError: boolean;
   onCreated: (requestId: string) => void;
+  companySearch?: string;
+  onCompanySearchChange?: (value: string) => void;
 };
 
 type CreateChangePayload =
@@ -84,6 +86,8 @@ export function CreateCorporateChangeRequestDialog({
   isLoading,
   hasError,
   onCreated,
+  companySearch = "",
+  onCompanySearchChange,
 }: Props) {
   const [form, setForm] = useState(emptyForm);
   const [officers, setOfficers] = useState<Officer[]>([]);
@@ -250,6 +254,19 @@ export function CreateCorporateChangeRequestDialog({
             記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。
           </DialogDescription>
         </DialogHeader>
+        {onCompanySearchChange ? (
+          <label className="text-sm">
+            搜尋可選公司
+            <Input
+              value={companySearch}
+              onChange={(event) => onCompanySearchChange(event.target.value)}
+              placeholder="選擇新申請的公司"
+            />
+            <span className="block text-xs text-muted-foreground">
+              只影響新增申請的公司選項；最多顯示200項。
+            </span>
+          </label>
+        ) : null}
 
         {isLoading ? (
           <p className="text-sm text-muted-foreground">載入中…</p>

@@ -77,6 +77,15 @@ export function ProductionWhatsAppAutomation({
   });
 
   const drafts = draftsQuery.data ?? [];
+  // Bulk draft creation represents only cases with a draft in this displayed set.
+  // Delivery/unknown rows remain visible for reconciliation, never bulk retry.
+  const draftCases = [
+    ...new Map(
+      drafts
+        .filter((d) => d.status === "draft")
+        .map((d) => [d.caseId, { id: d.caseId, label: d.companyName }]),
+    ).values(),
+  ].sort((a, b) => a.id.localeCompare(b.id));
   const error = draftsQuery.error ?? sendMutation.error ?? integrationQuery.error;
 
   return (
@@ -85,18 +94,14 @@ export function ProductionWhatsAppAutomation({
       <p className="text-sm text-muted-foreground">
         供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。
       </p>
-      {canBulk ? (
+      {canBulk && draftsQuery.isSuccess ? (
         <BulkSelectionToolbar
           actorScope={actorScope}
           resource="annual_return_case"
-          filters={{}}
-          page={[
-            ...new Map(
-              drafts.map((d) => [d.caseId, { id: d.caseId, label: d.companyName }]),
-            ).values(),
-          ]}
-          total={draftsQuery.isSuccess ? new Set(drafts.map((d) => d.caseId)).size : null}
-          pageSize={drafts.length}
+          filters={{ draftCaseIds: draftCases.map((d) => d.id) }}
+          page={draftCases}
+          total={draftCases.length}
+          pageSize={draftCases.length}
           maintenanceActions={["follow_up_draft"]}
         />
       ) : null}
@@ -132,6 +137,10 @@ export function ProductionWhatsAppAutomation({
         <div className="divide-y">
           {draftsQuery.isPending ? (
             <LoadingRows label="正在載入跟進…" rows={4} />
+          ) : draftsQuery.isError ? (
+            <p role="status" className="p-4 text-sm text-muted-foreground">
+              未能讀取跟進範圍，請重新載入。
+            </p>
           ) : drafts.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">沒有待處理的跟進。</p>
           ) : (

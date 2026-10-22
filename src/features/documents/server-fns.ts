@@ -26,6 +26,7 @@ import {
   createOpaqueDocumentKey,
 } from "./storage";
 import { DocumentVersionConflictError, withDocumentVersionConflict } from "./version-conflict";
+import { documentSearchFields } from "./list-filters";
 
 export function createDocumentStorageForProviderMode(
   providerMode: ProviderMode,
@@ -459,11 +460,11 @@ export async function listDocumentsForActor(
   if (actor.role === "Client") {
     if (!filters.companyId) throw new Error("Client document lists require a company ID.");
     await authorizeCompanyScope(actor, { companyId: filters.companyId }, dependencies);
-    return dependencies.repository.listDocuments(filters);
+    return dependencies.repository.listDocuments({ ...filters, includeFixtures: false });
   }
 
   const scope = documentFiltersForActor(actor);
-  return dependencies.repository.listDocuments({ ...filters, ...scope });
+  return dependencies.repository.listDocuments({ ...filters, ...scope, includeFixtures: false });
 }
 export async function listDocumentPageForActor(
   actor: AuthenticatedActor,
@@ -474,11 +475,12 @@ export async function listDocumentPageForActor(
   if (actor.role === "Client") {
     if (!filters.companyId) throw new Error("Client document lists require a company ID.");
     await authorizeCompanyScope(actor, { companyId: filters.companyId }, dependencies);
-    return dependencies.repository.listDocumentPage(filters);
+    return dependencies.repository.listDocumentPage({ ...filters, includeFixtures: false });
   }
   return dependencies.repository.listDocumentPage({
     ...filters,
     ...documentFiltersForActor(actor),
+    includeFixtures: false,
   });
 }
 
@@ -594,12 +596,11 @@ export const listDocuments = createServerFn({ method: "GET" })
       listDocumentsForActor(actor, data, dependencies),
     ),
   );
-const documentListPageSchema = z
+export const documentListPageSchema = z
   .object({
     companyId: z.string().uuid().optional(),
     caseId: z.string().uuid().optional(),
-    q: z.string().max(200).optional(),
-    category: z.enum(DOCUMENT_CATEGORIES).optional(),
+    ...documentSearchFields,
     cursor: z.string().max(2048).optional(),
     limit: z.number().int().min(1).max(200).optional(),
   })

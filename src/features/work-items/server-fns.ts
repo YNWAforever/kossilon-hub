@@ -26,6 +26,15 @@ export const listWorkQueueInputSchema = z
     view: z.enum(["mine", "team", "breached"]).default("mine"),
     ownerId: z.string().uuid().optional(),
     escalationState: escalationStateSchema.optional(),
+    q: z.string().trim().max(120).optional(),
+    workType: z.string().min(1).max(100).optional(),
+    unassigned: z.boolean().optional(),
+    priority: z.enum(["high", "normal"]).optional(),
+    sort: z.enum(["deadline", "priority"]).optional(),
+    status: z.enum(["open", "in_progress", "blocked"]).optional(),
+    limit: z.number().int().min(1).max(200).optional(),
+    cursor: z.string().max(8192).optional(),
+    caseIds: z.array(z.string().uuid()).max(200).optional(),
   })
   .strict()
   .default({});
@@ -65,7 +74,20 @@ export function queueFiltersForActor(
   actor: AuthenticatedActor,
   requested: RequestedQueueFilters,
 ): QueueFilters {
-  const shared = { escalationState: requested.escalationState };
+  if (!actor.active) throw new Error("Forbidden: inactive staff actor.");
+  const shared = {
+    escalationState:
+      requested.view === "breached" ? ("breach" as const) : requested.escalationState,
+    ...(requested.q ? { q: requested.q } : {}),
+    ...(requested.workType ? { workType: requested.workType } : {}),
+    ...(requested.unassigned ? { unassigned: true } : {}),
+    ...(requested.priority ? { priority: requested.priority } : {}),
+    ...(requested.sort ? { sort: requested.sort } : {}),
+    ...(requested.status ? { statuses: [requested.status] } : {}),
+    ...(requested.limit ? { limit: requested.limit } : {}),
+    ...(requested.cursor ? { cursor: requested.cursor } : {}),
+    ...(requested.caseIds ? { caseIds: requested.caseIds } : {}),
+  };
   const mine = requested.view === "mine";
   if (actor.role === "Admin") {
     return {
@@ -201,8 +223,27 @@ export async function acknowledgeWorkItemForActor(
 export const listWorkQueue = createServerFn({ method: "GET" })
   .validator(listWorkQueueInputSchema)
   .handler(({ data }) =>
+    withDefaultAuthorizedWorkItemRepository(
+      async (repository, actor) =>
+        (
+          await repository.listQueuePage(
+            queueFiltersForActor(actor, { ...data, limit: data.limit ?? 200 }),
+            caseFiltersForActor({
+              id: actor.userId,
+              role: actor.role,
+              teamId: actor.teamId,
+              active: actor.active,
+            }),
+          )
+        ).items,
+    ),
+  );
+
+export const listWorkQueuePage = createServerFn({ method: "GET" })
+  .validator(listWorkQueueInputSchema)
+  .handler(({ data }) =>
     withDefaultAuthorizedWorkItemRepository((repository, actor) =>
-      repository.listQueue(
+      repository.listQueuePage(
         queueFiltersForActor(actor, data),
         caseFiltersForActor({
           id: actor.userId,

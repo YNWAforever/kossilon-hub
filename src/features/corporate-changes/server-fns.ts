@@ -2,7 +2,13 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { assertCorporateChangeRequestWritable } from "./authorization";
-import { corporateChangeListTeamScope, getCorporateChangeRequestForActor } from "./read";
+import {
+  corporateChangeListTeamScope,
+  getCorporateChangeRequestForActor,
+  listCorporateChangeRequestPageForActor,
+} from "./read";
+import { caseListQuerySchema } from "@/features/incorporation/case-list-query";
+import { incorporationReadScope } from "@/features/incorporation/authorization";
 import type { CorporateChangeRequestRepository } from "./repository";
 import type { CreateCorporateChangeRequestInput } from "./types";
 
@@ -214,6 +220,17 @@ export const listCorporateChangeRequests = createServerFn({ method: "GET" })
       });
     }),
   );
+
+export const listCorporateChangeRequestPage = createServerFn({ method: "GET" })
+  .validator(caseListQuerySchema)
+  .handler(async ({ data }) => {
+    const { getRequest, requireStaffActor } = await loadDefaultCorporateChangeContext();
+    const actor = await requireStaffActor(getRequest());
+    incorporationReadScope(actor, data.teamId);
+    return withRepository((repository) =>
+      listCorporateChangeRequestPageForActor(actor, data, { repository }),
+    );
+  });
 
 export const getCorporateChangeRequest = createServerFn({ method: "GET" })
   .validator(z.object({ requestId: z.string().uuid() }))

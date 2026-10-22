@@ -67,7 +67,7 @@ export const navGroups: NavGroup[] = [
       { to: "/clients", label: "客戶", icon: Building2 },
       { to: "/incorporation", label: "公司註冊", icon: Rocket },
       { to: "/corporate-changes", label: "公司變更", icon: Repeat2 },
-      { to: "/imports", label: "月表匯入", icon: Upload, roles: ["Admin", "Manager"] },
+      { to: "/imports", label: "月表匯入", icon: Upload, roles: ["Admin"] },
     ],
   },
   {

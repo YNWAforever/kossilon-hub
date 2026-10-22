@@ -101,7 +101,7 @@ describe("production route authorization contract", () => {
     expect(inbox).not.toContain("annual-return-store");
     expect(inbox).not.toContain("client-portal-store");
 
-    for (const command of ["listWhatsAppConversations", "listWhatsAppConversationMessages"]) {
+    for (const command of ["listWhatsAppConversationPage", "listWhatsAppConversationMessagePage"]) {
       expect(inbox).toContain(command);
       expect(serverFunctions).toContain("export const " + command + " = createServerFn");
     }

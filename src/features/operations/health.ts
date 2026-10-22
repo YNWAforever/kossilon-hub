@@ -231,6 +231,30 @@ export function maintenanceHealthOf(input: {
     };
   }
 
+  const counts = latest.jobCounts;
+  if (
+    latest.executionScope === "safe-maintenance-only" &&
+    latest.outcome === "failed" &&
+    counts &&
+    counts.skipped > 0 &&
+    counts.completed === 0 &&
+    counts.failed === 0
+  ) {
+    // This is a receipt for an invocation which performed no jobs. It restores
+    // liveness visibility, not a successful run or missing original results.
+    return {
+      ...shared,
+      state: counts.unknown > 0 || latest.failedPasses.length > 0 ? "failing" : "degraded",
+      summary:
+        "最近一次排程未執行工作，全部略過；" +
+        (counts.unknown > 0
+          ? `先前仍有 ${counts.unknown} 項結果未知，請核對原執行紀錄。`
+          : latest.failedPasses.length > 0
+            ? `先前仍有失敗待核對：${latest.failedPasses.join("、")}。`
+            : "本次不是成功執行，請核對原執行紀錄。"),
+    };
+  }
+
   if (latest.outcome === "failed") {
     return {
       ...shared,

@@ -3,7 +3,7 @@ import { describeWorkItemTitle } from "@/features/work-items/title";
 import { formatDateTime } from "@/lib/format-date";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, type SearchSchemaInput } from "@tanstack/react-router";
 import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
 import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
@@ -35,15 +35,12 @@ import type { PersistedWorkItem } from "@/features/work-items/repository";
 import {
   acknowledgeWorkItemEscalation,
   assignWorkItem,
-  listWorkQueue,
+  listWorkQueuePage,
   recommendWorkItemAssignees,
 } from "@/features/work-items/server-fns";
 import { cn } from "@/lib/utils";
-
-type QueueView = "mine" | "team" | "breached";
-type SlaFilter = "all" | PersistedWorkItem["escalationState"];
-type PriorityFilter = "all" | "high" | "normal";
-type StatusFilter = "all" | PersistedWorkItem["status"];
+import { useRetainedPage } from "@/lib/use-retained-page";
+import { queueViewSearch, queueReturnPath } from "@/features/work-items/queue-view-state";
 
 type CaseDetailLink =
   | { to: "/annual-returns/$id"; params: { id: string } }
@@ -68,33 +65,28 @@ export function caseDetailLinkFor(item: PersistedWorkItem): CaseDetailLink | nul
 
 export const Route = createFileRoute("/work-queue")({
   head: () => ({ meta: [{ title: pageTitle("工作隊列") }] }),
-  validateSearch: (search: Record<string, unknown>) => ({
-    view:
-      search.view === "team" || search.view === "breached"
-        ? (search.view as QueueView)
-        : ("mine" as QueueView),
-    owner: typeof search.owner === "string" ? search.owner : "all",
-    workType: typeof search.workType === "string" ? search.workType : "all",
-    sla:
-      search.sla === "none" ||
-      search.sla === "warning" ||
-      search.sla === "breach" ||
-      search.sla === "acknowledged"
-        ? (search.sla as SlaFilter)
-        : ("all" as SlaFilter),
-    priority:
-      search.priority === "high" || search.priority === "normal"
-        ? (search.priority as PriorityFilter)
-        : ("all" as PriorityFilter),
-    status:
-      search.status === "open" || search.status === "in_progress" || search.status === "blocked"
-        ? (search.status as StatusFilter)
-        : ("all" as StatusFilter),
-  }),
+  validateSearch: (input: SearchSchemaInput & Record<string, unknown>) => queueViewSearch(input),
   component: WorkQueueRoute,
 });
 
 export function WorkQueueRoute() {
+  const { actor, dataMode } = Route.useRouteContext();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  if (search.contextError)
+    return (
+      <main className="min-w-0 flex-1 space-y-4 p-4 md:p-6">
+        <PageHeader eyebrow="今日工作" title="工作隊列" />
+        <p role="alert">篩選連結無效，請清除重複或無效條件後重試。</p>
+        <Button onClick={() => void navigate({ search: queueViewSearch({}), replace: true })}>
+          清除無效篩選
+        </Button>
+      </main>
+    );
+  return <WorkQueueSession key={JSON.stringify([dataMode, actor])} />;
+}
+
+function WorkQueueSession() {
   const { session } = useAuth();
   const queryClient = useQueryClient();
   const search = Route.useSearch();
@@ -103,21 +95,46 @@ export function WorkQueueRoute() {
     actor ? [actor.authUserId, actor.userId, actor.role, actor.teamId, actor.active] : null,
   );
   const navigate = Route.useNavigate();
-  const { view, owner, workType, sla, priority, status } = search;
-  const [query, setQuery] = useState("");
+  const {
+    view,
+    owner,
+    workType,
+    sla,
+    priority,
+    status,
+    q: query = "",
+    sort = "deadline",
+    cursor,
+  } = search;
+  const effectiveSla = view === "breached" ? ("breach" as const) : sla;
   const [assignmentItem, setAssignmentItem] = useState<PersistedWorkItem | null>(null);
   const [acknowledgementItem, setAcknowledgementItem] = useState<PersistedWorkItem | null>(null);
   const canManage = session?.role === "Admin" || session?.role === "Manager";
   const filters = {
     view,
-    escalationState: view === "breached" ? ("breach" as const) : undefined,
+    ...(query.trim() ? { q: query.trim() } : {}),
+    ...(owner === "unassigned" ? { unassigned: true } : owner !== "all" ? { ownerId: owner } : {}),
+    ...(workType !== "all" ? { workType } : {}),
+    ...(effectiveSla !== "all" ? { escalationState: effectiveSla } : {}),
+    ...(priority !== "all" ? { priority } : {}),
+    ...(status !== "all" ? { status } : {}),
+    sort,
   };
+  const readScope = JSON.stringify([actorScope, filters]);
   const queueQuery = useQuery({
-    queryKey: ["work-queue", view, actorScope],
-    queryFn: () => listWorkQueue({ data: filters }),
+    queryKey: ["work-queue", readScope, cursor],
+    queryFn: () => listWorkQueuePage({ data: { ...filters, cursor, limit: 50 } }),
     enabled: dataMode === "production",
+    retry: false,
   });
-  const items = useMemo(() => queueQuery.data ?? [], [queueQuery.data]);
+  const response = useMemo(
+    () =>
+      queueQuery.data ? { page: queueQuery.data, search: queueViewSearch(search) } : undefined,
+    [queueQuery.data, search],
+  );
+  const retained = useRetainedPage(readScope, response);
+  const page = retained?.page;
+  const items = useMemo(() => page?.items ?? [], [page]);
   const owners = useMemo(
     () =>
       assignmentLabels(
@@ -141,48 +158,22 @@ export function WorkQueueRoute() {
     () => Array.from(new Set(items.map((item) => item.workType))).sort(),
     [items],
   );
-  const visibleItems = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return items.filter((item) => {
-      const matchesQuery =
-        !needle ||
-        `${describeWorkItemTitle(item.title)} ${item.workType} ${workTypeLabel(item.workType)} ${item.companyName ?? ""}`
-          .toLowerCase()
-          .includes(needle);
-      const matchesOwner =
-        owner === "all" || (owner === "unassigned" ? !item.ownerId : item.ownerId === owner);
-      const matchesWorkType = workType === "all" || item.workType === workType;
-      const matchesSla = sla === "all" || item.escalationState === sla;
-      const matchesPriority =
-        priority === "all" || (priority === "high" ? item.priority >= 70 : item.priority < 70);
-      const matchesStatus = status === "all" || item.status === status;
-      return (
-        matchesQuery &&
-        matchesOwner &&
-        matchesWorkType &&
-        matchesSla &&
-        matchesPriority &&
-        matchesStatus
-      );
-    });
-  }, [items, owner, priority, query, sla, status, workType]);
+  const visibleItems = items;
   const bulkFilters: BulkFilters = {
     view,
     activeOnly: true,
     ...(query.trim() ? { q: query.trim() } : {}),
     ...(owner === "unassigned" ? { unassigned: true } : owner !== "all" ? { ownerId: owner } : {}),
     ...(workType !== "all" ? { workType } : {}),
-    ...(sla !== "all" ? { escalationState: sla } : {}),
+    ...(effectiveSla !== "all" ? { escalationState: effectiveSla } : {}),
     ...(priority !== "all" ? { priority } : {}),
     ...(status !== "all" ? { workStatus: status } : {}),
   };
-  const presentationScope = JSON.stringify([actorScope, bulkFilters]);
-  const [loadedScope, setLoadedScope] = useState({ scope: presentationScope, limit: 50 });
-  const visibleLimit = loadedScope.scope === presentationScope ? loadedScope.limit : 50;
-  const pageItems = visibleItems.slice(0, visibleLimit);
+  const pageItems = visibleItems;
+  const returnTo = queueReturnPath(retained?.search ?? queueViewSearch(search));
 
   const setFilter = (key: "owner" | "workType" | "sla" | "priority" | "status", value: string) =>
-    void navigate({ search: { ...search, [key]: value }, replace: true });
+    void navigate({ search: { ...search, [key]: value, cursor: undefined }, replace: true });
 
   const metrics = {
     dueToday: items.filter((item) => hongKongDateKey(item.slaDueAt) === hongKongDateKey(new Date()))
@@ -208,13 +199,32 @@ export function WorkQueueRoute() {
       <main className="min-w-0 flex-1 p-4 md:p-6">
         <PageHeader eyebrow="今日工作" title="工作隊列" subtitle="分配、工作量及 SLA 管控" />
         <div className="mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4">
-          <Counter label="今日到期" value={metrics.dueToday} />
-          <Counter label="有風險" value={metrics.atRisk} tone="warning" />
-          <Counter label="已逾時" value={metrics.breached} tone="danger" />
-          <Counter label="未分配" value={metrics.unassigned} />
+          <Counter label="本頁今日到期" value={metrics.dueToday} />
+          <Counter label="本頁有風險" value={metrics.atRisk} tone="warning" />
+          <Counter label="本頁已逾時" value={metrics.breached} tone="danger" />
+          <Counter label="本頁未分配" value={metrics.unassigned} />
         </div>
 
         <div className="mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
+          <label>
+            排序
+            <Select
+              aria-label="工作排序"
+              value={sort}
+              onChange={(event) =>
+                void navigate({
+                  search: {
+                    ...search,
+                    sort: event.target.value === "priority" ? "priority" : "deadline",
+                    cursor: undefined,
+                  },
+                })
+              }
+            >
+              <option value="deadline">SLA 到期</option>
+              <option value="priority">優先次序</option>
+            </Select>
+          </label>
           <nav aria-label="工作隊列檢視" className="flex min-w-0 gap-1">
             {(
               [
@@ -226,7 +236,7 @@ export function WorkQueueRoute() {
               <Link
                 key={value}
                 to="/work-queue"
-                search={{ ...search, view: value }}
+                search={{ ...search, view: value, cursor: undefined }}
                 className={cn(
                   "min-h-9 border-b-2 px-3 py-2 text-sm font-medium",
                   view === value
@@ -243,7 +253,12 @@ export function WorkQueueRoute() {
             <span className="sr-only">搜尋工作隊列</span>
             <Input
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) =>
+                void navigate({
+                  search: { ...search, q: event.target.value, cursor: undefined },
+                  replace: true,
+                })
+              }
               placeholder="搜尋案件或工作類型"
               className="w-full pl-9"
             />
@@ -278,7 +293,8 @@ export function WorkQueueRoute() {
           </FilterSelect>
           <FilterSelect
             label="按 SLA 狀態篩選"
-            value={sla}
+            value={effectiveSla}
+            disabled={view === "breached"}
             onChange={(value) => setFilter("sla", value)}
           >
             <option value="all">全部 SLA 狀態</option>
@@ -320,11 +336,17 @@ export function WorkQueueRoute() {
               id: i.id,
               label: `${i.companyName ?? "公司資料不詳"} · ${describeWorkItemTitle(i.title)}`,
             }))}
-            total={queueQuery.isError || !queueQuery.data ? null : visibleItems.length}
+            total={null}
           />
         ) : null}
         {queueQuery.isError ? (
-          <QueueMessage>無法載入工作隊列，請重新整理再試。</QueueMessage>
+          <QueueMessage>
+            無法載入這一頁；同一範圍已讀取內容仍保留。資料或篩選可能已變更，請重試或返回第一頁。
+            <Button onClick={() => void queueQuery.refetch()}>重試</Button>
+            <Button onClick={() => void navigate({ search: { ...search, cursor: undefined } })}>
+              返回第一頁
+            </Button>
+          </QueueMessage>
         ) : null}
         {!queueQuery.isLoading && !queueQuery.isError && visibleItems.length === 0 ? (
           <QueueMessage>此檢視沒有符合的工作項目。</QueueMessage>
@@ -372,6 +394,7 @@ export function WorkQueueRoute() {
                         <Link
                           to={caseDetailLinkFor(item)!.to}
                           params={caseDetailLinkFor(item)!.params}
+                          search={{ returnTo }}
                           className="font-medium hover:underline"
                         >
                           {describeWorkItemTitle(item.title)}
@@ -429,6 +452,7 @@ export function WorkQueueRoute() {
                       <Link
                         to={caseDetailLinkFor(item)!.to}
                         params={caseDetailLinkFor(item)!.params}
+                        search={{ returnTo }}
                         className="font-medium hover:underline"
                       >
                         {describeWorkItemTitle(item.title)}
@@ -469,12 +493,26 @@ export function WorkQueueRoute() {
           </section>
         ) : null}
       </main>
-      {visibleItems.length > pageItems.length ? (
+      <p className="px-4 text-sm text-muted-foreground">
+        本頁最多 50 項；排序及範圍變更後由第一頁重新讀取。
+      </p>
+      {cursor ? (
         <Button
           className="m-4"
-          onClick={() => setLoadedScope({ scope: presentationScope, limit: visibleLimit + 50 })}
+          onClick={() => void navigate({ search: { ...search, cursor: undefined } })}
         >
-          載入更多工作（每次 50 項）
+          返回第一頁
+        </Button>
+      ) : null}
+      {page?.nextCursor ? (
+        <Button
+          className="m-4"
+          disabled={queueQuery.isFetching}
+          onClick={() =>
+            void navigate({ search: { ...search, cursor: page.nextCursor ?? undefined } })
+          }
+        >
+          下一頁工作（每頁 50 項）
         </Button>
       ) : null}
       {assignmentItem && items.some((i) => i.id === assignmentItem.id) ? (
@@ -727,14 +765,17 @@ function FilterSelect({
   value,
   onChange,
   children,
+  disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   children: React.ReactNode;
+  disabled?: boolean;
 }) {
   return (
     <Select
+      disabled={disabled}
       size="sm"
       aria-label={label}
       value={value}

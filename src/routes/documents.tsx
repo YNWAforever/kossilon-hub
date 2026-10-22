@@ -31,6 +31,7 @@ import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import type { DocumentSummary } from "../features/documents/repository";
 import { DocumentRecoveryPanel } from "../features/documents/document-recovery-panel";
+import { DOCUMENT_CATEGORIES, type DocumentCategory } from "../features/documents/types";
 
 import { useAnnualReturnCases } from "../lib/annual-return-store";
 import {
@@ -74,13 +75,25 @@ function DocumentsRoute() {
   const [warning, setWarning] = useState<string | undefined>();
   const productionCaseId = parseEntityId(caseFilter) ?? undefined;
   const invalidCaseId = caseId !== undefined && !productionCaseId;
+  const productionFilters = {
+    ...(query.trim() ? { q: query.trim() } : {}),
+    ...(category !== "all" ? { category: category as DocumentCategory } : {}),
+    ...(source !== "all" ? { source: source as "staff" | "client" | "system" } : {}),
+    ...(status !== "all" ? { reviewStatus: status as "pending" | "verified" | "rejected" } : {}),
+  };
   const productionDocumentsQuery = useInfiniteQuery({
-    queryKey: ["documents", "archive", productionCaseId ?? "all", { actorScope: actor }],
+    queryKey: [
+      "documents",
+      "archive",
+      productionCaseId ?? "all",
+      { actorScope: actor, ...productionFilters },
+    ],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) =>
       listDocumentPage({
         data: {
           ...(productionCaseId ? { caseId: productionCaseId } : {}),
+          ...productionFilters,
           limit: 100,
           cursor: pageParam,
         },
@@ -191,7 +204,10 @@ function DocumentsRoute() {
         <BulkSelectionToolbar
           actorScope={JSON.stringify(actor)}
           resource="document"
-          filters={productionCaseId ? { caseId: productionCaseId } : {}}
+          filters={{
+            ...productionFilters,
+            ...(productionCaseId ? { caseId: productionCaseId } : {}),
+          }}
           page={productionDocuments.map((d) => ({ id: d.id, label: d.fileName }))}
           total={
             productionDocumentsQuery.hasNextPage
@@ -233,6 +249,52 @@ function DocumentsRoute() {
             最多顯示200項；搜尋在授權範圍執行。
           </span>
         </label>
+      ) : null}
+      {dataMode === "production" ? (
+        <section aria-label="正式文件篩選" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Input
+            aria-label="搜尋正式文件"
+            placeholder="搜尋檔案或公司名稱"
+            maxLength={120}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <Select
+            aria-label="按類別篩選正式文件"
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+          >
+            <option value="all">全部類別</option>
+            {DOCUMENT_CATEGORIES.map((value) => (
+              <option key={value} value={value}>
+                {labelValue(value)}
+              </option>
+            ))}
+          </Select>
+          <Select
+            aria-label="按來源篩選正式文件"
+            value={source}
+            onChange={(event) => setSource(event.target.value)}
+          >
+            <option value="all">全部來源</option>
+            <option value="client">客戶上載</option>
+            <option value="staff">同事上載</option>
+            <option value="system">系統產生</option>
+          </Select>
+          <Select
+            aria-label="按覆核狀態篩選正式文件"
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+          >
+            <option value="all">全部覆核狀態</option>
+            <option value="pending">待覆核</option>
+            <option value="verified">已核實</option>
+            <option value="rejected">已退回</option>
+          </Select>
+          <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-4">
+            搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。
+          </p>
+        </section>
       ) : null}
       {dataMode === "production" ? (
         <ProductionDocumentsSection
@@ -631,6 +693,27 @@ function ProductionDocumentsSection({
                 <p className="mt-1 text-xs text-muted-foreground">
                   {labelValue(document.category)}
                 </p>
+                <p className="mt-1 break-all text-xs text-muted-foreground">
+                  當前版本：{document.currentVersionId ?? "未有版本"} · 上載來源：
+                  {document.uploadSource === "client"
+                    ? "客戶"
+                    : document.uploadSource === "staff"
+                      ? "同事"
+                      : document.uploadSource === "system"
+                        ? "系統"
+                        : "未記錄"}
+                </p>
+                {document.caseId ? (
+                  <Link
+                    className="text-xs underline"
+                    to="/annual-returns/$id"
+                    params={{ id: document.caseId }}
+                  >
+                    開啟文件所屬案件
+                  </Link>
+                ) : (
+                  <p className="text-xs text-muted-foreground">未關聯案件</p>
+                )}
                 {document.objectAvailability === "not_checked" ? (
                   <p className="mt-1 text-xs text-muted-foreground">
                     儲存物件尚未核對；可用受控預覽核對缺口。
@@ -796,11 +879,15 @@ function ReviewActions({
     !pending &&
     (!noteRequired || note.trim().length > 0);
 
-  if (record.availability === "metadata_only" || record.availability === "missing_object") {
+  if (
+    !record.currentVersionId ||
+    record.availability === "metadata_only" ||
+    record.availability === "missing_object"
+  ) {
     return (
       <div className="space-y-2">
         <p className="text-sm text-status-orange-text md:text-right">
-          {record.availability === "metadata_only"
+          {!record.currentVersionId || record.availability === "metadata_only"
             ? "文件登記未有完整上載來源；物件尚未核對。"
             : "已核對但找不到儲存物件。"}
           不能預覽或批准，請先核對來源或受控補傳。

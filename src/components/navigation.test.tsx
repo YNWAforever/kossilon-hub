@@ -54,9 +54,15 @@ describe("daily role navigation", () => {
       );
       expect(screen.queryByRole("link", { name: "用戶管理" })).toBeNull();
       expect(screen.queryByRole("link", { name: "設定" })).toBeNull();
+      expect(screen.queryByRole("link", { name: "月表匯入" })).toBeNull();
       expect(screen.getByRole("link", { name: "系統運作" })).toBeTruthy();
     },
   );
+  it("retains monthly imports for Admin", () => {
+    auth.role = "Admin";
+    render(<NavList pathname="/imports" />);
+    expect(screen.getByRole("link", { name: "月表匯入" }).getAttribute("href")).toBe("/imports");
+  });
   it("Client sees only existing document and portal routes", () => {
     auth.role = "Client";
     render(<NavList pathname="/portal" />);

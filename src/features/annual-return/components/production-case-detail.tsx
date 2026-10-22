@@ -3,7 +3,7 @@ import { LoadingRows } from "@/components/ui/skeleton";
 import { formatDate, formatDateTime } from "@/lib/format-date";
 import { CaseFindings } from "./case-findings";
 import { CaseHandoff } from "./case-handoff";
-import { caseReturnPath, dailyViewSearch } from "../daily-view-state";
+import { caseReturnPath } from "../daily-view-state";
 import { readinessForCase } from "../readiness";
 import { parseEntityId } from "@/lib/entity-id";
 import { CaseParties } from "./case-parties";
@@ -93,16 +93,16 @@ export function ProductionAnnualReturnCaseDetail(props: CaseDetailProps) {
   // A truncated or hand-edited link can never name a case. Asking the server
   // anyway only fails schema validation, which the query retried behind an
   // endless loading state before showing the raw validation error.
-  if (parseEntityId(props.caseId) === null) return <CaseNotFound />;
+  if (parseEntityId(props.caseId) === null) return <CaseNotFound returnTo={props.returnTo} />;
   return <CaseDetail {...props} />;
 }
 
-function CaseNotFound() {
+function CaseNotFound({ returnTo }: Pick<CaseDetailProps, "returnTo">) {
   return (
     <main className="flex-1 space-y-3 p-6">
       <PageHeader eyebrow="案件與客戶" title="找不到案件" />
       <Button asChild>
-        <Link to="/annual-returns">返回周年申報</Link>
+        <a href={caseReturnPath(returnTo)}>返回工作列表</a>
       </Button>
     </main>
   );
@@ -229,13 +229,13 @@ function CaseDetail({
           {caseQuery.error.message}
         </p>
         <Button asChild>
-          <Link to="/annual-returns">返回周年申報</Link>
+          <a href={caseReturnPath(returnTo)}>返回工作列表</a>
         </Button>
       </main>
     );
   }
 
-  if (!caseItem) return <CaseNotFound />;
+  if (!caseItem) return <CaseNotFound returnTo={returnTo} />;
 
   const readiness = readinessForCase(caseItem);
   const packetReady = readiness.readyToPrepare && Boolean(readiness.sourceVersion);
@@ -252,24 +252,9 @@ function CaseDetail({
           subtitle={`申報年度 ${caseItem.returnYear} · 到期日 ${formatDate(caseItem.filingDueDate)}`}
           actions={
             <div className="flex flex-wrap items-center gap-3">
-              {caseReturnPath(returnTo).startsWith("/today") ? (
-                <Button asChild className="min-h-11">
-                  <Link
-                    to="/today"
-                    search={dailyViewSearch(
-                      Object.fromEntries(
-                        new URL(caseReturnPath(returnTo), "https://kossilon.invalid").searchParams,
-                      ),
-                    )}
-                  >
-                    返回工作列表
-                  </Link>
-                </Button>
-              ) : (
-                <Button asChild className="min-h-11">
-                  <Link to="/annual-returns">返回工作列表</Link>
-                </Button>
-              )}
+              <Button asChild className="min-h-11">
+                <a href={caseReturnPath(returnTo)}>返回工作列表</a>
+              </Button>
 
               {/* The demo case detail has always had this. Without it in
                   production there was no link anywhere carrying a caseId, so

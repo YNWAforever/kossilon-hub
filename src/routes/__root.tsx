@@ -19,13 +19,18 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { AppMobileNav } from "@/components/app-mobile-nav";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider, useAuth } from "@/features/auth/auth-context-neon";
+import {
+  AuthProvider,
+  AuthSessionBoundary,
+  classifyAuthFailure,
+  readAuthWithTimeout,
+  useAuth,
+} from "@/features/auth/auth-context-neon";
 import { getAuthenticatedActor } from "@/features/auth/neon-auth-rpc";
 import type { DataMode } from "@/features/runtime/data-mode";
 import {
   getSafeRedirectPath,
   isClientRoute,
-  isForbiddenAuthError,
   isPublicRoute,
   rememberRedirectPath,
 } from "@/features/auth/route-guard";
@@ -127,21 +132,19 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     if (dataMode !== "demo") {
       let actor: AuthenticatedActor;
       try {
-        actor = await getAuthenticatedActor();
+        actor = await readAuthWithTimeout(() => getAuthenticatedActor());
       } catch (error) {
+        const issue = classifyAuthFailure(error);
+        if (issue.kind === "service") throw new Error(issue.message);
         await ensureActorQueryScope(context.queryClient, null);
         // A Forbidden account is not "not signed in" — sending it through the
         // same redirect=... path would bounce it back here after every future
         // sign-in, identically and silently, since the sign-in step itself keeps
         // succeeding. Only the authorisation check fails.
-        if (isForbiddenAuthError(error)) {
-          throw redirect({ href: "/login?denied=1", replace: true });
-        }
-
         const redirectPath = getSafeRedirectPath(location.href);
         rememberRedirectPath(redirectPath);
         throw redirect({
-          href: `/login?redirect=${encodeURIComponent(redirectPath)}`,
+          href: `/login?${issue.kind === "unauthorized" ? "denied=1&" : ""}redirect=${encodeURIComponent(redirectPath)}`,
           replace: true,
         });
       }
@@ -203,21 +206,23 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+  const { queryClient, actor } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        {isPublicRoute(pathname) ? <Outlet /> : <ProtectedAppShell />}
-        <Toaster />
-      </AuthProvider>
+      <AuthSessionBoundary queryClient={queryClient}>
+        <AuthProvider key={JSON.stringify(actor)} queryClient={queryClient}>
+          {isPublicRoute(pathname) ? <Outlet /> : <ProtectedAppShell />}
+          <Toaster />
+        </AuthProvider>
+      </AuthSessionBoundary>
     </QueryClientProvider>
   );
 }
 
 function ProtectedAppShell() {
-  const { session, isHydrated } = useAuth();
+  const { session, isHydrated, authIssue, retrySession } = useAuth();
   const navigate = useNavigate();
   const redirectPath = useRouterState({
     select: (state) => `${state.location.pathname}${state.location.searchStr}`,
@@ -225,10 +230,15 @@ function ProtectedAppShell() {
 
   useEffect(() => {
     if (!isHydrated || session) return;
+    if (authIssue?.kind === "service") return;
 
-    rememberRedirectPath(redirectPath);
-    void navigate({ href: "/login", replace: true });
-  }, [isHydrated, navigate, redirectPath, session]);
+    const safeReturn = getSafeRedirectPath(redirectPath);
+    rememberRedirectPath(safeReturn);
+    void navigate({
+      href: `/login?${authIssue?.kind === "unauthorized" ? "denied=1&" : ""}redirect=${encodeURIComponent(safeReturn)}`,
+      replace: true,
+    });
+  }, [authIssue, isHydrated, navigate, redirectPath, session]);
 
   if (!isHydrated) {
     return (
@@ -244,11 +254,22 @@ function ProtectedAppShell() {
   }
 
   if (!session) {
+    if (authIssue?.kind === "service") {
+      return (
+        <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-4">
+          <p role="alert">{authIssue.message}</p>
+          <Button onClick={() => void retrySession()}>重試登入狀態</Button>
+        </main>
+      );
+    }
     return null;
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div
+      key={JSON.stringify([session.id, session.role, session.team])}
+      className="flex min-h-screen w-full bg-background"
+    >
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppMobileNav />

@@ -16,6 +16,22 @@ const serverFns = vi.hoisted(() => ({
   ceaseClientOfficer: vi.fn(),
   ceaseClientShareholding: vi.fn(),
   ceaseClientController: vi.fn(),
+  companyWork: vi.fn(),
+  documents: vi.fn(),
+  download: vi.fn(),
+}));
+vi.mock("../company-work-server-fns", () => ({ listCompanyWorkPage: serverFns.companyWork }));
+vi.mock("@/features/documents/server-fns", () => ({
+  listDocumentPage: serverFns.documents,
+  downloadDocument: serverFns.download,
+}));
+// This child section has its own server read; keep the parent component test
+// entirely local rather than invoking an unbound server/DB context.
+vi.mock("@/features/service-subscriptions/server-fns", () => ({
+  listServiceSubscriptions: async () => [],
+  addServiceSubscription: vi.fn(),
+  cancelServiceSubscription: vi.fn(),
+  renewServiceSubscription: vi.fn(),
 }));
 
 vi.mock("../server-fns", () => ({
@@ -26,8 +42,13 @@ vi.mock("../server-fns", () => ({
   ceaseClientShareholding: serverFns.ceaseClientShareholding,
   ceaseClientController: serverFns.ceaseClientController,
 }));
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children }: { children: ReactNode }) => <a href="/clients">{children}</a>,
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-router")>()),
+  Link: ({ children, "aria-label": ariaLabel }: { children: ReactNode; "aria-label"?: string }) => (
+    <a href="/clients" aria-label={ariaLabel}>
+      {children}
+    </a>
+  ),
 }));
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -79,12 +100,12 @@ function makeOptions(): ClientAssignmentOptions {
   };
 }
 
-function renderDetail() {
+function renderDetail(returnTo?: string) {
   return render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <ProductionClientDetail clientId={clientId} />
+      <ProductionClientDetail clientId={clientId} returnTo={returnTo} />
     </QueryClientProvider>,
   );
 }
@@ -98,12 +119,18 @@ describe("production client detail", () => {
     serverFns.ceaseClientShareholding.mockReset();
     serverFns.ceaseClientController.mockReset();
     serverFns.listClientAssignmentOptions.mockResolvedValue(makeOptions());
+    serverFns.companyWork
+      .mockReset()
+      .mockResolvedValue({ items: [], total: 0, unfinished: 0, nextCursor: null });
+    serverFns.documents.mockReset().mockResolvedValue({ documents: [], nextCursor: null });
+    serverFns.download.mockReset();
     vi.mocked(toast.success).mockReset();
     vi.mocked(toast.error).mockReset();
   });
 
   afterEach(() => {
     cleanup();
+    vi.unstubAllGlobals();
   });
 
   it("renders the company overview once the query resolves", async () => {
@@ -112,6 +139,23 @@ describe("production client detail", () => {
 
     expect(await screen.findByText("Acme Company Limited")).toBeTruthy();
     expect(screen.getByText("1 Harbour Road, Hong Kong")).toBeTruthy();
+  });
+
+  it("returns to the validated client list filters and cursor", async () => {
+    serverFns.getClient.mockResolvedValue(makeClient());
+    const returnTo = "/clients?q=Acme&status=active&cursor=preserved";
+    renderDetail(returnTo);
+    expect((await screen.findByRole("link", { name: "返回客戶清單" })).getAttribute("href")).toBe(
+      returnTo,
+    );
+  });
+
+  it("falls back to the client list for an unsafe return destination", async () => {
+    serverFns.getClient.mockResolvedValue(makeClient());
+    renderDetail("https://untrusted.example/clients");
+    expect((await screen.findByRole("link", { name: "返回客戶清單" })).getAttribute("href")).toBe(
+      "/clients",
+    );
   });
 
   it("shows a not-found state when the client does not exist", async () => {
@@ -335,5 +379,128 @@ describe("production client detail", () => {
         data: expect.objectContaining({ companyId: clientId, controllerId: "controller-1" }),
       }),
     );
+  });
+
+  it("shows unfinished work and scoped case links for all three businesses", async () => {
+    serverFns.getClient.mockResolvedValue(makeClient());
+    serverFns.companyWork.mockResolvedValue({
+      total: 3,
+      unfinished: 2,
+      nextCursor: null,
+      items: [
+        {
+          id: "ar-case",
+          kind: "annual_return",
+          title: "2026",
+          status: "Documents pending",
+          active: true,
+        },
+        {
+          id: "inc-case",
+          kind: "incorporation",
+          title: "Acme intake",
+          status: "Completed",
+          active: false,
+        },
+        {
+          id: "change-case",
+          kind: "corporate_change",
+          title: "name_change",
+          status: "Requested",
+          active: true,
+        },
+      ],
+    });
+    renderDetail();
+    await screen.findByText("Acme Company Limited");
+    expect(await screen.findByText("未完成案件：2")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "開啟周年申報案件 2026" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "開啟公司註冊案件 Acme intake" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "開啟公司變更案件 name_change" })).toBeTruthy();
+  });
+
+  it("keeps unsafe metadata visible with a reason and offers safe version-bound file actions", async () => {
+    serverFns.getClient.mockResolvedValue(makeClient());
+    const safe = {
+      id: "safe-document",
+      caseId: "case-a",
+      fileName: "safe-proof.pdf",
+      category: "payment",
+      currentVersionId: "version-a",
+      uploadStatus: "available",
+      scanVerdictSource: "provider",
+      availability: "available",
+      reviewStatus: "pending",
+    };
+    serverFns.documents.mockResolvedValue({
+      documents: [
+        safe,
+        {
+          ...safe,
+          id: "legacy",
+          fileName: "legacy.pdf",
+          currentVersionId: null,
+          availability: "metadata_only",
+        },
+      ],
+      nextCursor: null,
+    });
+    renderDetail();
+    expect(await screen.findByRole("button", { name: "預覽 safe-proof.pdf" })).toBeTruthy();
+    expect(screen.getByText("legacy.pdf")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "預覽 legacy.pdf" })).toBeNull();
+    expect(screen.getByText(/欠缺當前版本或完整上載來源/)).toBeTruthy();
+  });
+
+  it("binds preview and failed download to the displayed version and retains its case link", async () => {
+    serverFns.getClient.mockResolvedValue(makeClient());
+    const createObjectURL = vi.fn(() => "blob:synthetic-preview");
+    vi.stubGlobal(
+      "URL",
+      Object.assign(class extends URL {}, { createObjectURL, revokeObjectURL: vi.fn() }),
+    );
+    serverFns.documents.mockResolvedValue({
+      documents: [
+        {
+          id: "safe-document",
+          caseId: "case-a",
+          fileName: "safe-proof.pdf",
+          currentVersionId: "version-a",
+          uploadStatus: "available",
+          scanVerdictSource: "provider",
+          availability: "available",
+          reviewStatus: "pending",
+        },
+      ],
+      nextCursor: null,
+    });
+    serverFns.download
+      .mockResolvedValueOnce(
+        new Response("synthetic", { headers: { "content-type": "application/pdf" } }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 409 }));
+    renderDetail();
+    fireEvent.click(await screen.findByRole("button", { name: "預覽 safe-proof.pdf" }));
+    expect(await screen.findByTitle("文件預覽 safe-proof.pdf")).toBeTruthy();
+    expect(serverFns.download).toHaveBeenCalledWith({
+      data: { documentId: "safe-document", expectedVersionId: "version-a" },
+    });
+    expect(screen.getByRole("link", { name: "開啟文件所屬案件" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "下載 safe-proof.pdf" }));
+    expect(await screen.findByText("下載未能完成或版本已更新，請重新載入文件。")).toBeTruthy();
+    expect(serverFns.download).toHaveBeenLastCalledWith({
+      data: { documentId: "safe-document", expectedVersionId: "version-a" },
+    });
+  });
+
+  it("separates failed work and document reads from empty results", async () => {
+    serverFns.getClient.mockResolvedValue(makeClient());
+    serverFns.companyWork.mockRejectedValue(new Error("synthetic unavailable"));
+    serverFns.documents.mockRejectedValue(new Error("synthetic unavailable"));
+    renderDetail();
+    expect(await screen.findByText(/案件讀取失敗/)).toBeTruthy();
+    expect(await screen.findByText(/文件讀取失敗/)).toBeTruthy();
+    expect(screen.queryByText("此授權範圍未有已關聯案件。")).toBeNull();
+    expect(screen.queryByText("此授權範圍未有文件紀錄。")).toBeNull();
   });
 });

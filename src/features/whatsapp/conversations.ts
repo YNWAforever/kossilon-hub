@@ -104,6 +104,15 @@ export function sortConversationMessagesOldestFirst<T extends WhatsAppConversati
 export const CONVERSATION_PAGE_SIZE = 100;
 export const CONVERSATION_MESSAGE_PAGE_SIZE = 200;
 
+/** Continuation is bound server-side to the verified actor and search/contact. */
+export type WhatsAppHistoryCursor = {
+  at: string;
+  id: string;
+  scope: string;
+  asOf?: string;
+};
+export type WhatsAppHistoryPage<T> = { items: T[]; nextCursor: WhatsAppHistoryCursor | null };
+
 const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
 
 /**

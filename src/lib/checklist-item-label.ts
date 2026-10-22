@@ -50,6 +50,11 @@ const CHINESE_NAMES: Record<string, string> = {
   "proof of new address": "新地址證明",
 };
 
+/** Shared search vocabulary; stored names remain unchanged. */
+export function checklistSearchAliases(): [string, string][] {
+  return Object.entries(CHINESE_NAMES).map(([stored, displayed]) => [displayed, stored]);
+}
+
 /** The Chinese name of a built-in document, or null for a name the firm typed. */
 export function checklistItemChineseName(label: string): string | null {
   return CHINESE_NAMES[label.trim().replace(/\s+/g, " ").toLowerCase()] ?? null;
