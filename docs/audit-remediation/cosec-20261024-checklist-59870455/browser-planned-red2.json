@@ -1,0 +1,77 @@
+{
+  "attempt": "red2",
+  "run_id": "cosec-20261024-checklist-59870455",
+  "fixture": {
+    "id": "f910bf25-8a65-455d-82d0-e2e6557b5189",
+    "proposedCompanyNameEn": "UC159 local browser contract",
+    "proposedCompanyNameZh": null,
+    "proposedRegisteredOffice": "Local only",
+    "proposedCompanySecretary": "Local only",
+    "registeredCapital": 10000,
+    "businessNature": "Local contract",
+    "status": "Intake",
+    "ownerId": "efe2fb7a-29c5-4419-b71d-f5646765308a",
+    "ownerName": "Local owner",
+    "teamId": "7f053621-c219-4a13-a480-12f47e4ea996",
+    "teamName": "Local team",
+    "targetCompletionDate": "2026-11-30",
+    "companyId": null,
+    "completedAt": null,
+    "createdAt": "2026-10-24T00:00:00Z",
+    "checklist": [
+      {
+        "id": "043d4348-b587-4216-9c23-ff0bac1721b4",
+        "caseId": "f910bf25-8a65-455d-82d0-e2e6557b5189",
+        "itemLabel": "NNC1 incorporation form",
+        "required": true,
+        "status": "Missing",
+        "note": "Preserve note 0",
+        "receivedAt": null,
+        "verifiedAt": null
+      },
+      {
+        "id": "1c73f141-30ed-49df-a0b5-cec95a1d6d2b",
+        "caseId": "f910bf25-8a65-455d-82d0-e2e6557b5189",
+        "itemLabel": "NNC1 incorporation form",
+        "required": true,
+        "status": "Missing",
+        "note": "Preserve note 1",
+        "receivedAt": null,
+        "verifiedAt": null
+      },
+      {
+        "id": "110877fe-1a74-48f2-8dbe-8bb048fb5765",
+        "caseId": "f910bf25-8a65-455d-82d0-e2e6557b5189",
+        "itemLabel": "Local document 3",
+        "required": true,
+        "status": "Missing",
+        "note": "Preserve note 2",
+        "receivedAt": null,
+        "verifiedAt": null
+      },
+      {
+        "id": "ac3d5851-3e8e-4eb9-a53a-a6e02fb9b15f",
+        "caseId": "f910bf25-8a65-455d-82d0-e2e6557b5189",
+        "itemLabel": "Local document 4",
+        "required": true,
+        "status": "Missing",
+        "note": "Preserve note 3",
+        "receivedAt": null,
+        "verifiedAt": null
+      },
+      {
+        "id": "f1528c21-8d4c-402b-b0c6-98105090103d",
+        "caseId": "f910bf25-8a65-455d-82d0-e2e6557b5189",
+        "itemLabel": "Local document 5",
+        "required": true,
+        "status": "Missing",
+        "note": "Preserve note 4",
+        "receivedAt": null,
+        "verifiedAt": null
+      }
+    ]
+  },
+  "source_sha256": "fb3d3c1607d94ec9d6f9bd5fa19ff485b598b492daacb6a0a9fc816942c94902",
+  "rpc": "in-memory local stub; no database/auth/provider client",
+  "native": false
+}

@@ -1,0 +1,64 @@
+{
+  "source_sha": "096f491db9d174f3d183db8788ae934a2da75ff8",
+  "parent_sha": "347fdbcb540456863d5a93a9cdb21a9471e9416c",
+  "tested_head": "347fdbcb540456863d5a93a9cdb21a9471e9416c",
+  "paths": [
+    "src/features/incorporation/components/production-incorporation-detail.tsx",
+    "src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx",
+    "src/features/incorporation/server-fns.ts",
+    "src/features/incorporation/checklist-command.test.ts",
+    "src/features/incorporation/checklist-recovery.integration.test.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "files": [
+    {
+      "path": "src/features/incorporation/components/production-incorporation-detail.tsx",
+      "bytes": 16171,
+      "sha256": "6694558aa3359b258a31dbff2eb8da87f07bb053f8772ba48c650ef46eb4c01d",
+      "git_blob_equal": true
+    },
+    {
+      "path": "src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx",
+      "bytes": 10961,
+      "sha256": "06db7e41a24ca907a9c228c5cd098cd367e219140c13d41be1b733c84f324f3b",
+      "git_blob_equal": true
+    },
+    {
+      "path": "src/features/incorporation/server-fns.ts",
+      "bytes": 7308,
+      "sha256": "37dd21c9fed4619ddd75cbf83e31e7782d0ff103c725abe41e172d54657e3535",
+      "git_blob_equal": true
+    },
+    {
+      "path": "src/features/incorporation/checklist-command.test.ts",
+      "bytes": 6203,
+      "sha256": "50939e63c0dcbbd5c774d08a54c090a2f2f5efbdd9cf92670b028abe50011b64",
+      "git_blob_equal": true
+    },
+    {
+      "path": "src/features/incorporation/checklist-recovery.integration.test.ts",
+      "bytes": 17894,
+      "sha256": "73022cc824b5d7a02c03fa8b6e81e1765035faeb6cd9a430a68145934ec47e6e",
+      "git_blob_equal": true
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "bytes": 3129,
+      "sha256": "169b3f640be34dc9b7488b81978bcf8e3911cfa9fd4b9f644a73374764c9bbdc",
+      "git_blob_equal": true
+    }
+  ],
+  "unit_build_equivalence": {
+    "before_freeze": "source-freeze.json",
+    "final_freeze": "source-final-freeze.json",
+    "only_changed_after_full_unit": "src/features/incorporation/checklist-recovery.integration.test.ts",
+    "excluded_from_unit_project": true,
+    "product_and_unit_files_unchanged": true,
+    "sql_rerun": "db-final/db-checklist-final.json",
+    "convention_rerun": "targeted-verified.json",
+    "typecheck_lint_rerun": [
+      "typecheck-verified.json",
+      "lint-verified.json"
+    ]
+  }
+}

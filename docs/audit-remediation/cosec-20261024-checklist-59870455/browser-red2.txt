@@ -1,0 +1,26 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
++ [
++   "The requested module '/@id/__x00__uc159-router' does not provide an export named 'defaultStringifySearch'",
++   "The requested module '/@id/__x00__uc159-router' does not provide an export named 'defaultStringifySearch'"
++ ]
+- []
+
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-checklist-59870455/browser-checklist.mjs:74:64 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: [
+    "The requested module '/@id/__x00__uc159-router' does not provide an export named 'defaultStringifySearch'",
+    "The requested module '/@id/__x00__uc159-router' does not provide an export named 'defaultStringifySearch'"
+  ],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.18.0

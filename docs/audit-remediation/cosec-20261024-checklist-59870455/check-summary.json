@@ -1,0 +1,19 @@
+{
+  "unit_files": 272,
+  "unit_pass": 2595,
+  "unit_fail": 0,
+  "unit_skip": 0,
+  "targeted_pass": 51,
+  "component_new_pass": 9,
+  "component_existing_pass": 4,
+  "component_included_in_unit": true,
+  "local_edge_pass": 3,
+  "local_edge_original_failed": 3,
+  "sql_files": 1,
+  "sql_pass_per_attempt": 1,
+  "sql_attempts": 2,
+  "sql_not_combined_with_unit": true,
+  "lint_errors": 0,
+  "lint_warnings": 1,
+  "native_auth_runtime": false
+}

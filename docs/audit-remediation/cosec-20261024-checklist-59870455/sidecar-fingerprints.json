@@ -1,0 +1,36 @@
+{
+  "status": "CODE_FROZEN_NOT_TESTED",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "base_head": "347fdbcb540456863d5a93a9cdb21a9471e9416c",
+  "actual_head": "347fdbcb540456863d5a93a9cdb21a9471e9416c",
+  "tests_run_by_sidecar": false,
+  "database_clients_created_by_sidecar": false,
+  "files": [
+    {
+      "path": "src/features/incorporation/server-fns.ts",
+      "sha256": "37dd21c9fed4619ddd75cbf83e31e7782d0ff103c725abe41e172d54657e3535",
+      "bytes": 7308
+    },
+    {
+      "path": "src/features/incorporation/checklist-command.test.ts",
+      "sha256": "50939e63c0dcbbd5c774d08a54c090a2f2f5efbdd9cf92670b028abe50011b64",
+      "bytes": 6203
+    },
+    {
+      "path": "src/features/incorporation/checklist-recovery.integration.test.ts",
+      "sha256": "b973fa2dbe7e8676b8ffe21beb8db141971089182f577a263af3daad02838a61",
+      "bytes": 17488
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-checklist-59870455/sidecar-vitest.config.mts",
+      "sha256": "71a8ee317d22922195b416e59e002d43c421445327d810ad52df2a668a82ef63",
+      "bytes": 929
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-checklist-59870455/sidecar-handoff.md",
+      "sha256": "83161a03813c3e3a3e3ac1809988d9d8d08917e878af3bc8d03be15c5802416e",
+      "bytes": 9025
+    }
+  ]
+}

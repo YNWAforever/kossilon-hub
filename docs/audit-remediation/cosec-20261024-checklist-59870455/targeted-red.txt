@@ -1,0 +1,928 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx (8 tests | 5 failed) 4387ms
+     × gives all five controls unique document names even when labels repeat 407ms
+     ✓ saves five choices and reads them again using a fresh query cache after reopening  534ms
+     × keeps the saving control keyboard-focusable and refuses repeated pending changes 94ms
+     × retains a failed choice with a linked error and retries only after an explicit action 1089ms
+     ✓ does not steal focus when the user moves away during a save 125ms
+     × requires the returned case/item/status to confirm a save before announcing it 1051ms
+     ✓ does not carry a late failed choice into a different reopened case 62ms
+     × explains an empty checklist without inventing controls or saved status 1023ms
+ ✓ |unit| src/features/incorporation/components/production-incorporation-detail.test.tsx (4 tests) 374ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  5 failed | 7 passed (12)
+   Start at  04:02:38
+   Duration  45.28s (transform 739ms, setup 0ms, import 7.47s, tests 4.76s, environment 31.43s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx > UC159 five-item checklist component contract (mocked RPC) > gives all five controls unique document names even when labels repeat
+AssertionError: expected 4 to be 5 // Object.is equality
+
+- Expected
++ Received
+
+- 5
++ 4
+
+ ❯ src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx:62:74
+     60|     mount(); await screen.findAllByRole("combobox");
+     61|     const names = selects().map(select => select.getAttribute("aria-la…
+     62|     expect(names.every(Boolean)).toBe(true); expect(new Set(names).siz…
+       |                                                                          ^
+     63|     expect(names[0]).toContain("NNC1"); expect(names[1]).toContain("NN…
+     64|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |unit| src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx > UC159 five-item checklist component contract (mocked RPC) > keeps the saving control keyboard-focusable and refuses repeated pending changes
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx:87:29
+     85|     fireEvent.change(select, { target: { value: "Received" } });
+     86|     await waitFor(() => expect(api.updateIncorporationChecklistItem).t…
+     87|     expect(select.disabled).toBe(false); expect(select.getAttribute("a…
+       |                             ^
+     88|     expect(select.value).toBe("Received"); expect(document.activeEleme…
+     89|     fireEvent.change(select, { target: { value: "Verified" } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |unit| src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx > UC159 five-item checklist component contract (mocked RPC) > retains a failed choice with a linked error and retries only after an explicit action
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mUC159 local component contract[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m目標完成日期 2026年11月30日[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-3"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m狀態[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-1 flex items-center gap-2"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-status-yellow"[39m
+              [36m/>[39m
+              [0m受理中[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent px-3 text-xs h-auto whitespace-normal py-2"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m推進至「[0m
+              [0m待收文件[0m
+              [0m」[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m負責同事／團隊[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-1 text-sm"[39m
+          [36m>[39m
+            [0mLocal owner[0m
+            [0m · [0m
+            [0mLocal team[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m註冊辦事處[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-1 text-sm"[39m
+          [36m>[39m
+            [0mLocal only[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between gap-3 py-3"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate text-sm"[39m
+            [36m>[39m
+              [0mNNC1 法團成立表格[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"ml-1.5 text-xs font-normal text-muted-foreground"[39m
+                [33mlang[39m=[32m"en"[39m
+              [36m>[39m
+                [0mNNC1 incorporation form[0m
+              [36m</span>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex shrink-0 items-center gap-2"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-muted text-muted-foreground ring-border"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-muted-foreground"[39m
+                [36m/>[39m
+                [0m缺少[0m
+              [36m</span>[39m
+              [36m<select[39m
+                [33maria-label[39m=[32m"NNC1 法團成立表格（NNC1 incorporation form） 狀態"[39m
+                [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs"[39m
+              [36m>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Missing"[39m
+                [36m>[39m
+                  [0m缺少[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Received"[39m
+                [36m>[39m
+                  [0m已收到[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Verified"[39m
+                [36m>[39m
+                  [0m已核對[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Rejected"[39m
+                [36m>[39m
+...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mUC159 local component contract[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m目標完成日期 2026年11月30日[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-3"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m狀態[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-1 flex items-center gap-2"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-status-yellow"[39m
+              [36m/>[39m
+              [0m受理中[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent px-3 text-xs h-auto whitespace-normal py-2"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m推進至「[0m
+              [0m待收文件[0m
+              [0m」[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m負責同事／團隊[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-1 text-sm"[39m
+          [36m>[39m
+            [0mLocal owner[0m
+            [0m · [0m
+            [0mLocal team[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m註冊辦事處[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-1 text-sm"[39m
+          [36m>[39m
+            [0mLocal only[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between gap-3 py-3"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate text-sm"[39m
+            [36m>[39m
+              [0mNNC1 法團成立表格[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"ml-1.5 text-xs font-normal text-muted-foreground"[39m
+                [33mlang[39m=[32m"en"[39m
+              [36m>[39m
+                [0mNNC1 incorporation form[0m
+              [36m</span>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex shrink-0 items-center gap-2"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-muted text-muted-foreground ring-border"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-muted-foreground"[39m
+                [36m/>[39m
+                [0m缺少[0m
+              [36m</span>[39m
+              [36m<select[39m
+                [33maria-label[39m=[32m"NNC1 法團成立表格（NNC1 incorporation form） 狀態"[39m
+                [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs"[39m
+              [36m>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Missing"[39m
+                [36m>[39m
+                  [0m缺少[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Received"[39m
+                [36m>[39m
+                  [0m已收到[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Verified"[39m
+                [36m>[39m
+                  [0m已核對[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Rejected"[39m
+                [36m>[39m
+...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx:101:32
+     99|     mount(); await screen.findAllByRole("combobox"); const select = se…
+    100|     fireEvent.change(select, { target: { value: "Rejected" } });
+    101|     const alert = await screen.findByRole("alert");
+       |                                ^
+    102|     expect(alert.textContent).toContain("未能保存");
+    103|     expect(select.getAttribute("aria-describedby")?.split(" ")).toCont…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |unit| src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx > UC159 five-item checklist component contract (mocked RPC) > requires the returned case/item/status to confirm a save before announcing it
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mUC159 local component contract[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m目標完成日期 2026年11月30日[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-3"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m狀態[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-1 flex items-center gap-2"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-status-yellow"[39m
+              [36m/>[39m
+              [0m受理中[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent px-3 text-xs h-auto whitespace-normal py-2"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m推進至「[0m
+              [0m待收文件[0m
+              [0m」[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m負責同事／團隊[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-1 text-sm"[39m
+          [36m>[39m
+            [0mLocal owner[0m
+            [0m · [0m
+            [0mLocal team[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m註冊辦事處[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-1 text-sm"[39m
+          [36m>[39m
+            [0mLocal only[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between gap-3 py-3"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate text-sm"[39m
+            [36m>[39m
+              [0mNNC1 法團成立表格[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"ml-1.5 text-xs font-normal text-muted-foreground"[39m
+                [33mlang[39m=[32m"en"[39m
+              [36m>[39m
+                [0mNNC1 incorporation form[0m
+              [36m</span>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex shrink-0 items-center gap-2"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-muted text-muted-foreground ring-border"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-muted-foreground"[39m
+                [36m/>[39m
+                [0m缺少[0m
+              [36m</span>[39m
+              [36m<select[39m
+                [33maria-label[39m=[32m"NNC1 法團成立表格（NNC1 incorporation form） 狀態"[39m
+                [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs"[39m
+              [36m>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Missing"[39m
+                [36m>[39m
+                  [0m缺少[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Received"[39m
+                [36m>[39m
+                  [0m已收到[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Verified"[39m
+                [36m>[39m
+                  [0m已核對[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Rejected"[39m
+                [36m>[39m
+...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mUC159 local component contract[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m目標完成日期 2026年11月30日[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-3"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m狀態[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-1 flex items-center gap-2"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-status-yellow"[39m
+              [36m/>[39m
+              [0m受理中[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent px-3 text-xs h-auto whitespace-normal py-2"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m推進至「[0m
+              [0m待收文件[0m
+              [0m」[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m負責同事／團隊[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-1 text-sm"[39m
+          [36m>[39m
+            [0mLocal owner[0m
+            [0m · [0m
+            [0mLocal team[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m註冊辦事處[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-1 text-sm"[39m
+          [36m>[39m
+            [0mLocal only[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between gap-3 py-3"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate text-sm"[39m
+            [36m>[39m
+              [0mNNC1 法團成立表格[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"ml-1.5 text-xs font-normal text-muted-foreground"[39m
+                [33mlang[39m=[32m"en"[39m
+              [36m>[39m
+                [0mNNC1 incorporation form[0m
+              [36m</span>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex shrink-0 items-center gap-2"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-muted text-muted-foreground ring-border"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-muted-foreground"[39m
+                [36m/>[39m
+                [0m缺少[0m
+              [36m</span>[39m
+              [36m<select[39m
+                [33maria-label[39m=[32m"NNC1 法團成立表格（NNC1 incorporation form） 狀態"[39m
+                [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs"[39m
+              [36m>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Missing"[39m
+                [36m>[39m
+                  [0m缺少[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Received"[39m
+                [36m>[39m
+                  [0m已收到[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Verified"[39m
+                [36m>[39m
+                  [0m已核對[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"Rejected"[39m
+                [36m>[39m
+...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx:124:26
+    122|     api.updateIncorporationChecklistItem.mockResolvedValue(fixture(oth…
+    123|     mount(); await screen.findAllByRole("combobox"); fireEvent.change(…
+    124|     expect((await screen.findByRole("alert")).textContent).toContain("…
+       |                          ^
+    125|     expect(saved.checklist[1].status).toBe("Missing");
+    126|     expect(screen.queryByText("已保存")).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |unit| src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx > UC159 five-item checklist component contract (mocked RPC) > explains an empty checklist without inventing controls or saved status
+TestingLibraryElementError: Unable to find an element with the text: 此案件暫未有清單項目。. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mUC159 local component contract[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m目標完成日期 2026年11月30日[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-3"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m狀態[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-1 flex items-center gap-2"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-status-yellow"[39m
+              [36m/>[39m
+              [0m受理中[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent px-3 text-xs h-auto whitespace-normal py-2"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m推進至「[0m
+              [0m待收文件[0m
+              [0m」[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m負責同事／團隊[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-1 text-sm"[39m
+          [36m>[39m
+            [0mLocal owner[0m
+            [0m · [0m
+            [0mLocal team[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m註冊辦事處[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-1 text-sm"[39m
+          [36m>[39m
+            [0mLocal only[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m/>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mUC159 local component contract[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m目標完成日期 2026年11月30日[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-3"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m狀態[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-1 flex items-center gap-2"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-status-yellow"[39m
+              [36m/>[39m
+              [0m受理中[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent px-3 text-xs h-auto whitespace-normal py-2"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m推進至「[0m
+              [0m待收文件[0m
+              [0m」[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m負責同事／團隊[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-1 text-sm"[39m
+          [36m>[39m
+            [0mLocal owner[0m
+            [0m · [0m
+            [0mLocal team[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+          [36m>[39m
+            [0m註冊辦事處[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-1 text-sm"[39m
+          [36m>[39m
+            [0mLocal only[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m/>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx:140:25
+    138|   it("explains an empty checklist without inventing controls or saved …
+    139|     saved.checklist = []; mount();
+    140|     expect(await screen.findByText("此案件暫未有清單項目。" )).toBeTruthy();
+       |                         ^
+    141|     expect(screen.queryByRole("combobox")).toBeNull(); expect(api.upda…
+    142|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+

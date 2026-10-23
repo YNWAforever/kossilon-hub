@@ -1,0 +1,46 @@
+{
+  "attempt": "red3",
+  "run_id": "cosec-20261024-checklist-59870455",
+  "origin": "http://127.0.0.1:5173",
+  "host": "127.0.0.1",
+  "server_port": 5173,
+  "browser_version": "155.0.4283.62",
+  "executable": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+  "source_sha256": "fb3d3c1607d94ec9d6f9bd5fa19ff485b598b492daacb6a0a9fc816942c94902",
+  "rpc_stub_resolutions": 2,
+  "blocked_external_origins": [],
+  "page_errors": [],
+  "results": [
+    {
+      "name": "UC159 five unique accessible names",
+      "status": "failed",
+      "error": "expect(locator).toHaveCount(expected) failed\n\nLocator:  getByRole('combobox')\nExpected: 5\nReceived: 0\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveCount\" getByRole('combobox') with timeout 5000ms\n  - waiting for getByRole('combobox')\n    13 × locator resolved to 0 elements\n       - unexpected value \"0\"\n",
+      "dom": "",
+      "active": {
+        "tag": "BODY",
+        "label": null
+      }
+    },
+    {
+      "name": "UC159 keyboard pending focus, Tab, five saves and reopen",
+      "status": "failed",
+      "error": "expect(locator).toHaveCount(expected) failed\n\nLocator:  getByRole('combobox')\nExpected: 5\nReceived: 0\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveCount\" getByRole('combobox') with timeout 5000ms\n  - waiting for getByRole('combobox')\n    14 × locator resolved to 0 elements\n       - unexpected value \"0\"\n",
+      "dom": "返回工作列表\n\n案件與客戶\n\n案件無法載入\n\n案件資料暫時無法載入，請稍後再試。\n\n重試返回公司註冊",
+      "active": {
+        "tag": "BODY",
+        "label": null
+      }
+    },
+    {
+      "name": "UC159 linked error and explicit keyboard retry",
+      "status": "failed",
+      "error": "expect(locator).toHaveCount(expected) failed\n\nLocator:  getByRole('combobox')\nExpected: 5\nReceived: 0\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveCount\" getByRole('combobox') with timeout 5000ms\n  - waiting for getByRole('combobox')\n    14 × locator resolved to 0 elements\n       - unexpected value \"0\"\n",
+      "dom": "返回工作列表\n\n案件與客戶\n\n案件無法載入\n\n案件資料暫時無法載入，請稍後再試。\n\n重試返回公司註冊",
+      "active": {
+        "tag": "BODY",
+        "label": null
+      }
+    }
+  ],
+  "native_auth_http_rls": false
+}

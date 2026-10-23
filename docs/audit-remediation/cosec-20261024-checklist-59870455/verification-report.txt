@@ -1,0 +1,6 @@
+Verified two exact SQL targets, 25 transitions/25 retries/7 denials each, cleanup0, and Edge three-red/three-green local keyboard evidence.
+VERIFIED source=096f491db9d174f3d183db8788ae934a2da75ff8; evidence_files=108; prior_batches=8/1419_files
+VERIFIED unit=2595/272_files; scoped=51; Edge=3; SQL=1_per_target; typecheck/lint/build=0
+VERIFIED only post-unit change=excluded_SQL_cleanup; SQL/convention/typecheck/lint rerun; product/unit bytes unchanged
+VERIFIED original_rows=184; 35F/15R/100UC/34LA; native=70_BLOCKED/114_NOT_RUN/0_PASS; NO_GO
+VERIFIED both_SQL_fixture_cleanup=0; both_owned_containers/credentials_removed; all_preexisting_ids_preserved

@@ -1,0 +1,6 @@
+{
+  "unit_receipt": "unit-final.json",
+  "all6_source_freeze_hashes_equal": true,
+  "checked_utc": "2026-10-23T20:29:44.248Z",
+  "change_to_follow": "SQL integration test cleanup only; excluded from unit project; convention will rerun"
+}

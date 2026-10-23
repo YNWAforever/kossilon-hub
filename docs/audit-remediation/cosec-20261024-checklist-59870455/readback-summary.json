@@ -1,0 +1,368 @@
+{
+  "run_id": "cosec-20261024-checklist-59870455",
+  "cases": [
+    {
+      "attempt": "green",
+      "events": "db/sidecar-UC159-SQL-green.jsonl",
+      "planned_ids": {
+        "teams": [
+          "067ea62f-b6a5-47f2-95dd-6eaca9d3cfd1",
+          "84754959-3922-4379-b2f5-8fad999675c6"
+        ],
+        "users": {
+          "staff": "74e782e4-1fd1-41a8-ac34-c932e6608cb2",
+          "admin": "89f1ebb5-e336-46a4-b044-aa72cce5b65f",
+          "inactive": "313f0b88-526c-47a1-a8da-d171d90b5deb",
+          "otherStaff": "e7d53679-a7b6-42ef-9d67-63fde0aa9c58"
+        },
+        "cases": [
+          "af8e23df-2dd0-4555-a185-ad6ed8bf42fc",
+          "3a0010aa-c9ba-4205-85ab-cdea4d49a90a"
+        ],
+        "checklist": [
+          "ec8250ec-6538-4be7-ae99-076d11963fea",
+          "584b7594-119f-4919-8ccf-39b023454d57",
+          "7ade0e4f-c2ea-466c-8371-399b1f66197b",
+          "dd347db2-43c4-409b-beb9-0884ebaac0fb",
+          "6c2c4c13-a52e-42d5-874b-84d50320f66f"
+        ],
+        "missingCase": "97cd59c7-ac6b-4503-91f4-ecb6419a4036"
+      },
+      "sql_tests_passed": 1,
+      "checklist_count": 5,
+      "committed_transitions": 25,
+      "same_value_retries": 25,
+      "refusals": [
+        {
+          "name": "Client role",
+          "repositoryCalls": 0
+        },
+        {
+          "name": "inactive supplied actor",
+          "repositoryCalls": 0
+        },
+        {
+          "name": "other team",
+          "repositoryCalls": 0
+        },
+        {
+          "name": "no database identity",
+          "repositoryCalls": 0
+        },
+        {
+          "name": "missing case",
+          "repositoryCalls": 0
+        },
+        {
+          "name": "item belongs to a different case",
+          "repositoryCalls": 1
+        },
+        {
+          "name": "repository assertActor rejects inactive persisted user despite active supplied actor",
+          "repositoryCalls": 1
+        }
+      ],
+      "business_state_and_timestamps_equal_on_retry": true,
+      "write_metadata_on_retry": "updated_at and xmin are refreshed by existing SQL; no claim of zero duplicate SQL writes",
+      "rejected_requests_full_rows_unchanged": true,
+      "independent_sessions": {
+        "runId": "cosec-20261024-checklist-59870455",
+        "attempt": "green",
+        "phase": "sql-identity",
+        "verifiedTargetId": "b8f1b6db0249901bf68031e350333f959750304d6c70ddfed47252d7f0c6f16e",
+        "writerIdentity": {
+          "database": "cosec_checklist_59870455",
+          "db_role": "cosec_runner",
+          "server_address": "172.17.0.2/32",
+          "server_port": 5432,
+          "pid": 123
+        },
+        "observerIdentity": {
+          "database": "cosec_checklist_59870455",
+          "db_role": "cosec_runner",
+          "server_address": "172.17.0.2/32",
+          "server_port": 5432,
+          "pid": 124
+        }
+      },
+      "final_rows": [
+        {
+          "id": "584b7594-119f-4919-8ccf-39b023454d57",
+          "case_id": "af8e23df-2dd0-4555-a185-ad6ed8bf42fc",
+          "item_label": "Synthetic UC159 document 1",
+          "required": true,
+          "status": "Received",
+          "note": "文件 1: Received (4)\nKeep punctuation, Unicode and trailing spaces.  ",
+          "received_at": "2026-10-23 20:16:44.819316+00",
+          "verified_at": null,
+          "created_at": "2026-10-01 00:00:01+00",
+          "updated_at": "2026-10-23 20:16:44.831146+00",
+          "row_version": "780"
+        },
+        {
+          "id": "6c2c4c13-a52e-42d5-874b-84d50320f66f",
+          "case_id": "af8e23df-2dd0-4555-a185-ad6ed8bf42fc",
+          "item_label": "Synthetic UC159 document 4",
+          "required": false,
+          "status": "Received",
+          "note": "文件 4: Received (4)\nKeep punctuation, Unicode and trailing spaces.  ",
+          "received_at": "2026-10-23 20:16:45.062787+00",
+          "verified_at": null,
+          "created_at": "2026-10-01 00:00:04+00",
+          "updated_at": "2026-10-23 20:16:45.070725+00",
+          "row_version": "810"
+        },
+        {
+          "id": "7ade0e4f-c2ea-466c-8371-399b1f66197b",
+          "case_id": "af8e23df-2dd0-4555-a185-ad6ed8bf42fc",
+          "item_label": "Synthetic UC159 document 2",
+          "required": true,
+          "status": "Received",
+          "note": "文件 2: Received (4)\nKeep punctuation, Unicode and trailing spaces.  ",
+          "received_at": "2026-10-23 20:16:44.897752+00",
+          "verified_at": null,
+          "created_at": "2026-10-01 00:00:02+00",
+          "updated_at": "2026-10-23 20:16:44.905679+00",
+          "row_version": "790"
+        },
+        {
+          "id": "dd347db2-43c4-409b-beb9-0884ebaac0fb",
+          "case_id": "af8e23df-2dd0-4555-a185-ad6ed8bf42fc",
+          "item_label": "Synthetic UC159 document 3",
+          "required": true,
+          "status": "Received",
+          "note": "文件 3: Received (4)\nKeep punctuation, Unicode and trailing spaces.  ",
+          "received_at": "2026-10-23 20:16:44.973724+00",
+          "verified_at": null,
+          "created_at": "2026-10-01 00:00:03+00",
+          "updated_at": "2026-10-23 20:16:44.98087+00",
+          "row_version": "800"
+        },
+        {
+          "id": "ec8250ec-6538-4be7-ae99-076d11963fea",
+          "case_id": "af8e23df-2dd0-4555-a185-ad6ed8bf42fc",
+          "item_label": "Synthetic UC159 document 0",
+          "required": true,
+          "status": "Received",
+          "note": "文件 0: Received (4)\nKeep punctuation, Unicode and trailing spaces.  ",
+          "received_at": "2026-10-23 20:16:44.742559+00",
+          "verified_at": null,
+          "created_at": "2026-10-01 00:00:00+00",
+          "updated_at": "2026-10-23 20:16:44.749752+00",
+          "row_version": "770"
+        }
+      ],
+      "cleanup": {
+        "checklist": 0,
+        "checklist_by_case": 0,
+        "cases": 0,
+        "users": 0,
+        "teams": 0
+      },
+      "container_id": "b8f1b6db0249901bf68031e350333f959750304d6c70ddfed47252d7f0c6f16e",
+      "system_id": "7699959098961330215",
+      "native_auth_rls": false
+    },
+    {
+      "attempt": "final",
+      "events": "db-final/sidecar-UC159-SQL-final.jsonl",
+      "planned_ids": {
+        "teams": [
+          "9065d5ce-f967-4640-bad3-4342b15f89d8",
+          "2a390964-f4ab-4ec4-b945-e0536d8d1bf1"
+        ],
+        "users": {
+          "staff": "39b221ea-9a57-4ce0-9cdb-1641efc4b2b0",
+          "admin": "47a170b9-5ceb-43ab-ada2-4232f0368e2f",
+          "inactive": "1aa9320f-746c-4ef6-89f8-015683d5fa84",
+          "otherStaff": "7319f540-9dc1-40c3-9133-7c01f259fed1"
+        },
+        "cases": [
+          "933bca4a-16df-47e4-9e4b-2fb8f92e5f5f",
+          "97b5ac7a-8d58-4a8c-8b13-7eeeec6ab144"
+        ],
+        "checklist": [
+          "6dbe421e-22a1-4b3e-aba5-e6c94cc7cf1e",
+          "6465df7d-0a9d-483f-9a35-05620820e315",
+          "3c74f12c-1113-47cb-bb32-f44d1a4ebd9e",
+          "9d2f17f9-b059-4969-8e41-c318bd081fc9",
+          "27e92a32-012f-418d-a87d-cd567745d5fb"
+        ],
+        "missingCase": "8971a057-81dc-46a6-8520-7cb4f3dcb845"
+      },
+      "sql_tests_passed": 1,
+      "checklist_count": 5,
+      "committed_transitions": 25,
+      "same_value_retries": 25,
+      "refusals": [
+        {
+          "name": "Client role",
+          "repositoryCalls": 0
+        },
+        {
+          "name": "inactive supplied actor",
+          "repositoryCalls": 0
+        },
+        {
+          "name": "other team",
+          "repositoryCalls": 0
+        },
+        {
+          "name": "no database identity",
+          "repositoryCalls": 0
+        },
+        {
+          "name": "missing case",
+          "repositoryCalls": 0
+        },
+        {
+          "name": "item belongs to a different case",
+          "repositoryCalls": 1
+        },
+        {
+          "name": "repository assertActor rejects inactive persisted user despite active supplied actor",
+          "repositoryCalls": 1
+        }
+      ],
+      "business_state_and_timestamps_equal_on_retry": true,
+      "write_metadata_on_retry": "updated_at and xmin are refreshed by existing SQL; no claim of zero duplicate SQL writes",
+      "rejected_requests_full_rows_unchanged": true,
+      "independent_sessions": {
+        "runId": "cosec-20261024-checklist-59870455",
+        "attempt": "final",
+        "phase": "sql-identity",
+        "verifiedTargetId": "6f3106648506a867d80391830bde0efe7cb67a59c02bb40d433e418ccdb68c5e",
+        "writerIdentity": {
+          "database": "cosec_checklist_59870455_final",
+          "db_role": "cosec_runner",
+          "server_address": "172.17.0.2/32",
+          "server_port": 5432,
+          "pid": 115
+        },
+        "observerIdentity": {
+          "database": "cosec_checklist_59870455_final",
+          "db_role": "cosec_runner",
+          "server_address": "172.17.0.2/32",
+          "server_port": 5432,
+          "pid": 116
+        }
+      },
+      "final_rows": [
+        {
+          "id": "27e92a32-012f-418d-a87d-cd567745d5fb",
+          "case_id": "933bca4a-16df-47e4-9e4b-2fb8f92e5f5f",
+          "item_label": "Synthetic UC159 document 4",
+          "required": false,
+          "status": "Received",
+          "note": "文件 4: Received (4)\nKeep punctuation, Unicode and trailing spaces.  ",
+          "received_at": "2026-10-23 20:34:54.733473+00",
+          "verified_at": null,
+          "created_at": "2026-10-01 00:00:04+00",
+          "updated_at": "2026-10-23 20:34:54.743281+00",
+          "row_version": "791"
+        },
+        {
+          "id": "3c74f12c-1113-47cb-bb32-f44d1a4ebd9e",
+          "case_id": "933bca4a-16df-47e4-9e4b-2fb8f92e5f5f",
+          "item_label": "Synthetic UC159 document 2",
+          "required": true,
+          "status": "Received",
+          "note": "文件 2: Received (4)\nKeep punctuation, Unicode and trailing spaces.  ",
+          "received_at": "2026-10-23 20:34:54.527211+00",
+          "verified_at": null,
+          "created_at": "2026-10-01 00:00:02+00",
+          "updated_at": "2026-10-23 20:34:54.53882+00",
+          "row_version": "771"
+        },
+        {
+          "id": "6465df7d-0a9d-483f-9a35-05620820e315",
+          "case_id": "933bca4a-16df-47e4-9e4b-2fb8f92e5f5f",
+          "item_label": "Synthetic UC159 document 1",
+          "required": true,
+          "status": "Received",
+          "note": "文件 1: Received (4)\nKeep punctuation, Unicode and trailing spaces.  ",
+          "received_at": "2026-10-23 20:34:54.409182+00",
+          "verified_at": null,
+          "created_at": "2026-10-01 00:00:01+00",
+          "updated_at": "2026-10-23 20:34:54.424025+00",
+          "row_version": "761"
+        },
+        {
+          "id": "6dbe421e-22a1-4b3e-aba5-e6c94cc7cf1e",
+          "case_id": "933bca4a-16df-47e4-9e4b-2fb8f92e5f5f",
+          "item_label": "Synthetic UC159 document 0",
+          "required": true,
+          "status": "Received",
+          "note": "文件 0: Received (4)\nKeep punctuation, Unicode and trailing spaces.  ",
+          "received_at": "2026-10-23 20:34:54.226644+00",
+          "verified_at": null,
+          "created_at": "2026-10-01 00:00:00+00",
+          "updated_at": "2026-10-23 20:34:54.243851+00",
+          "row_version": "751"
+        },
+        {
+          "id": "9d2f17f9-b059-4969-8e41-c318bd081fc9",
+          "case_id": "933bca4a-16df-47e4-9e4b-2fb8f92e5f5f",
+          "item_label": "Synthetic UC159 document 3",
+          "required": true,
+          "status": "Received",
+          "note": "文件 3: Received (4)\nKeep punctuation, Unicode and trailing spaces.  ",
+          "received_at": "2026-10-23 20:34:54.6287+00",
+          "verified_at": null,
+          "created_at": "2026-10-01 00:00:03+00",
+          "updated_at": "2026-10-23 20:34:54.639169+00",
+          "row_version": "781"
+        }
+      ],
+      "cleanup": {
+        "checklist": 0,
+        "checklist_by_case": 0,
+        "cases": 0,
+        "users": 0,
+        "teams": 0
+      },
+      "container_id": "6f3106648506a867d80391830bde0efe7cb67a59c02bb40d433e418ccdb68c5e",
+      "system_id": "7699964457632567335",
+      "native_auth_rls": false
+    }
+  ],
+  "local_browser": {
+    "red": "browser-results-red5.json",
+    "green": "browser-results-green.json",
+    "red_failed": 3,
+    "green_passed": 3,
+    "version": "155.0.4283.62",
+    "source_red_sha256": "fb3d3c1607d94ec9d6f9bd5fa19ff485b598b492daacb6a0a9fc816942c94902",
+    "source_green_sha256": "6694558aa3359b258a31dbff2eb8da87f07bb053f8772ba48c650ef46eb4c01d",
+    "keyboard": true,
+    "five_saved_and_reopened": true,
+    "focus_retained_and_not_stolen": true,
+    "explicit_retry": true,
+    "rpc": "IN_MEMORY_STUB",
+    "native_auth_http_rls": false
+  },
+  "earlier_browser_attempts": [
+    {
+      "attempt": "red",
+      "classification": "SANDBOX_LOOPBACK_EACCES_NO_BROWSER"
+    },
+    {
+      "attempt": "red2",
+      "classification": "HARNESS_ROUTER_STUB_EXPORT_MISSING"
+    },
+    {
+      "attempt": "red3",
+      "classification": "HARNESS_NOT_READY_BLANK_DOM_NOT_PRODUCT_RESULT"
+    },
+    {
+      "attempt": "red4",
+      "classification": "MIXED_HARNESS_OPTIMIZE_DEP_504_AND_PENDING_RENDER_RACE_NOT_FINAL_BASELINE"
+    }
+  ],
+  "preexisting_container_counts": {
+    "initial": 313,
+    "final": 313
+  },
+  "native": "BLOCKED_NOT_RUN",
+  "release_gate": "NO_GO"
+}

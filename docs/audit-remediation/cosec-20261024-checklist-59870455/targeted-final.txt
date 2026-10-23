@@ -1,0 +1,16 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx (9 tests) 916ms
+ ✓ |unit| src/features/incorporation/checklist-command.test.ts (27 tests) 26ms
+ ✓ |unit| src/features/incorporation/components/production-incorporation-detail.test.tsx (4 tests) 219ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 3ms
+ ✓ |unit| src/features/incorporation/authorization.test.ts (9 tests) 4ms
+
+ Test Files  5 passed (5)
+      Tests  51 passed (51)
+   Start at  04:15:24
+   Duration  28.82s (transform 777ms, setup 0ms, import 6.70s, tests 1.17s, environment 19.06s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
