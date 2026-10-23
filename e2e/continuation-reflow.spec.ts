@@ -1,123 +1,18 @@
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import {
+  COMPANY,
+  CASE_PATH,
+  PERSONAS,
+  assertKeyboardFocus,
+  tabTo,
+  activate,
+  openNavigation,
+  assertReflow,
+  assertReadonlyDelta,
+} from "./read-only-demo-journey";
 
-// Existing fixture-backed demo only. 640 CSS px models the reflow space of a
-// 1280px layout at 200%; it is NOT browser zoom, native Auth or backend UAT.
+// Reflow simulation only; actual browser zoom has a separate guarded runner.
 const REFLOW = { width: 640, height: 450 };
-const COMPANY = "Delta Bloom Ventures Limited";
-const CASE_PATH = "/annual-returns/ar-delta";
-const PERSONAS = [
-  { name: "Amy Chan", role: "Admin", label: "管理員" },
-  { name: "Mei Lam", role: "Staff", label: "同事" },
-] as const;
-
-async function assertKeyboardFocus(target: Locator) {
-  await expect(target).toBeFocused();
-  await expect(target).toBeInViewport();
-  // Radix's drawer can be visible/focused during its 500ms entrance animation.
-  // Wait for the same geometry/focus contract, rather than sampling mid-slide.
-  await expect
-    .poll(() =>
-      target.evaluate((element) => {
-        const style = getComputedStyle(element);
-        const rect = element.getBoundingClientRect();
-        return {
-          visible: element.matches(":focus-visible"),
-          cue:
-            (style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0) ||
-            style.boxShadow !== "none",
-          contained: rect.left >= -1 && rect.right <= document.documentElement.clientWidth + 1,
-        };
-      }),
-    )
-    .toEqual({ visible: true, cue: true, contained: true });
-}
-
-// Find the real sequential tab stop, rather than using locator.focus() to make
-// an otherwise unreachable control look keyboard accessible.
-async function tabTo(page: Page, target: Locator) {
-  await expect(target).toBeVisible();
-  for (let count = 0; count < 80; count++) {
-    if (await target.evaluate((element) => element === document.activeElement)) {
-      await assertKeyboardFocus(target);
-      return;
-    }
-    await page.keyboard.press("Tab");
-  }
-  throw new Error(`Target was not reached within 80 Tab presses: ${target.toString()}`);
-}
-
-async function activate(page: Page, target: Locator) {
-  await tabTo(page, target);
-  await page.keyboard.press("Enter");
-}
-
-async function openNavigation(page: Page) {
-  const trigger = page.getByRole("button", { name: "開啟導覽選單", exact: true });
-  if (await trigger.isVisible()) {
-    await activate(page, trigger);
-    await expect(page.getByRole("dialog", { name: "導覽", exact: true })).toBeVisible();
-  }
-  const nav = page.getByRole("navigation", { name: "主要導覽", exact: true });
-  await expect(nav).toBeVisible();
-  return nav;
-}
-
-async function assertReflow(page: Page, width: number) {
-  await expect(page.getByRole("main")).toBeVisible();
-  const geometry = await page.evaluate(() => ({
-    viewport: window.innerWidth,
-    document: document.documentElement.scrollWidth,
-    body: document.body.scrollWidth,
-  }));
-  expect(geometry.viewport).toBe(width);
-  expect(geometry.document, "document must not scroll horizontally").toBeLessThanOrEqual(width + 1);
-  expect(geometry.body, "body must not scroll horizontally").toBeLessThanOrEqual(width + 1);
-  const heading = await page.getByRole("heading", { level: 1 }).boundingBox();
-  expect(heading).not.toBeNull();
-  expect(heading!.x).toBeGreaterThanOrEqual(-1);
-  expect(heading!.x + heading!.width).toBeLessThanOrEqual(width + 1);
-}
-
-async function assertReadonlyDelta(page: Page) {
-  await expect(page).toHaveURL(new RegExp(`${CASE_PATH}$`));
-  const main = page.getByRole("main");
-  await expect(main.getByRole("heading", { level: 1, name: COMPANY, exact: true })).toBeVisible();
-  await expect(main).toContainText("Joanna Poon · +852 9333 2211");
-  await expect(main).toContainText("等待文件");
-  await expect(main.getByRole("combobox", { name: "分配負責同事" })).toHaveValue("Iris Wong");
-  for (const [label, value] of [
-    ["付款", "pending"],
-    ["簽署", "requested"],
-    ["覆核", "not-started"],
-  ]) {
-    const control = main.getByRole("combobox", { name: label, exact: true });
-    await expect(control).toBeDisabled();
-    await expect(control).toHaveValue(value);
-  }
-  const blockers = main.locator("section").filter({
-    has: page.getByRole("heading", { name: "阻礙事項", exact: true }),
-  });
-  await expect(blockers).toContainText("Signed NAR1");
-  await expect(blockers).toContainText("Updated significant controller register");
-  await expect(blockers.getByRole("button", { name: "標記為已收到", exact: true })).toHaveCount(2);
-  expect(await main.locator("button, select").count()).toBeGreaterThan(10);
-  await expect(main.locator("button:enabled, select:enabled")).toHaveCount(0);
-  await expect(main.getByRole("button", { name: "遞交交件套件", exact: true })).toBeDisabled();
-  await expect(main.getByRole("button", { name: "接納回條", exact: true })).toBeDisabled();
-  await expect(main.getByRole("button", { name: "加入備註", exact: true })).toBeDisabled();
-  const note = main.getByRole("textbox", { name: "新增備註", exact: true });
-  await expect(note).toHaveAttribute("readonly", "");
-  await expect(note).toHaveValue("");
-  await expect(main.getByText("暫時沒有備註。", { exact: true })).toBeVisible();
-  await expect(main.getByText("Case seeded", { exact: true })).toBeVisible();
-  await expect(main.getByRole("status")).toContainText("唯讀示範。案件狀態只可在正式環境");
-  return main.locator("select, textarea").evaluateAll((elements) =>
-    elements.map((element) => {
-      const control = element as HTMLSelectElement | HTMLTextAreaElement;
-      return { value: control.value, disabled: control.disabled };
-    }),
-  );
-}
 
 test("LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow", async ({
   page,
