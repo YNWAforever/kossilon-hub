@@ -1,0 +1,75 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Users/laich/Documents/kossilon-hub/cosec-20261023[39m
+
+ [31m❯[39m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts [2m([22m[2m5 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 1369[2mms[22m[39m
+[31m     [31m×[31m UC130 two managers on independent connections: owner[39m[32m 296[2mms[22m[39m
+[31m     [31m×[31m UC130 two managers on independent connections: reviewer[39m[33m 350[2mms[22m[39m
+[31m     [31m×[31m UC131 server rechecks the selected staff: users[39m[33m 311[2mms[22m[39m
+[31m     [31m×[31m UC131 server rechecks the selected staff: profile[39m[32m 202[2mms[22m[39m
+[31m     [31m×[31m UC131 server rechecks the selected staff: both[39m[32m 209[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m5 failed[39m[22m[90m (5)[39m
+[2m   Start at [22m 19:52:50
+[2m   Duration [22m 2.20s[2m (transform 443ms, setup 0ms, import 664ms, tests 1.37s, environment 0ms)[22m
+
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 5 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC130 two managers on independent connections: owner
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC130 two managers on independent connections: reviewer
+[31m[1mAssertionError[22m: expected { …(3) } to match object { statusCode: 409, …(1) }
+(1 matching property omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "code": "WORK_ITEM_ASSIGNMENT_STALE",[39m
+[32m-   "statusCode": 409,[39m
+[31m+   "code": undefined,[39m
+[31m+   "statusCode": undefined,[39m
+[2m  }[22m
+
+[36m [2m❯[22m withFixture src/features/work-items/assignment-recovery.integration.test.ts:[2m310:39[22m[39m
+    [90m308|[39m       // The pre-existing repository protects the write but currently …
+    [90m309|[39m       // structured conflict contract. Assert it after recording real …
+    [90m310|[39m       [34mexpect[39m([34merrorFacts[39m(loser[33m.[39merror))[33m.[39m[34mtoMatchObject[39m({
+    [90m   |[39m                                       [31m^[39m
+    [90m311|[39m         statusCode[33m:[39m [34m409[39m[33m,[39m
+    [90m312|[39m         code[33m:[39m [32m"WORK_ITEM_ASSIGNMENT_STALE"[39m[33m,[39m
+[90m [2m❯[22m execute src/features/work-items/assignment-recovery.integration.test.ts:[2m77:3[22m[39m
+[90m [2m❯[22m src/features/work-items/assignment-recovery.integration.test.ts:[2m86:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC131 server rechecks the selected staff: users
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC131 server rechecks the selected staff: profile
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC131 server rechecks the selected staff: both
+[31m[1mAssertionError[22m: expected { …(3) } to match object { statusCode: 409, …(1) }
+(1 matching property omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "code": "WORK_ITEM_ASSIGNEE_UNAVAILABLE",[39m
+[32m-   "statusCode": 409,[39m
+[31m+   "code": undefined,[39m
+[31m+   "statusCode": undefined,[39m
+[2m  }[22m
+
+[36m [2m❯[22m withFixture src/features/work-items/assignment-recovery.integration.test.ts:[2m351:40[22m[39m
+    [90m349|[39m         expected_version[33m:[39m [34m1[39m[33m,[39m
+    [90m350|[39m       })[33m;[39m
+    [90m351|[39m       [34mexpect[39m([34merrorFacts[39m(denied[33m.[39merror))[33m.[39m[34mtoMatchObject[39m({
+    [90m   |[39m                                        [31m^[39m
+    [90m352|[39m         statusCode[33m:[39m [34m409[39m[33m,[39m
+    [90m353|[39m         code[33m:[39m [32m"WORK_ITEM_ASSIGNEE_UNAVAILABLE"[39m[33m,[39m
+[90m [2m❯[22m execute src/features/work-items/assignment-recovery.integration.test.ts:[2m77:3[22m[39m
+[90m [2m❯[22m src/features/work-items/assignment-recovery.integration.test.ts:[2m93:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯[22m[39m
+

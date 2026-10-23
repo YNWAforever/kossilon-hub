@@ -1,0 +1,819 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > UC130: rereads manager A's assignment before manager B can deliberately confirm again (0) 454ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > UC130: rereads manager A's assignment before manager B can deliberately confirm again (1) 266ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > UC131: keeps input after server denial and requires an eligible replacement (0) 279ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > UC131: keeps input after server denial and requires an eligible replacement (1) 392ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > UC131: keeps input after server denial and requires an eligible replacement (2) 416ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > requires explicit reread after any mutation error, without exposing server details (0) 167ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > requires explicit reread after any mutation error, without exposing server details (1) 197ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses confirmation and retains input when explicit recovery returns queue-error 234ms
+ × src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses confirmation and retains input when explicit recovery returns recommendations-error 1183ms
+   → Found multiple elements with the role "alert"
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<p[39m
+  [33mrole[39m=[32m"alert"[39m
+[36m>[39m
+  [0m可分配名單未能載入，請重新載入。[0m
+[36m</p>[39m
+
+Ignored nodes: comments, script, style
+[36m<p[39m
+  [33mclass[39m=[32m"text-sm"[39m
+  [33mrole[39m=[32m"alert"[39m
+[36m>[39m
+  [0m未能重新讀取工作及建議人選，請重新讀取後再確認。[0m
+[36m</p>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"radix-_r_q_"[39m
+  [33maria-labelledby[39m=[32m"radix-_r_p_"[39m
+  [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] border bg-background shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-w-xl gap-0 p-0"[39m
+  [33mdata-state[39m=[32m"open"[39m
+  [33mid[39m=[32m"radix-_r_o_"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"border-b border-border px-5 py-4"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_p_"[39m
+      [36m>[39m
+        [0m分配工作項目[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_q_"[39m
+      [36m>[39m
+        [0mAssignment recovery task[0m
+      [36m</p>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"max-h-[55vh] space-y-2 overflow-y-auto p-5"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m目前負責同事：[0m
+      [0m未分配[0m
+      [0m · [0m
+      [0m覆核人：[0m
+      [0m未分配[0m
+      [0m · [0m
+      [0m待處理[0m
+      [0m · 版本 [0m
+      [0m1[0m
+    [36m</p>[39m
+    [36m<select[39m
+      [33maria-label[39m=[32m"分配角色"[39m
+      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+    [36m>[39m
+      [36m<option[39m
+        [33mvalue[39m=[32m"owner"[39m
+      [36m>[39m
+        [0m負責同事[0m
+      [36m</option>[39m
+      [36m<option[39m
+        [33mvalue[39m=[32m"reviewer"[39m
+      [36m>[39m
+        [0m覆核人[0m
+      [36m</option>[39m
+    [36m</select>[39m
+    [36m<p[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0m可分配名單未能載入，請重新載入。[0m
+    [36m</p>[39m
+    [36m<button[39m
+      [33maria-pressed[39m=[32m"false"[39m
+      [33mclass[39m=[32m"grid w-full grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border p-3 text-left border-border hover:bg-muted/40"[39m
+      [33mdisabled[39m=[32m""[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"font-semibold tabular-nums"[39m
+      [36m>[39m
+        [0m#[0m
+        [0m1[0m
+      [36m</span>[39m
+      [36m<span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-sm font-medium"[39m
+        [36m>[39m
+          [0mAmy Chan · Team A[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"mt-1 block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m技能 [0m
+          [0m5[0m
+          [0m/5 · 工作量 [0m
+          [0m0[0m
+          [0m%[0m
+        [36m</span>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"text-sm font-semibold tabular-nums"[39m
+      [36m>[39m
+        [0m500[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33maria-pressed[39m=[32m"false"[39m
+      [33mclass[39m=[32m"grid w-full grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border p-3 text-left border-border hover:bg-muted/40"[39m
+      [33mdisabled[39m=[32m""[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"font-semibold tabular-nums"[39m
+      [36m>[39m
+        [0m#[0m
+        [0m2[0m
+      [36m</span>[39m
+      [36m<span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-sm font-medium"[39m
+        [36m>[39m
+          [0mBob Chan · Team A[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"mt-1 block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m技能 [0m
+          [0m4[0m
+          [0m/5 · 工作量 [0m
+          [0m0[0m
+          [0m%[0m
+        [36m</span>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"text-sm font-semibold tabular-nums"[39m
+      [36m>[39m
+        [0m400[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<textarea[39m
+      [33maria-label[39m=[32m"例外理由"[39m
+      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-20 w-full"[39m
+      [33mplaceholder[39m=[32m"不選首選人選或超出工作量的理由"[39m
+    [36m>[39m
+      [0mKeep this reason after reading the latest assignment[0m
+    [36m</textarea>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0m未能重新讀取工作及建議人選，請重新讀取後再確認。[0m
+    [36m</p>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0m重新讀取工作及建議人選[0m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 border-t border-border px-5 py-4"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0m取消[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+      [33mdisabled[39m=[32m""[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0m確認分配[0m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M18 6 6 18"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"m6 6 12 12"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"sr-only"[39m
+    [36m>[39m
+      [0mClose[0m
+    [36m</span>[39m
+  [36m</button>[39m
+[36m</div>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"min-w-0 flex-1 p-4 md:p-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m今日工作[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0m工作隊列[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m分配、工作量及 SLA 管控[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁今日到期[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁有風險[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-amber-700"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁已逾時[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-destructive"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁未分配[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [0m排序[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"工作排序"[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"deadline"[39m
+              [36m>[39m
+                [0mSLA 到期[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"priority"[39m
+              [36m>[39m
+                [0m優先次序[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"工作隊列檢視"[39m
+            [33mclass[39m=[32m"flex min-w-0 gap-1"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m我的工作[0m
+            [36m</a>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m團隊隊列[0m
+            [36m</a>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m已逾時[0m
+            [36m</a>[39m
+          [36m</nav>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"relative block w-full lg:w-80"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=...
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses confirmation and retains input when explicit recovery returns missing 217ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses confirmation and retains input when explicit recovery returns completed 188ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses confirmation and retains input when explicit recovery returns cancelled 199ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > does not confirm a hidden selection after background eligibility changes 91ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > does not confirm cached recommendations after their refetch fails 83ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > cancels before submit without assigning 105ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > blocks same-turn duplicates and all dismissal paths while saving 166ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > keeps confirmation locked during a reread and prevents same-turn duplicate rereads 140ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > discards the old actor's dialog and does not close a new dialog on late success 267ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > work queue in demo mode > explains the empty queue instead of calling the production server 3ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > offers recovery for malformed filters without issuing queue or bulk reads 4ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > retains successful rows when the next cursor fails, and clears them across actors 97ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > keeps the same return context on desktop and mobile case links 31ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > uses the effective breached predicate for both reads and all-results snapshots 16ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > starts a new view from its first page 6ms
+ ✓ src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > shows real identity, payment blocker with on-track SLA, and current owner/reviewer candidates 87ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 24 passed (25)
+   Start at  19:54:48
+   Duration  7.50s (transform 266ms, setup 0ms, import 898ms, tests 5.29s, environment 1.11s)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses confirmation and retains input when explicit recovery returns recommendations-error
+TestingLibraryElementError: Found multiple elements with the role "alert"
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<p[39m
+  [33mrole[39m=[32m"alert"[39m
+[36m>[39m
+  [0m可分配名單未能載入，請重新載入。[0m
+[36m</p>[39m
+
+Ignored nodes: comments, script, style
+[36m<p[39m
+  [33mclass[39m=[32m"text-sm"[39m
+  [33mrole[39m=[32m"alert"[39m
+[36m>[39m
+  [0m未能重新讀取工作及建議人選，請重新讀取後再確認。[0m
+[36m</p>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"radix-_r_q_"[39m
+  [33maria-labelledby[39m=[32m"radix-_r_p_"[39m
+  [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] border bg-background shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-w-xl gap-0 p-0"[39m
+  [33mdata-state[39m=[32m"open"[39m
+  [33mid[39m=[32m"radix-_r_o_"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"border-b border-border px-5 py-4"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_p_"[39m
+      [36m>[39m
+        [0m分配工作項目[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_q_"[39m
+      [36m>[39m
+        [0mAssignment recovery task[0m
+      [36m</p>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"max-h-[55vh] space-y-2 overflow-y-auto p-5"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m目前負責同事：[0m
+      [0m未分配[0m
+      [0m · [0m
+      [0m覆核人：[0m
+      [0m未分配[0m
+      [0m · [0m
+      [0m待處理[0m
+      [0m · 版本 [0m
+      [0m1[0m
+    [36m</p>[39m
+    [36m<select[39m
+      [33maria-label[39m=[32m"分配角色"[39m
+      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+    [36m>[39m
+      [36m<option[39m
+        [33mvalue[39m=[32m"owner"[39m
+      [36m>[39m
+        [0m負責同事[0m
+      [36m</option>[39m
+      [36m<option[39m
+        [33mvalue[39m=[32m"reviewer"[39m
+      [36m>[39m
+        [0m覆核人[0m
+      [36m</option>[39m
+    [36m</select>[39m
+    [36m<p[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0m可分配名單未能載入，請重新載入。[0m
+    [36m</p>[39m
+    [36m<button[39m
+      [33maria-pressed[39m=[32m"false"[39m
+      [33mclass[39m=[32m"grid w-full grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border p-3 text-left border-border hover:bg-muted/40"[39m
+      [33mdisabled[39m=[32m""[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"font-semibold tabular-nums"[39m
+      [36m>[39m
+        [0m#[0m
+        [0m1[0m
+      [36m</span>[39m
+      [36m<span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-sm font-medium"[39m
+        [36m>[39m
+          [0mAmy Chan · Team A[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"mt-1 block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m技能 [0m
+          [0m5[0m
+          [0m/5 · 工作量 [0m
+          [0m0[0m
+          [0m%[0m
+        [36m</span>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"text-sm font-semibold tabular-nums"[39m
+      [36m>[39m
+        [0m500[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33maria-pressed[39m=[32m"false"[39m
+      [33mclass[39m=[32m"grid w-full grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border p-3 text-left border-border hover:bg-muted/40"[39m
+      [33mdisabled[39m=[32m""[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"font-semibold tabular-nums"[39m
+      [36m>[39m
+        [0m#[0m
+        [0m2[0m
+      [36m</span>[39m
+      [36m<span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-sm font-medium"[39m
+        [36m>[39m
+          [0mBob Chan · Team A[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"mt-1 block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m技能 [0m
+          [0m4[0m
+          [0m/5 · 工作量 [0m
+          [0m0[0m
+          [0m%[0m
+        [36m</span>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"text-sm font-semibold tabular-nums"[39m
+      [36m>[39m
+        [0m400[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<textarea[39m
+      [33maria-label[39m=[32m"例外理由"[39m
+      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-20 w-full"[39m
+      [33mplaceholder[39m=[32m"不選首選人選或超出工作量的理由"[39m
+    [36m>[39m
+      [0mKeep this reason after reading the latest assignment[0m
+    [36m</textarea>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0m未能重新讀取工作及建議人選，請重新讀取後再確認。[0m
+    [36m</p>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0m重新讀取工作及建議人選[0m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 border-t border-border px-5 py-4"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0m取消[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+      [33mdisabled[39m=[32m""[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0m確認分配[0m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M18 6 6 18"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"m6 6 12 12"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"sr-only"[39m
+    [36m>[39m
+      [0mClose[0m
+    [36m</span>[39m
+  [36m</button>[39m
+[36m</div>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"min-w-0 flex-1 p-4 md:p-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m今日工作[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0m工作隊列[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m分配、工作量及 SLA 管控[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁今日到期[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁有風險[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-amber-700"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁已逾時[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-destructive"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁未分配[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [0m排序[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"工作排序"[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"deadline"[39m
+              [36m>[39m
+                [0mSLA 到期[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"priority"[39m
+              [36m>[39m
+                [0m優先次序[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"工作隊列檢視"[39m
+            [33mclass[39m=[32m"flex min-w-0 gap-1"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m我的工作[0m
+            [36m</a>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m團隊隊列[0m
+            [36m</a>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m已逾時[0m
+            [36m</a>[39m
+          [36m</nav>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"relative block w-full lg:w-80"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/routes/-work-queue.interaction.test.tsx:304:13
+    302|       });
+    303|       fireEvent.click(reloadAssignment());
+    304|       await waitFor(() => expect(within(screen.getByRole("dialog")).ge…
+       |             ^
+    305|       expect(screen.getByLabelText<HTMLTextAreaElement>("例外理由").value)…
+    306|       expect(screen.getByLabelText<HTMLSelectElement>("分配角色").value).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

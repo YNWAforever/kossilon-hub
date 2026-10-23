@@ -1,0 +1,426 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/routes/-work-queue.interaction.test.tsx (30 tests | 4 failed) 9989ms
+     ✓ UC130: rereads manager A's assignment before manager B can deliberately confirm again (0)  729ms
+     ✓ UC130: rereads manager A's assignment before manager B can deliberately confirm again (1)  465ms
+     ✓ UC131: keeps input after server denial and requires an eligible replacement (0)  328ms
+     ✓ UC131: keeps input after server denial and requires an eligible replacement (1) 245ms
+     ✓ UC131: keeps input after server denial and requires an eligible replacement (2) 296ms
+     ✓ requires explicit reread after any mutation error, without exposing server details (0) 184ms
+     ✓ requires explicit reread after any mutation error, without exposing server details (1) 170ms
+     ✓ refuses confirmation and retains input when explicit recovery returns queue-error 275ms
+     ✓ refuses confirmation and retains input when explicit recovery returns recommendations-error  318ms
+     ✓ refuses confirmation and retains input when explicit recovery returns missing  352ms
+     ✓ refuses confirmation and retains input when explicit recovery returns completed 215ms
+     ✓ refuses confirmation and retains input when explicit recovery returns cancelled 212ms
+     ✓ does not confirm a hidden selection after background eligibility changes 140ms
+     ✓ does not confirm cached recommendations after their refetch fails 126ms
+     ✓ cancels before submit without assigning 178ms
+     ✓ keeps an uncertain write locked after cancelling and reopening the same item 196ms
+     × refuses a captured confirmation when a background queue read becomes missing 1097ms
+     × refuses a captured confirmation when a background queue read becomes error 1115ms
+     × refuses a captured confirmation when a background queue read becomes completed 1123ms
+     × refuses a captured confirmation when a background queue read becomes cancelled 1155ms
+     ✓ blocks same-turn duplicates and all dismissal paths while saving 210ms
+     ✓ keeps confirmation locked during a reread and prevents same-turn duplicate rereads 161ms
+     ✓ discards the old actor's dialog and does not close a new dialog on late success 296ms
+     ✓ explains the empty queue instead of calling the production server 5ms
+     ✓ offers recovery for malformed filters without issuing queue or bulk reads 4ms
+     ✓ retains successful rows when the next cursor fails, and clears them across actors 131ms
+     ✓ keeps the same return context on desktop and mobile case links 54ms
+     ✓ uses the effective breached predicate for both reads and all-results snapshots 22ms
+     ✓ starts a new view from its first page 18ms
+     ✓ shows real identity, payment blocker with on-track SLA, and current owner/reviewer candidates 169ms
+ ✓ |unit| src/features/work-items/server-orchestration.test.ts (6 tests) 38ms
+ ✓ |unit| src/features/work-items/server-fns.test.ts (5 tests) 6ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 5ms
+ ✓ |unit| src/features/work-items/assignment.test.ts (7 tests) 5ms
+ ✓ |unit| src/features/auth/staff-state.test.ts (4 tests) 4ms
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  4 failed | 50 passed (54)
+   Start at  19:57:20
+   Duration  15.86s (transform 846ms, setup 0ms, import 2.78s, tests 10.05s, environment 1.58s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/routes/-work-queue.interaction.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses a captured confirmation when a background queue read becomes missing
+AssertionError: expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"min-w-0 flex-1 p-4 md:p-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m今日工作[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0m工作隊列[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m分配、工作量及 SLA 管控[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁今日到期[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁有風險[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-amber-700"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁已逾時[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-destructive"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁未分配[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [0m排序[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"工作排序"[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"deadline"[39m
+              [36m>[39m
+                [0mSLA 到期[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"priority"[39m
+              [36m>[39m
+                [0m優先次序[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"工作隊列檢視"[39m
+            [33mclass[39m=[32m"flex min-w-0 gap-1"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m我的工作[0m
+            [36m</a>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m團隊隊列[0m
+            [36m</a>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m已逾時[0m
+            [36m</a>[39m
+          [36m</nav>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"relative block w-full lg:w-80"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=...
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/routes/-work-queue.interaction.test.tsx:378:64
+    376|       });
+    377|       await act(async () => { await client.refetchQueries({ queryKey: …
+    378|       await waitFor(() => expect(confirmAssignment().disabled).toBe(tr…
+       |                                                                ^
+    379|       expect(screen.getByRole("dialog")).toBeTruthy();
+    380|       fireEvent.click(confirmAssignment());
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses a captured confirmation when a background queue read becomes error
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses a captured confirmation when a background queue read becomes completed
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses a captured confirmation when a background queue read becomes cancelled
+AssertionError: expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"min-w-0 flex-1 p-4 md:p-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m今日工作[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0m工作隊列[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m分配、工作量及 SLA 管控[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁今日到期[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁有風險[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-amber-700"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁已逾時[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-destructive"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁未分配[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [0m排序[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"工作排序"[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"deadline"[39m
+              [36m>[39m
+                [0mSLA 到期[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"priority"[39m
+              [36m>[39m
+                [0m優先次序[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"工作隊列檢視"[39m
+            [33mclass[39m=[32m"flex min-w-0 gap-1"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m我的工作[0m
+            [36m</a>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m團隊隊列[0m
+            [36m</a>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m已逾時[0m
+            [36m</a>[39m
+          [36m</nav>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"relative block w-full lg:w-80"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=...
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/routes/-work-queue.interaction.test.tsx:378:64
+    376|       });
+    377|       await act(async () => { await client.refetchQueries({ queryKey: …
+    378|       await waitFor(() => expect(confirmAssignment().disabled).toBe(tr…
+       |                                                                ^
+    379|       expect(screen.getByRole("dialog")).toBeTruthy();
+    380|       fireEvent.click(confirmAssignment());
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+

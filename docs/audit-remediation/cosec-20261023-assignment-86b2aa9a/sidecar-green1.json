@@ -1,0 +1,19 @@
+{
+  "phase": "green1",
+  "startedUtc": "2026-10-23T11:54:47.7455854Z",
+  "finishedUtc": "2026-10-23T11:54:55.8577501Z",
+  "exitCode": 1,
+  "command": "C:\\Program Files\\nodejs\\node.exe node_modules/vitest/vitest.mjs run --configLoader runner --config docs/audit-remediation/cosec-20261023-assignment-86b2aa9a/sidecar-vitest.config.mts",
+  "environment": "Cleared; only fixed Windows/runtime/PATH/TEMP/TMP/NODE_ENV/NO_COLOR whitelist. No inherited DB/provider variables. envDir points to per-run scratch.",
+  "temp": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\sidecar-assignment-86b2aa9a",
+  "hashes": [
+    {
+      "path": "src/routes/work-queue.tsx",
+      "sha256": "6d779be1c40f5ca1a6c25eb49b7c19604dc08639dc8d74c053ee1129944930f3"
+    },
+    {
+      "path": "src/routes/-work-queue.interaction.test.tsx",
+      "sha256": "dad590a85e167fb988a245639429e062afd4ad528baa4948431678a95fb6275c"
+    }
+  ]
+}

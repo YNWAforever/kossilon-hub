@@ -1,0 +1,428 @@
+{
+  "run_id": "cosec-20261023-assignment-86b2aa9a",
+  "scenario_count": 6,
+  "scenarios": [
+    {
+      "scenario": "UC130-owner",
+      "ids": {
+        "company": "51329e81-5cc9-4c41-9202-3840ae0b9d00",
+        "case": "366b9ca9-22b3-4285-9610-4744b16d282e",
+        "work": "63fb430f-3d5b-43a7-8ad0-df5cd533a9ab",
+        "teams": [
+          "44ca1ff3-4afa-49e9-bec2-4c6fe95e326e",
+          "068c3143-0b5f-4037-a82f-c3b6f4df1792"
+        ],
+        "users": [
+          "f1833508-67e7-478d-bae4-135824ac5cd8",
+          "f693a241-1266-4ddc-ba9c-e043d835792f",
+          "0ce74c97-b115-4e6d-9f11-8ddf4e94bec7",
+          "e9648377-3b3d-4d8b-bf23-a4b38e0d2a0c",
+          "81478bd5-84ea-42a3-bcb4-ec9f9305f586",
+          "c15a8ab8-8fd9-4843-9a51-4cb798288602"
+        ],
+        "profiles": [
+          "931ce8c6-aca8-4dab-b6b7-ab120e1cffc3",
+          "35ea0ce8-5166-4a7c-974e-066257af8087",
+          "9d2f251b-7b4a-4bf3-b89b-585697f8d453",
+          "69ab3410-8a38-4ed3-b8d6-4e03c6ed13fa",
+          "6bcb97a6-395f-4436-8137-392cbfc50f85",
+          "98d9621a-346f-4765-86f1-496543f55816"
+        ],
+        "skills": [
+          "d251bb34-1e48-477b-bc75-330c0e73c580",
+          "144a9007-a622-46f6-88e7-ed4e3d17ec74"
+        ]
+      },
+      "sessions": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC130-owner",
+        "phase": "physical-sessions",
+        "observerPid": 245,
+        "firstPid": 246,
+        "secondPid": 247
+      },
+      "lock": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC130-owner",
+        "phase": "concurrent-lock",
+        "firstPid": 246,
+        "secondPid": 247,
+        "blocking": {
+          "blockers": [
+            246
+          ],
+          "event_type": "Lock",
+          "event": "transactionid"
+        }
+      },
+      "conflict": {
+        "message": "Work item assignment is stale.",
+        "statusCode": 409,
+        "code": "WORK_ITEM_ASSIGNMENT_STALE"
+      },
+      "actor_denial": {
+        "message": "Staff user is inactive, inconsistent or ineligible.",
+        "statusCode": 403,
+        "code": "WORK_ITEM_ACTOR_UNAVAILABLE"
+      },
+      "final_version": 3,
+      "assignment_events": 2,
+      "timeline_events": 2,
+      "outbox": 0,
+      "cleanup": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC130-owner",
+        "phase": "cleanup-readback",
+        "companies": 0,
+        "cases": 0,
+        "work_items": 0,
+        "assignment_events": 0,
+        "timeline": 0,
+        "users": 0,
+        "teams": 0
+      },
+      "events_file": "db/UC130-owner-expanded.jsonl"
+    },
+    {
+      "scenario": "UC130-reviewer",
+      "ids": {
+        "company": "f4aa0d92-c18b-41e2-a66b-841ac2e96ecb",
+        "case": "5352f7f8-c20f-49dc-a81e-bee6419dcbe1",
+        "work": "4886c94d-0011-45cd-a119-a69c9b1208c8",
+        "teams": [
+          "2dcab2b0-1c56-4a78-b88d-ab9173fdd9bf",
+          "1e3f1dae-d636-4466-b7e0-fbbc6cd5b0a9"
+        ],
+        "users": [
+          "f27c4f84-4a57-4118-9c83-c50e13fb5856",
+          "3b90676b-f762-477c-8b84-ae94f3f1d95a",
+          "6826d6cf-0110-42c5-9e58-b166c628b249",
+          "d38640b7-6ec7-46a8-ad75-08aaacb34c87",
+          "7c0c8278-ad1c-40f8-8b24-46c9af53f2a3",
+          "759a0d10-99ba-4368-a2d3-991d9536ba50"
+        ],
+        "profiles": [
+          "fa85ee79-3c18-4a80-85d6-96961169b1dd",
+          "4b23c040-1c09-4e34-ba64-a27d6b1f177b",
+          "4e931ecf-6002-4155-b650-0f2695fc94dc",
+          "db4ebcf4-f575-4dfc-9133-808716879dab",
+          "154c9498-d475-45a8-a579-ff1a94d18c3d",
+          "15b83a63-3b2e-47da-8f54-2f1d95e22870"
+        ],
+        "skills": [
+          "88049b45-c070-415b-a1b1-6658cb46fcde",
+          "b986fe2a-41be-4686-b365-9543aff89b97"
+        ]
+      },
+      "sessions": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC130-reviewer",
+        "phase": "physical-sessions",
+        "observerPid": 248,
+        "firstPid": 249,
+        "secondPid": 250
+      },
+      "lock": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC130-reviewer",
+        "phase": "concurrent-lock",
+        "firstPid": 249,
+        "secondPid": 250,
+        "blocking": {
+          "blockers": [
+            249
+          ],
+          "event_type": "Lock",
+          "event": "transactionid"
+        }
+      },
+      "conflict": {
+        "message": "Work item assignment is stale.",
+        "statusCode": 409,
+        "code": "WORK_ITEM_ASSIGNMENT_STALE"
+      },
+      "actor_denial": {
+        "message": "Staff user is inactive, inconsistent or ineligible.",
+        "statusCode": 403,
+        "code": "WORK_ITEM_ACTOR_UNAVAILABLE"
+      },
+      "final_version": 3,
+      "assignment_events": 2,
+      "timeline_events": 2,
+      "outbox": 0,
+      "cleanup": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC130-reviewer",
+        "phase": "cleanup-readback",
+        "companies": 0,
+        "cases": 0,
+        "work_items": 0,
+        "assignment_events": 0,
+        "timeline": 0,
+        "users": 0,
+        "teams": 0
+      },
+      "events_file": "db/UC130-reviewer-expanded.jsonl"
+    },
+    {
+      "scenario": "UC131-both",
+      "ids": {
+        "company": "29c00e79-6421-4650-8fae-008843c7362a",
+        "case": "4a98b927-dd6e-4514-891f-4f7686571e81",
+        "work": "8a5a2cef-ac2b-4dba-986c-705b24795453",
+        "teams": [
+          "53426169-eb00-46e7-82a5-fe75749c2c86",
+          "b21fb8d5-3411-4ee0-b7d4-1e78963ae90d"
+        ],
+        "users": [
+          "965560d4-519d-4a39-8e0d-de74bcae0a17",
+          "e07ff15f-d2f3-45c7-a1a2-465017a2dbb0",
+          "df88dc1f-7f40-4ff1-9e50-27d59bef445c",
+          "8794e189-6427-477f-9709-a6783283c399",
+          "7bc7fc70-27b1-4c81-830a-da068c784f72",
+          "c1ded455-a28e-49cb-bce0-73501cfe9d4a"
+        ],
+        "profiles": [
+          "e2286e7d-387b-480f-8e68-c3432661ae30",
+          "82bb5b5b-a883-408c-89c8-2c34b2ea216a",
+          "275365a6-a1d0-4e4d-844e-1335f46cdddd",
+          "6fa79b67-7b37-4a05-b8ba-7a1300b4d217",
+          "0084e221-3441-44bf-8367-19ceb6839031",
+          "0860efbb-62c7-47ad-b68e-3b39120f036b"
+        ],
+        "skills": [
+          "596d5314-3a6a-4cb2-999d-af602be29d2c",
+          "d7d3804f-e2ab-4fe0-9d85-2f102ecab157"
+        ]
+      },
+      "sessions": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC131-both",
+        "phase": "physical-sessions",
+        "observerPid": 257,
+        "firstPid": 258,
+        "secondPid": 259
+      },
+      "lock": null,
+      "conflict": {
+        "message": "Selected assignee is no longer eligible. Refresh recommendations.",
+        "statusCode": 409,
+        "code": "WORK_ITEM_ASSIGNEE_UNAVAILABLE"
+      },
+      "actor_denial": null,
+      "final_version": 2,
+      "assignment_events": 1,
+      "timeline_events": 1,
+      "outbox": 0,
+      "cleanup": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC131-both",
+        "phase": "cleanup-readback",
+        "companies": 0,
+        "cases": 0,
+        "work_items": 0,
+        "assignment_events": 0,
+        "timeline": 0,
+        "users": 0,
+        "teams": 0
+      },
+      "events_file": "db/UC131-both-expanded.jsonl"
+    },
+    {
+      "scenario": "UC131-profile",
+      "ids": {
+        "company": "774b4dde-61c3-4c82-b94a-b5b6d9bd15be",
+        "case": "c86c1e8f-9d6e-4286-a98d-20d457a98ff6",
+        "work": "d7258f40-db9a-4dd9-af02-d5974b7ade0a",
+        "teams": [
+          "3ce9d792-1642-4c5f-b5bf-ffa8bb326dc8",
+          "d7d80eaa-2920-4140-a2c6-729b66b77773"
+        ],
+        "users": [
+          "77ded4d3-8331-4076-a467-d026463d1a01",
+          "85e05999-d0a4-4c8b-a166-8b196e91a65a",
+          "9fb97ec7-7326-4931-b385-a2d31c4198ec",
+          "cad44f62-b5a9-4c32-a36c-3003ab92fbb5",
+          "d9b26546-6974-4810-b647-cda996a846fe",
+          "c8c95875-cdf3-4373-8e34-b75e57d55225"
+        ],
+        "profiles": [
+          "22dc687a-bc3d-4704-bc8a-ad23a23ab890",
+          "156ee986-1f66-40e5-b872-88c84616d3c9",
+          "31b2f16a-814a-4a7d-af87-17965fe48dfa",
+          "c9c7825c-6efb-44b3-bd96-18bacea2fc14",
+          "63e0ad1b-adec-4dce-ba6b-f7457c547aff",
+          "f4a6b8bc-7839-42df-b1b7-eb2b03a22b24"
+        ],
+        "skills": [
+          "a34c2212-a64e-4656-abad-5f42b7fcb6ae",
+          "4598ca6a-868f-4e17-9137-6dcb540176c2"
+        ]
+      },
+      "sessions": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC131-profile",
+        "phase": "physical-sessions",
+        "observerPid": 254,
+        "firstPid": 255,
+        "secondPid": 256
+      },
+      "lock": null,
+      "conflict": {
+        "message": "Selected assignee is no longer eligible. Refresh recommendations.",
+        "statusCode": 409,
+        "code": "WORK_ITEM_ASSIGNEE_UNAVAILABLE"
+      },
+      "actor_denial": null,
+      "final_version": 2,
+      "assignment_events": 1,
+      "timeline_events": 1,
+      "outbox": 0,
+      "cleanup": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC131-profile",
+        "phase": "cleanup-readback",
+        "companies": 0,
+        "cases": 0,
+        "work_items": 0,
+        "assignment_events": 0,
+        "timeline": 0,
+        "users": 0,
+        "teams": 0
+      },
+      "events_file": "db/UC131-profile-expanded.jsonl"
+    },
+    {
+      "scenario": "UC131-skill",
+      "ids": {
+        "company": "4c60b936-0bbd-4c19-9e24-901ab5785172",
+        "case": "eda22229-abe8-4385-aa7b-b5dac3adab16",
+        "work": "d8363d5e-c5e5-4220-9383-f144ba33eca0",
+        "teams": [
+          "a33a5926-331f-4f66-a93b-886d3f49f4e5",
+          "e39ad6a5-c170-4f6f-ac6a-bb7995d18ed9"
+        ],
+        "users": [
+          "e68e6217-d178-41d2-8059-da62ac9b2ca5",
+          "3c8fa243-af31-4fef-a513-b3cfb08b5424",
+          "2d3156c4-32c8-4a33-969b-5b0f74188159",
+          "e1d2e375-30ab-4a6d-a853-1a3cca8f6842",
+          "daa61830-8c50-446f-ac2c-17c00625abdd",
+          "dff68048-ccd4-44f3-8e75-b23ebb6f6b0f"
+        ],
+        "profiles": [
+          "fb750981-fe57-4c1f-b788-324b996bef74",
+          "61fdf86f-dfca-41e1-b8d0-b865cb61c38a",
+          "b4059929-c875-455b-875e-c1e763d11823",
+          "8da9fa5d-9cff-44a0-bb07-85f8d9ec3046",
+          "5cf41c32-8a6b-47d8-b863-e700d53785e2",
+          "fede5184-19fb-4428-87ed-643ce58d9225"
+        ],
+        "skills": [
+          "6232e973-b7e5-4661-9f6c-625920b74545",
+          "ccb3dd66-a966-4277-bec5-79635d3ec7ee"
+        ]
+      },
+      "sessions": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC131-skill",
+        "phase": "physical-sessions",
+        "observerPid": 260,
+        "firstPid": 261,
+        "secondPid": 262
+      },
+      "lock": null,
+      "conflict": {
+        "message": "Selected assignee is no longer eligible. Refresh recommendations.",
+        "statusCode": 409,
+        "code": "WORK_ITEM_ASSIGNEE_UNAVAILABLE"
+      },
+      "actor_denial": null,
+      "final_version": 2,
+      "assignment_events": 1,
+      "timeline_events": 1,
+      "outbox": 0,
+      "cleanup": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC131-skill",
+        "phase": "cleanup-readback",
+        "companies": 0,
+        "cases": 0,
+        "work_items": 0,
+        "assignment_events": 0,
+        "timeline": 0,
+        "users": 0,
+        "teams": 0
+      },
+      "events_file": "db/UC131-skill-expanded.jsonl"
+    },
+    {
+      "scenario": "UC131-users",
+      "ids": {
+        "company": "17436fb8-855d-462c-99a4-2155698a1470",
+        "case": "c9957b8f-9637-4211-9740-4998603d0afc",
+        "work": "2e385d81-a6cc-4a62-a937-56ff7c514b65",
+        "teams": [
+          "4586df93-ac22-43d5-97d8-c1de31790c36",
+          "5bbbee1e-f420-470d-9a3a-4e80b9545de8"
+        ],
+        "users": [
+          "5e4c16f9-463a-46d7-b806-24ce4140f998",
+          "389931e7-aa2c-4bca-8fa2-8d7dd83d9bb6",
+          "c2c8d354-9c43-4198-912e-655afc61fc76",
+          "8e01cc53-e9e1-4ce3-8b8d-bb0bf5392e47",
+          "b1d662bb-b7cf-4e1c-9549-6b033f972358",
+          "ca64a77f-96b8-4e31-a6e0-f1ed17560557"
+        ],
+        "profiles": [
+          "79374625-922e-4205-9429-27ebda817b84",
+          "38947410-377a-4e7f-88a7-b1198adbc62d",
+          "2bcc8853-8959-42f4-93ea-b7af1248743c",
+          "8dbac356-0252-4290-ac38-bd6c6eae6e26",
+          "2ac5798c-5bbf-4786-9a47-aab39c2c0797",
+          "fe05c602-2ade-4b06-bc9a-87a984dce5e9"
+        ],
+        "skills": [
+          "7cb27425-69dc-44d7-b2c3-76d0d87232a2",
+          "5cfdaa2e-d248-4316-bfaa-3b8efc89e41d"
+        ]
+      },
+      "sessions": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC131-users",
+        "phase": "physical-sessions",
+        "observerPid": 251,
+        "firstPid": 252,
+        "secondPid": 253
+      },
+      "lock": null,
+      "conflict": {
+        "message": "Selected assignee is no longer eligible. Refresh recommendations.",
+        "statusCode": 409,
+        "code": "WORK_ITEM_ASSIGNEE_UNAVAILABLE"
+      },
+      "actor_denial": null,
+      "final_version": 2,
+      "assignment_events": 1,
+      "timeline_events": 1,
+      "outbox": 0,
+      "cleanup": {
+        "runId": "cosec-20261023-assignment-86b2aa9a",
+        "scenario": "UC131-users",
+        "phase": "cleanup-readback",
+        "companies": 0,
+        "cases": 0,
+        "work_items": 0,
+        "assignment_events": 0,
+        "timeline": 0,
+        "users": 0,
+        "teams": 0
+      },
+      "events_file": "db/UC131-users-expanded.jsonl"
+    }
+  ],
+  "native_auth": false,
+  "http": false,
+  "real_business_payment": false,
+  "provider": false
+}

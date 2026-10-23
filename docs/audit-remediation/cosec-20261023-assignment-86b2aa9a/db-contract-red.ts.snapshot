@@ -1,0 +1,388 @@
+import { randomUUID } from "node:crypto";
+import { appendFileSync, closeSync, openSync, realpathSync } from "node:fs";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { getCurrentTest } from "@vitest/runner";
+import { describe, expect, it, onTestFinished } from "vitest";
+import { createSqlClient } from "@/server/db/client";
+import { guardSqlTestLifetime } from "@/test/sql-test-lifetime";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import { createWorkItemRepository } from "./repository";
+import {
+  assignWorkItemForActor,
+  queueFiltersForActor,
+  recommendWorkItemAssigneesForActor,
+} from "./server-fns";
+
+// No client, fixture or artifact is created by import/collection. The operator
+// must prove a new disposable target before supplying these opt-ins.
+const url = process.env.TEST_DATABASE_URL;
+const run = process.env.KOSSILON_ASSIGNMENT_RUN_ID;
+const attempt = process.env.KOSSILON_ASSIGNMENT_ATTEMPT;
+const directory = process.env.KOSSILON_ASSIGNMENT_EVENTS_DIR;
+const policyId = process.env.KOSSILON_ASSIGNMENT_POLICY_ID;
+type RecordEvent = (phase: string, values: object) => void;
+type Scenario = "UC130-owner" | "UC130-reviewer" | "UC131-users" | "UC131-profile" | "UC131-both";
+
+function errorFacts(error: unknown) {
+  const value = error as { message?: string; statusCode?: number; code?: string } | undefined;
+  return { message: value?.message, statusCode: value?.statusCode, code: value?.code };
+}
+async function outcome<T>(action: Promise<T>) {
+  return action.then(
+    (value) => ({ value, error: undefined }),
+    (error) => ({ value: undefined, error }),
+  );
+}
+
+async function execute(scenario: Scenario) {
+  if (
+    !url ||
+    !run ||
+    !/^cosec-20261023-assignment-[a-f0-9]{8}$/.test(run) ||
+    !attempt ||
+    !/^[a-z0-9-]+$/.test(attempt) ||
+    !directory ||
+    !policyId ||
+    !/^[a-f0-9]{64}$/.test(process.env.KOSSILON_ASSIGNMENT_TARGET_ID ?? "")
+  ) {
+    throw new Error("Fresh verified assignment target and owned artifacts required.");
+  }
+  const target = new URL(url);
+  expect(target.hostname).toBe("127.0.0.1");
+  expect(target.pathname).toBe("/" + process.env.KOSSILON_ASSIGNMENT_DB_NAME);
+  const folder = resolve(directory),
+    local = relative(resolve("docs/audit-remediation", run), folder);
+  if (
+    isAbsolute(local) ||
+    local.startsWith("..") ||
+    realpathSync(folder) !== folder ||
+    realpathSync(dirname(folder)) !== dirname(folder)
+  )
+    throw new Error("Redirected artifact path.");
+  const context = getCurrentTest()?.context;
+  if (!context) throw new Error("Running test lifetime required.");
+  const pending = withFixture(
+    url,
+    run,
+    scenario,
+    resolve(folder, `${scenario}-${attempt}.jsonl`),
+    policyId,
+    context.signal,
+  );
+  onTestFinished(async () => {
+    // The awaited test promise reports its failure. This hook only drains it
+    // after a timeout, avoiding duplicate error reports or background commits.
+    await pending.catch(() => undefined);
+  });
+  await pending;
+}
+
+describe.skipIf(!url || !run)(
+  "UC130/UC131 real SQL assignment conflicts and stale staff choices",
+  () => {
+    it.each(["owner", "reviewer"] as const)(
+      "UC130 two managers on independent connections: %s",
+      async (target) => {
+        await execute(`UC130-${target}`);
+      },
+      45_000,
+    );
+    it.each(["users", "profile", "both"] as const)(
+      "UC131 server rechecks the selected staff: %s",
+      async (mode) => {
+        await execute(`UC131-${mode}`);
+      },
+      45_000,
+    );
+  },
+);
+
+async function withFixture(
+  databaseUrl: string,
+  tag: string,
+  scenario: Scenario,
+  path: string,
+  slaPolicyId: string,
+  signal: AbortSignal,
+) {
+  const fd = openSync(path, "wx");
+  const record: RecordEvent = (phase, values) =>
+    appendFileSync(fd, JSON.stringify({ runId: tag, scenario, phase, ...values }) + "\n");
+  const ids = {
+    company: randomUUID(),
+    case: randomUUID(),
+    work: randomUUID(),
+    teams: [randomUUID(), randomUUID()],
+    users: Array.from({ length: 6 }, () => randomUUID()),
+    profiles: Array.from({ length: 6 }, () => randomUUID()),
+    skills: [randomUUID(), randomUUID()],
+  };
+  const [managerA, managerB, staffX, staffY] = ids.users;
+  const actor = (
+    index: number,
+    role: AuthenticatedActor["role"] = "Manager",
+  ): AuthenticatedActor => ({
+    userId: ids.users[index],
+    authUserId: `${tag}:${ids.users[index]}`,
+    role,
+    teamId: ids.teams[index === 4 ? 1 : 0],
+    active: index !== 5,
+  });
+  const skill = `${tag}:${scenario}:${ids.work}`;
+  record("planned-ids", { ids, policyId: slaPolicyId, synthetic: true, nativeAuth: false });
+  // The metadata/system-ID gate is performed by the parent before Vitest is
+  // started. These are three distinct physical SQL sessions, not mock providers.
+  const raw = createSqlClient(databaseUrl, { max: 1, ssl: false });
+  const firstRaw = createSqlClient(databaseUrl, { max: 1, ssl: false });
+  const secondRaw = createSqlClient(databaseUrl, { max: 1, ssl: false });
+  const sql = guardSqlTestLifetime(raw, () => signal);
+  const first = guardSqlTestLifetime(firstRaw, () => signal);
+  const second = guardSqlTestLifetime(secondRaw, () => signal);
+  const repo = createWorkItemRepository({ sql });
+  let competitor: Promise<Awaited<ReturnType<typeof outcome>>> | undefined;
+  try {
+    await sql.begin(async (tx) => {
+      for (const [index, id] of ids.teams.entries())
+        await tx`insert into teams(id,name) values(${id},${tag + ":" + scenario + ":" + index})`;
+      for (const [index, id] of ids.users.entries()) {
+        const role = index === 2 || index === 3 ? "Staff" : "Manager";
+        const active = index !== 5;
+        const team = ids.teams[index === 4 ? 1 : 0];
+        await tx`insert into users(id,name,email,role,team_id,active) values(${id},${"Synthetic " + role + ":" + index},${id + "@example.test"},${role},${team},${active})`;
+        await tx`insert into staff_profiles(id,user_id,auth_user_id,role,team_id,active) values(${ids.profiles[index]},${id},${tag + ":" + id},${role},${team},${active})`;
+      }
+      for (const index of [2, 3])
+        await tx`insert into staff_skills(id,staff_profile_id,skill_key,proficiency) values(${ids.skills[index - 2]},${ids.profiles[index]},${skill},${index === 2 ? 5 : 4})`;
+      await tx`insert into companies(id,company_name,cr_number,br_number,incorporation_date,annual_return_basis_date,registered_office,company_secretary,status,assigned_owner_id,assigned_team_id,data_origin)
+        values(${ids.company},${"Synthetic assignment company " + ids.work},${ids.company},${ids.company},'2020-01-01','2026-01-01','Synthetic','Synthetic','active',${managerA},${ids.teams[0]},'client')`;
+      await tx`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,current_status,risk_level,owner_id)
+        values(${ids.case},${ids.company},2026,'2026-01-01','2026-02-12','Upcoming','green',${managerA})`;
+      await tx`insert into work_items(id,company_id,case_type,annual_return_case_id,source_event_key,source_event_type,work_type,required_skill_key,title,team_id,sla_policy_version_id,sla_started_at,sla_warning_at,sla_due_at)
+        values(${ids.work},${ids.company},'annual_return',${ids.case},${tag + ":" + scenario + ":" + ids.work},'synthetic_assignment','annual_return_case',${skill},'Review assignment fixture',${ids.teams[0]},${slaPolicyId},'2026-10-01','2026-10-02','2026-10-03')`;
+    });
+    const [observerPid] = await sql<{ pid: number }[]>`select pg_backend_pid() pid`;
+    const [firstPid] = await first<{ pid: number }[]>`select pg_backend_pid() pid`;
+    const [secondPid] = await second<{ pid: number }[]>`select pg_backend_pid() pid`;
+    expect(new Set([observerPid.pid, firstPid.pid, secondPid.pid]).size).toBe(3);
+    record("physical-sessions", {
+      observerPid: observerPid.pid,
+      firstPid: firstPid.pid,
+      secondPid: secondPid.pid,
+    });
+    const readback = async (phase: string) => {
+      const current = await createWorkItemRepository({ sql: second }).get(ids.work);
+      const events =
+        await second`select id,work_item_id,previous_assignee_id,assigned_to_id,assigned_by_id,expected_version,decision,recommendation_factors from assignment_events where work_item_id=${ids.work} order by expected_version,id`;
+      const timeline =
+        await second`select id,actor_id,metadata from timeline_events where company_id=${ids.company} and case_id=${ids.case} and event_type='work_item_assigned' order by created_at,id`;
+      const [outbox] = await second<
+        { count: number }[]
+      >`select count(*)::int count from notification_outbox where work_item_id=${ids.work}`;
+      const queue = await createWorkItemRepository({ sql: second }).listQueuePage(
+        queueFiltersForActor(actor(1), { view: "team", limit: 50 }),
+        { caseIds: [ids.case], includeFixtures: true },
+      );
+      expect(queue.items.map((item) => item.id)).toEqual([ids.work]);
+      expect(queue.items[0].version).toBe(current?.version);
+      expect(outbox.count).toBe(0);
+      record(phase, { current, events, timeline, queue: queue.items, outbox: outbox.count });
+      return { current, events, timeline };
+    };
+    const command = (
+      assigneeId: string,
+      expectedVersion: number,
+      assignmentTarget: "owner" | "reviewer" = "owner",
+    ) => ({
+      workItemId: ids.work,
+      assigneeId,
+      expectedVersion,
+      assignmentTarget,
+      overrideReason: "Synthetic workload exception retained",
+    });
+    const before = await readback("before");
+    expect(before.current).toMatchObject({ ownerId: null, reviewerId: null, version: 1 });
+    expect(before.events).toHaveLength(0);
+
+    if (scenario.startsWith("UC130")) {
+      const target = scenario === "UC130-owner" ? "owner" : "reviewer";
+      // Supplied-actor denials plus the locked persisted role remain separate
+      // from genuine session/Auth acceptance.
+      for (const candidate of [
+        actor(2, "Staff"),
+        actor(4),
+        { ...actor(0), teamId: null },
+        actor(5),
+        actor(2, "Client"),
+      ]) {
+        const denied = await outcome(
+          assignWorkItemForActor(repo, candidate, command(staffX, 1, target)),
+        );
+        expect(denied.error).toBeDefined();
+        record("role-denied", { actor: candidate, error: errorFacts(denied.error) });
+      }
+      const forged = await outcome(
+        assignWorkItemForActor(repo, actor(2, "Admin"), command(staffY, 1, target)),
+      );
+      expect(forged.error).toBeDefined();
+      record("persisted-role-denied", { error: errorFacts(forged.error) });
+      const initialRecommendations = await recommendWorkItemAssigneesForActor(
+        repo,
+        actor(0),
+        ids.work,
+        target,
+      );
+      expect(initialRecommendations.map((item) => item.userId)).toEqual([staffX, staffY]);
+      let blocking:
+        | { blockers: number[]; event_type: string | null; event: string | null }
+        | undefined;
+      const winner = await first.begin(async (tx) => {
+        await tx`set local statement_timeout='15s'`;
+        await tx`select id from annual_return_cases where id=${ids.case} for update`;
+        competitor = outcome(
+          second.begin(async (otherTx) => {
+            await otherTx`set local lock_timeout='10s'`;
+            await otherTx`set local statement_timeout='15s'`;
+            return assignWorkItemForActor(
+              createWorkItemRepository({ sql: otherTx }),
+              actor(1),
+              command(staffY, 1, target),
+            );
+          }),
+        );
+        for (let index = 0; index < 200; index++) {
+          const [activity] = await sql<
+            { blockers: number[]; event_type: string | null; event: string | null }[]
+          >`
+            select pg_blocking_pids(pid) blockers,wait_event_type event_type,wait_event event from pg_stat_activity where pid=${secondPid.pid}`;
+          if (activity?.blockers.includes(firstPid.pid)) {
+            blocking = activity;
+            break;
+          }
+          await new Promise((resolveWait) => setTimeout(resolveWait, 10));
+        }
+        expect(blocking?.blockers).toContain(firstPid.pid);
+        record("concurrent-lock", { firstPid: firstPid.pid, secondPid: secondPid.pid, blocking });
+        return assignWorkItemForActor(
+          createWorkItemRepository({ sql: tx }),
+          actor(0),
+          command(staffX, 1, target),
+        );
+      });
+      const loser = await competitor!;
+      expect(loser.error).toBeDefined();
+      record("concurrent-result", { winner, error: errorFacts(loser.error) });
+      const committed = await readback("winner-readback");
+      expect(committed.current).toMatchObject({ version: 2, [target + "Id"]: staffX });
+      expect(committed.events).toHaveLength(1);
+      expect(committed.timeline).toHaveLength(1);
+      expect(committed.events[0]).toMatchObject({
+        assigned_by_id: managerA,
+        assigned_to_id: staffX,
+        expected_version: 1,
+      });
+      const replay = await outcome(
+        assignWorkItemForActor(repo, actor(1), command(staffY, 1, target)),
+      );
+      expect(replay.error).toBeDefined();
+      const unchanged = await readback("stale-replay-readback");
+      expect(unchanged.events).toHaveLength(1);
+      expect(unchanged.current?.version).toBe(2);
+      // Deliberate new confirmation after an independent session read, never an
+      // automatic resend of the original version.
+      const fresh = await createWorkItemRepository({ sql: second }).get(ids.work);
+      const recovered = await assignWorkItemForActor(
+        repo,
+        actor(1),
+        command(staffY, fresh!.version, target),
+      );
+      expect(recovered).toMatchObject({ version: 3, [target + "Id"]: staffY });
+      const after = await readback("recovery-readback");
+      expect(after.events).toHaveLength(2);
+      expect(after.timeline).toHaveLength(2);
+      expect(after.events[1]).toMatchObject({
+        assigned_by_id: managerB,
+        assigned_to_id: staffY,
+        previous_assignee_id: staffX,
+        expected_version: 2,
+      });
+      // The pre-existing repository protects the write but currently loses the
+      // structured conflict contract. Assert it after recording real invariants.
+      expect(errorFacts(loser.error)).toMatchObject({
+        statusCode: 409,
+        code: "WORK_ITEM_ASSIGNMENT_STALE",
+      });
+      expect(errorFacts(replay.error)).toMatchObject({
+        statusCode: 409,
+        code: "WORK_ITEM_ASSIGNMENT_STALE",
+      });
+    } else {
+      const options = await recommendWorkItemAssigneesForActor(repo, actor(0), ids.work);
+      expect(options.some((option) => option.userId === staffX)).toBe(true);
+      if (scenario !== "UC131-profile")
+        await first`update users set active=false where id=${staffX}`;
+      if (scenario !== "UC131-users")
+        await first`update staff_profiles set active=false where id=${ids.profiles[2]}`;
+      const [persisted] =
+        await second`select u.active user_active,sp.active profile_active from users u join staff_profiles sp on sp.user_id=u.id where u.id=${staffX}`;
+      record("disabled-after-selection", { selected: staffX, options, persisted });
+      const denied = await outcome(assignWorkItemForActor(repo, actor(0), command(staffX, 1)));
+      expect(denied.error).toBeDefined();
+      record("inactive-rejected", { error: errorFacts(denied.error) });
+      const unchanged = await readback("inactive-readback");
+      expect(unchanged.current).toMatchObject({ ownerId: null, version: 1 });
+      expect(unchanged.events).toHaveLength(0);
+      expect(unchanged.timeline).toHaveLength(0);
+      const fresh = await recommendWorkItemAssigneesForActor(repo, actor(0), ids.work);
+      expect(fresh.map((option) => option.userId)).toEqual([staffY]);
+      const recovered = await assignWorkItemForActor(
+        repo,
+        actor(0),
+        command(staffY, unchanged.current!.version),
+      );
+      expect(recovered).toMatchObject({ ownerId: staffY, version: 2 });
+      const final = await readback("reselection-readback");
+      expect(final.events).toHaveLength(1);
+      expect(final.timeline).toHaveLength(1);
+      expect(final.events[0]).toMatchObject({
+        assigned_by_id: managerA,
+        assigned_to_id: staffY,
+        expected_version: 1,
+      });
+      expect(errorFacts(denied.error)).toMatchObject({
+        statusCode: 409,
+        code: "WORK_ITEM_ASSIGNEE_UNAVAILABLE",
+      });
+    }
+  } finally {
+    // Await outstanding transactions before exact-ID cleanup. Never start the
+    // next scenario while a timed-out query can still commit in the background.
+    if (competitor) await competitor;
+    await raw.begin(async (tx) => {
+      const actualWork = await tx`select id from work_items where company_id=${ids.company}`;
+      record("cleanup-owned-work", { actualWork });
+      await tx`delete from notification_outbox where work_item_id=${ids.work}`;
+      await tx`delete from assignment_events where work_item_id=${ids.work}`;
+      await tx`delete from escalation_events where work_item_id=${ids.work}`;
+      await tx`delete from timeline_events where company_id=${ids.company} and case_id=${ids.case}`;
+      await tx`delete from work_items where id=${ids.work}`;
+      await tx`delete from annual_return_cases where id=${ids.case}`;
+      await tx`delete from companies where id=${ids.company}`;
+      await tx`delete from staff_skills where id=any(${ids.skills}::uuid[])`;
+      await tx`delete from staff_profiles where id=any(${ids.profiles}::uuid[])`;
+      await tx`delete from users where id=any(${ids.users}::uuid[])`;
+      await tx`delete from teams where id=any(${ids.teams}::uuid[])`;
+    });
+    const [counts] = await raw`select
+      (select count(*)::int from companies where id=${ids.company}) companies,
+      (select count(*)::int from annual_return_cases where id=${ids.case}) cases,
+      (select count(*)::int from work_items where id=${ids.work}) work_items,
+      (select count(*)::int from assignment_events where work_item_id=${ids.work}) assignment_events,
+      (select count(*)::int from timeline_events where company_id=${ids.company}) timeline,
+      (select count(*)::int from users where id=any(${ids.users}::uuid[])) users,
+      (select count(*)::int from teams where id=any(${ids.teams}::uuid[])) teams`;
+    record("cleanup-readback", counts);
+    expect(Object.values(counts)).toEqual(Array(Object.keys(counts).length).fill(0));
+    await Promise.all([raw.end(), firstRaw.end(), secondRaw.end()]);
+    closeSync(fd);
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-23T12:05:57.2302322Z",
+  "container_id": "c9547fc4528903fff2ed0e833ffe49f4aa10aecf14cc74af5f2756baf011e250",
+  "container_absent": true,
+  "credentials_absent": true,
+  "preexisting_count": 313,
+  "preexisting_missing": [],
+  "daemon_stopped": false,
+  "cache_path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\.cache\\cosec-20261023-assignment-86b2aa9a-db",
+  "cache_link_type": null
+}

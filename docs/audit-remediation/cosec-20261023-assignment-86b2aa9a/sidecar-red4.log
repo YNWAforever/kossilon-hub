@@ -1,0 +1,62 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > UC130: rereads manager A's assignment before manager B can deliberately confirm again (0)
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > UC130: rereads manager A's assignment before manager B can deliberately confirm again (1)
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > UC131: keeps input after server denial and requires an eligible replacement (0)
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > UC131: keeps input after server denial and requires an eligible replacement (1)
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > UC131: keeps input after server denial and requires an eligible replacement (2)
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > requires explicit reread after any mutation error, without exposing server details (0)
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > requires explicit reread after any mutation error, without exposing server details (1)
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses confirmation and retains input when explicit recovery returns queue-error
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses confirmation and retains input when explicit recovery returns recommendations-error
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses confirmation and retains input when explicit recovery returns missing
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses confirmation and retains input when explicit recovery returns completed
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses confirmation and retains input when explicit recovery returns cancelled
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > does not confirm a hidden selection after background eligibility changes
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > does not confirm cached recommendations after their refetch fails
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > cancels before submit without assigning
+ × src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > keeps an uncertain write locked after cancelling and reopening the same item 464ms
+   → expected false to be true // Object.is equality
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses a captured confirmation when a background queue read becomes missing
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses a captured confirmation when a background queue read becomes error
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses a captured confirmation when a background queue read becomes completed
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > refuses a captured confirmation when a background queue read becomes cancelled
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > blocks same-turn duplicates and all dismissal paths while saving
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > keeps confirmation locked during a reread and prevents same-turn duplicate rereads
+ ↓ src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > discards the old actor's dialog and does not close a new dialog on late success
+ ↓ src/routes/-work-queue.interaction.test.tsx > work queue in demo mode > explains the empty queue instead of calling the production server
+ ↓ src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > offers recovery for malformed filters without issuing queue or bulk reads
+ ↓ src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > retains successful rows when the next cursor fails, and clears them across actors
+ ↓ src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > keeps the same return context on desktop and mobile case links
+ ↓ src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > uses the effective breached predicate for both reads and all-results snapshots
+ ↓ src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > starts a new view from its first page
+ ↓ src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > shows real identity, payment blocker with on-track SLA, and current owner/reviewer candidates
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 29 skipped (30)
+   Start at  19:58:06
+   Duration  3.70s (transform 266ms, setup 0ms, import 1.05s, tests 466ms, environment 1.80s)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/-work-queue.interaction.test.tsx > UC130/UC131 assignment recovery > keeps an uncertain write locked after cancelling and reopening the same item
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/routes/-work-queue.interaction.test.tsx:358:42
+    356|     await waitFor(() => expect(screen.getByRole<HTMLButtonElement>("bu…
+    357|     fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Tea…
+    358|     expect(confirmAssignment().disabled).toBe(true);
+       |                                          ^
+    359|     expect(mocks.list).toHaveBeenCalledTimes(1);
+    360|     fireEvent.click(confirmAssignment());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

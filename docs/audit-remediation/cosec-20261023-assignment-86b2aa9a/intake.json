@@ -1,0 +1,13 @@
+{
+  "run_id": "cosec-20261023-assignment-86b2aa9a",
+  "utc": "2026-10-23T11:44:59.9011229Z",
+  "head": "8a0fbdcc860981d43fb9e12f794d7b549e331435",
+  "branch": "codex/cosec-20261023",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "remote": "https://github.com/YNWAforever/kossilon-hub.git",
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "scope": "UC130 and UC131 local SQL + component only",
+  "native_auth": false,
+  "authorization": "Local code/tests/docs and verified disposable resources; no push/merge/deploy/provider",
+  "graph_fallback": "Prior private-repo index/upload refusal remains; no retry; inspect known local source only"
+}

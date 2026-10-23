@@ -1,0 +1,17 @@
+{
+  "run_id": "cosec-20261023-assignment-86b2aa9a",
+  "container_id": "c9547fc4528903fff2ed0e833ffe49f4aa10aecf14cc74af5f2756baf011e250",
+  "own_row_counts_before_removal": {
+    "companies": 0,
+    "cases": 0,
+    "work_items": 0,
+    "assignment_events": 0,
+    "timeline": 0,
+    "outbox": 0,
+    "users": 1,
+    "teams": 0
+  },
+  "container_absent_after": true,
+  "credentials_removed": true,
+  "daemon_stopped": false
+}
