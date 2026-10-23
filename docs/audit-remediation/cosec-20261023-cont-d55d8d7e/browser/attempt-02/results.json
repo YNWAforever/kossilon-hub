@@ -1,0 +1,319 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config=playwright.local.config.ts",
+      "e2e/continuation-reflow.spec.ts"
+    ],
+    "configFile": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\playwright.local.config.ts",
+    "rootDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\local-evidence-guard.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/.worktrees/local-browser-runs/run-JyQNTY/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile390",
+        "name": "mobile390",
+        "testDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "local-ux.spec.ts",
+          "performance.spec.ts",
+          "audit-release-demo.spec.ts",
+          "audit-persona-local.spec.ts",
+          "continuation-reflow.spec.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/.worktrees/local-browser-runs/run-JyQNTY/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "desktop1280",
+        "name": "desktop1280",
+        "testDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "local-ux.spec.ts",
+          "performance.spec.ts",
+          "audit-release-demo.spec.ts",
+          "audit-persona-local.spec.ts",
+          "continuation-reflow.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-JyQNTY\\results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "npm run dev -- --host 127.0.0.1 --port 5180",
+      "url": "http://127.0.0.1:5180",
+      "reuseExistingServer": false,
+      "timeout": 30000,
+      "env": {
+        "VITE_ENABLE_DEMO_AUTH": "true"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "continuation-reflow.spec.ts",
+      "file": "continuation-reflow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [
+                {
+                  "type": "scope",
+                  "description": "Local demo only; client record journey unavailable; 640 CSS px is reflow, not actual 200% zoom or native Auth."
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "mobile390",
+              "projectName": "mobile390",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 6903,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[32m-   \"contained\": true,\u001b[39m\n\u001b[31m+   \"contained\": false,\u001b[39m\n\u001b[2m    \"cue\": true,\u001b[22m\n\u001b[2m    \"visible\": true,\u001b[22m\n\u001b[2m  }\u001b[22m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[32m-   \"contained\": true,\u001b[39m\n\u001b[31m+   \"contained\": false,\u001b[39m\n\u001b[2m    \"cue\": true,\u001b[22m\n\u001b[2m    \"visible\": true,\u001b[22m\n\u001b[2m  }\u001b[22m\n    at assertKeyboardFocus (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:27:17)\n    at tabTo (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:36:7)\n    at activate (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:45:3)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:167:7\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:149:5",
+                    "location": {
+                      "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                      "column": 17,
+                      "line": 27
+                    },
+                    "snippet": "  25 |     };\n  26 |   });\n> 27 |   expect(focus).toEqual({ visible: true, cue: true, contained: true });\n     |                 ^\n  28 | }\n  29 |\n  30 | // Find the real sequential tab stop, rather than using locator.focus() to make"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                        "column": 17,
+                        "line": 27
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[32m-   \"contained\": true,\u001b[39m\n\u001b[31m+   \"contained\": false,\u001b[39m\n\u001b[2m    \"cue\": true,\u001b[22m\n\u001b[2m    \"visible\": true,\u001b[22m\n\u001b[2m  }\u001b[22m\n\n  25 |     };\n  26 |   });\n> 27 |   expect(focus).toEqual({ visible: true, cue: true, contained: true });\n     |                 ^\n  28 | }\n  29 |\n  30 | // Find the real sequential tab stop, rather than using locator.focus() to make\n    at assertKeyboardFocus (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:27:17)\n    at tabTo (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:36:7)\n    at activate (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:45:3)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:167:7\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:149:5"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "Admin: keyboard login and honest client demo boundary",
+                      "duration": 6485,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[32m-   \"contained\": true,\u001b[39m\n\u001b[31m+   \"contained\": false,\u001b[39m\n\u001b[2m    \"cue\": true,\u001b[22m\n\u001b[2m    \"visible\": true,\u001b[22m\n\u001b[2m  }\u001b[22m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[32m-   \"contained\": true,\u001b[39m\n\u001b[31m+   \"contained\": false,\u001b[39m\n\u001b[2m    \"cue\": true,\u001b[22m\n\u001b[2m    \"visible\": true,\u001b[22m\n\u001b[2m  }\u001b[22m\n    at assertKeyboardFocus (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:27:17)\n    at tabTo (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:36:7)\n    at activate (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:45:3)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:167:7\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:149:5",
+                        "location": {
+                          "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                          "column": 17,
+                          "line": 27
+                        },
+                        "snippet": "  25 |     };\n  26 |   });\n> 27 |   expect(focus).toEqual({ visible: true, cue: true, contained: true });\n     |                 ^\n  28 | }\n  29 |\n  30 | // Find the real sequential tab stop, rather than using locator.focus() to make"
+                      }
+                    }
+                  ],
+                  "startTime": "2026-10-23T03:47:59.942Z",
+                  "annotations": [
+                    {
+                      "type": "scope",
+                      "description": "Local demo only; client record journey unavailable; 640 CSS px is reflow, not actual 200% zoom or native Auth."
+                    }
+                  ],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-JyQNTY\\artifacts\\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-JyQNTY\\artifacts\\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-JyQNTY\\artifacts\\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                    "column": 17,
+                    "line": 27
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "b6315d36f2618dba9d63-81dc79fc085298038846",
+          "file": "continuation-reflow.spec.ts",
+          "line": 117,
+          "column": 1
+        },
+        {
+          "title": "LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [
+                {
+                  "type": "scope",
+                  "description": "Local demo only; client record journey unavailable; 640 CSS px is reflow, not actual 200% zoom or native Auth."
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "desktop1280",
+              "projectName": "desktop1280",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 6952,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/clients$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:5180/clients?q=&status=all&team=all&includeFixtures=false\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"zh-Hant-HK\" data-tsd-source=\"/src/routes/__root.tsx:196:5\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:5180/clients?q=&status=all&team=all&includeFixtures=false\"\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/clients$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:5180/clients?q=&status=all&team=all&includeFixtures=false\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"zh-Hant-HK\" data-tsd-source=\"/src/routes/__root.tsx:196:5\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:5180/clients?q=&status=all&team=all&includeFixtures=false\"\u001b[22m\n\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:168:26\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:149:5",
+                    "location": {
+                      "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                      "column": 26,
+                      "line": 168
+                    },
+                    "snippet": "  166 |       }\n  167 |       await activate(page, nav.getByRole(\"link\", { name: \"客戶\", exact: true }));\n> 168 |       await expect(page).toHaveURL(/\\/clients$/);\n      |                          ^\n  169 |       await expect(\n  170 |         page.getByRole(\"heading\", { level: 1, name: \"客戶\", exact: true }),\n  171 |       ).toBeVisible();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                        "column": 26,
+                        "line": 168
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/clients$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:5180/clients?q=&status=all&team=all&includeFixtures=false\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"zh-Hant-HK\" data-tsd-source=\"/src/routes/__root.tsx:196:5\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:5180/clients?q=&status=all&team=all&includeFixtures=false\"\u001b[22m\n\n\n  166 |       }\n  167 |       await activate(page, nav.getByRole(\"link\", { name: \"客戶\", exact: true }));\n> 168 |       await expect(page).toHaveURL(/\\/clients$/);\n      |                          ^\n  169 |       await expect(\n  170 |         page.getByRole(\"heading\", { level: 1, name: \"客戶\", exact: true }),\n  171 |       ).toBeVisible();\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:168:26\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:149:5"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "Admin: keyboard login and honest client demo boundary",
+                      "duration": 6562,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/clients$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:5180/clients?q=&status=all&team=all&includeFixtures=false\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"zh-Hant-HK\" data-tsd-source=\"/src/routes/__root.tsx:196:5\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:5180/clients?q=&status=all&team=all&includeFixtures=false\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/clients$/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:5180/clients?q=&status=all&team=all&includeFixtures=false\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 5000ms\u001b[22m\n\u001b[2m    14 × locator resolved to <html lang=\"zh-Hant-HK\" data-tsd-source=\"/src/routes/__root.tsx:196:5\">…</html>\u001b[22m\n\u001b[2m       - unexpected value \"http://127.0.0.1:5180/clients?q=&status=all&team=all&includeFixtures=false\"\u001b[22m\n\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:168:26\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:149:5",
+                        "location": {
+                          "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                          "column": 26,
+                          "line": 168
+                        },
+                        "snippet": "  166 |       }\n  167 |       await activate(page, nav.getByRole(\"link\", { name: \"客戶\", exact: true }));\n> 168 |       await expect(page).toHaveURL(/\\/clients$/);\n      |                          ^\n  169 |       await expect(\n  170 |         page.getByRole(\"heading\", { level: 1, name: \"客戶\", exact: true }),\n  171 |       ).toBeVisible();"
+                      }
+                    }
+                  ],
+                  "startTime": "2026-10-23T03:48:08.222Z",
+                  "annotations": [
+                    {
+                      "type": "scope",
+                      "description": "Local demo only; client record journey unavailable; 640 CSS px is reflow, not actual 200% zoom or native Auth."
+                    }
+                  ],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-JyQNTY\\artifacts\\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-JyQNTY\\artifacts\\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-JyQNTY\\artifacts\\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                    "column": 26,
+                    "line": 168
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "b6315d36f2618dba9d63-168774fe365f8f8a21b4",
+          "file": "continuation-reflow.spec.ts",
+          "line": 117,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-23T03:47:49.096Z",
+    "duration": 27104.864999999998,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

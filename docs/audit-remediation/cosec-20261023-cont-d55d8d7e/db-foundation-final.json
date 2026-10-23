@@ -1,0 +1,15 @@
+{
+  "run_id": "cosec-20261023-cont-d55d8d7e",
+  "exact_retained_ids": {
+    "users": [
+      "914c5b78-5acc-4e09-8f05-0914a2228284"
+    ],
+    "calendars": [
+      "ef55c45b-6b9d-481c-a1d5-d38028a06d1b"
+    ],
+    "policies": [
+      "a89521bd-0810-40ee-94aa-a3105fcc7309"
+    ]
+  },
+  "removal": "whole owned tmpfs container only; no immutable trigger bypass"
+}

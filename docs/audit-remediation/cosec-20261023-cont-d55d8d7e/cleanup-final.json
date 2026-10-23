@@ -1,0 +1,17 @@
+{
+  "checked_utc": "2026-10-23T04:13:57.1856998Z",
+  "exact_container_ids": [
+    "f3d366104b311d60f881cee4486bfc8a61bf8453ebef424519f0553710537bcb",
+    "4f451922c0b848f5d8db0cae0900430b9143a4ccb5a27448d871ada6842af937"
+  ],
+  "containers_absent": true,
+  "credential_paths_absent": [
+    "node_modules/.cache/cosec-20261023-cont-d55d8d7e-db/owned-target.json",
+    "node_modules/.cache/cosec-20261023-cont-d55d8d7e-db/container.env",
+    "node_modules/.cache/cosec-20261023-cont-d55d8d7e-verify-db/owned-target.json",
+    "node_modules/.cache/cosec-20261023-cont-d55d8d7e-verify-db/container.env"
+  ],
+  "port_5180_bind_probe_free": true,
+  "unrelated_containers_changed": false,
+  "docker_daemon_lifecycle_changed": false
+}

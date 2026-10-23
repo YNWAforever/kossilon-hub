@@ -1,0 +1,11 @@
+{
+  "baseline": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+  "runtime_source_content_equal": true,
+  "new_paths": [
+    "e2e/continuation-reflow.spec.ts",
+    "playwright.local.config.ts",
+    "src/features/nar-import/scale.integration.test.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "checked_utc": "2026-10-23T04:04:39.3702573Z"
+}

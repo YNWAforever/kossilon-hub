@@ -1,0 +1,37 @@
+{
+  "source_sha": "d632570839640cc07c83aa76b3b51310038cf245",
+  "branch": "codex/cosec-20261023",
+  "base_head": "717ee08cfdfb6dc819d2105d8152b153207c9e03",
+  "runtime_baseline": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+  "tested_head": "717ee08cfdfb6dc819d2105d8152b153207c9e03",
+  "tests_ran_on_dirty_candidate": true,
+  "post_unit_change": "Only DB-project scale test gained durable event writer; excluded from unit and application build; latest DB/typecheck/lint rerun cover it",
+  "files": [
+    {
+      "path": "e2e/continuation-reflow.spec.ts",
+      "sha256": "553236f342f4793d116eab4703ce5c897bbf18be49b446f0e877266c98947662",
+      "bytes": 14879,
+      "git_blob": "2817b4fc1d6ca8c98c348c712880dd384ee60a4a"
+    },
+    {
+      "path": "playwright.local.config.ts",
+      "sha256": "c6223d14f419e26db46e4b15464339202bcee0ce094017db711b1af5ff373d3c",
+      "bytes": 1981,
+      "git_blob": "9173a465649c473416f28a91a17d05d1d4f450cd"
+    },
+    {
+      "path": "src/features/nar-import/scale.integration.test.ts",
+      "sha256": "a6ba98bac2beb4e3d55496d38ec9533735a2a27ceee6b9962fbba5ab224bbf64",
+      "bytes": 18897,
+      "git_blob": "b1b48a48a9e3fbbd62aa5288c3a856f504f0f8a5"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "sha256": "c7fa09583f1e8769ccd2398b12686bec60087178a8487073b556caa4c5dfad8f",
+      "bytes": 2729,
+      "git_blob": "3ca2e11ac6ba9acda7dab8ab0e3cf0d00be41f68"
+    }
+  ],
+  "source_patch": "source.patch",
+  "source_patch_sha256": "52f1a9b074765496544fe7a8bc042aaf56d85d3dd6967abe9a3f07751073a007"
+}

@@ -1,0 +1,123 @@
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-47QxVl
+[WebServer] (node:36344) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+Running 2 tests using 1 worker
+
+(node:24464) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-47QxVl
+[WebServer] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午11:50:18 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午11:50:18 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午11:50:18 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[WebServer] 上午11:50:18 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[WebServer] 上午11:50:20 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[WebServer] 上午11:50:20 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+  x  1 [mobile390] › e2e\continuation-reflow.spec.ts:122:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow (14.7s)
+(node:34980) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-47QxVl
+[WebServer] 上午11:50:30 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午11:50:30 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午11:50:31 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[WebServer] 上午11:50:31 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+  x  2 [desktop1280] › e2e\continuation-reflow.spec.ts:122:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow (9.6s)
+[local-browser-evidence] historical bytes unchanged: 9
+
+
+  1) [mobile390] › e2e\continuation-reflow.spec.ts:122:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow › Admin: real fixture board -> detail -> read-only reload -> return 
+
+    Error: expect(locator).toBeDisabled() failed
+
+    Locator: getByRole('main').getByLabel('付款', { exact: true })
+    Expected: disabled
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeDisabled" getByRole('main').getByLabel('付款', { exact: true }) with timeout 5000ms
+      - waiting for getByRole('main').getByLabel('付款', { exact: true })
+
+
+      92 |   ]) {
+      93 |     const control = main.getByLabel(label, { exact: true });
+    > 94 |     await expect(control).toBeDisabled();
+         |                           ^
+      95 |     await expect(control).toHaveValue(value);
+      96 |   }
+      97 |   const blockers = main.locator("section").filter({
+        at assertReadonlyDelta (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\continuation-reflow.spec.ts:94:27)
+        at C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\continuation-reflow.spec.ts:235:28
+        at C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\continuation-reflow.spec.ts:215:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-47QxVl\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .worktrees\local-browser-runs\run-47QxVl\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-47QxVl\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\trace.zip
+    Usage:
+
+        npx playwright show-trace .worktrees\local-browser-runs\run-47QxVl\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [desktop1280] › e2e\continuation-reflow.spec.ts:122:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow › Admin: real fixture board -> detail -> read-only reload -> return 
+
+    Error: expect(locator).toBeDisabled() failed
+
+    Locator: getByRole('main').getByLabel('付款', { exact: true })
+    Expected: disabled
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeDisabled" getByRole('main').getByLabel('付款', { exact: true }) with timeout 5000ms
+      - waiting for getByRole('main').getByLabel('付款', { exact: true })
+
+
+      92 |   ]) {
+      93 |     const control = main.getByLabel(label, { exact: true });
+    > 94 |     await expect(control).toBeDisabled();
+         |                           ^
+      95 |     await expect(control).toHaveValue(value);
+      96 |   }
+      97 |   const blockers = main.locator("section").filter({
+        at assertReadonlyDelta (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\continuation-reflow.spec.ts:94:27)
+        at C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\continuation-reflow.spec.ts:235:28
+        at C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\continuation-reflow.spec.ts:215:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-47QxVl\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .worktrees\local-browser-runs\run-47QxVl\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-47QxVl\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\trace.zip
+    Usage:
+
+        npx playwright show-trace .worktrees\local-browser-runs\run-47QxVl\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [mobile390] › e2e\continuation-reflow.spec.ts:122:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow 
+    [desktop1280] › e2e\continuation-reflow.spec.ts:122:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow 

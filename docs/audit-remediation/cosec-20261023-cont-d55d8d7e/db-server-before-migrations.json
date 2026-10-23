@@ -1,0 +1,13 @@
+{
+  "run_id": "cosec-20261023-cont-d55d8d7e",
+  "checked_utc": "2026-10-23T03:53:21.906Z",
+  "identity": {
+    "db": "cosec_cont_d55d8d7e",
+    "username": "cosec_runner",
+    "server_address": "172.17.0.2/32",
+    "server_port": 5432,
+    "system_id": "7699706353407160359"
+  },
+  "tcp_and_container_system_id_equal": true,
+  "public_tables": []
+}

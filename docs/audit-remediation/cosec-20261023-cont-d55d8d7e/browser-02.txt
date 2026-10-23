@@ -1,0 +1,120 @@
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-JyQNTY
+[WebServer] (node:40144) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+Running 2 tests using 1 worker
+
+(node:24008) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-JyQNTY
+[WebServer] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午11:48:05 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午11:48:05 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午11:48:06 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[WebServer] 上午11:48:06 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+  x  1 [mobile390] › e2e\continuation-reflow.spec.ts:117:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow (6.9s)
+(node:43892) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-JyQNTY
+[WebServer] 上午11:48:09 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午11:48:09 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+  x  2 [desktop1280] › e2e\continuation-reflow.spec.ts:117:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow (7.0s)
+[local-browser-evidence] historical bytes unchanged: 9
+
+
+  1) [mobile390] › e2e\continuation-reflow.spec.ts:117:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow › Admin: keyboard login and honest client demo boundary 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+    -   "contained": true,
+    +   "contained": false,
+        "cue": true,
+        "visible": true,
+      }
+
+      25 |     };
+      26 |   });
+    > 27 |   expect(focus).toEqual({ visible: true, cue: true, contained: true });
+         |                 ^
+      28 | }
+      29 |
+      30 | // Find the real sequential tab stop, rather than using locator.focus() to make
+        at assertKeyboardFocus (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\continuation-reflow.spec.ts:27:17)
+        at tabTo (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\continuation-reflow.spec.ts:36:7)
+        at activate (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\continuation-reflow.spec.ts:45:3)
+        at C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\continuation-reflow.spec.ts:167:7
+        at C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\continuation-reflow.spec.ts:149:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-JyQNTY\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .worktrees\local-browser-runs\run-JyQNTY\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-JyQNTY\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\trace.zip
+    Usage:
+
+        npx playwright show-trace .worktrees\local-browser-runs\run-JyQNTY\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [desktop1280] › e2e\continuation-reflow.spec.ts:117:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow › Admin: keyboard login and honest client demo boundary 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/clients$/
+    Received string:  "http://127.0.0.1:5180/clients?q=&status=all&team=all&includeFixtures=false"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        14 × locator resolved to <html lang="zh-Hant-HK" data-tsd-source="/src/routes/__root.tsx:196:5">…</html>
+           - unexpected value "http://127.0.0.1:5180/clients?q=&status=all&team=all&includeFixtures=false"
+
+
+      166 |       }
+      167 |       await activate(page, nav.getByRole("link", { name: "客戶", exact: true }));
+    > 168 |       await expect(page).toHaveURL(/\/clients$/);
+          |                          ^
+      169 |       await expect(
+      170 |         page.getByRole("heading", { level: 1, name: "客戶", exact: true }),
+      171 |       ).toBeVisible();
+        at C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\continuation-reflow.spec.ts:168:26
+        at C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\continuation-reflow.spec.ts:149:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-JyQNTY\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .worktrees\local-browser-runs\run-JyQNTY\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-JyQNTY\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\trace.zip
+    Usage:
+
+        npx playwright show-trace .worktrees\local-browser-runs\run-JyQNTY\artifacts\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [mobile390] › e2e\continuation-reflow.spec.ts:117:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow 
+    [desktop1280] › e2e\continuation-reflow.spec.ts:117:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow 
