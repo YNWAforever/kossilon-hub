@@ -1,0 +1,261 @@
+// @vitest-environment jsdom
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { JobResult } from "@/features/bulk-operations/types";
+
+// Mock the complete RPC boundary: importing this component never creates an Auth/DB client.
+const api = vi.hoisted(() => ({
+  snapshot: vi.fn(),
+  membership: vi.fn(),
+  preview: vi.fn(),
+  maintenance: vi.fn(),
+  execute: vi.fn(),
+  jobs: vi.fn(),
+  get: vi.fn(),
+  resume: vi.fn(),
+  cancel: vi.fn(),
+  retry: vi.fn(),
+  reconcile: vi.fn(),
+  export: vi.fn(),
+  assignees: vi.fn(),
+}));
+vi.mock("@/features/bulk-operations/server-fns", () => ({
+  createBulkSelectionSnapshot: api.snapshot,
+  getBulkSnapshotMembership: api.membership,
+  previewBulkAssignment: api.preview,
+  previewBulkMaintenance: api.maintenance,
+  executeBulkAssignment: api.execute,
+  listBulkJobs: api.jobs,
+  getBulkJob: api.get,
+  resumeBulkJob: api.resume,
+  cancelBulkJob: api.cancel,
+  retryFailedBulkItems: api.retry,
+  reconcileUnknownBulkItems: api.reconcile,
+  exportBulkResults: api.export,
+  listBulkAssignees: api.assignees,
+}));
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, params }: { children: ReactNode; params: { id: string } }) => (
+    <a href={"/annual-returns/" + params.id}>{children}</a>
+  ),
+}));
+import { BulkSelectionToolbar } from "./bulk-selection-toolbar";
+
+const jobA = "60000000-0000-0000-0000-000000000001";
+const jobB = "60000000-0000-0000-0000-000000000002";
+const csv =
+  '\uFEFFordinal,label,state,reason\r\n1,"甲公司, Ltd",succeeded,""\r\n2,"乙公司",failed,"needs review"\r\n';
+const nativeBlob = globalThis.Blob;
+const blobConstructor = vi.fn(function (parts?: BlobPart[], options?: BlobPropertyBag) {
+  return new nativeBlob(parts, options);
+});
+const createObjectURL = vi.fn((_blob: Blob) => "blob:uc157-saved-results");
+const revokeObjectURL = vi.fn();
+const downloads: { filename: string; href: string }[] = [];
+const clients: QueryClient[] = [];
+
+function job(jobId: string): JobResult {
+  return {
+    jobId,
+    resource: "annual_return_case",
+    operation: "assignment",
+    assignmentTarget: "owner",
+    createdBy: "20000000-0000-0000-0000-000000000003",
+    createdAt: "2026-10-01T00:00:00Z",
+    updatedAt: "2026-10-01T00:01:00Z",
+    payloadHash: "synthetic-approved-assignment",
+    state: "partial",
+    total: 2,
+    counts: { succeeded: 1, failed: 1 },
+    retryableFailedCount: 1,
+    items: [],
+    nextCursor: null,
+  };
+}
+
+beforeEach(() => {
+  Object.values(api).forEach((mock) => mock.mockReset());
+  blobConstructor.mockClear();
+  createObjectURL.mockClear();
+  revokeObjectURL.mockClear();
+  downloads.length = 0;
+  vi.stubGlobal("Blob", blobConstructor);
+  vi.stubGlobal(
+    "URL",
+    class extends URL {
+      static createObjectURL = createObjectURL;
+      static revokeObjectURL = revokeObjectURL;
+    },
+  );
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => {
+      throw new Error("UC157 sidecar forbids network");
+    }),
+  );
+  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    downloads.push({ filename: this.download, href: this.href });
+  });
+  api.jobs.mockResolvedValue({
+    jobs: [job(jobA), job(jobB)].map(({ jobId, state, total, createdAt }) => ({
+      jobId,
+      state,
+      total,
+      createdAt,
+    })),
+    nextCursor: null,
+  });
+  api.get.mockImplementation(async ({ data }: { data: { jobId: string } }) => job(data.jobId));
+  api.assignees.mockResolvedValue([]);
+  api.export.mockResolvedValue({ csv });
+});
+
+afterEach(() => {
+  cleanup();
+  clients.splice(0).forEach((client) => client.clear());
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+
+function setup() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } },
+  });
+  clients.push(client);
+  const element = (actorScope = "manager-A") => (
+    <QueryClientProvider client={client}>
+      <BulkSelectionToolbar
+        actorScope={actorScope}
+        resource="annual_return_case"
+        filters={{}}
+        page={[]}
+        total={0}
+      />
+    </QueryClientProvider>
+  );
+  return { ...render(element()), element };
+}
+
+async function selectSavedJob(jobId = jobA) {
+  await screen.findAllByRole("option", { name: /2筆.*部分完成/, hidden: true });
+  fireEvent.change(screen.getByLabelText("已保存工作"), { target: { value: jobId } });
+  await waitFor(() => expect(api.get).toHaveBeenCalledWith({ data: { jobId } }));
+  return screen.findByRole<HTMLButtonElement>("button", { name: "匯出可查閱結果" });
+}
+
+function deferredExport() {
+  let resolve!: (value: { csv: string }) => void;
+  const promise = new Promise<{ csv: string }>((done) => {
+    resolve = done;
+  });
+  api.export.mockReturnValueOnce(promise);
+  return resolve;
+}
+
+async function downloadedText() {
+  const blob = createObjectURL.mock.calls[0]?.[0] as Blob | undefined;
+  expect(blob).toBeInstanceOf(nativeBlob);
+  expect(blob!.type).toBe("text/csv;charset=utf-8");
+  // Read the actual Blob bytes; text decoders may consume the CSV BOM.
+  const bytes = await new Promise<ArrayBuffer>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as ArrayBuffer);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsArrayBuffer(blob!);
+  });
+  return Array.from(new Uint8Array(bytes));
+}
+
+describe("UC157 saved result export interactions", () => {
+  it("downloads the mocked saved-job CSV bytes with the results filename and releases its URL", async () => {
+    setup();
+    const button = await selectSavedJob();
+    expect(api.export).not.toHaveBeenCalled();
+    fireEvent.click(button);
+    await waitFor(() =>
+      expect(downloads).toEqual([
+        { filename: "bulk-assignment-results.csv", href: "blob:uc157-saved-results" },
+      ]),
+    );
+    expect(api.export).toHaveBeenCalledExactlyOnceWith({ data: { jobId: jobA } });
+    expect(blobConstructor).toHaveBeenCalledTimes(1);
+    expect(await downloadedText()).toEqual(Array.from(new TextEncoder().encode(csv)));
+    expect(revokeObjectURL).toHaveBeenCalledExactlyOnceWith("blob:uc157-saved-results");
+  });
+
+  it("shows a rejected export without making a Blob or download and recovers only after explicit retry", async () => {
+    api.export.mockRejectedValueOnce(new Error("synthetic export unavailable"));
+    setup();
+    const button = await selectSavedJob();
+    fireEvent.click(button);
+    expect((await screen.findByRole("alert")).textContent).toMatch(/未能匯出結果/);
+    expect(blobConstructor).not.toHaveBeenCalled();
+    expect(createObjectURL).not.toHaveBeenCalled();
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+    expect(downloads).toEqual([]);
+    expect(api.export).toHaveBeenCalledTimes(1);
+    expect(button.disabled).toBe(false);
+    fireEvent.click(button);
+    await waitFor(() => expect(downloads).toHaveLength(1));
+    expect(api.export).toHaveBeenNthCalledWith(2, { data: { jobId: jobA } });
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(blobConstructor).toHaveBeenCalledTimes(1);
+    expect(await downloadedText()).toEqual(Array.from(new TextEncoder().encode(csv)));
+  });
+
+  it("blocks repeated clicks while the export RPC is pending and downloads only once", async () => {
+    const resolve = deferredExport();
+    setup();
+    const button = await selectSavedJob();
+    fireEvent.click(button);
+    await waitFor(() => expect(button.disabled).toBe(true));
+    fireEvent.click(button);
+    fireEvent.click(button);
+    expect(api.export).toHaveBeenCalledTimes(1);
+    expect(blobConstructor).not.toHaveBeenCalled();
+    expect(downloads).toEqual([]);
+    await act(async () => resolve({ csv }));
+    await waitFor(() => expect(button.disabled).toBe(false));
+    expect(downloads).toHaveLength(1);
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it("discards a pending export when the selected saved job changes and permits the new job export", async () => {
+    const resolve = deferredExport();
+    setup();
+    fireEvent.click(await selectSavedJob());
+    await waitFor(() => expect(api.export).toHaveBeenCalledTimes(1));
+    const newButton = await selectSavedJob(jobB);
+    await act(async () => resolve({ csv: "prior job CSV must not download" }));
+    await waitFor(() => expect(newButton.disabled).toBe(false));
+    expect(blobConstructor).not.toHaveBeenCalled();
+    expect(createObjectURL).not.toHaveBeenCalled();
+    expect(downloads).toEqual([]);
+    fireEvent.click(newButton);
+    await waitFor(() => expect(downloads).toHaveLength(1));
+    expect(api.export).toHaveBeenLastCalledWith({ data: { jobId: jobB } });
+    expect(await downloadedText()).toEqual(Array.from(new TextEncoder().encode(csv)));
+  });
+
+  it("discards a pending export after an actor change and requires that actor to select and export again", async () => {
+    const resolve = deferredExport();
+    const view = setup();
+    fireEvent.click(await selectSavedJob());
+    await waitFor(() => expect(api.export).toHaveBeenCalledTimes(1));
+    view.rerender(view.element("manager-B"));
+    expect((screen.getByLabelText("已保存工作") as HTMLSelectElement).value).toBe("");
+    await act(async () => resolve({ csv: "prior actor CSV must not download" }));
+    expect(blobConstructor).not.toHaveBeenCalled();
+    expect(createObjectURL).not.toHaveBeenCalled();
+    expect(downloads).toEqual([]);
+    fireEvent.click(await selectSavedJob());
+    await waitFor(() => expect(downloads).toHaveLength(1));
+    expect(api.export).toHaveBeenCalledTimes(2);
+    expect(await downloadedText()).toEqual(Array.from(new TextEncoder().encode(csv)));
+  });
+});
