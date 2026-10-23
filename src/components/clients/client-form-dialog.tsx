@@ -4,7 +4,7 @@ import {
   isValidBrNumber,
   isValidCrNumber,
 } from "@/features/clients/identifiers";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
@@ -85,23 +85,67 @@ function formFor(client: ClientDetail): FormState {
 
 const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
-/** ClientWriteError fields this dialog renders an inline message for. Anything else toasts. */
-const INLINE_ERROR_FIELDS = new Set(["crNumber", "brNumber", "contact"]);
+const FIELD_IDS = {
+  companyName: "client-name",
+  crNumber: "client-cr",
+  brNumber: "client-br",
+  incorporationDate: "client-incorporated",
+  annualReturnBasisDate: "client-basis",
+  registeredOffice: "client-office",
+  ownerId: "client-owner",
+  teamId: "client-team",
+  contact: "contact-email",
+} as const;
+
+const REQUIRED_MESSAGES = {
+  companyName: "請填寫公司名稱。",
+  crNumber: "請填寫 CR 號碼。",
+  brNumber: "請填寫 BR 號碼。",
+  incorporationDate: "請填寫成立日期。",
+  annualReturnBasisDate: "請填寫周年申報基準日。",
+  registeredOffice: "請填寫註冊辦事處。",
+  ownerId: "請選擇負責同事。",
+  teamId: "請選擇團隊。",
+} as const;
+
+// Server errors may contain SQL, connection details or other clients' data.
+const SERVER_FIELD_MESSAGES = {
+  crNumber: "請檢查 CR 號碼，確認格式正確且未被其他公司使用。",
+  brNumber: "請檢查 BR 號碼，確認格式正確且未被其他公司使用。",
+  contact: "請提供有效的電郵地址或電話號碼。",
+} as const;
 
 export function ClientFormDialog({ open, onOpenChange, options, client, onSaved }: Props) {
   const isEdit = Boolean(client);
   const [form, setForm] = useState<FormState>(() =>
     client ? formFor(client) : emptyForm(options),
   );
-  const [fieldError, setFieldError] = useState<{ field: string; message: string } | null>(null);
+  const [fieldError, setFieldError] = useState<{
+    field: keyof typeof FIELD_IDS;
+    message: string;
+  } | null>(null);
   const [saving, setSaving] = useState(false);
+  const pending = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const previousSession = useRef({ open, clientId: client?.id });
 
   useEffect(() => {
-    if (open) {
+    // Fresh option/client objects for the same open session must not erase a draft.
+    if (
+      open &&
+      (!previousSession.current.open || previousSession.current.clientId !== client?.id)
+    ) {
       setForm(client ? formFor(client) : emptyForm(options));
       setFieldError(null);
     }
+    previousSession.current = { open, clientId: client?.id };
   }, [open, client, options]);
+
+  useEffect(() => {
+    if (fieldError) {
+      formRef.current?.querySelector<HTMLElement>(`#${FIELD_IDS[fieldError.field]}`)?.focus();
+    }
+  }, [fieldError]);
 
   // `listAssignmentOptions()` only returns active users/teams, so if the company's
   // currently-assigned owner or team has since been deactivated it will not appear in
@@ -131,20 +175,60 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
 
+  const errorAttributes = (field: keyof typeof FIELD_IDS) => ({
+    "aria-invalid": fieldError?.field === field,
+    "aria-describedby": fieldError?.field === field ? `${FIELD_IDS[field]}-error` : undefined,
+  });
+
+  const renderError = (field: keyof typeof FIELD_IDS) =>
+    fieldError?.field === field ? (
+      <p id={`${FIELD_IDS[field]}-error`} className="mt-1 text-xs text-destructive">
+        {fieldError.message}
+      </p>
+    ) : null;
+
+  function changeOpen(nextOpen: boolean) {
+    if (!pending.current) onOpenChange(nextOpen);
+  }
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    // React state alone cannot guard two submit events in the same render.
+    if (pending.current) return;
     setFieldError(null);
 
-    // Checked here as well as on the server so the message lands on the field
-    // being typed in, before a round trip.
-    if (!client && !isValidCrNumber(form.crNumber)) {
-      setFieldError({ field: "crNumber", message: CR_NUMBER_MESSAGE });
+    const requiredFields = client
+      ? (["companyName", "registeredOffice", "ownerId", "teamId"] as const)
+      : ([
+          "companyName",
+          "crNumber",
+          "brNumber",
+          "incorporationDate",
+          "annualReturnBasisDate",
+          "registeredOffice",
+          "ownerId",
+          "teamId",
+        ] as const);
+    for (const field of requiredFields) {
+      if (!form[field].trim()) {
+        setFieldError({ field, message: REQUIRED_MESSAGES[field] });
+        return;
+      }
+      if (field === "crNumber" && !isValidCrNumber(form.crNumber)) {
+        setFieldError({ field, message: CR_NUMBER_MESSAGE });
+        return;
+      }
+      if (field === "brNumber" && !isValidBrNumber(form.brNumber)) {
+        setFieldError({ field, message: BR_NUMBER_MESSAGE });
+        return;
+      }
+    }
+    const emailInput = formRef.current?.querySelector<HTMLInputElement>("#contact-email");
+    if (!client && emailInput && !emailInput.validity.valid) {
+      setFieldError({ field: "contact", message: "請輸入有效的電郵地址。" });
       return;
     }
-    if (!client && !isValidBrNumber(form.brNumber)) {
-      setFieldError({ field: "brNumber", message: BR_NUMBER_MESSAGE });
-      return;
-    }
+    pending.current = true;
     setSaving(true);
 
     try {
@@ -193,24 +277,22 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
 
       onOpenChange(false);
     } catch (error) {
-      const field = (error as { field?: string }).field;
-      const message = error instanceof Error ? error.message : "未能儲存客戶資料。";
-
-      // Only these fields have somewhere to render an inline error. Anything else falls back
-      // to a toast — without this the message would be swallowed entirely, because a truthy
-      // `field` with no matching slot renders nothing and skips the toast.
-      if (field && INLINE_ERROR_FIELDS.has(field)) {
-        setFieldError({ field, message });
+      const field =
+        error && typeof error === "object" && "field" in error ? error.field : undefined;
+      if (!client && typeof field === "string" && Object.hasOwn(SERVER_FIELD_MESSAGES, field)) {
+        const knownField = field as keyof typeof SERVER_FIELD_MESSAGES;
+        setFieldError({ field: knownField, message: SERVER_FIELD_MESSAGES[knownField] });
       } else {
-        toast.error(message);
+        toast.error("未能儲存客戶資料，請稍後再試。");
       }
     } finally {
+      pending.current = false;
       setSaving(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={changeOpen}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? "編輯客戶" : "新增客戶"}</DialogTitle>
@@ -221,19 +303,21 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={submit} className="space-y-4">
+        <form ref={formRef} noValidate onSubmit={submit} className="space-y-4">
           <div>
             <label className={labelClass} htmlFor="client-name">
               公司名稱
             </label>
             <Input
               id="client-name"
+              {...errorAttributes("companyName")}
               size="sm"
               className="w-full"
               value={form.companyName}
               onChange={(event) => set("companyName", event.target.value)}
               required
             />
+            {renderError("companyName")}
           </div>
 
           {!isEdit && (
@@ -288,6 +372,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                 </label>
                 <Input
                   id="client-incorporated"
+                  {...errorAttributes("incorporationDate")}
                   type="date"
                   size="sm"
                   className="w-full"
@@ -295,6 +380,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                   onChange={(event) => set("incorporationDate", event.target.value)}
                   required
                 />
+                {renderError("incorporationDate")}
               </div>
               <div>
                 <label className={labelClass} htmlFor="client-basis">
@@ -302,6 +388,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                 </label>
                 <Input
                   id="client-basis"
+                  {...errorAttributes("annualReturnBasisDate")}
                   type="date"
                   size="sm"
                   className="w-full"
@@ -309,6 +396,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                   onChange={(event) => set("annualReturnBasisDate", event.target.value)}
                   required
                 />
+                {renderError("annualReturnBasisDate")}
               </div>
             </div>
           )}
@@ -319,12 +407,14 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
             </label>
             <Input
               id="client-office"
+              {...errorAttributes("registeredOffice")}
               size="sm"
               className="w-full"
               value={form.registeredOffice}
               onChange={(event) => set("registeredOffice", event.target.value)}
               required
             />
+            {renderError("registeredOffice")}
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -334,17 +424,23 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
               </label>
               <Select
                 id="client-owner"
+                {...errorAttributes("ownerId")}
                 size="sm"
                 className="w-full"
                 value={form.ownerId}
                 onChange={(event) => set("ownerId", event.target.value)}
+                required
               >
+                <option value="" disabled>
+                  請選擇負責同事
+                </option>
                 {ownerOptions.map((owner) => (
                   <option key={owner.id} value={owner.id}>
                     {owner.name}
                   </option>
                 ))}
               </Select>
+              {renderError("ownerId")}
             </div>
             <div>
               <label className={labelClass} htmlFor="client-team">
@@ -352,17 +448,23 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
               </label>
               <Select
                 id="client-team"
+                {...errorAttributes("teamId")}
                 size="sm"
                 className="w-full"
                 value={form.teamId}
                 onChange={(event) => set("teamId", event.target.value)}
+                required
               >
+                <option value="" disabled>
+                  請選擇團隊
+                </option>
                 {teamOptions.map((team) => (
                   <option key={team.id} value={team.id}>
                     {team.name}
                   </option>
                 ))}
               </Select>
+              {renderError("teamId")}
             </div>
           </div>
 
@@ -458,7 +560,13 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
           )}
 
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={saving}
+              onClick={() => changeOpen(false)}
+            >
               取消
             </Button>
             <Button type="submit" variant="primary" size="sm" disabled={saving}>

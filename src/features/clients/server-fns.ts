@@ -89,14 +89,14 @@ const contactSchema = z
     path: ["email"],
   });
 
-const createClientSchema = z.object({
-  companyName: z.string().min(1),
+export const createClientSchema = z.object({
+  companyName: z.string().trim().min(1, "請輸入公司名稱。"),
   crNumber: z.string().transform(normalizeCrNumber).refine(isValidCrNumber, CR_NUMBER_MESSAGE),
   brNumber: z.string().transform(normalizeBrNumber).refine(isValidBrNumber, BR_NUMBER_MESSAGE),
   incorporationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   annualReturnBasisDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  registeredOffice: z.string().min(1),
-  companySecretary: z.string().min(1),
+  registeredOffice: z.string().trim().min(1, "請輸入註冊辦事處。"),
+  companySecretary: z.string().trim().min(1, "請輸入公司秘書。"),
   ownerId: z.string().uuid(),
   teamId: z.string().uuid(),
   contacts: z.array(contactSchema).default([]),
@@ -304,13 +304,23 @@ export const getClient = createServerFn({ method: "GET" })
     return withClientRepository((repository) => repository.getClient(data.id));
   });
 
+/** The same command used by the authenticated handler and isolated SQL checks. */
+export async function createClientForActor(
+  actor: AuthenticatedActor,
+  input: z.input<typeof createClientSchema>,
+  repository: Pick<ClientRepository, "createClient">,
+) {
+  if (!actor.userId) throw new Error("Forbidden: a staff database identity is required.");
+  assertClientCompanyCreatable(actor, { teamId: input.teamId });
+  return repository.createClient({ ...createClientSchema.parse(input), actorId: actor.userId });
+}
+
 export const createClient = createServerFn({ method: "POST" })
   .validator(createClientSchema)
   .handler(async ({ data }) =>
     withClientRepository(async (repository) => {
       const actor = await getCurrentClientActor();
-      assertClientCompanyCreatable(actor, { teamId: data.teamId });
-      return repository.createClient({ ...data, actorId: actor.userId });
+      return createClientForActor(actor, data, repository);
     }),
   );
 
