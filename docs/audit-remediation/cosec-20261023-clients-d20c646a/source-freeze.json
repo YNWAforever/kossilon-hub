@@ -1,0 +1,30 @@
+{
+  "head": "1b8dffc256b934ed11864a07883c80d8de5f8749",
+  "utc": "2026-10-23T13:20:10.3105106Z",
+  "files": [
+    {
+      "path": "src/components/clients/client-form-dialog.tsx",
+      "sha256": "5b7b877f9a1df100303b8867305e9bed514818a2e273d803ef057b2b0c1ced21"
+    },
+    {
+      "path": "src/components/clients/client-form-dialog.test.tsx",
+      "sha256": "14da1e450a00616ddfa23ba8c99a19887f24965258fdee7c579a59f0c661a474"
+    },
+    {
+      "path": "src/features/clients/server-fns.ts",
+      "sha256": "d25f95c046290ae4becef5f517596e8de1f37827e277ac9044e55c6f4753e37a"
+    },
+    {
+      "path": "src/features/clients/create-command.test.ts",
+      "sha256": "3f6bb195aa0c29d0ae3e6c88d92a7e97005c84f5266018745bc57eeac5723450"
+    },
+    {
+      "path": "src/features/clients/create-recovery.integration.test.ts",
+      "sha256": "be74c9a68b2e09e91f241eca3e9ed882be0afb9b1bd059e785d87686776a3b41"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "sha256": "ad8693e5af4f3e7aabc5b3ced7f7848aa92892c2ded4b6bc03141fc2ed309bb1"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "run_id": "cosec-20261023-clients-d20c646a",
+  "container_id": "12098f280e8e3873c72b215464fd56ea2f1d7f1999eedb59fe967de439570f92",
+  "gate_passed": true,
+  "port": 52000,
+  "fixture_count": 0,
+  "migrations": 0
+}

@@ -1,0 +1,851 @@
+diff --git a/src/components/clients/client-form-dialog.test.tsx b/src/components/clients/client-form-dialog.test.tsx
+index 9b2ff9c..992e7c0 100644
+--- a/src/components/clients/client-form-dialog.test.tsx
++++ b/src/components/clients/client-form-dialog.test.tsx
+@@ -1,5 +1,8 @@
+ // @vitest-environment jsdom
+-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
++import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
++import { useState } from "react";
++import { toast } from "sonner";
++import type { ClientDetail } from "@/features/clients/types";
+ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+ 
+ const serverFns = vi.hoisted(() => ({ createClient: vi.fn(), updateClient: vi.fn() }));
+@@ -17,6 +20,9 @@ function fillRequired(cr: string, br: string) {
+   fireEvent.change(screen.getByLabelText(/公司名稱/), { target: { value: "Flow Test Limited" } });
+   fireEvent.change(screen.getByLabelText("CR 號碼"), { target: { value: cr } });
+   fireEvent.change(screen.getByLabelText("BR 號碼"), { target: { value: br } });
++  fireEvent.change(screen.getByLabelText("成立日期"), { target: { value: "2020-01-15" } });
++  fireEvent.change(screen.getByLabelText("周年申報基準日"), { target: { value: "2026-01-15" } });
++  fireEvent.change(screen.getByLabelText("註冊辦事處"), { target: { value: "Synthetic Office" } });
+ }
+ 
+ describe("ClientFormDialog identifier checks", () => {
+@@ -45,3 +51,506 @@ describe("ClientFormDialog identifier checks", () => {
+     expect(serverFns.createClient).not.toHaveBeenCalled();
+   });
+ });
++
++const detailedOptions = {
++  owners: [
++    ...options.owners,
++    { id: "20000000-0000-0000-0000-000000000002", name: "Ben Test", teamId: null },
++  ],
++  teams: [...options.teams, { id: "10000000-0000-0000-0000-000000000002", name: "Synthetic Team" }],
++};
++
++function mount(client?: ClientDetail) {
++  const onSaved = vi.fn();
++  const onOpenChange = vi.fn();
++  function Harness() {
++    const [open, setOpen] = useState(true);
++    return (
++      <>
++        <button onClick={() => setOpen(true)}>重新開啟</button>
++        <ClientFormDialog
++          open={open}
++          onOpenChange={(next) => {
++            onOpenChange(next);
++            setOpen(next);
++          }}
++          options={detailedOptions}
++          client={client}
++          onSaved={onSaved}
++        />
++      </>
++    );
++  }
++  render(<Harness />);
++  return { onSaved, onOpenChange };
++}
++
++function change(label: string, value: string) {
++  fireEvent.change(screen.getByLabelText(label), { target: { value } });
++}
++
++function currentForm() {
++  return screen.getByLabelText("公司名稱").closest("form")!;
++}
++
++function submit() {
++  // Intentionally bypass native validation and the disabled submit button.
++  fireEvent.submit(currentForm());
++}
++
++function fillAll() {
++  fillRequired("1200042", "60000138");
++  change("負責同事", detailedOptions.owners[1].id);
++  change("團隊", detailedOptions.teams[1].id);
++  change("姓名", "Synthetic Contact");
++  change("職位", "Director");
++  change("電郵", "contact@example.invalid");
++  change("電話", "55550000");
++}
++
++function inputValues() {
++  return Object.fromEntries(
++    Array.from(
++      currentForm().querySelectorAll<HTMLInputElement | HTMLSelectElement>("input, select"),
++    ).map((input) => [input.id, input.value]),
++  );
++}
++
++function expectFieldError(label: string) {
++  const field = screen.getByLabelText(label);
++  expect(document.activeElement).toBe(field);
++  expect(field.getAttribute("aria-invalid")).toBe("true");
++  const messageId = field.getAttribute("aria-describedby");
++  expect(messageId).toBeTruthy();
++  expect(document.getElementById(messageId!)?.textContent?.trim()).toBeTruthy();
++}
++
++function pendingSave() {
++  let resolve!: (value: { id: string }) => void;
++  const promise = new Promise<{ id: string }>((done) => {
++    resolve = done;
++  });
++  return { promise, resolve };
++}
++
++describe("ClientFormDialog UC135–137 component RPC boundary", () => {
++  beforeEach(() => {
++    serverFns.createClient.mockReset();
++    serverFns.updateClient.mockReset();
++    vi.mocked(toast.error).mockClear();
++    vi.mocked(toast.success).mockClear();
++  });
++  afterEach(cleanup);
++
++  it("UC135 corrects every empty required field in order with focus and associated text before one save", async () => {
++    serverFns.createClient.mockResolvedValue({ id: "created-client" });
++    const { onSaved } = mount();
++    const corrections = [
++      ["公司名稱", "Sequential Limited"],
++      ["CR 號碼", "1200042"],
++      ["BR 號碼", "60000138"],
++      ["成立日期", "2020-01-15"],
++      ["周年申報基準日", "2026-01-15"],
++      ["註冊辦事處", "Synthetic Office"],
++    ];
++    for (const [label, value] of corrections) {
++      submit();
++      expectFieldError(label);
++      expect(serverFns.createClient).not.toHaveBeenCalled();
++      change(label, value);
++    }
++    submit();
++    await waitFor(() => expect(onSaved).toHaveBeenCalledExactlyOnceWith("created-client"));
++    expect(serverFns.createClient).toHaveBeenCalledTimes(1);
++  });
++
++  it.each(["公司名稱", "註冊辦事處"])(
++    "UC135 rejects whitespace-only %s before the RPC",
++    (label) => {
++      mount();
++      fillAll();
++      change(label, "   ");
++      submit();
++      expectFieldError(label);
++      expect(serverFns.createClient).not.toHaveBeenCalled();
++    },
++  );
++
++  it("UC135 focuses malformed CR then BR during sequential manual correction without premature RPC", async () => {
++    serverFns.createClient.mockResolvedValue({ id: "created-client" });
++    const { onSaved } = mount();
++    fillRequired("12", "abc");
++    screen.getByRole("button", { name: "新增客戶" }).focus();
++    submit();
++    expectFieldError("CR 號碼");
++    expect(screen.getByRole("textbox", { name: "CR 號碼", description: /7 或 8 位數字/ })).toBe(
++      document.activeElement,
++    );
++    expect(serverFns.createClient).not.toHaveBeenCalled();
++
++    change("CR 號碼", "1200042");
++    submit();
++    expectFieldError("BR 號碼");
++    expect(screen.getByRole("textbox", { name: "BR 號碼", description: /8 位數字/ })).toBe(
++      document.activeElement,
++    );
++    expect(serverFns.createClient).not.toHaveBeenCalled();
++
++    change("BR 號碼", "60000138");
++    submit();
++    await waitFor(() => expect(onSaved).toHaveBeenCalledExactlyOnceWith("created-client"));
++    expect(serverFns.createClient).toHaveBeenCalledTimes(1);
++  });
++
++  it("preserves native email rejection when required-field feedback is handled by the dialog", () => {
++    mount();
++    fillAll();
++    change("電郵", "not-an-email");
++    fireEvent.click(screen.getByRole("button", { name: "新增客戶" }));
++    expectFieldError("電郵");
++    expect(serverFns.createClient).not.toHaveBeenCalled();
++  });
++
++  it("keeps unsaved inputs and the current error when assignment options rerender", () => {
++    const props = { open: true, onOpenChange: vi.fn(), onSaved: vi.fn() };
++    const view = render(<ClientFormDialog {...props} options={detailedOptions} />);
++    fillAll();
++    change("CR 號碼", "12");
++    submit();
++    const before = inputValues();
++    const errorText = document.getElementById("client-cr-error")?.textContent;
++    view.rerender(
++      <ClientFormDialog
++        {...props}
++        options={{
++          owners: detailedOptions.owners.map((owner) => ({ ...owner })),
++          teams: detailedOptions.teams.map((team) => ({ ...team })),
++        }}
++      />,
++    );
++    expect(inputValues()).toEqual(before);
++    expectFieldError("CR 號碼");
++    expect(document.getElementById("client-cr-error")?.textContent).toBe(errorText);
++    expect(serverFns.createClient).not.toHaveBeenCalled();
++  });
++
++  it.each([
++    ["ownerId", "負責同事", "client-owner", detailedOptions.owners[1].id],
++    ["teamId", "團隊", "client-team", detailedOptions.teams[1].id],
++  ])(
++    "UC135 requires %s with empty options and an explicit choice after refresh, preserving the draft",
++    async (field, label, inputId, validId) => {
++      const pending = pendingSave();
++      serverFns.createClient.mockReturnValue(pending.promise);
++      const onSaved = vi.fn();
++      const props = { open: true, onOpenChange: vi.fn(), onSaved };
++      const missingOptions =
++        field === "ownerId"
++          ? { owners: [], teams: detailedOptions.teams }
++          : { owners: detailedOptions.owners, teams: [] };
++      const view = render(<ClientFormDialog {...props} options={missingOptions} />);
++      fillAll();
++      const before = inputValues();
++      expect(before[inputId]).toBe("");
++      submit();
++      expectFieldError(label);
++      expect(serverFns.createClient).not.toHaveBeenCalled();
++
++      view.rerender(<ClientFormDialog {...props} options={detailedOptions} />);
++      const select = screen.getByLabelText(label) as HTMLSelectElement;
++      expect(inputValues()).toEqual(before);
++      expect(select.value).toBe("");
++      expect(select.selectedOptions[0]?.value).toBe("");
++      expect(select.selectedOptions[0]?.textContent).toMatch(/請選擇/);
++      submit();
++      expectFieldError(label);
++      expect(serverFns.createClient).not.toHaveBeenCalled();
++
++      change(label, validId);
++      expect(inputValues()).toEqual({ ...before, [inputId]: validId });
++      submit();
++      expect(serverFns.createClient).toHaveBeenCalledTimes(1);
++      expect(serverFns.createClient.mock.calls[0][0].data).toEqual(
++        expect.objectContaining({
++          [field]: validId,
++          companyName: "Flow Test Limited",
++          crNumber: "1200042",
++          brNumber: "60000138",
++          registeredOffice: "Synthetic Office",
++          contacts: [
++            {
++              name: "Synthetic Contact",
++              role: "Director",
++              email: "contact@example.invalid",
++              phone: "55550000",
++              isPrimary: true,
++            },
++          ],
++        }),
++      );
++      await act(async () => pending.resolve({ id: "created-client" }));
++      expect(onSaved).toHaveBeenCalledExactlyOnceWith("created-client");
++    },
++  );
++
++  it.each([
++    ["crNumber", "CR 號碼", "1200043"],
++    ["brNumber", "BR 號碼", "60000139"],
++  ])(
++    "UC136 retains ALL fields and focuses server %s, then manually retries once",
++    async (field, label, corrected) => {
++      const retry = pendingSave();
++      serverFns.createClient
++        .mockRejectedValueOnce(Object.assign(new Error("Synthetic field conflict"), { field }))
++        .mockReturnValue(retry.promise);
++      const { onSaved, onOpenChange } = mount();
++      fillAll();
++      const before = inputValues();
++      submit();
++      await waitFor(() => expectFieldError(label));
++      expect(inputValues()).toEqual(before);
++      expect(onSaved).not.toHaveBeenCalled();
++      expect(onOpenChange).not.toHaveBeenCalled();
++      expect(serverFns.createClient).toHaveBeenCalledTimes(1);
++
++      change(label, corrected);
++      act(() => {
++        submit();
++        submit();
++      });
++      submit();
++      expect(serverFns.createClient).toHaveBeenCalledTimes(2);
++      expect(screen.getByRole<HTMLButtonElement>("button", { name: "儲存中…" }).disabled).toBe(
++        true,
++      );
++      expect(inputValues()).toEqual({
++        ...before,
++        [field === "crNumber" ? "client-cr" : "client-br"]: corrected,
++      });
++      const payload = serverFns.createClient.mock.calls[1][0].data;
++      expect(payload).toEqual({
++        companyName: "Flow Test Limited",
++        crNumber: field === "crNumber" ? corrected : "1200042",
++        brNumber: field === "brNumber" ? corrected : "60000138",
++        incorporationDate: "2020-01-15",
++        annualReturnBasisDate: "2026-01-15",
++        registeredOffice: "Synthetic Office",
++        companySecretary: "Kossilon Secretaries Ltd",
++        ownerId: detailedOptions.owners[1].id,
++        teamId: detailedOptions.teams[1].id,
++        contacts: [
++          {
++            name: "Synthetic Contact",
++            role: "Director",
++            email: "contact@example.invalid",
++            phone: "55550000",
++            isPrimary: true,
++          },
++        ],
++      });
++      await act(async () => retry.resolve({ id: "created-client" }));
++      expect(onSaved).toHaveBeenCalledExactlyOnceWith("created-client");
++      expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(false);
++      expect(screen.queryByRole("dialog")).toBeNull();
++    },
++  );
++
++  it.each(["60000138-000-07-27-A", " 60000138 - 000 - 07 - 27 - a "])(
++    "UC137 accepts whole certificate BR %s at the mocked RPC boundary",
++    async (certificate) => {
++      serverFns.createClient.mockResolvedValue({ id: "created-client" });
++      const { onSaved } = mount();
++      fillRequired("1200042", certificate);
++      submit();
++      await waitFor(() => expect(onSaved).toHaveBeenCalledExactlyOnceWith("created-client"));
++      expect(serverFns.createClient).toHaveBeenCalledTimes(1);
++      // The component passes the certificate through; real server normalization belongs to parent tests.
++      expect(serverFns.createClient.mock.calls[0][0].data.brNumber).toBe(certificate);
++      expect(serverFns.createClient.mock.calls[0][0].data.contacts).toEqual([]);
++    },
++  );
++
++  it("guards duplicate form submit in the same render and while pending even bypassing the disabled button", async () => {
++    const pending = pendingSave();
++    serverFns.createClient.mockReturnValue(pending.promise);
++    const { onSaved } = mount();
++    fillAll();
++    act(() => {
++      submit();
++      submit();
++    });
++    submit();
++    expect(serverFns.createClient).toHaveBeenCalledTimes(1);
++    expect(screen.getByRole<HTMLButtonElement>("button", { name: "儲存中…" }).disabled).toBe(true);
++    expect(onSaved).not.toHaveBeenCalled();
++    await act(async () => pending.resolve({ id: "created-client" }));
++    expect(onSaved).toHaveBeenCalledExactlyOnceWith("created-client");
++  });
++
++  it.each(["cancel", "escape", "close"])(
++    "guards pending %s until the single invocation settles",
++    async (dismiss) => {
++      const pending = pendingSave();
++      serverFns.createClient.mockReturnValue(pending.promise);
++      const { onSaved, onOpenChange } = mount();
++      fillAll();
++      const before = inputValues();
++      submit();
++      if (dismiss === "cancel") fireEvent.click(screen.getByRole("button", { name: "取消" }));
++      if (dismiss === "escape")
++        fireEvent.keyDown(document.activeElement!, { key: "Escape", code: "Escape" });
++      if (dismiss === "close") fireEvent.click(screen.getByRole("button", { name: "Close" }));
++      expect(onOpenChange).not.toHaveBeenCalled();
++      expect(screen.getByRole("dialog")).toBeTruthy();
++      expect(inputValues()).toEqual(before);
++      expect(serverFns.createClient).toHaveBeenCalledTimes(1);
++      await act(async () => pending.resolve({ id: "created-client" }));
++      expect(onSaved).toHaveBeenCalledExactlyOnceWith("created-client");
++      expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(false);
++    },
++  );
++
++  it("ordinary cancel and reopen discard unsaved input and validation errors without saving", () => {
++    const { onOpenChange, onSaved } = mount();
++    fillRequired("12", "abc");
++    submit();
++    fireEvent.click(screen.getByRole("button", { name: "取消" }));
++    expect(screen.queryByRole("dialog")).toBeNull();
++    expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(false);
++    fireEvent.click(screen.getByRole("button", { name: "重新開啟" }));
++    expect((screen.getByLabelText("公司名稱") as HTMLInputElement).value).toBe("");
++    expect((screen.getByLabelText("CR 號碼") as HTMLInputElement).value).toBe("");
++    expect(screen.getByLabelText("CR 號碼").getAttribute("aria-invalid")).not.toBe("true");
++    expect(serverFns.createClient).not.toHaveBeenCalled();
++    expect(onSaved).not.toHaveBeenCalled();
++  });
++
++  it.each([
++    [
++      undefined,
++      new Error(
++        "SYNTHETIC_PRIVATE_SQL postgresql://user:secret@internal.invalid customer@example.invalid",
++      ),
++    ],
++    [
++      "unknownField",
++      Object.assign(new Error("SYNTHETIC_PRIVATE_SQL internal constraint"), {
++        field: "unknownField",
++      }),
++    ],
++    [
++      "crNumber",
++      Object.assign(new Error("SYNTHETIC_PRIVATE_SQL duplicate key 60000138"), {
++        field: "crNumber",
++      }),
++    ],
++    ["brNumber", { field: "brNumber", message: "SYNTHETIC_PRIVATE_SQL serialized backend detail" }],
++    [
++      "contact",
++      Object.assign(new Error("SYNTHETIC_PRIVATE_SQL contact constraint"), { field: "contact" }),
++    ],
++  ])(
++    "retries an error for %s with retained input and no raw sensitive text",
++    async (field, failure) => {
++      serverFns.createClient
++        .mockRejectedValueOnce(failure)
++        .mockResolvedValueOnce({ id: "created-client" });
++      const { onSaved, onOpenChange } = mount();
++      fillAll();
++      const before = inputValues();
++      submit();
++      await waitFor(() =>
++        expect(screen.getByRole<HTMLButtonElement>("button", { name: "新增客戶" }).disabled).toBe(
++          false,
++        ),
++      );
++      expect(inputValues()).toEqual(before);
++      expect(document.body.textContent).not.toContain("SYNTHETIC_PRIVATE_SQL");
++      expect(JSON.stringify(vi.mocked(toast.error).mock.calls)).not.toContain(
++        "SYNTHETIC_PRIVATE_SQL",
++      );
++      if (field === "crNumber" || field === "brNumber")
++        expectFieldError(field === "crNumber" ? "CR 號碼" : "BR 號碼");
++      else if (field !== "contact")
++        expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/未能儲存/));
++      expect(onSaved).not.toHaveBeenCalled();
++      expect(onOpenChange).not.toHaveBeenCalled();
++      submit();
++      await waitFor(() => expect(onSaved).toHaveBeenCalledExactlyOnceWith("created-client"));
++      expect(serverFns.createClient).toHaveBeenCalledTimes(2);
++    },
++  );
++
++  it("preserves edit payload, immutable identifiers and inactive owner/team when saving", async () => {
++    const client: ClientDetail = {
++      id: "existing-client",
++      companyName: "Existing Limited",
++      crNumber: "legacy-cr",
++      brNumber: "legacy-br",
++      status: "active",
++      ownerId: "inactive-owner",
++      ownerName: "Former Owner",
++      ownerInitials: "FO",
++      teamId: "inactive-team",
++      teamName: "Former Team",
++      arDueDate: null,
++      paymentStatus: null,
++      invoiceAmount: null,
++      incorporationDate: "2020-01-15",
++      annualReturnBasisDate: "2026-01-15",
++      registeredOffice: "Existing Office",
++      companySecretary: "Existing Secretary",
++      contacts: [],
++      officers: [],
++      shareholdings: [],
++      significantControllers: [],
++      inspectionRequests: [],
++      timeline: [],
++      annualReturnHistory: [],
++      documents: [],
++    };
++    serverFns.updateClient.mockResolvedValue({ id: client.id });
++    const onSaved = vi.fn();
++    const props = { open: true, onOpenChange: vi.fn(), onSaved };
++    const view = render(<ClientFormDialog {...props} options={detailedOptions} client={client} />);
++    expect(screen.queryByLabelText("CR 號碼")).toBeNull();
++    expect(
++      screen.getByRole<HTMLOptionElement>("option", { name: "Former Owner（已停用）" }).selected,
++    ).toBe(true);
++    expect(
++      screen.getByRole<HTMLOptionElement>("option", { name: "Former Team（已停用）" }).selected,
++    ).toBe(true);
++    change("公司名稱", "Renamed Limited");
++    change("註冊辦事處", "Updated Office");
++    change("狀態", "inactive");
++    view.rerender(
++      <ClientFormDialog {...props} options={{ ...detailedOptions }} client={{ ...client }} />,
++    );
++    expect((screen.getByLabelText("公司名稱") as HTMLInputElement).value).toBe("Renamed Limited");
++    expect((screen.getByLabelText("註冊辦事處") as HTMLInputElement).value).toBe("Updated Office");
++    expect((screen.getByLabelText("狀態") as HTMLSelectElement).value).toBe("inactive");
++    for (const [label, validId] of [
++      ["負責同事", "inactive-owner"],
++      ["團隊", "inactive-team"],
++    ]) {
++      change(label, "");
++      submit();
++      expectFieldError(label);
++      expect(serverFns.updateClient).not.toHaveBeenCalled();
++      change(label, validId);
++    }
++    submit();
++    await waitFor(() => expect(onSaved).toHaveBeenCalledExactlyOnceWith(client.id));
++    expect(serverFns.createClient).not.toHaveBeenCalled();
++    expect(serverFns.updateClient).toHaveBeenCalledExactlyOnceWith({
++      data: {
++        id: client.id,
++        companyName: "Renamed Limited",
++        registeredOffice: "Updated Office",
++        status: "inactive",
++        ownerId: "inactive-owner",
++        teamId: "inactive-team",
++      },
++    });
++  });
++});
+diff --git a/src/components/clients/client-form-dialog.tsx b/src/components/clients/client-form-dialog.tsx
+index 8765a6b..ee3a5ea 100644
+--- a/src/components/clients/client-form-dialog.tsx
++++ b/src/components/clients/client-form-dialog.tsx
+@@ -4,7 +4,7 @@ import {
+   isValidBrNumber,
+   isValidCrNumber,
+ } from "@/features/clients/identifiers";
+-import { useEffect, useMemo, useState } from "react";
++import { useEffect, useMemo, useRef, useState } from "react";
+ import { toast } from "sonner";
+ import { Button } from "@/components/ui/button";
+ import { Input, Select } from "@/components/ui/field";
+@@ -85,24 +85,68 @@ function formFor(client: ClientDetail): FormState {
+ 
+ const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
+ 
+-/** ClientWriteError fields this dialog renders an inline message for. Anything else toasts. */
+-const INLINE_ERROR_FIELDS = new Set(["crNumber", "brNumber", "contact"]);
++const FIELD_IDS = {
++  companyName: "client-name",
++  crNumber: "client-cr",
++  brNumber: "client-br",
++  incorporationDate: "client-incorporated",
++  annualReturnBasisDate: "client-basis",
++  registeredOffice: "client-office",
++  ownerId: "client-owner",
++  teamId: "client-team",
++  contact: "contact-email",
++} as const;
++
++const REQUIRED_MESSAGES = {
++  companyName: "請填寫公司名稱。",
++  crNumber: "請填寫 CR 號碼。",
++  brNumber: "請填寫 BR 號碼。",
++  incorporationDate: "請填寫成立日期。",
++  annualReturnBasisDate: "請填寫周年申報基準日。",
++  registeredOffice: "請填寫註冊辦事處。",
++  ownerId: "請選擇負責同事。",
++  teamId: "請選擇團隊。",
++} as const;
++
++// Server errors may contain SQL, connection details or other clients' data.
++const SERVER_FIELD_MESSAGES = {
++  crNumber: "請檢查 CR 號碼，確認格式正確且未被其他公司使用。",
++  brNumber: "請檢查 BR 號碼，確認格式正確且未被其他公司使用。",
++  contact: "請提供有效的電郵地址或電話號碼。",
++} as const;
+ 
+ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved }: Props) {
+   const isEdit = Boolean(client);
+   const [form, setForm] = useState<FormState>(() =>
+     client ? formFor(client) : emptyForm(options),
+   );
+-  const [fieldError, setFieldError] = useState<{ field: string; message: string } | null>(null);
++  const [fieldError, setFieldError] = useState<{
++    field: keyof typeof FIELD_IDS;
++    message: string;
++  } | null>(null);
+   const [saving, setSaving] = useState(false);
++  const pending = useRef(false);
++  const formRef = useRef<HTMLFormElement>(null);
++  const previousSession = useRef({ open, clientId: client?.id });
+ 
+   useEffect(() => {
+-    if (open) {
++    // Fresh option/client objects for the same open session must not erase a draft.
++    if (
++      open &&
++      (!previousSession.current.open || previousSession.current.clientId !== client?.id)
++    ) {
+       setForm(client ? formFor(client) : emptyForm(options));
+       setFieldError(null);
+     }
++    previousSession.current = { open, clientId: client?.id };
+   }, [open, client, options]);
+ 
++  useEffect(() => {
++    if (fieldError) {
++      formRef.current?.querySelector<HTMLElement>(`#${FIELD_IDS[fieldError.field]}`)?.focus();
++    }
++  }, [fieldError]);
++
+   // `listAssignmentOptions()` only returns active users/teams, so if the company's
+   // currently-assigned owner or team has since been deactivated it will not appear in
+   // `options`. A <Select> whose value matches no <option> renders blank or silently falls
+@@ -131,20 +175,60 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved
+   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+     setForm((current) => ({ ...current, [key]: value }));
+ 
++  const errorAttributes = (field: keyof typeof FIELD_IDS) => ({
++    "aria-invalid": fieldError?.field === field,
++    "aria-describedby": fieldError?.field === field ? `${FIELD_IDS[field]}-error` : undefined,
++  });
++
++  const renderError = (field: keyof typeof FIELD_IDS) =>
++    fieldError?.field === field ? (
++      <p id={`${FIELD_IDS[field]}-error`} className="mt-1 text-xs text-destructive">
++        {fieldError.message}
++      </p>
++    ) : null;
++
++  function changeOpen(nextOpen: boolean) {
++    if (!pending.current) onOpenChange(nextOpen);
++  }
++
+   async function submit(event: React.FormEvent) {
+     event.preventDefault();
++    // React state alone cannot guard two submit events in the same render.
++    if (pending.current) return;
+     setFieldError(null);
+ 
+-    // Checked here as well as on the server so the message lands on the field
+-    // being typed in, before a round trip.
+-    if (!client && !isValidCrNumber(form.crNumber)) {
+-      setFieldError({ field: "crNumber", message: CR_NUMBER_MESSAGE });
+-      return;
++    const requiredFields = client
++      ? (["companyName", "registeredOffice", "ownerId", "teamId"] as const)
++      : ([
++          "companyName",
++          "crNumber",
++          "brNumber",
++          "incorporationDate",
++          "annualReturnBasisDate",
++          "registeredOffice",
++          "ownerId",
++          "teamId",
++        ] as const);
++    for (const field of requiredFields) {
++      if (!form[field].trim()) {
++        setFieldError({ field, message: REQUIRED_MESSAGES[field] });
++        return;
++      }
++      if (field === "crNumber" && !isValidCrNumber(form.crNumber)) {
++        setFieldError({ field, message: CR_NUMBER_MESSAGE });
++        return;
++      }
++      if (field === "brNumber" && !isValidBrNumber(form.brNumber)) {
++        setFieldError({ field, message: BR_NUMBER_MESSAGE });
++        return;
++      }
+     }
+-    if (!client && !isValidBrNumber(form.brNumber)) {
+-      setFieldError({ field: "brNumber", message: BR_NUMBER_MESSAGE });
++    const emailInput = formRef.current?.querySelector<HTMLInputElement>("#contact-email");
++    if (!client && emailInput && !emailInput.validity.valid) {
++      setFieldError({ field: "contact", message: "請輸入有效的電郵地址。" });
+       return;
+     }
++    pending.current = true;
+     setSaving(true);
+ 
+     try {
+@@ -193,24 +277,22 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved
+ 
+       onOpenChange(false);
+     } catch (error) {
+-      const field = (error as { field?: string }).field;
+-      const message = error instanceof Error ? error.message : "未能儲存客戶資料。";
+-
+-      // Only these fields have somewhere to render an inline error. Anything else falls back
+-      // to a toast — without this the message would be swallowed entirely, because a truthy
+-      // `field` with no matching slot renders nothing and skips the toast.
+-      if (field && INLINE_ERROR_FIELDS.has(field)) {
+-        setFieldError({ field, message });
++      const field =
++        error && typeof error === "object" && "field" in error ? error.field : undefined;
++      if (!client && typeof field === "string" && Object.hasOwn(SERVER_FIELD_MESSAGES, field)) {
++        const knownField = field as keyof typeof SERVER_FIELD_MESSAGES;
++        setFieldError({ field: knownField, message: SERVER_FIELD_MESSAGES[knownField] });
+       } else {
+-        toast.error(message);
++        toast.error("未能儲存客戶資料，請稍後再試。");
+       }
+     } finally {
++      pending.current = false;
+       setSaving(false);
+     }
+   }
+ 
+   return (
+-    <Dialog open={open} onOpenChange={onOpenChange}>
++    <Dialog open={open} onOpenChange={changeOpen}>
+       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+         <DialogHeader>
+           <DialogTitle>{isEdit ? "編輯客戶" : "新增客戶"}</DialogTitle>
+@@ -221,19 +303,21 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved
+           </DialogDescription>
+         </DialogHeader>
+ 
+-        <form onSubmit={submit} className="space-y-4">
++        <form ref={formRef} noValidate onSubmit={submit} className="space-y-4">
+           <div>
+             <label className={labelClass} htmlFor="client-name">
+               公司名稱
+             </label>
+             <Input
+               id="client-name"
++              {...errorAttributes("companyName")}
+               size="sm"
+               className="w-full"
+               value={form.companyName}
+               onChange={(event) => set("companyName", event.target.value)}
+               required
+             />
++            {renderError("companyName")}
+           </div>
+ 
+           {!isEdit && (
+@@ -288,6 +372,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved
+                 </label>
+                 <Input
+                   id="client-incorporated"
++                  {...errorAttributes("incorporationDate")}
+                   type="date"
+                   size="sm"
+                   className="w-full"
+@@ -295,6 +380,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved
+                   onChange={(event) => set("incorporationDate", event.target.value)}
+                   required
+                 />
++                {renderError("incorporationDate")}
+               </div>
+               <div>
+                 <label className={labelClass} htmlFor="client-basis">
+@@ -302,6 +388,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved
+                 </label>
+                 <Input
+                   id="client-basis"
++                  {...errorAttributes("annualReturnBasisDate")}
+                   type="date"
+                   size="sm"
+                   className="w-full"
+@@ -309,6 +396,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved
+                   onChange={(event) => set("annualReturnBasisDate", event.target.value)}
+                   required
+                 />
++                {renderError("annualReturnBasisDate")}
+               </div>
+             </div>
+           )}
+@@ -319,12 +407,14 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved
+             </label>
+             <Input
+               id="client-office"
++              {...errorAttributes("registeredOffice")}
+               size="sm"
+               className="w-full"
+               value={form.registeredOffice}
+               onChange={(event) => set("registeredOffice", event.target.value)}
+               required
+             />
++            {renderError("registeredOffice")}
+           </div>
+ 
+           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+@@ -334,17 +424,23 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved
+               </label>
+               <Select
+                 id="client-owner"
++                {...errorAttributes("ownerId")}
+                 size="sm"
+                 className="w-full"
+                 value={form.ownerId}
+                 onChange={(event) => set("ownerId", event.target.value)}
++                required
+               >
++                <option value="" disabled>
++                  請選擇負責同事
++                </option>
+                 {ownerOptions.map((owner) => (
+                   <option key={owner.id} value={owner.id}>
+                     {owner.name}
+                   </option>
+                 ))}
+               </Select>
++              {renderError("ownerId")}
+             </div>
+             <div>
+               <label className={labelClass} htmlFor="client-team">
+@@ -352,17 +448,23 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved
+               </label>
+               <Select
+                 id="client-team"
++                {...errorAttributes("teamId")}
+                 size="sm"
+                 className="w-full"
+                 value={form.teamId}
+                 onChange={(event) => set("teamId", event.target.value)}
++                required
+               >
++                <option value="" disabled>
++                  請選擇團隊
++                </option>
+                 {teamOptions.map((team) => (
+                   <option key={team.id} value={team.id}>
+                     {team.name}
+                   </option>
+                 ))}
+               </Select>
++              {renderError("teamId")}
+             </div>
+           </div>
+ 
+@@ -458,7 +560,13 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved
+           )}
+ 
+           <DialogFooter>
+-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
++            <Button
++              type="button"
++              variant="outline"
++              size="sm"
++              disabled={saving}
++              onClick={() => changeOpen(false)}
++            >
+               取消
+             </Button>
+             <Button type="submit" variant="primary" size="sm" disabled={saving}>

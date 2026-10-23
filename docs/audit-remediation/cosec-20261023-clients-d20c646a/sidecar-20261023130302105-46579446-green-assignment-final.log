@@ -1,0 +1,37 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog identifier checks > stops a malformed CR number at the field instead of saving it 271ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog identifier checks > stops a malformed BR number at the field 89ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 corrects every empty required field in order with focus and associated text before one save 141ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 rejects whitespace-only 公司名稱 before the RPC 125ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 rejects whitespace-only 註冊辦事處 before the RPC 196ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 focuses malformed CR then BR during sequential manual correction without premature RPC 221ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > preserves native email rejection when required-field feedback is handled by the dialog 188ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > keeps unsaved inputs and the current error when assignment options rerender 176ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 requires ownerId with empty options and an explicit choice after refresh, preserving the draft 137ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 requires teamId with empty options and an explicit choice after refresh, preserving the draft 134ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC136 retains ALL fields and focuses server crNumber, then manually retries once 90ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC136 retains ALL fields and focuses server brNumber, then manually retries once 96ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC137 accepts whole certificate BR 60000138-000-07-27-A at the mocked RPC boundary 45ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC137 accepts whole certificate BR  60000138 - 000 - 07 - 27 - a  at the mocked RPC boundary 47ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > guards duplicate form submit in the same render and while pending even bypassing the disabled button 119ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > guards pending cancel until the single invocation settles 106ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > guards pending escape until the single invocation settles 112ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > guards pending close until the single invocation settles 114ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > ordinary cancel and reopen discard unsaved input and validation errors without saving 96ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for undefined with retained input and no raw sensitive text 143ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for unknownField with retained input and no raw sensitive text 125ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for crNumber with retained input and no raw sensitive text 101ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for brNumber with retained input and no raw sensitive text 87ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for contact with retained input and no raw sensitive text 94ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > preserves edit payload, immutable identifiers and inactive owner/team when saving 98ms
+
+ Test Files  1 passed (1)
+      Tests  25 passed (25)
+   Start at  21:17:07
+   Duration  4.99s (transform 168ms, setup 0ms, import 560ms, tests 3.15s, environment 1.07s)
+
+JSON report written to C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261023-clients-d20c646a/sidecar-20261023130302105-46579446-green-assignment-final-vitest.json
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

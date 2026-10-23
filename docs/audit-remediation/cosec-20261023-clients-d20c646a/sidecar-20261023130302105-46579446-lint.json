@@ -1,0 +1,49 @@
+{
+  "action": "lint",
+  "started": "2026-10-23T13:11:28.127Z",
+  "finished": "2026-10-23T13:11:32.268Z",
+  "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/eslint/bin/eslint.js",
+    "src/components/clients/client-form-dialog.tsx",
+    "src/components/clients/client-form-dialog.test.tsx",
+    "--max-warnings",
+    "0"
+  ],
+  "head": "1b8dffc256b934ed11864a07883c80d8de5f8749",
+  "exit_code": 0,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ],
+  "dotenv_files": [],
+  "before": {
+    "src/components/clients/client-form-dialog.tsx": "17dd35972acff8d830cf1d8958a874fce970bad9138aa97b66ce8da7592569c5",
+    "src/components/clients/client-form-dialog.test.tsx": "0c2c359331f4dc82a7e3f381b81dea6ab64610c76269e13d2e1e2055628de447"
+  },
+  "after": {
+    "src/components/clients/client-form-dialog.tsx": "17dd35972acff8d830cf1d8958a874fce970bad9138aa97b66ce8da7592569c5",
+    "src/components/clients/client-form-dialog.test.tsx": "0c2c359331f4dc82a7e3f381b81dea6ab64610c76269e13d2e1e2055628de447"
+  },
+  "counts": null
+}

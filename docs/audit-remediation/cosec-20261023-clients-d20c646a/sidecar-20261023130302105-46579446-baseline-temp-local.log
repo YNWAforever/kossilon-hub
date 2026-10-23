@@ -1,0 +1,14 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog identifier checks > stops a malformed CR number at the field instead of saving it 197ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog identifier checks > stops a malformed BR number at the field 51ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  21:04:00
+   Duration  2.08s (transform 131ms, setup 0ms, import 525ms, tests 249ms, environment 1.03s)
+
+JSON report written to C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261023-clients-d20c646a/sidecar-20261023130302105-46579446-baseline-temp-local-vitest.json
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

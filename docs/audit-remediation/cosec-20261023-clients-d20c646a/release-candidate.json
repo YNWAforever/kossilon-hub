@@ -1,0 +1,50 @@
+{
+  "run_id": "cosec-20261023-clients-d20c646a",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "b3d02f218b8de915f0ac1a544ebc85f1bf262764",
+  "parent_sha": "1b8dffc256b934ed11864a07883c80d8de5f8749",
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "phase": "LOCAL_UC135_137_VERIFIED_NATIVE_BLOCKED",
+  "release_gate": "NO_GO",
+  "auth_runtime_verified": false,
+  "deployed": false,
+  "source_manifest": "source-candidate.json",
+  "evidence_manifest": "evidence-manifest.json",
+  "checks": {
+    "unit": {
+      "receipt": "unit-final.json",
+      "log": "unit-final.txt",
+      "exit_code": 0
+    },
+    "typecheck": {
+      "receipt": "typecheck-verified.json",
+      "log": "typecheck-verified.txt",
+      "exit_code": 0
+    },
+    "lint": {
+      "receipt": "lint-verified.json",
+      "log": "lint-verified.txt",
+      "exit_code": 0
+    },
+    "build": {
+      "receipt": "build-final.json",
+      "log": "build-final.txt",
+      "exit_code": 0
+    },
+    "sql": {
+      "files": 1,
+      "passed": 10,
+      "receipt": "db/db-clients-green.json",
+      "log": "db/db-clients-green.txt",
+      "summary": "readback-summary.json"
+    },
+    "browser": "NOT_RUN",
+    "native": "BLOCKED"
+  },
+  "rollback": {
+    "action": "ordinary new commit reverting this source commit if needed; retain evidence/history",
+    "production_action": false
+  }
+}

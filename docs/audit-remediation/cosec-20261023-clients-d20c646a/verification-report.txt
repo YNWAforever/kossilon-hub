@@ -1,0 +1,5 @@
+VERIFIED SQL regression type-only change: emitted JavaScript byte-identical; no DB connection.
+VERIFIED source=b3d02f218b8de915f0ac1a544ebc85f1bf262764; evidence_files=152
+VERIFIED unit=2538/268_files; SQL=10; typecheck/lint/build=0
+VERIFIED original_rows=184; native=70_BLOCKED/114_NOT_RUN/0_PASS; NO_GO
+VERIFIED all_20_SQL_cleanup=0; container/credentials_removed; 313_preexisting_preserved

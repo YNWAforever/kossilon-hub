@@ -1,0 +1,59 @@
+{
+  "action": "green-initial",
+  "started": "2026-10-23T13:10:46.268Z",
+  "finished": "2026-10-23T13:10:53.808Z",
+  "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/components/clients/client-form-dialog.test.tsx",
+    "--maxWorkers",
+    "1",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile.json=C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261023-clients-d20c646a\\sidecar-20261023130302105-46579446-green-initial-vitest.json"
+  ],
+  "head": "1b8dffc256b934ed11864a07883c80d8de5f8749",
+  "exit_code": 0,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ],
+  "dotenv_files": [],
+  "before": {
+    "src/components/clients/client-form-dialog.tsx": "aca8759102cc4716a72b16b783662dbd668b29bf0bef95fa06e286fd74415298",
+    "src/components/clients/client-form-dialog.test.tsx": "45bc6b6d67f25c41cb9655f5a189cc63ebe7b0d283441fa072c6a406fffae21a"
+  },
+  "after": {
+    "src/components/clients/client-form-dialog.tsx": "aca8759102cc4716a72b16b783662dbd668b29bf0bef95fa06e286fd74415298",
+    "src/components/clients/client-form-dialog.test.tsx": "45bc6b6d67f25c41cb9655f5a189cc63ebe7b0d283441fa072c6a406fffae21a"
+  },
+  "counts": {
+    "total": 23,
+    "passed": 23,
+    "failed": 0,
+    "pending": 0
+  }
+}

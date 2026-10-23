@@ -1,0 +1,35 @@
+{
+  "action": "snapshot-prefixed-finalred",
+  "at": "2026-10-23T13:09:38.975Z",
+  "head": "1b8dffc256b934ed11864a07883c80d8de5f8749",
+  "branch": "codex/cosec-20261023",
+  "status": "M src/components/clients/client-form-dialog.test.tsx\n M src/features/clients/server-fns.ts\n M src/test/db-integration-files.ts\n?? docs/audit-remediation/cosec-20261023-clients-d20c646a/\n?? src/features/clients/create-command.test.ts\n?? src/features/clients/create-recovery.integration.test.ts",
+  "fingerprints": {
+    "src/components/clients/client-form-dialog.tsx": "7b0f8408a3ded2a01cfe5ab666283316c9e6ff14f060b5399983ecc6d00d48a6",
+    "src/components/clients/client-form-dialog.test.tsx": "45bc6b6d67f25c41cb9655f5a189cc63ebe7b0d283441fa072c6a406fffae21a"
+  },
+  "free_ram_bytes": 9349652480,
+  "total_ram_bytes": 34033348608,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ],
+  "dotenv_files": []
+}

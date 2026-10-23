@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import ts from 'typescript';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+const folder=import.meta.dirname,root=resolve(folder,'../../..');
+const read=p=>JSON.parse(readFileSync(join(folder,p),'utf8').replace(/^\uFEFF/,''));
+const proof=read('db-runtime-equivalence.json');
+const hash=b=>createHash('sha256').update(b).digest('hex');
+const before=readFileSync(join(folder,proof.before_snapshot),'utf8'),after=readFileSync(join(root,proof.path),'utf8');
+assert.equal(hash(before),proof.before_sha256);assert.equal(hash(after),proof.after_sha256);
+assert.equal(read('db-source-freeze.json').files.find(f=>f.path===proof.path).sha256,proof.before_sha256);
+assert.equal(ts.version,proof.typescript_version);assert.equal(proof.remove_comments,true);
+const emit=s=>ts.transpileModule(s,{fileName:'sql-regression.ts',compilerOptions:{target:ts.ScriptTarget.ESNext,module:ts.ModuleKind.ESNext,removeComments:true}}).outputText;
+assert.equal(emit(before),emit(after));assert.equal(hash(emit(after)),proof.emitted_javascript_sha256);
+console.log('VERIFIED SQL regression type-only change: emitted JavaScript byte-identical; no DB connection.');

@@ -1,0 +1,525 @@
+{
+  "run_id": "cosec-20261023-clients-d20c646a",
+  "sql_files": 1,
+  "sql_pass": 10,
+  "cases": [
+    {
+      "scenario": "UC135-companyName",
+      "planned_ids": {
+        "teams": [
+          "365cad00-cf18-48d4-89fd-be7c93c1d5e3",
+          "8c5ee479-a378-40c9-a40e-a255a2959dd4"
+        ],
+        "users": [
+          "984c5e2b-c397-483e-a776-2f9200153985",
+          "313fa3a8-627c-46c4-829e-bc04388f636a",
+          "3e009ca3-1698-48ad-ab08-455c541e8cd4",
+          "61f9eb9b-0e29-4c48-a835-2d43b15b511d"
+        ]
+      },
+      "company_ids": [
+        "04fd0dd3-a1f3-42e8-8c6b-857cb8b23a36"
+      ],
+      "final_companies": 1,
+      "final_contacts": 1,
+      "final_secretaries": 1,
+      "client_created_events": 1,
+      "refusals": [
+        {
+          "phase": "invalid-result",
+          "issues": [
+            {
+              "path": [
+                "companyName"
+              ],
+              "message": "請輸入公司名稱。"
+            }
+          ],
+          "message": "[\n  {\n    \"code\": \"too_small\",\n    \"minimum\": 1,\n    \"type\": \"string\",\n    \"inclusive\": true,\n    \"exact\": false,\n    \"message\": \"請輸入公司名稱。\",\n    \"path\": [\n      \"companyName\"\n    ]\n  }\n]"
+        }
+      ],
+      "lock_observed": false,
+      "cleanup_zero": true,
+      "events": "db/UC135-companyName-green.jsonl"
+    },
+    {
+      "scenario": "UC135-companySecretary",
+      "planned_ids": {
+        "teams": [
+          "c899913c-6914-405b-820d-6061914e64d8",
+          "c48f0cfc-b9b2-4a9e-b23b-f23f05073585"
+        ],
+        "users": [
+          "1f7c0cf7-3cc6-495a-926a-7036668397ef",
+          "471b66e4-3172-4c7f-b86e-e3adf69fc8b9",
+          "68c1dd7f-0ec8-4a52-9b90-3332a22a6da8",
+          "960bda30-64f6-478f-b6b4-c1dccdfbcea0"
+        ]
+      },
+      "company_ids": [
+        "a3e01515-1ef4-4675-911c-c455a46057f3"
+      ],
+      "final_companies": 1,
+      "final_contacts": 1,
+      "final_secretaries": 1,
+      "client_created_events": 1,
+      "refusals": [
+        {
+          "phase": "invalid-result",
+          "issues": [
+            {
+              "path": [
+                "companySecretary"
+              ],
+              "message": "請輸入公司秘書。"
+            }
+          ],
+          "message": "[\n  {\n    \"code\": \"too_small\",\n    \"minimum\": 1,\n    \"type\": \"string\",\n    \"inclusive\": true,\n    \"exact\": false,\n    \"message\": \"請輸入公司秘書。\",\n    \"path\": [\n      \"companySecretary\"\n    ]\n  }\n]"
+        }
+      ],
+      "lock_observed": false,
+      "cleanup_zero": true,
+      "events": "db/UC135-companySecretary-green.jsonl"
+    },
+    {
+      "scenario": "UC135-correction",
+      "planned_ids": {
+        "teams": [
+          "c756f26d-0bbd-40ab-88a9-b23f4047399f",
+          "5d0fac96-0460-40ff-bd06-2f6f7c0f5ad3"
+        ],
+        "users": [
+          "c50473a7-b62c-47f0-9ead-af778719ea14",
+          "ede5eb60-0458-4658-a58c-fdf003e806c9",
+          "428fcf3d-6071-40b5-86e7-4dfbb325b078",
+          "34159e63-c422-4b79-8b47-05fd30eb0221"
+        ]
+      },
+      "company_ids": [
+        "7ba4297c-28fd-48c3-b52c-9ab54e1c266b"
+      ],
+      "final_companies": 1,
+      "final_contacts": 1,
+      "final_secretaries": 1,
+      "client_created_events": 1,
+      "refusals": [
+        {
+          "phase": "invalid-result",
+          "issues": [
+            {
+              "path": [
+                "companyName"
+              ],
+              "message": "請輸入公司名稱。"
+            }
+          ],
+          "message": "[\n  {\n    \"code\": \"too_small\",\n    \"minimum\": 1,\n    \"type\": \"string\",\n    \"inclusive\": true,\n    \"exact\": false,\n    \"message\": \"請輸入公司名稱。\",\n    \"path\": [\n      \"companyName\"\n    ]\n  }\n]"
+        },
+        {
+          "phase": "invalid-result",
+          "issues": [
+            {
+              "path": [
+                "crNumber"
+              ],
+              "message": "CR 號碼須為 7 或 8 位數字（非香港公司以 F 開頭）。"
+            }
+          ],
+          "message": "[\n  {\n    \"code\": \"custom\",\n    \"message\": \"CR 號碼須為 7 或 8 位數字（非香港公司以 F 開頭）。\",\n    \"path\": [\n      \"crNumber\"\n    ]\n  }\n]"
+        },
+        {
+          "phase": "invalid-result",
+          "issues": [
+            {
+              "path": [
+                "brNumber"
+              ],
+              "message": "BR 號碼須為 8 位數字，可附 3 位分行號碼（例如 12345678-000）。"
+            }
+          ],
+          "message": "[\n  {\n    \"code\": \"custom\",\n    \"message\": \"BR 號碼須為 8 位數字，可附 3 位分行號碼（例如 12345678-000）。\",\n    \"path\": [\n      \"brNumber\"\n    ]\n  }\n]"
+        },
+        {
+          "phase": "invalid-result",
+          "issues": [
+            {
+              "path": [
+                "incorporationDate"
+              ],
+              "message": "Invalid"
+            }
+          ],
+          "message": "[\n  {\n    \"validation\": \"regex\",\n    \"code\": \"invalid_string\",\n    \"message\": \"Invalid\",\n    \"path\": [\n      \"incorporationDate\"\n    ]\n  }\n]"
+        },
+        {
+          "phase": "invalid-result",
+          "issues": [
+            {
+              "path": [
+                "annualReturnBasisDate"
+              ],
+              "message": "Invalid"
+            }
+          ],
+          "message": "[\n  {\n    \"validation\": \"regex\",\n    \"code\": \"invalid_string\",\n    \"message\": \"Invalid\",\n    \"path\": [\n      \"annualReturnBasisDate\"\n    ]\n  }\n]"
+        },
+        {
+          "phase": "invalid-result",
+          "issues": [
+            {
+              "path": [
+                "registeredOffice"
+              ],
+              "message": "請輸入註冊辦事處。"
+            }
+          ],
+          "message": "[\n  {\n    \"code\": \"too_small\",\n    \"minimum\": 1,\n    \"type\": \"string\",\n    \"inclusive\": true,\n    \"exact\": false,\n    \"message\": \"請輸入註冊辦事處。\",\n    \"path\": [\n      \"registeredOffice\"\n    ]\n  }\n]"
+        },
+        {
+          "phase": "invalid-result",
+          "issues": [
+            {
+              "path": [
+                "ownerId"
+              ],
+              "message": "Invalid uuid"
+            }
+          ],
+          "message": "[\n  {\n    \"validation\": \"uuid\",\n    \"code\": \"invalid_string\",\n    \"message\": \"Invalid uuid\",\n    \"path\": [\n      \"ownerId\"\n    ]\n  }\n]"
+        },
+        {
+          "phase": "invalid-result",
+          "issues": [
+            {
+              "path": [
+                "teamId"
+              ],
+              "message": "Invalid uuid"
+            }
+          ],
+          "message": "[\n  {\n    \"validation\": \"uuid\",\n    \"code\": \"invalid_string\",\n    \"message\": \"Invalid uuid\",\n    \"path\": [\n      \"teamId\"\n    ]\n  }\n]"
+        },
+        {
+          "phase": "role-denied",
+          "message": "Forbidden: this client company belongs to another team."
+        },
+        {
+          "phase": "role-denied",
+          "message": "Forbidden: inactive users cannot change client companies."
+        },
+        {
+          "phase": "role-denied",
+          "message": "Forbidden: staff access is required."
+        },
+        {
+          "phase": "role-denied",
+          "message": "Forbidden: a staff database identity is required."
+        },
+        {
+          "phase": "persisted-inactive-denied",
+          "message": "Client actor not found or inactive."
+        },
+        {
+          "phase": "denied-readback"
+        },
+        {
+          "phase": "retry-refused",
+          "field": "crNumber",
+          "message": "已有公司使用此 CR 號碼。"
+        }
+      ],
+      "lock_observed": false,
+      "cleanup_zero": true,
+      "events": "db/UC135-correction-green.jsonl"
+    },
+    {
+      "scenario": "UC135-registeredOffice",
+      "planned_ids": {
+        "teams": [
+          "69a1f661-2a04-472b-be0a-c908447fd58d",
+          "32a6752f-a672-4832-9bb4-c45dfbfe0357"
+        ],
+        "users": [
+          "40c367dd-da32-4f9e-bb04-076d1ac9e5c0",
+          "e813b302-fc0c-41a2-8991-b5793085f9fa",
+          "2dea6417-788b-4ae4-be11-b947fc01c35a",
+          "bb4baa32-85e3-403d-baed-bfffef5fb780"
+        ]
+      },
+      "company_ids": [
+        "d3809001-6d3d-40a8-bb67-7701db0a72e1"
+      ],
+      "final_companies": 1,
+      "final_contacts": 1,
+      "final_secretaries": 1,
+      "client_created_events": 1,
+      "refusals": [
+        {
+          "phase": "invalid-result",
+          "issues": [
+            {
+              "path": [
+                "registeredOffice"
+              ],
+              "message": "請輸入註冊辦事處。"
+            }
+          ],
+          "message": "[\n  {\n    \"code\": \"too_small\",\n    \"minimum\": 1,\n    \"type\": \"string\",\n    \"inclusive\": true,\n    \"exact\": false,\n    \"message\": \"請輸入註冊辦事處。\",\n    \"path\": [\n      \"registeredOffice\"\n    ]\n  }\n]"
+        }
+      ],
+      "lock_observed": false,
+      "cleanup_zero": true,
+      "events": "db/UC135-registeredOffice-green.jsonl"
+    },
+    {
+      "scenario": "UC135-rollback",
+      "planned_ids": {
+        "teams": [
+          "449ee6a8-0893-4af6-ac05-7a4fc38c4524",
+          "ad98922c-3134-40a3-978e-69973f397689"
+        ],
+        "users": [
+          "8ef0e3e5-ec0b-4b03-858d-d6a5f28e8b1b",
+          "c684053d-306f-4f38-89f0-978ade5a2363",
+          "886f95fd-c7c6-46c0-82dd-25bf3992310c",
+          "ac9221fd-435a-42f4-8e0d-82535099871b"
+        ]
+      },
+      "company_ids": [
+        "cd593a31-4224-47bc-a9cc-c4ddbda22a45"
+      ],
+      "final_companies": 1,
+      "final_contacts": 1,
+      "final_secretaries": 1,
+      "client_created_events": 1,
+      "refusals": [],
+      "lock_observed": false,
+      "cleanup_zero": true,
+      "events": "db/UC135-rollback-green.jsonl"
+    },
+    {
+      "scenario": "UC136-brNumber",
+      "planned_ids": {
+        "teams": [
+          "21e6b4f9-5cba-44a1-b939-0e4f94aaee17",
+          "522a7957-fa0b-49da-9207-c457d123029d"
+        ],
+        "users": [
+          "195c00c8-b241-47f1-869b-91f78600d664",
+          "f70f19e1-1131-430b-94ea-febbc7081a16",
+          "6fac5264-2c0e-453a-a314-bde137361f1d",
+          "b2c2e431-d5ac-4058-8c30-66609df448e6"
+        ]
+      },
+      "company_ids": [
+        "980d56b8-24be-459c-8acd-c318c5f09836",
+        "cda9c216-6b17-4fae-a981-c1b6bf1c66a7"
+      ],
+      "final_companies": 2,
+      "final_contacts": 2,
+      "final_secretaries": 2,
+      "client_created_events": 2,
+      "refusals": [
+        {
+          "phase": "duplicate-refused",
+          "field": "brNumber",
+          "message": "已有公司使用此 BR 號碼。"
+        },
+        {
+          "phase": "duplicate-refused",
+          "field": "brNumber",
+          "message": "已有公司使用此 BR 號碼。"
+        }
+      ],
+      "lock_observed": false,
+      "cleanup_zero": true,
+      "events": "db/UC136-brNumber-green.jsonl"
+    },
+    {
+      "scenario": "UC136-crNumber",
+      "planned_ids": {
+        "teams": [
+          "3b1b512e-5674-4bfe-af5b-c3fafa170340",
+          "1cc3008c-2c40-45e6-a413-a7867283bfbb"
+        ],
+        "users": [
+          "afc4db47-53d4-4b77-b48b-70c693919f51",
+          "5f5a2f54-87cc-450d-839d-ffe447041688",
+          "3ae352c9-4897-4f77-bb2f-a29bce9e7adc",
+          "48dcd0b9-07b6-42e9-bb6d-91f4b71b09c2"
+        ]
+      },
+      "company_ids": [
+        "52a5e8ba-1f33-4e58-bf7b-207c7e991c8f",
+        "974948ee-e5a7-4876-8d78-1f84d43ef0f7"
+      ],
+      "final_companies": 2,
+      "final_contacts": 2,
+      "final_secretaries": 2,
+      "client_created_events": 2,
+      "refusals": [
+        {
+          "phase": "duplicate-refused",
+          "field": "crNumber",
+          "message": "已有公司使用此 CR 號碼。"
+        },
+        {
+          "phase": "duplicate-refused",
+          "field": "crNumber",
+          "message": "已有公司使用此 CR 號碼。"
+        }
+      ],
+      "lock_observed": false,
+      "cleanup_zero": true,
+      "events": "db/UC136-crNumber-green.jsonl"
+    },
+    {
+      "scenario": "UC136-race-brNumber",
+      "planned_ids": {
+        "teams": [
+          "5de6ea13-ea01-42ad-a927-fc9ba7573156",
+          "ed53d798-17ac-49af-8ba7-8dc5bae9c9c2"
+        ],
+        "users": [
+          "fc69aafd-602a-43b2-bb4c-08871ba5506d",
+          "7e5f274e-9b53-44ef-95d0-e9b039bb0da0",
+          "b70ef546-86aa-4088-b997-637714e4ef3c",
+          "f216a6e9-36f1-42a2-bf94-0414c026dede"
+        ]
+      },
+      "company_ids": [
+        "7e1acfd2-5962-471b-af7b-b0df7ad972e7",
+        "b7f9b2eb-9ad4-4a81-93e6-2e344c4bb9d5"
+      ],
+      "final_companies": 2,
+      "final_contacts": 2,
+      "final_secretaries": 2,
+      "client_created_events": 2,
+      "refusals": [
+        {
+          "phase": "concurrent-refused",
+          "field": "brNumber",
+          "message": "已有公司使用此 BR 號碼。"
+        },
+        {
+          "phase": "retry-refused",
+          "field": "brNumber",
+          "message": "已有公司使用此 BR 號碼。"
+        }
+      ],
+      "lock_observed": true,
+      "cleanup_zero": true,
+      "events": "db/UC136-race-brNumber-green.jsonl"
+    },
+    {
+      "scenario": "UC136-race-crNumber",
+      "planned_ids": {
+        "teams": [
+          "fadbb399-c36f-4b6c-82e3-97cf77cf79df",
+          "8f0b3607-0ddd-472c-9649-d877ed3d33ec"
+        ],
+        "users": [
+          "84a37fbc-c894-4e44-b0a6-94b089a7d88f",
+          "08d8cd82-cc2c-4b36-83f7-820ebf264999",
+          "c9125cfa-2759-47d9-a049-c35587e4cda6",
+          "035076f4-c333-451a-afb6-5fbdf25cff28"
+        ]
+      },
+      "company_ids": [
+        "852021b1-7efd-4fe9-a212-03332c134731",
+        "b22ad7de-9c83-4f79-aa8d-a5019465c0dd"
+      ],
+      "final_companies": 2,
+      "final_contacts": 2,
+      "final_secretaries": 2,
+      "client_created_events": 2,
+      "refusals": [
+        {
+          "phase": "concurrent-refused",
+          "field": "crNumber",
+          "message": "已有公司使用此 CR 號碼。"
+        },
+        {
+          "phase": "retry-refused",
+          "field": "crNumber",
+          "message": "已有公司使用此 CR 號碼。"
+        }
+      ],
+      "lock_observed": true,
+      "cleanup_zero": true,
+      "events": "db/UC136-race-crNumber-green.jsonl"
+    },
+    {
+      "scenario": "UC137-certificate",
+      "planned_ids": {
+        "teams": [
+          "30e69666-7157-4ebd-ab3b-9696cf7b871e",
+          "457fa55c-1450-4c79-a80b-7286b4200efd"
+        ],
+        "users": [
+          "5f628d68-ee55-4ca3-aa45-aad890fa498f",
+          "66dc2fcb-ef4c-4c8f-b68d-99e2ac5736f4",
+          "37a85ca9-8a65-4acf-b627-9578e74eee7c",
+          "ba87b32a-2968-4239-b6b0-3bd64c38f202"
+        ]
+      },
+      "company_ids": [
+        "de201aa2-aad8-4fdf-a013-e5898adc12b3"
+      ],
+      "final_companies": 1,
+      "final_contacts": 1,
+      "final_secretaries": 1,
+      "client_created_events": 1,
+      "refusals": [
+        {
+          "phase": "normalized-duplicate-refused",
+          "field": "brNumber",
+          "message": "已有公司使用此 BR 號碼。"
+        },
+        {
+          "phase": "normalized-duplicate-refused",
+          "field": "brNumber",
+          "message": "已有公司使用此 BR 號碼。"
+        }
+      ],
+      "lock_observed": false,
+      "normalized": [
+        {
+          "cr_number": "F0012345",
+          "br_number": "12345678-000"
+        }
+      ],
+      "cleanup_zero": true,
+      "events": "db/UC137-certificate-green.jsonl"
+    }
+  ],
+  "product_red": {
+    "failed": 3,
+    "passed": 7,
+    "raw_invalid_commits": [
+      {
+        "scenario": "UC135-companyName",
+        "company_id": "b11864d8-265b-4505-9a5d-45c78bcf2635",
+        "invalid_field_value": " \t ",
+        "events": "db/UC135-companyName-red.jsonl"
+      },
+      {
+        "scenario": "UC135-registeredOffice",
+        "company_id": "c52bbe96-d042-4249-a71b-faee52c9b693",
+        "invalid_field_value": " \t ",
+        "events": "db/UC135-registeredOffice-red.jsonl"
+      },
+      {
+        "scenario": "UC135-companySecretary",
+        "company_id": "4c4fc02e-4f96-41cb-839a-4b189211cee7",
+        "invalid_field_value": " \t ",
+        "events": "db/UC135-companySecretary-red.jsonl"
+      }
+    ]
+  },
+  "all_twenty_fixture_cleanup_zero": true,
+  "native_auth": false,
+  "http": false,
+  "browser_reload": false,
+  "app_seed": false
+}

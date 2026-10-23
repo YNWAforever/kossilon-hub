@@ -1,0 +1,19 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  21:03:40
+   Duration  1.37s (transform 0ms, setup 0ms, import 0ms, tests 0ms, environment 1.13s)
+
+JSON report written to C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261023-clients-d20c646a/sidecar-20261023130302105-46579446-baseline-vitest.json
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx [ src/components/clients/client-form-dialog.test.tsx ]
+Error: EPERM: operation not permitted, rename 'C:\Users\laich\AppData\Local\Packages\sandbox.{9a05b4b2-8ccf-4d23-a860-d54b8a436d12}\AC\Temp\ctOOHeM6D76JywT8PXyz3\client\.tmp-1792760621720-mia6oe0mhh' -> 'C:\Users\laich\AppData\Local\Packages\sandbox.{9a05b4b2-8ccf-4d23-a860-d54b8a436d12}\AC\Temp\ctOOHeM6D76JywT8PXyz3\client\9807652542d37ea24f4ece9ff1d1da400d976e7a'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

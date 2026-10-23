@@ -1,0 +1,14 @@
+{
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "initial_head": "1b8dffc256b934ed11864a07883c80d8de5f8749",
+  "initial_dirty": false,
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "main_verified_read_only": true,
+  "production_supplied_historical_sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "production_accessed": false,
+  "worktrees": "worktree C:/Users/laich/Documents/kossilon-hub/kossilon-hub-work\nHEAD 76ad310ca8bad75a7ce44c82c9e20db734fd6eaa\nbranch refs/heads/codex/outbox-safety\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree\nHEAD 38123c96ed84fae84e41f17d4dea606c7a8938d0\nbranch refs/heads/codex/r03-role-review-package-20261005\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r12-f25-ci-20261009\nHEAD c9417b925d2134d7c2aef1d45be5d52da8154e50\nbranch refs/heads/codex/staff-remediation-20261012\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r13-dependency-audit-20261009\nHEAD 01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e\nbranch refs/heads/codex/audit-r13-dependency-gates-20261009\n\nworktree C:/Users/laich/Documents/kossilon-hub/cosec-20261023\nHEAD b3d02f218b8de915f0ac1a544ebc85f1bf262764\nbranch refs/heads/codex/cosec-20261023\n\n",
+  "discovery": "Known local files; prior private-code graph-index approval rejection retained; no upload/retry",
+  "authorization": "Local changes and verified disposable resources only; no push/merge/deploy/production/providers"
+}

@@ -1,0 +1,901 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog identifier checks > stops a malformed CR number at the field instead of saving it 222ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog identifier checks > stops a malformed BR number at the field 92ms
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 corrects every empty required field in order with focus and associated text before one save 31ms
+   → expected null to be 'true' // Object.is equality
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 rejects whitespace-only 公司名稱 before the RPC 137ms
+   → expected null to be 'true' // Object.is equality
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 rejects whitespace-only 註冊辦事處 before the RPC 114ms
+   → expected <input …(4)></input> to be <input …(4)></input> // Object.is equality
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 focuses malformed CR then BR during sequential manual correction without premature RPC 64ms
+   → expected <button type="submit" …(1)></button> to be <input …(6)></input> // Object.is equality
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC136 retains ALL fields and focuses server crNumber, then manually retries once 1122ms
+   → expected <input …(4)></input> to be <input …(6)></input> // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<button>[39m
+        [0m重新開啟[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_k_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_j_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-2xl"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_i_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_j_"[39m
+        [36m>[39m
+          [0m新增客戶[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_k_"[39m
+        [36m>[39m
+          [0m在客戶名冊新增公司，CR 及 BR 號碼不得重複。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"client-name"[39m
+          [36m>[39m
+            [0m公司名稱[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"client-name"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mvalue[39m=[32m"Flow Test Limited"[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-1 gap-4 md:grid-cols-2"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+              [33mfor[39m=[32m"client-cr"[39m
+            [36m>[39m
+              [0mCR 號碼[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-describedby[39m=[32m"client-cr-error"[39m
+              [33maria-invalid[39m=[32m"true"[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+              [33mid[39m=[32m"client-cr"[39m
+              [33mrequired[39m=[32m""[39m
+              [33mvalue[39m=[32m"1200042"[39m
+            [36m/>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-1 text-xs text-destructive"[39m
+              [33mid[39m=[32m"client-cr-error"[39m
+            [36m>[39m
+              [0mSynthetic field conflict[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+              [33mfor[39m=[32m"client-br"[39m
+            [36m>[39m
+              [0mBR 號碼[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-invalid[39m=[32m"false"[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+              [33mid[39m=[32m"client-br"[39m
+              [33mrequired[39m=[32m""[39m
+              [33mvalue[39m=[32m"60000138"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+              [33mfor[39m=[32m"client-incorporated"[39m
+            [36m>[39m
+              [0m成立日期[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+              [33mid[39m=[32m"client-incorporated"[39m
+              [33mrequired[39m=[32m""[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2020-01-15"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[3...
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC136 retains ALL fields and focuses server brNumber, then manually retries once 1116ms
+   → expected <input …(4)></input> to be <input …(6)></input> // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<button>[39m
+        [0m重新開啟[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_n_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_m_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-2xl"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_l_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_m_"[39m
+        [36m>[39m
+          [0m新增客戶[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_n_"[39m
+        [36m>[39m
+          [0m在客戶名冊新增公司，CR 及 BR 號碼不得重複。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"client-name"[39m
+          [36m>[39m
+            [0m公司名稱[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"client-name"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mvalue[39m=[32m"Flow Test Limited"[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-1 gap-4 md:grid-cols-2"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+              [33mfor[39m=[32m"client-cr"[39m
+            [36m>[39m
+              [0mCR 號碼[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-invalid[39m=[32m"false"[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+              [33mid[39m=[32m"client-cr"[39m
+              [33mrequired[39m=[32m""[39m
+              [33mvalue[39m=[32m"1200042"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+              [33mfor[39m=[32m"client-br"[39m
+            [36m>[39m
+              [0mBR 號碼[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-describedby[39m=[32m"client-br-error"[39m
+              [33maria-invalid[39m=[32m"true"[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+              [33mid[39m=[32m"client-br"[39m
+              [33mrequired[39m=[32m""[39m
+              [33mvalue[39m=[32m"60000138"[39m
+            [36m/>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-1 text-xs text-destructive"[39m
+              [33mid[39m=[32m"client-br-error"[39m
+            [36m>[39m
+              [0mSynthetic field conflict[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+              [33mfor[39m=[32m"client-incorporated"[39m
+            [36m>[39m
+              [0m成立日期[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+              [33mid[39m=[32m"client-incorporated"[39m
+              [33mrequired[39m=[32m""[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2020-01-15"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[3...
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC137 accepts whole certificate BR 60000138-000-07-27-A at the mocked RPC boundary 197ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC137 accepts whole certificate BR  60000138 - 000 - 07 - 27 - a  at the mocked RPC boundary 127ms
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > guards duplicate form submit in the same render and while pending even bypassing the disabled button 195ms
+   → expected "vi.fn()" to be called 1 times, but got 3 times
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > guards pending cancel until the single invocation settles 195ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      false,
+    ]
+
+
+Number of calls: 1
+
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > guards pending escape until the single invocation settles 128ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      false,
+    ]
+
+
+Number of calls: 1
+
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > guards pending close until the single invocation settles 93ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      false,
+    ]
+
+
+Number of calls: 1
+
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > ordinary cancel and reopen discard unsaved input and validation errors without saving 57ms
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for undefined with retained input and no raw sensitive text 113ms
+   → expected '[["SYNTHETIC_PRIVATE_SQL postgresql:/…' not to contain 'SYNTHETIC_PRIVATE_SQL'
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for unknownField with retained input and no raw sensitive text 112ms
+   → expected '[["SYNTHETIC_PRIVATE_SQL internal con…' not to contain 'SYNTHETIC_PRIVATE_SQL'
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for crNumber with retained input and no raw sensitive text 124ms
+   → expected '重新開啟新增客戶在客戶名冊新增公司，CR 及 BR 號碼不得重複。公司名稱…' not to contain 'SYNTHETIC_PRIVATE_SQL'
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for brNumber with retained input and no raw sensitive text 152ms
+   → expected <input …(4)></input> to be <input …(6)></input> // Object.is equality
+ × |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for contact with retained input and no raw sensitive text 131ms
+   → expected '重新開啟新增客戶在客戶名冊新增公司，CR 及 BR 號碼不得重複。公司名稱…' not to contain 'SYNTHETIC_PRIVATE_SQL'
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > preserves edit payload, immutable identifiers and inactive owner/team when saving 47ms
+
+ Test Files  1 failed (1)
+      Tests  15 failed | 6 passed (21)
+   Start at  21:06:15
+   Duration  6.65s (transform 159ms, setup 0ms, import 570ms, tests 4.57s, environment 1.20s)
+
+JSON report written to C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261023-clients-d20c646a/sidecar-20261023130302105-46579446-red-vitest.json
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 corrects every empty required field in order with focus and associated text before one save
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ expectFieldError src/components/clients/client-form-dialog.test.tsx:124:46
+    122|   const field = screen.getByLabelText(label);
+    123|   expect(document.activeElement).toBe(field);
+    124|   expect(field.getAttribute("aria-invalid")).toBe("true");
+       |                                              ^
+    125|   const messageId = field.getAttribute("aria-describedby");
+    126|   expect(messageId).toBeTruthy();
+ ❯ src/components/clients/client-form-dialog.test.tsx:158:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 rejects whitespace-only 公司名稱 before the RPC
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ expectFieldError src/components/clients/client-form-dialog.test.tsx:124:46
+    122|   const field = screen.getByLabelText(label);
+    123|   expect(document.activeElement).toBe(field);
+    124|   expect(field.getAttribute("aria-invalid")).toBe("true");
+       |                                              ^
+    125|   const messageId = field.getAttribute("aria-describedby");
+    126|   expect(messageId).toBeTruthy();
+ ❯ src/components/clients/client-form-dialog.test.tsx:172:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 rejects whitespace-only 註冊辦事處 before the RPC
+AssertionError: expected <input …(4)></input> to be <input …(4)></input> // Object.is equality
+
+- Expected
++ Received
+
+  <input
+    class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+-   id="client-office"
++   id="client-name"
+    required=""
+-   value="   "
++   value="Flow Test Limited"
+  />
+
+ ❯ expectFieldError src/components/clients/client-form-dialog.test.tsx:123:34
+    121| function expectFieldError(label: string) {
+    122|   const field = screen.getByLabelText(label);
+    123|   expect(document.activeElement).toBe(field);
+       |                                  ^
+    124|   expect(field.getAttribute("aria-invalid")).toBe("true");
+    125|   const messageId = field.getAttribute("aria-describedby");
+ ❯ src/components/clients/client-form-dialog.test.tsx:172:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC135 focuses malformed CR then BR during sequential manual correction without premature RPC
+AssertionError: expected <button type="submit" …(1)></button> to be <input …(6)></input> // Object.is equality
+
+- Expected
++ Received
+
+- <input
+-   aria-describedby="client-cr-error"
+-   aria-invalid="true"
+-   class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+-   id="client-cr"
+-   required=""
+-   value="12"
+- />
++ <button
++   class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"
++   type="submit"
++ >
++   新增客戶
++ </button>
+
+ ❯ expectFieldError src/components/clients/client-form-dialog.test.tsx:123:34
+    121| function expectFieldError(label: string) {
+    122|   const field = screen.getByLabelText(label);
+    123|   expect(document.activeElement).toBe(field);
+       |                                  ^
+    124|   expect(field.getAttribute("aria-invalid")).toBe("true");
+    125|   const messageId = field.getAttribute("aria-describedby");
+ ❯ src/components/clients/client-form-dialog.test.tsx:182:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC136 retains ALL fields and focuses server crNumber, then manually retries once
+AssertionError: expected <input …(4)></input> to be <input …(6)></input> // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<button>[39m
+        [0m重新開啟[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_k_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_j_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-2xl"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_i_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_j_"[39m
+        [36m>[39m
+          [0m新增客戶[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_k_"[39m
+        [36m>[39m
+          [0m在客戶名冊新增公司，CR 及 BR 號碼不得重複。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"client-name"[39m
+          [36m>[39m
+            [0m公司名稱[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"client-name"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mvalue[39m=[32m"Flow Test Limited"[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-1 gap-4 md:grid-cols-2"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+              [33mfor[39m=[32m"client-cr"[39m
+            [36m>[39m
+              [0mCR 號碼[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-describedby[39m=[32m"client-cr-error"[39m
+              [33maria-invalid[39m=[32m"true"[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+              [33mid[39m=[32m"client-cr"[39m
+              [33mrequired[39m=[32m""[39m
+              [33mvalue[39m=[32m"1200042"[39m
+            [36m/>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-1 text-xs text-destructive"[39m
+              [33mid[39m=[32m"client-cr-error"[39m
+            [36m>[39m
+              [0mSynthetic field conflict[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+              [33mfor[39m=[32m"client-br"[39m
+            [36m>[39m
+              [0mBR 號碼[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-invalid[39m=[32m"false"[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+              [33mid[39m=[32m"client-br"[39m
+              [33mrequired[39m=[32m""[39m
+              [33mvalue[39m=[32m"60000138"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+              [33mfor[39m=[32m"client-incorporated"[39m
+            [36m>[39m
+              [0m成立日期[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+              [33mid[39m=[32m"client-incorporated"[39m
+              [33mrequired[39m=[32m""[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2020-01-15"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[3...
+
+- Expected
++ Received
+
+  <input
+-   aria-describedby="client-cr-error"
+-   aria-invalid="true"
+    class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+-   id="client-cr"
++   id="client-name"
+    required=""
+-   value="1200042"
++   value="Flow Test Limited"
+  />
+
+ ❯ expectFieldError src/components/clients/client-form-dialog.test.tsx:123:34
+    121| function expectFieldError(label: string) {
+    122|   const field = screen.getByLabelText(label);
+    123|   expect(document.activeElement).toBe(field);
+       |                                  ^
+    124|   expect(field.getAttribute("aria-invalid")).toBe("true");
+    125|   const messageId = field.getAttribute("aria-describedby");
+ ❯ src/components/clients/client-form-dialog.test.tsx:210:25
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > UC136 retains ALL fields and focuses server brNumber, then manually retries once
+AssertionError: expected <input …(4)></input> to be <input …(6)></input> // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<button>[39m
+        [0m重新開啟[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_n_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_m_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-2xl"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_l_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_m_"[39m
+        [36m>[39m
+          [0m新增客戶[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_n_"[39m
+        [36m>[39m
+          [0m在客戶名冊新增公司，CR 及 BR 號碼不得重複。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"client-name"[39m
+          [36m>[39m
+            [0m公司名稱[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"client-name"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mvalue[39m=[32m"Flow Test Limited"[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-1 gap-4 md:grid-cols-2"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+              [33mfor[39m=[32m"client-cr"[39m
+            [36m>[39m
+              [0mCR 號碼[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-invalid[39m=[32m"false"[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+              [33mid[39m=[32m"client-cr"[39m
+              [33mrequired[39m=[32m""[39m
+              [33mvalue[39m=[32m"1200042"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+              [33mfor[39m=[32m"client-br"[39m
+            [36m>[39m
+              [0mBR 號碼[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-describedby[39m=[32m"client-br-error"[39m
+              [33maria-invalid[39m=[32m"true"[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+              [33mid[39m=[32m"client-br"[39m
+              [33mrequired[39m=[32m""[39m
+              [33mvalue[39m=[32m"60000138"[39m
+            [36m/>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-1 text-xs text-destructive"[39m
+              [33mid[39m=[32m"client-br-error"[39m
+            [36m>[39m
+              [0mSynthetic field conflict[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+              [33mfor[39m=[32m"client-incorporated"[39m
+            [36m>[39m
+              [0m成立日期[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+              [33mid[39m=[32m"client-incorporated"[39m
+              [33mrequired[39m=[32m""[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2020-01-15"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[3...
+
+- Expected
++ Received
+
+  <input
+-   aria-describedby="client-br-error"
+-   aria-invalid="true"
+    class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+-   id="client-br"
++   id="client-name"
+    required=""
+-   value="60000138"
++   value="Flow Test Limited"
+  />
+
+ ❯ expectFieldError src/components/clients/client-form-dialog.test.tsx:123:34
+    121| function expectFieldError(label: string) {
+    122|   const field = screen.getByLabelText(label);
+    123|   expect(document.activeElement).toBe(field);
+       |                                  ^
+    124|   expect(field.getAttribute("aria-invalid")).toBe("true");
+    125|   const messageId = field.getAttribute("aria-describedby");
+ ❯ src/components/clients/client-form-dialog.test.tsx:210:25
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > guards duplicate form submit in the same render and while pending even bypassing the disabled button
+AssertionError: expected "vi.fn()" to be called 1 times, but got 3 times
+ ❯ src/components/clients/client-form-dialog.test.tsx:266:36
+    264|     act(() => { submit(); submit(); });
+    265|     submit();
+    266|     expect(serverFns.createClient).toHaveBeenCalledTimes(1);
+       |                                    ^
+    267|     expect(screen.getByRole<HTMLButtonElement>("button", { name: "儲存中……
+    268|     expect(onSaved).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > guards pending cancel until the single invocation settles
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > guards pending escape until the single invocation settles
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > guards pending close until the single invocation settles
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      false,
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/components/clients/client-form-dialog.test.tsx:283:30
+    281|     if (dismiss === "escape") fireEvent.keyDown(document.activeElement…
+    282|     if (dismiss === "close") fireEvent.click(screen.getByRole("button"…
+    283|     expect(onOpenChange).not.toHaveBeenCalled();
+       |                              ^
+    284|     expect(screen.getByRole("dialog")).toBeTruthy();
+    285|     expect(inputValues()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for undefined with retained input and no raw sensitive text
+AssertionError: expected '[["SYNTHETIC_PRIVATE_SQL postgresql:/…' not to contain 'SYNTHETIC_PRIVATE_SQL'
+
+Expected: "SYNTHETIC_PRIVATE_SQL"
+Received: "[["SYNTHETIC_PRIVATE_SQL postgresql://user:secret@internal.invalid customer@example.invalid"]]"
+
+ ❯ src/components/clients/client-form-dialog.test.tsx:322:67
+    320|     expect(inputValues()).toEqual(before);
+    321|     expect(document.body.textContent).not.toContain("SYNTHETIC_PRIVATE…
+    322|     expect(JSON.stringify(vi.mocked(toast.error).mock.calls)).not.toCo…
+       |                                                                   ^
+    323|     if (field === "crNumber" || field === "brNumber") expectFieldError…
+    324|     else if (field !== "contact") expect(toast.error).toHaveBeenCalled…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for unknownField with retained input and no raw sensitive text
+AssertionError: expected '[["SYNTHETIC_PRIVATE_SQL internal con…' not to contain 'SYNTHETIC_PRIVATE_SQL'
+
+Expected: "SYNTHETIC_PRIVATE_SQL"
+Received: "[["SYNTHETIC_PRIVATE_SQL internal constraint"]]"
+
+ ❯ src/components/clients/client-form-dialog.test.tsx:322:67
+    320|     expect(inputValues()).toEqual(before);
+    321|     expect(document.body.textContent).not.toContain("SYNTHETIC_PRIVATE…
+    322|     expect(JSON.stringify(vi.mocked(toast.error).mock.calls)).not.toCo…
+       |                                                                   ^
+    323|     if (field === "crNumber" || field === "brNumber") expectFieldError…
+    324|     else if (field !== "contact") expect(toast.error).toHaveBeenCalled…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for crNumber with retained input and no raw sensitive text
+AssertionError: expected '重新開啟新增客戶在客戶名冊新增公司，CR 及 BR 號碼不得重複。公司名稱…' not to contain 'SYNTHETIC_PRIVATE_SQL'
+
+Expected: "SYNTHETIC_PRIVATE_SQL"
+Received: "重新開啟新增客戶在客戶名冊新增公司，CR 及 BR 號碼不得重複。公司名稱CR 號碼SYNTHETIC_PRIVATE_SQL duplicate key 60000138BR 號碼成立日期周年申報基準日註冊辦事處負責同事Amy ChanBen Test團隊Annual Return ControlSynthetic Team主要聯絡人（選填）姓名職位電郵電話取消新增客戶Close"
+
+ ❯ src/components/clients/client-form-dialog.test.tsx:321:43
+    319|     await waitFor(() => expect(screen.getByRole<HTMLButtonElement>("bu…
+    320|     expect(inputValues()).toEqual(before);
+    321|     expect(document.body.textContent).not.toContain("SYNTHETIC_PRIVATE…
+       |                                           ^
+    322|     expect(JSON.stringify(vi.mocked(toast.error).mock.calls)).not.toCo…
+    323|     if (field === "crNumber" || field === "brNumber") expectFieldError…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for brNumber with retained input and no raw sensitive text
+AssertionError: expected <input …(4)></input> to be <input …(6)></input> // Object.is equality
+
+- Expected
++ Received
+
+  <input
+-   aria-describedby="client-br-error"
+-   aria-invalid="true"
+    class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+-   id="client-br"
++   id="client-name"
+    required=""
+-   value="60000138"
++   value="Flow Test Limited"
+  />
+
+ ❯ expectFieldError src/components/clients/client-form-dialog.test.tsx:123:34
+    121| function expectFieldError(label: string) {
+    122|   const field = screen.getByLabelText(label);
+    123|   expect(document.activeElement).toBe(field);
+       |                                  ^
+    124|   expect(field.getAttribute("aria-invalid")).toBe("true");
+    125|   const messageId = field.getAttribute("aria-describedby");
+ ❯ src/components/clients/client-form-dialog.test.tsx:323:55
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  |unit| src/components/clients/client-form-dialog.test.tsx > ClientFormDialog UC135–137 component RPC boundary > retries an error for contact with retained input and no raw sensitive text
+AssertionError: expected '重新開啟新增客戶在客戶名冊新增公司，CR 及 BR 號碼不得重複。公司名稱…' not to contain 'SYNTHETIC_PRIVATE_SQL'
+
+Expected: "SYNTHETIC_PRIVATE_SQL"
+Received: "重新開啟新增客戶在客戶名冊新增公司，CR 及 BR 號碼不得重複。公司名稱CR 號碼BR 號碼成立日期周年申報基準日註冊辦事處負責同事Amy ChanBen Test團隊Annual Return ControlSynthetic Team主要聯絡人（選填）姓名職位電郵電話SYNTHETIC_PRIVATE_SQL contact constraint取消新增客戶Close"
+
+ ❯ src/components/clients/client-form-dialog.test.tsx:321:43
+    319|     await waitFor(() => expect(screen.getByRole<HTMLButtonElement>("bu…
+    320|     expect(inputValues()).toEqual(before);
+    321|     expect(document.body.textContent).not.toContain("SYNTHETIC_PRIVATE…
+       |                                           ^
+    322|     expect(JSON.stringify(vi.mocked(toast.error).mock.calls)).not.toCo…
+    323|     if (field === "crNumber" || field === "brNumber") expectFieldError…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+

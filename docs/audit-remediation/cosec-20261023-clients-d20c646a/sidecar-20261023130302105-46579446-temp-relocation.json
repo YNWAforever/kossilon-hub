@@ -1,0 +1,8 @@
+{
+  "at": "2026-10-23T13:09:33.9152492Z",
+  "source": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261023-clients-d20c646a\\sidecar-20261023130302105-46579446-runtime-temp",
+  "target": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\sidecar-20261023130302105-46579446-runtime-temp",
+  "action": "Moved own inspected runtime temp to ignored path; no files deleted",
+  "sourceAbsent": true,
+  "targetPresent": true
+}
