@@ -39,6 +39,7 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/features/documents/company-document-register.integration.test.ts",
   "src/features/documents/document-volume.integration.test.ts",
   "src/features/incorporation/repository.test.ts",
+  "src/features/incorporation/checklist-recovery.integration.test.ts",
   "src/features/incorporation/read-page.integration.test.ts",
   "src/features/notifications/outbox.integration.test.ts",
   "src/features/operations/repository.integration.test.ts",

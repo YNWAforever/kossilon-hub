@@ -157,15 +157,31 @@ export const createIncorporationCase = createServerFn({ method: "POST" })
     }),
   );
 
+/** Test seam for the existing command; request authentication stays in the native handler. */
+export async function updateIncorporationChecklistItemForActor(
+  actor: AuthenticatedActor,
+  input: unknown,
+  repository: Pick<IncorporationRepository, "getCaseTeamId" | "updateChecklistItem">,
+) {
+  const data = updateChecklistItemSchema.parse(input);
+  if (!actor.userId) {
+    throw new Error("Forbidden: a staff database identity is required.");
+  }
+  const teamId = await repository.getCaseTeamId(data.caseId);
+  if (!teamId) {
+    throw new Error("Incorporation case not found.");
+  }
+  assertIncorporationCaseWritable(actor, { teamId });
+  return repository.updateChecklistItem({ ...data, actorId: actor.userId });
+}
+
 export const updateIncorporationChecklistItem = createServerFn({ method: "POST" })
   .validator(updateChecklistItemSchema)
   .handler(async ({ data }) =>
-    withIncorporationRepository(async (repository) =>
-      repository.updateChecklistItem({
-        ...data,
-        actorId: await requireWritableCase(repository, data.caseId),
-      }),
-    ),
+    withIncorporationRepository(async (repository) => {
+      const actor = await getCurrentIncorporationActor();
+      return updateIncorporationChecklistItemForActor(actor, data, repository);
+    }),
   );
 
 export const updateIncorporationCaseStatus = createServerFn({ method: "POST" })
