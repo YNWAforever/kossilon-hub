@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-23T18:43:59.349Z",
+  "finished": "2026-10-23T18:44:26.033Z",
+  "exit_code": 1,
+  "signal": null,
+  "launch_error": null,
+  "test_process_started": true,
+  "report_present": true,
+  "total_tests": 5,
+  "passed_tests": 1,
+  "failed_tests": 4,
+  "source_unchanged_during_run": true,
+  "test_unchanged_during_run": true
+}

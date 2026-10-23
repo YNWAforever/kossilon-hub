@@ -1,0 +1,14 @@
+{
+  "receipt": "unit-final.json",
+  "log": "unit-final.txt",
+  "passed_files": 269,
+  "passed_tests": 2529,
+  "unhandled_errors": 1,
+  "missing_file": "src/routes/-work-queue.interaction.test.tsx",
+  "classification": "VITEST_FORK_WORKER_STARTUP_TIMEOUT",
+  "file_unchanged_from_parent": true,
+  "file_sha256": "8c3a008d50ca73bee1b22c623942b9e88d369c85b35d73108744f185b0a26b7b",
+  "test_assertion_failure_reported": false,
+  "underlying_startup_cause": "Not established; no assertion or application-source repair is justified by this worker-start error",
+  "recovery": "Same-byte single-file diagnostic, then complete suite retry; retain first failed broad run"
+}

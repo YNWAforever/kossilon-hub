@@ -1,0 +1,46 @@
+{
+  "status": "FROZEN_FOR_PARENT_VERIFICATION",
+  "no_more_edits": true,
+  "frozen_at": "2026-10-23T18:47:25.141Z",
+  "head": "89676dca7be49f4bf65afb44b036fce087934fc4",
+  "test_cases": 5,
+  "source_numstat": "17\t4\tsrc/components/bulk-selection-toolbar.tsx",
+  "diff_check_exit_code": 0,
+  "existing_test_unchanged": true,
+  "free_ram_bytes_at_only_run": 1646759936,
+  "free_ram_gib_at_only_run": 1.5336647033691406,
+  "focused": {
+    "started": "2026-10-23T18:43:59.349Z",
+    "finished": "2026-10-23T18:44:26.033Z",
+    "exit_code": 1,
+    "signal": null,
+    "launch_error": null,
+    "test_process_started": true,
+    "report_present": true,
+    "total_tests": 5,
+    "passed_tests": 1,
+    "failed_tests": 4,
+    "source_unchanged_during_run": true,
+    "test_unchanged_during_run": true
+  },
+  "files": [
+    {
+      "path": "src/components/bulk-selection-toolbar.tsx",
+      "sha256": "a568d87dc63f3c0d712dcb21c3a8f1e33b35a9be4e3049682cfd81c2d8da0f44",
+      "bytes": 29137,
+      "lines": 786
+    },
+    {
+      "path": "src/components/bulk-export.interaction.test.tsx",
+      "sha256": "b8ce663646107a89ae5257b136ba4448abfc5368bbc6fe612f6f5af88c7652f7",
+      "bytes": 9940,
+      "lines": 261
+    },
+    {
+      "path": "src/components/bulk-selection-toolbar.test.tsx",
+      "sha256": "8a271fafc87d5fee4374a834145e93fd3d83b1d8111690c771fc35d92f50f581",
+      "bytes": 22610,
+      "lines": 580
+    }
+  ]
+}

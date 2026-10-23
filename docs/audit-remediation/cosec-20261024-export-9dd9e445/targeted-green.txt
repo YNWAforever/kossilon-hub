@@ -1,0 +1,13 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/bulk-operations/result-export.test.ts (13 tests) 84ms
+ ✓ |unit| src/features/bulk-operations/server-fns.test.ts (5 tests) 12ms
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  02:38:00
+   Duration  5.47s (transform 2.21s, setup 0ms, import 3.62s, tests 96ms, environment 0ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

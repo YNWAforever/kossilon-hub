@@ -1,0 +1,13 @@
+{
+  "attempts": [
+    "initial",
+    "final"
+  ],
+  "planned_uuids_per_attempt": 317,
+  "overlap": [],
+  "exact_ids_files": [
+    "db/UC157-initial.jsonl",
+    "db/UC157-final.jsonl"
+  ],
+  "fixture_names_are_synthetic": true
+}

@@ -1,0 +1,53 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ × src/components/bulk-export.interaction.test.tsx > UC157 saved result export interactions > downloads the mocked saved-job CSV bytes with the results filename and releases its URL 1079ms
+   → expected Mock{ …(1) } to be an instance of Blob
+ × src/components/bulk-export.interaction.test.tsx > UC157 saved result export interactions > shows a rejected export without making a Blob or download and recovers only after explicit retry 194ms
+   → expected Mock{ …(1) } to be an instance of Blob
+ ✓ src/components/bulk-export.interaction.test.tsx > UC157 saved result export interactions > blocks repeated clicks while the export RPC is pending and downloads only once 183ms
+ × src/components/bulk-export.interaction.test.tsx > UC157 saved result export interactions > discards a pending export when the selected saved job changes and permits the new job export 300ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        "prior job CSV must not download",
+      ],
+      Object {
+        "type": "text/csv;charset=utf-8",
+      },
+    ]
+
+
+Number of calls: 1
+
+ × src/components/bulk-export.interaction.test.tsx > UC157 saved result export interactions > discards a pending export after an actor change and requires that actor to select and export again 116ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        "prior actor CSV must not download",
+      ],
+      Object {
+        "type": "text/csv;charset=utf-8",
+      },
+    ]
+
+
+Number of calls: 1
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  02:44:01
+   Duration  24.39s (transform 364ms, setup 0ms, import 3.93s, tests 1.87s, environment 17.97s)
+
+JSON report written to C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-export-9dd9e445/sidecar-focused-report.json

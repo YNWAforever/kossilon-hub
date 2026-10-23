@@ -1,0 +1,46 @@
+{
+  "focused_invocations": 1,
+  "actual_result": {
+    "passed": 1,
+    "failed": 4,
+    "total": 5
+  },
+  "passed": [
+    "blocks repeated clicks while the export RPC is pending and downloads only once"
+  ],
+  "product_red": [
+    {
+      "case": "saved job changes during pending export",
+      "observed": "Blob constructor called with prior job CSV after changing to job B",
+      "cause": "export success callback has no current job/session guard"
+    },
+    {
+      "case": "actor changes during pending export",
+      "observed": "Blob constructor called with prior actor CSV after the previous session unmounts",
+      "cause": "hook-level mutation success callback still performs download side effects after unmount"
+    }
+  ],
+  "harness_failures": [
+    {
+      "case": "successful export CSV bytes",
+      "observed": "expected Mock to be an instance of Blob",
+      "cause": "vi.fn(class extends nativeBlob {}) did not return a native Blob instance",
+      "final_change": "constructor function explicitly returns new nativeBlob(parts, options)"
+    },
+    {
+      "case": "rejection and explicit retry",
+      "observed": "rejection/no-Blob assertions passed; retried byte inspection failed at native Blob instance assertion",
+      "cause": "same constructor double",
+      "final_change": "same corrected constructor double"
+    }
+  ],
+  "final_source_change": "Capture jobId and a scope identity at export click. Invalidate scope on job/actor changes and unmount. Discard a success callback whose captured scope is no longer current.",
+  "final_verification": "NOT_RUN: user limited this sidecar to one focused invocation; parent owns final full unit/type/lint/build verification",
+  "green_log": null,
+  "discovery_failures": [
+    "CIM Win32_OperatingSystem resource read was denied; no escalation attempted; actual free RAM gate used node:os.freemem",
+    "No standalone vitest.config.ts/vitest.unit.config.ts exists; used standalone config with envDir:false instead of loading repository Vite plugins/env"
+  ],
+  "no_db_auth_client_network_provider_container": true,
+  "no_commits_push_merge_deploy_index_upload": true
+}

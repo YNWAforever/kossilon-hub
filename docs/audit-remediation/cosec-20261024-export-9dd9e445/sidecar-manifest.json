@@ -1,0 +1,98 @@
+{
+  "files": [
+    {
+      "name": "sidecar-classification.json",
+      "bytes": 2141,
+      "sha256": "457b73808c7c7de2190d49b63dca98032aa585dc51b4ed820c0e96d74cad1673"
+    },
+    {
+      "name": "sidecar-existing-harness.tsx.snapshot",
+      "bytes": 22610,
+      "sha256": "8a271fafc87d5fee4374a834145e93fd3d83b1d8111690c771fc35d92f50f581"
+    },
+    {
+      "name": "sidecar-focused-report.json",
+      "bytes": 6310,
+      "sha256": "5d714926cb95e6f4bdeeefb32300bd1b43382633d6d23cd6662daa560093fcd1"
+    },
+    {
+      "name": "sidecar-focused-run.json",
+      "bytes": 341,
+      "sha256": "85cf62b88880c61d7087a498fb14508434b7fbcdfa887726774f4aa1dfd76dbb"
+    },
+    {
+      "name": "sidecar-focused-stderr.txt",
+      "bytes": 3721,
+      "sha256": "3b3289aa72db1c83e902124cbd6e85ac48eed1f18d6d761d1f96e338246c3281"
+    },
+    {
+      "name": "sidecar-focused-stdout.txt",
+      "bytes": 2067,
+      "sha256": "44f4e9868de38361b9591a8ec8c53fdc47c06c8c3e4e58804cf6ca793c42e5d9"
+    },
+    {
+      "name": "sidecar-freeze.mjs",
+      "bytes": 7792,
+      "sha256": "52ec9469a1743e6f38679c50b4ce450ef9e64c3d4409de11793729e2e9eaa254"
+    },
+    {
+      "name": "sidecar-frozen.json",
+      "bytes": 1419,
+      "sha256": "a9d19fc994ba940eb54a25097e7e9d78f74e28e6cfe65574edc60bdbdd15e212"
+    },
+    {
+      "name": "sidecar-green-status.json",
+      "bytes": 149,
+      "sha256": "e498ad6c88806e3a0e3730ffc316b37b1b33d5460dacef53bce13235898c08a9"
+    },
+    {
+      "name": "sidecar-handoff.md",
+      "bytes": 2735,
+      "sha256": "f416be758f1e21355ec482fabcb30c6a0e25832c008241ac73cea65263735120"
+    },
+    {
+      "name": "sidecar-preflight.json",
+      "bytes": 1768,
+      "sha256": "2dd9cb3f8878cb0fb2e23731aaf40dfc5c3e4321b58034586e0cce750ccc2b05"
+    },
+    {
+      "name": "sidecar-run-focused.mjs",
+      "bytes": 4995,
+      "sha256": "687ec96bffcec650ce20859ac01d28d3f4b6a66c77b726b39c2385eb23328b74"
+    },
+    {
+      "name": "sidecar-source-after.tsx.snapshot",
+      "bytes": 29137,
+      "sha256": "a568d87dc63f3c0d712dcb21c3a8f1e33b35a9be4e3049682cfd81c2d8da0f44"
+    },
+    {
+      "name": "sidecar-source-before.tsx.snapshot",
+      "bytes": 28698,
+      "sha256": "6907ade12bedf041112fee850860b3ba06df22b3217a3ae55289c31c9ea71284"
+    },
+    {
+      "name": "sidecar-source.patch",
+      "bytes": 1842,
+      "sha256": "a3981d4e5f6c18515201d3e7d151f1956ed28235c5c761d712e3ebea0e4e306e"
+    },
+    {
+      "name": "sidecar-test-after.tsx.snapshot",
+      "bytes": 9940,
+      "sha256": "b8ce663646107a89ae5257b136ba4448abfc5368bbc6fe612f6f5af88c7652f7"
+    },
+    {
+      "name": "sidecar-test-before.tsx.snapshot",
+      "bytes": 9866,
+      "sha256": "eda454790506d69e888786e7d659f55efc4517cbcd7a93887c6b64db9b02a667"
+    },
+    {
+      "name": "sidecar-vitest-config.mjs.snapshot",
+      "bytes": 535,
+      "sha256": "19c7db95ddc2524ef6414f7cce9fe85df94137c17af9220231383859ba08ab22"
+    }
+  ],
+  "entries": 18,
+  "excludes": [
+    "sidecar-manifest.json"
+  ]
+}

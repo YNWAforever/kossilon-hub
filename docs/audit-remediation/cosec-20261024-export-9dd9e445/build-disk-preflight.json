@@ -1,0 +1,8 @@
+{
+  "checked_utc": "2026-10-23T19:07:10.0919477Z",
+  "drive": "C",
+  "free_bytes": 36402765824,
+  "minimum_bytes": 2147483648,
+  "allowed": true,
+  "heavy_concurrency": "one owned command at a time"
+}

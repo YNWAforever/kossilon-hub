@@ -1,0 +1,45 @@
+diff --git a/src/components/bulk-selection-toolbar.tsx b/src/components/bulk-selection-toolbar.tsx
+index e442f87..713a3cb 100644
+--- a/src/components/bulk-selection-toolbar.tsx
++++ b/src/components/bulk-selection-toolbar.tsx
+@@ -1,4 +1,4 @@
+-import { useState } from "react";
++import { useEffect, useRef, useState } from "react";
+ import { ChevronDown, Layers } from "lucide-react";
+ import { Link } from "@tanstack/react-router";
+ import { Button } from "@/components/ui/button";
+@@ -606,10 +606,19 @@ function BulkJobProgress({
+     retry: false,
+     onSuccess: refreshed,
+   });
++  const exportScope = useRef<object | null>(null);
++  useEffect(() => {
++    exportScope.current = {};
++    return () => {
++      exportScope.current = null;
++    };
++  }, [actorScope, jobId]);
+   const exporting = useMutation({
+-    mutationFn: () => exportBulkResults({ data: { jobId: jobId! } }),
++    mutationFn: ({ jobId }: { jobId: string; scope: object | null }) =>
++      exportBulkResults({ data: { jobId } }),
+     retry: false,
+-    onSuccess: (data) => {
++    onSuccess: (data, request) => {
++      if (!request.scope || request.scope !== exportScope.current) return;
+       const url = URL.createObjectURL(new Blob([data.csv], { type: "text/csv;charset=utf-8" }));
+       const a = document.createElement("a");
+       a.href = url;
+@@ -714,7 +723,11 @@ function BulkJobProgress({
+                 先核對未知結果
+               </Button>
+             ) : null}
+-            <Button size="sm" disabled={exporting.isPending} onClick={() => exporting.mutate()}>
++            <Button
++              size="sm"
++              disabled={exporting.isPending}
++              onClick={() => exporting.mutate({ jobId: jobId!, scope: exportScope.current })}
++            >
+               匯出可查閱結果
+             </Button>
+           </div>

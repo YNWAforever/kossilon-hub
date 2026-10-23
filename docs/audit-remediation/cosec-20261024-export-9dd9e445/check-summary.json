@@ -1,0 +1,16 @@
+{
+  "unit_files": 270,
+  "unit_pass": 2559,
+  "unit_fail": 0,
+  "unit_skip": 0,
+  "ui_export_pass": 5,
+  "ui_included_in_unit": true,
+  "targeted_backend_pass": 21,
+  "sql_files": 1,
+  "sql_pass_per_attempt": 1,
+  "sql_attempts": 2,
+  "sql_attempts_not_combined_with_unit": true,
+  "lint_errors": 0,
+  "lint_warnings": 1,
+  "native_auth_runtime": false
+}

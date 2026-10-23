@@ -1,0 +1,8 @@
+import { defineConfig } from 'vitest/config';
+export default defineConfig({
+  root: "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  envDir: false,
+  cacheDir: "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\sidecar-uc157-9dd9e445-52a3e8\\vite-cache",
+  resolve: { alias: { '@': "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src" } },
+  test: { include: ["src/components/bulk-export.interaction.test.tsx"], environment: 'jsdom', maxWorkers: 1, fileParallelism: false, retry: 0 }
+});
