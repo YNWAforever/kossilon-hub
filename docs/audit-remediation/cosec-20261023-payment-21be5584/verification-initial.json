@@ -1,0 +1,8 @@
+{
+  "command": "verify-delivery.ps1",
+  "exit_code": 1,
+  "error": "SQL count mismatch",
+  "location": "verify-delivery.ps1:20",
+  "root_cause": "Raw Vitest SQL log includes ANSI escapes between 6 passed and (6); parser must strip ANSI for matching, raw log remains unchanged",
+  "product_failure": false
+}

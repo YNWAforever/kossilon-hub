@@ -1,0 +1,14 @@
+{
+  "head": "a6d5d89d0bf9c020ec9b98e0eed8749e13de5b24",
+  "files": [
+    {
+      "path": "src/features/annual-return/payment-conflict.integration.test.ts",
+      "sha256": "8824b40f676f0f08e694499bc3333ae3dcf0f6df08ec5affaf3899562a382dc6"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "sha256": "7c0c3b439697f2d53de25e35b9bc6bd01395df75a2f83a9018bdd1690b29838c"
+    }
+  ],
+  "note": "Initial UC155 opposite-decision regression; application source unchanged"
+}

@@ -1,0 +1,8 @@
+{
+  "run_id": "cosec-20261023-payment-21be5584",
+  "container_id": "cd30855dc7fd8f836c5b435d9683c5828f9bbcded4a666f5c43ec62c379d614e",
+  "gate_passed": true,
+  "port": 63262,
+  "fixture_count": 0,
+  "migrations": 0
+}

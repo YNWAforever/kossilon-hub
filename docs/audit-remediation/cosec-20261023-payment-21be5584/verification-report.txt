@@ -1,0 +1,4 @@
+VERIFIED source=3f2eeb3a4eb4ccb05535f19ac2136a2bafc6a093; evidence_files=101
+VERIFIED UC155_SQL=6; targeted_unit_component=76/5_files; typecheck=0; lint=0/1_warning
+VERIFIED original_rows=184; native=70_BLOCKED/114_NOT_RUN/0_PASS; NO_GO
+VERIFIED all_30_attempt_cleanup=0; owned_container_and_credentials_removed; 313_preexisting_preserved

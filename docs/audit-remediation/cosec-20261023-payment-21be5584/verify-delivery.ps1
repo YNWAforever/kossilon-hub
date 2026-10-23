@@ -1,0 +1,75 @@
+$ErrorActionPreference='Stop'
+$folder=$PSScriptRoot
+$repo=(Resolve-Path (Join-Path $folder '../../..')).Path
+if($repo -ine 'C:\Users\laich\Documents\kossilon-hub\cosec-20261023'){throw 'Unexpected checkout'}
+$candidate=Get-Content (Join-Path $folder 'release-candidate.json') -Raw | ConvertFrom-Json
+$source=Get-Content (Join-Path $folder 'source-candidate.json') -Raw | ConvertFrom-Json
+if($candidate.release_gate -cne 'NO_GO' -or $candidate.auth_runtime_verified -or $candidate.deployed){throw 'Native boundary drift'}
+if($source.source_sha -cne $candidate.source_sha){throw 'Source mismatch'}
+foreach($f in $source.files){if((Get-FileHash -LiteralPath (Join-Path $repo $f.path) -Algorithm SHA256).Hash.ToLower() -cne $f.sha256){throw('Source bytes drift: '+$f.path)}}
+git -C $repo diff --exit-code $source.source_sha -- $source.paths
+if($LASTEXITCODE -ne 0){throw 'Tested source differs'}
+$changed=@(git -C $repo diff --name-only $candidate.parent_sha HEAD -- . ':!docs/audit-remediation/**')
+if((($changed | Sort-Object)-join ';') -cne (($source.paths | Sort-Object)-join ';')){throw 'Unexpected application changes'}
+foreach($receipt in @('targeted-accepted.json','typecheck-accepted.json','lint-accepted.json','db/db-payment-accepted.json')){
+  if((Get-Content (Join-Path $folder $receipt) -Raw | ConvertFrom-Json).exit_code -ne 0){throw('Failed check: '+$receipt)}
+}
+$unit=Get-Content (Join-Path $folder 'targeted-accepted.txt') -Raw
+if($unit -notmatch '5 passed \(5\)' -or $unit -notmatch '76 passed \(76\)'){throw 'Targeted count mismatch'}
+$db=Get-Content (Join-Path $folder 'db/db-payment-accepted.txt') -Raw
+$db=[regex]::Replace($db,[char]27+'\[[0-?]*[ -/]*[@-~]','')
+if($db -notmatch '6 passed \(6\)'){throw 'SQL count mismatch'}
+$cases=@((Get-Content (Join-Path $folder 'readback-summary.json') -Raw | ConvertFrom-Json).cases)
+if($cases.Count -ne 6 -or @($cases.case_id | Sort-Object -Unique).Count -ne 6){throw 'Reused case identity'}
+foreach($case in $cases){
+  $events=@(Get-Content (Join-Path $folder $case.events) | ForEach-Object {$_|ConvertFrom-Json})
+  $commands=$events | Where-Object phase -ceq 'same-version-commands'
+  if($commands.winner.expectedVersion -cne $commands.loser.expectedVersion -or $commands.winner.proofVersionId -cne $commands.loser.proofVersionId -or $commands.winner.decision -ceq $commands.loser.decision){throw 'Not opposite decisions on same version'}
+  $lock=$events | Where-Object phase -ceq 'lock-observed'
+  if($lock.wait_type -cne 'Lock' -or $lock.firstPid -notin $lock.blockers){throw 'No actual blocking evidence'}
+  if($case.conflict.status -ne 409 -or $case.conflict.body.code -cne 'version_conflict'){throw 'Not business conflict'}
+  if($case.invoice -ne 1800 -or $case.balance -ne (1800-$case.received) -or $case.review_audit_count -ne 1 -or $case.new_payment_audit_count -ne 2 -or -not $case.retry_invariant -or -not $case.cleanup_zero){throw 'Amount/audit/retry inconsistency'}
+  if(@($events|Where-Object phase -ceq 'stale-replay').Count -ne 2 -or @($events|Where-Object phase -ceq 'fresh-terminal-retry').Count -ne 2){throw 'Retry gap'}
+}
+# All 30 attempts retain exact cleanup, including failures; never recast as pass.
+$attempts=@(Get-Content (Join-Path $folder 'attempts.json') -Raw | ConvertFrom-Json)
+if(($attempts.exit_code -join ',') -cne '1,0,1,1,0'){throw 'Failure history changed'}
+foreach($attempt in $attempts){
+  if($attempt.events.Count -ne 6){throw 'Attempt count gap'}
+  foreach($path in $attempt.events){
+    $events=@(Get-Content (Join-Path $folder $path) | ForEach-Object {$_|ConvertFrom-Json})
+    $cleanup=@($events | Where-Object phase -ceq 'cleanup')
+    if($cleanup.Count -ne 1 -or @($cleanup[0].remaining.PSObject.Properties | Where-Object Value -ne 0).Count){throw 'Nonzero or missing precise cleanup'}
+  }
+}
+$cleanup=Get-Content (Join-Path $folder 'cleanup-final.json') -Raw | ConvertFrom-Json
+if(-not $cleanup.container_absent -or -not $cleanup.credentials_absent -or $cleanup.preexisting_count -ne 313 -or $cleanup.preexisting_missing.Count){throw 'Resource cleanup gap'}
+$target=Get-Content (Join-Path $folder 'db/db-server-before-teardown.json') -Raw | ConvertFrom-Json
+if(-not $target.tcp_and_container_system_id_equal -or $target.identity.system_id -cne '7699839798837174311'){throw 'Target identity mismatch'}
+$old=@(Import-Csv (Join-Path $folder '../cosec-20261023-assignment-86b2aa9a/acceptance-results.csv'))
+$rows=@(Import-Csv (Join-Path $folder 'acceptance-results.csv'))
+if($rows.Count -ne 184 -or $old.Count -ne 184){throw 'Original row count drift'}
+$immutable=@($old[0].PSObject.Properties.Name|Where-Object {$_ -notin @('local_result','local_scope','evidence_paths','remaining_scope')})
+for($i=0;$i -lt 184;$i++){foreach($field in $immutable){if($rows[$i].$field -cne $old[$i].$field){throw('Original/native drift: '+$old[$i].id)}}}
+foreach($kind in @(@('F',35),@('R',15),@('UC',100),@('LA',34))){if(@($rows|Where-Object record_type -ceq $kind[0]).Count -ne $kind[1]){throw 'Category count drift'}}
+if(@($rows|Where-Object native_result -ceq 'BLOCKED').Count -ne 70 -or @($rows|Where-Object native_result -ceq 'NOT_RUN').Count -ne 114){throw 'Invented native pass'}
+$audit=(Resolve-Path (Join-Path $folder '..')).Path+[IO.Path]::DirectorySeparatorChar
+foreach($path in ($rows.evidence_paths -split ';'|Where-Object {$_}|Sort-Object -Unique)){
+  $absolute=[IO.Path]::GetFullPath((Join-Path $folder $path))
+  if(-not $absolute.StartsWith($audit,[StringComparison]::OrdinalIgnoreCase) -or -not(Test-Path -LiteralPath $absolute -PathType Leaf)){throw('Missing/outside evidence: '+$path)}
+}
+foreach($prior in (Get-Content (Join-Path $folder 'prior-evidence-integrity.json') -Raw|ConvertFrom-Json)){
+  $base=Join-Path $folder ('../'+$prior.run)
+  $manifest=Get-Content (Join-Path $base 'evidence-manifest.json') -Raw|ConvertFrom-Json
+  foreach($f in $manifest.files){if((Get-FileHash -LiteralPath (Join-Path $base $f.path) -Algorithm SHA256).Hash.ToLower() -cne $f.sha256.ToLower()){throw('Prior evidence drift: '+$prior.run+'/'+$f.path)}}
+}
+$manifest=Get-Content (Join-Path $folder 'evidence-manifest.json') -Raw|ConvertFrom-Json
+foreach($f in $manifest.files){
+  $absolute=[IO.Path]::GetFullPath((Join-Path $folder $f.path))
+  if(-not $absolute.StartsWith($folder+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Manifest path escape'}
+  if((Get-FileHash -LiteralPath $absolute -Algorithm SHA256).Hash.ToLower() -cne $f.sha256){throw('Evidence drift: '+$f.path)}
+}
+Write-Output ('VERIFIED source='+$source.source_sha+'; evidence_files='+$manifest.files.Count)
+Write-Output 'VERIFIED UC155_SQL=6; targeted_unit_component=76/5_files; typecheck=0; lint=0/1_warning'
+Write-Output 'VERIFIED original_rows=184; native=70_BLOCKED/114_NOT_RUN/0_PASS; NO_GO'
+Write-Output 'VERIFIED all_30_attempt_cleanup=0; owned_container_and_credentials_removed; 313_preexisting_preserved'

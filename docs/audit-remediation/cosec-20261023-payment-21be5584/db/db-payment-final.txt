@@ -1,0 +1,44 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Users/laich/Documents/kossilon-hub/cosec-20261023[39m
+
+ [31m❯[39m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[33m 3012[2mms[22m[39m
+[31m     [31m×[31m empty-full: verified commits before the opposite decision[39m[33m 362[2mms[22m[39m
+[31m     [31m×[31m empty-full: rejected commits before the opposite decision[39m[32m 270[2mms[22m[39m
+[31m     [31m×[31m partial-full: verified commits before the opposite decision[39m[33m 493[2mms[22m[39m
+[31m     [31m×[31m partial-full: rejected commits before the opposite decision[39m[33m 482[2mms[22m[39m
+[31m     [31m×[31m partial-open: verified commits before the opposite decision[39m[33m 681[2mms[22m[39m
+[31m     [31m×[31m partial-open: rejected commits before the opposite decision[39m[33m 720[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m6 failed[39m[22m[90m (6)[39m
+[2m   Start at [22m 20:37:25
+[2m   Duration [22m 4.43s[2m (transform 827ms, setup 0ms, import 1.16s, tests 3.01s, environment 0ms)[22m
+
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 6 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mempty-full: verified commits before the opposite decision
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mempty-full: rejected commits before the opposite decision
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mpartial-full: verified commits before the opposite decision
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mpartial-full: rejected commits before the opposite decision
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mpartial-open: verified commits before the opposite decision
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mpartial-open: rejected commits before the opposite decision
+[31m[1mPostgresError[22m: column "review_status" does not exist[39m
+[90m [2m❯[22m ErrorResponse node_modules/postgres/src/connection.js:[2m815:30[22m[39m
+[90m [2m❯[22m handle node_modules/postgres/src/connection.js:[2m489:6[22m[39m
+[90m [2m❯[22m Socket.data node_modules/postgres/src/connection.js:[2m324:9[22m[39m
+[90m [2m❯[22m cachedError node_modules/postgres/src/query.js:[2m170:23[22m[39m
+[90m [2m❯[22m new Query node_modules/postgres/src/query.js:[2m36:24[22m[39m
+[90m [2m❯[22m sql node_modules/postgres/src/index.js:[2m112:11[22m[39m
+[36m [2m❯[22m Object.apply src/test/sql-test-lifetime.ts:[2m44:19[22m[39m
+    [90m 42|[39m         [34mcheck[39m()[33m;[39m
+    [90m 43|[39m         [35mreturn[39m [34mguardQuery[39m(
+    [90m 44|[39m           Reflect.apply(fn as unknown as (...args: unknown[]) => unkno…
+    [90m   |[39m                   [31m^[39m
+    [90m 45|[39m         )[33m;[39m
+    [90m 46|[39m       }[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯[22m[39m
+
