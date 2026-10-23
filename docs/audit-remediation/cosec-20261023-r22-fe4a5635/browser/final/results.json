@@ -1,0 +1,355 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.r22-local.config.ts"
+    ],
+    "configFile": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\playwright.r22-local.config.ts",
+    "rootDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\local-evidence-guard.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/.worktrees/local-browser-runs/run-gFc8D6/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "zoom": 1,
+          "cssWidth": 390,
+          "cssHeight": 844
+        },
+        "id": "full390",
+        "name": "full390",
+        "testDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "r22-viewport-zoom.spec.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/.worktrees/local-browser-runs/run-gFc8D6/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "zoom": 1,
+          "cssWidth": 1280,
+          "cssHeight": 900
+        },
+        "id": "desktop100",
+        "name": "desktop100",
+        "testDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "r22-viewport-zoom.spec.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/.worktrees/local-browser-runs/run-gFc8D6/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "zoom": 2,
+          "cssWidth": 640,
+          "cssHeight": 450
+        },
+        "id": "desktop200",
+        "name": "desktop200",
+        "testDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "r22-viewport-zoom.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-gFc8D6\\results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "npm run dev -- --host 127.0.0.1 --port 5180",
+      "url": "http://127.0.0.1:5180",
+      "reuseExistingServer": false,
+      "timeout": 30000,
+      "env": {
+        "VITE_ENABLE_DEMO_AUTH": "true"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "r22-viewport-zoom.spec.ts",
+      "file": "r22-viewport-zoom.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "full390",
+              "projectName": "full390",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 12430,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[2m    \"clipping\": Array [],\u001b[22m\n\u001b[2m    \"ownTextFits\": true,\u001b[22m\n\u001b[32m-   \"unobscured\": true,\u001b[39m\n\u001b[31m+   \"unobscured\": false,\u001b[39m\n\u001b[2m    \"viewport\": true,\u001b[22m\n\u001b[2m  }\u001b[22m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[2m    \"clipping\": Array [],\u001b[22m\n\u001b[2m    \"ownTextFits\": true,\u001b[22m\n\u001b[32m-   \"unobscured\": true,\u001b[39m\n\u001b[31m+   \"unobscured\": false,\u001b[39m\n\u001b[2m    \"viewport\": true,\u001b[22m\n\u001b[2m  }\u001b[22m\n    at assertReadable (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts:86:20)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\r22-viewport-zoom.spec.ts:214:9",
+                    "location": {
+                      "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts",
+                      "column": 20,
+                      "line": 86
+                    },
+                    "snippet": "\u001b[90m   at \u001b[39mread-only-demo-journey.ts:86\n\n  84 |     };\n  85 |   });\n> 86 |   expect(geometry).toEqual({ clipping: [], viewport: true, unobscured: true, ownTextFits: true });\n     |                    ^\n  87 | }\n  88 |\n  89 | // Find the real sequential tab stop, rather than using locator.focus() to make"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts",
+                        "column": 20,
+                        "line": 86
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[2m    \"clipping\": Array [],\u001b[22m\n\u001b[2m    \"ownTextFits\": true,\u001b[22m\n\u001b[32m-   \"unobscured\": true,\u001b[39m\n\u001b[31m+   \"unobscured\": false,\u001b[39m\n\u001b[2m    \"viewport\": true,\u001b[22m\n\u001b[2m  }\u001b[22m\n\n   at read-only-demo-journey.ts:86\n\n  84 |     };\n  85 |   });\n> 86 |   expect(geometry).toEqual({ clipping: [], viewport: true, unobscured: true, ownTextFits: true });\n     |                    ^\n  87 | }\n  88 |\n  89 | // Find the real sequential tab stop, rather than using locator.focus() to make\n    at assertReadable (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts:86:20)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\r22-viewport-zoom.spec.ts:214:9"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-23T11:14:02.261Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-gFc8D6\\artifacts\\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-full390\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-gFc8D6\\artifacts\\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-full390\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-gFc8D6\\artifacts\\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-full390\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts",
+                    "column": 20,
+                    "line": 86
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "3ac0b682e45e79da4875-6bb5ff1c1f60afcb44d1",
+          "file": "r22-viewport-zoom.spec.ts",
+          "line": 46,
+          "column": 1
+        },
+        {
+          "title": "LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop100",
+              "projectName": "desktop100",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 6987,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[2m    \"clipping\": Array [],\u001b[22m\n\u001b[2m    \"ownTextFits\": true,\u001b[22m\n\u001b[32m-   \"unobscured\": true,\u001b[39m\n\u001b[31m+   \"unobscured\": false,\u001b[39m\n\u001b[2m    \"viewport\": true,\u001b[22m\n\u001b[2m  }\u001b[22m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[2m    \"clipping\": Array [],\u001b[22m\n\u001b[2m    \"ownTextFits\": true,\u001b[22m\n\u001b[32m-   \"unobscured\": true,\u001b[39m\n\u001b[31m+   \"unobscured\": false,\u001b[39m\n\u001b[2m    \"viewport\": true,\u001b[22m\n\u001b[2m  }\u001b[22m\n    at assertReadable (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts:86:20)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\r22-viewport-zoom.spec.ts:214:9",
+                    "location": {
+                      "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts",
+                      "column": 20,
+                      "line": 86
+                    },
+                    "snippet": "\u001b[90m   at \u001b[39mread-only-demo-journey.ts:86\n\n  84 |     };\n  85 |   });\n> 86 |   expect(geometry).toEqual({ clipping: [], viewport: true, unobscured: true, ownTextFits: true });\n     |                    ^\n  87 | }\n  88 |\n  89 | // Find the real sequential tab stop, rather than using locator.focus() to make"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts",
+                        "column": 20,
+                        "line": 86
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[2m    \"clipping\": Array [],\u001b[22m\n\u001b[2m    \"ownTextFits\": true,\u001b[22m\n\u001b[32m-   \"unobscured\": true,\u001b[39m\n\u001b[31m+   \"unobscured\": false,\u001b[39m\n\u001b[2m    \"viewport\": true,\u001b[22m\n\u001b[2m  }\u001b[22m\n\n   at read-only-demo-journey.ts:86\n\n  84 |     };\n  85 |   });\n> 86 |   expect(geometry).toEqual({ clipping: [], viewport: true, unobscured: true, ownTextFits: true });\n     |                    ^\n  87 | }\n  88 |\n  89 | // Find the real sequential tab stop, rather than using locator.focus() to make\n    at assertReadable (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts:86:20)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\r22-viewport-zoom.spec.ts:214:9"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-23T11:14:15.659Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-gFc8D6\\artifacts\\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop100\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-gFc8D6\\artifacts\\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop100\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-gFc8D6\\artifacts\\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop100\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts",
+                    "column": 20,
+                    "line": 86
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "3ac0b682e45e79da4875-1de8e03d828acb620d82",
+          "file": "r22-viewport-zoom.spec.ts",
+          "line": 46,
+          "column": 1
+        },
+        {
+          "title": "LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop200",
+              "projectName": "desktop200",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 7957,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[2m    \"clipping\": Array [],\u001b[22m\n\u001b[2m    \"ownTextFits\": true,\u001b[22m\n\u001b[32m-   \"unobscured\": true,\u001b[39m\n\u001b[31m+   \"unobscured\": false,\u001b[39m\n\u001b[2m    \"viewport\": true,\u001b[22m\n\u001b[2m  }\u001b[22m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[2m    \"clipping\": Array [],\u001b[22m\n\u001b[2m    \"ownTextFits\": true,\u001b[22m\n\u001b[32m-   \"unobscured\": true,\u001b[39m\n\u001b[31m+   \"unobscured\": false,\u001b[39m\n\u001b[2m    \"viewport\": true,\u001b[22m\n\u001b[2m  }\u001b[22m\n    at assertReadable (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts:86:20)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\r22-viewport-zoom.spec.ts:214:9",
+                    "location": {
+                      "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts",
+                      "column": 20,
+                      "line": 86
+                    },
+                    "snippet": "\u001b[90m   at \u001b[39mread-only-demo-journey.ts:86\n\n  84 |     };\n  85 |   });\n> 86 |   expect(geometry).toEqual({ clipping: [], viewport: true, unobscured: true, ownTextFits: true });\n     |                    ^\n  87 | }\n  88 |\n  89 | // Find the real sequential tab stop, rather than using locator.focus() to make"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts",
+                        "column": 20,
+                        "line": 86
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[2m    \"clipping\": Array [],\u001b[22m\n\u001b[2m    \"ownTextFits\": true,\u001b[22m\n\u001b[32m-   \"unobscured\": true,\u001b[39m\n\u001b[31m+   \"unobscured\": false,\u001b[39m\n\u001b[2m    \"viewport\": true,\u001b[22m\n\u001b[2m  }\u001b[22m\n\n   at read-only-demo-journey.ts:86\n\n  84 |     };\n  85 |   });\n> 86 |   expect(geometry).toEqual({ clipping: [], viewport: true, unobscured: true, ownTextFits: true });\n     |                    ^\n  87 | }\n  88 |\n  89 | // Find the real sequential tab stop, rather than using locator.focus() to make\n    at assertReadable (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts:86:20)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\r22-viewport-zoom.spec.ts:214:9"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-23T11:14:23.519Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-gFc8D6\\artifacts\\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop200\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-gFc8D6\\artifacts\\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop200\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-gFc8D6\\artifacts\\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop200\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\read-only-demo-journey.ts",
+                    "column": 20,
+                    "line": 86
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "3ac0b682e45e79da4875-2808f81a390e633ea0e0",
+          "file": "r22-viewport-zoom.spec.ts",
+          "line": 46,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-23T11:13:49.920Z",
+    "duration": 42322.015,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 3,
+    "flaky": 0
+  }
+}

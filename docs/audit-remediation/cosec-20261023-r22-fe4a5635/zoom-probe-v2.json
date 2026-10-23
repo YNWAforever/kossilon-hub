@@ -1,0 +1,144 @@
+[
+  {
+    "zoom": 1,
+    "profile": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\r22-fe4a5635-profiles\\zoom-1-7BVGO3",
+    "preferences": {
+      "partition": {
+        "default_zoom_level": {
+          "x": 0
+        }
+      }
+    },
+    "version": "155.0.4283.62",
+    "dimensions": {
+      "innerWidth": 1256,
+      "innerHeight": 808,
+      "outerWidth": 1280,
+      "outerHeight": 900,
+      "devicePixelRatio": 1,
+      "screenWidth": 800,
+      "screenHeight": 600,
+      "visualScale": 1,
+      "visualWidth": 1256,
+      "cssZoom": "1"
+    },
+    "layout": {
+      "layoutViewport": {
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 1256,
+        "clientHeight": 808
+      },
+      "visualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 1256,
+        "clientHeight": 808,
+        "scale": 1,
+        "zoom": 1
+      },
+      "contentSize": {
+        "x": 0,
+        "y": 0,
+        "width": 1256,
+        "height": 808
+      },
+      "cssLayoutViewport": {
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 1256,
+        "clientHeight": 808
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 1256,
+        "clientHeight": 808,
+        "scale": 1,
+        "zoom": 1
+      },
+      "cssContentSize": {
+        "x": 0,
+        "y": 0,
+        "width": 1256,
+        "height": 808
+      }
+    },
+    "blocked": []
+  },
+  {
+    "zoom": 2,
+    "profile": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\r22-fe4a5635-profiles\\zoom-2-wbQJOv",
+    "preferences": {
+      "partition": {
+        "default_zoom_level": {
+          "x": 3.8017840169239308
+        }
+      }
+    },
+    "version": "155.0.4283.62",
+    "dimensions": {
+      "innerWidth": 628,
+      "innerHeight": 404,
+      "outerWidth": 1280,
+      "outerHeight": 900,
+      "devicePixelRatio": 2,
+      "screenWidth": 800,
+      "screenHeight": 600,
+      "visualScale": 1,
+      "visualWidth": 628,
+      "cssZoom": "1"
+    },
+    "layout": {
+      "layoutViewport": {
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 1256,
+        "clientHeight": 808
+      },
+      "visualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 1256,
+        "clientHeight": 808,
+        "scale": 1,
+        "zoom": 2
+      },
+      "contentSize": {
+        "x": 0,
+        "y": 0,
+        "width": 1256,
+        "height": 808
+      },
+      "cssLayoutViewport": {
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 628,
+        "clientHeight": 404
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 628,
+        "clientHeight": 404,
+        "scale": 1,
+        "zoom": 2
+      },
+      "cssContentSize": {
+        "x": 0,
+        "y": 0,
+        "width": 628,
+        "height": 404
+      }
+    },
+    "blocked": []
+  }
+]

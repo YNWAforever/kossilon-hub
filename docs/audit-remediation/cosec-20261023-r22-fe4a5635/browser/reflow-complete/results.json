@@ -1,0 +1,260 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.local.config.ts",
+      "e2e/continuation-reflow.spec.ts"
+    ],
+    "configFile": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\playwright.local.config.ts",
+    "rootDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\local-evidence-guard.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/.worktrees/local-browser-runs/run-RCrDmE/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile390",
+        "name": "mobile390",
+        "testDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "local-ux.spec.ts",
+          "performance.spec.ts",
+          "audit-release-demo.spec.ts",
+          "audit-persona-local.spec.ts",
+          "continuation-reflow.spec.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/.worktrees/local-browser-runs/run-RCrDmE/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "desktop1280",
+        "name": "desktop1280",
+        "testDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "local-ux.spec.ts",
+          "performance.spec.ts",
+          "audit-release-demo.spec.ts",
+          "audit-persona-local.spec.ts",
+          "continuation-reflow.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-RCrDmE\\results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "npm run dev -- --host 127.0.0.1 --port 5180",
+      "url": "http://127.0.0.1:5180",
+      "reuseExistingServer": false,
+      "timeout": 30000,
+      "env": {
+        "VITE_ENABLE_DEMO_AUTH": "true"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "continuation-reflow.spec.ts",
+      "file": "continuation-reflow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [
+                {
+                  "type": "scope",
+                  "description": "Local demo only; client record journey unavailable; 640 CSS px is reflow, not actual 200% zoom or native Auth."
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "mobile390",
+              "projectName": "mobile390",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 21869,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "Admin: keyboard login and honest client demo boundary",
+                      "duration": 7216
+                    },
+                    {
+                      "title": "Admin: real fixture board -> detail -> read-only reload -> return",
+                      "duration": 3269
+                    },
+                    {
+                      "title": "Admin: Admin read-only surface or Staff direct-route denial",
+                      "duration": 2406
+                    },
+                    {
+                      "title": "Staff: keyboard login and honest client demo boundary",
+                      "duration": 3837
+                    },
+                    {
+                      "title": "Staff: real fixture board -> detail -> read-only reload -> return",
+                      "duration": 2798
+                    },
+                    {
+                      "title": "Staff: Admin read-only surface or Staff direct-route denial",
+                      "duration": 2073
+                    }
+                  ],
+                  "startTime": "2026-10-23T11:23:32.749Z",
+                  "annotations": [
+                    {
+                      "type": "scope",
+                      "description": "Local demo only; client record journey unavailable; 640 CSS px is reflow, not actual 200% zoom or native Auth."
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b6315d36f2618dba9d63-81dc79fc085298038846",
+          "file": "continuation-reflow.spec.ts",
+          "line": 17,
+          "column": 1
+        },
+        {
+          "title": "LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [
+                {
+                  "type": "scope",
+                  "description": "Local demo only; client record journey unavailable; 640 CSS px is reflow, not actual 200% zoom or native Auth."
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "desktop1280",
+              "projectName": "desktop1280",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 16037,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "Admin: keyboard login and honest client demo boundary",
+                      "duration": 3325
+                    },
+                    {
+                      "title": "Admin: real fixture board -> detail -> read-only reload -> return",
+                      "duration": 2827
+                    },
+                    {
+                      "title": "Admin: Admin read-only surface or Staff direct-route denial",
+                      "duration": 1970
+                    },
+                    {
+                      "title": "Staff: keyboard login and honest client demo boundary",
+                      "duration": 2528
+                    },
+                    {
+                      "title": "Staff: real fixture board -> detail -> read-only reload -> return",
+                      "duration": 3020
+                    },
+                    {
+                      "title": "Staff: Admin read-only surface or Staff direct-route denial",
+                      "duration": 2039
+                    }
+                  ],
+                  "startTime": "2026-10-23T11:23:56.693Z",
+                  "annotations": [
+                    {
+                      "type": "scope",
+                      "description": "Local demo only; client record journey unavailable; 640 CSS px is reflow, not actual 200% zoom or native Auth."
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b6315d36f2618dba9d63-168774fe365f8f8a21b4",
+          "file": "continuation-reflow.spec.ts",
+          "line": 17,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-23T11:23:24.919Z",
+    "duration": 49048.159999999996,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

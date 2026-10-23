@@ -1,0 +1,76 @@
+{
+  "projects": [
+    {
+      "project": "desktop100",
+      "checkpoints": 16,
+      "zoom_values": [
+        1
+      ],
+      "first_metrics": {
+        "innerWidth": 1280,
+        "innerHeight": 900,
+        "outerWidth": 1304,
+        "outerHeight": 992,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 1280,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "browser": "155.0.4283.62",
+      "denied": 0,
+      "page_errors": 0
+    },
+    {
+      "project": "desktop200",
+      "checkpoints": 16,
+      "zoom_values": [
+        2
+      ],
+      "first_metrics": {
+        "innerWidth": 640,
+        "innerHeight": 450,
+        "outerWidth": 1304,
+        "outerHeight": 992,
+        "devicePixelRatio": 2,
+        "visualScale": 1,
+        "visualWidth": 640,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "browser": "155.0.4283.62",
+      "denied": 0,
+      "page_errors": 0
+    },
+    {
+      "project": "full390",
+      "checkpoints": 16,
+      "zoom_values": [
+        1
+      ],
+      "first_metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "browser": "155.0.4283.62",
+      "denied": 0,
+      "page_errors": 0
+    }
+  ],
+  "native_auth": false,
+  "business_writes": false,
+  "checkpoint_count": 48
+}

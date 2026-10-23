@@ -1,0 +1,14 @@
+{
+  "code": 0,
+  "signal": null,
+  "runRoot": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-RCrDmE",
+  "utc": "2026-10-23T11:24:13.985Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/@playwright/test/cli.js",
+    "test",
+    "--config",
+    "playwright.local.config.ts",
+    "e2e/continuation-reflow.spec.ts"
+  ]
+}

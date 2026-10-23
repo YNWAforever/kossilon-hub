@@ -1,0 +1,28 @@
+{
+  "utc": "2026-10-23T11:26:48.7275317Z",
+  "head": "09d57c13761f73ae55064a59936537dc74d0738a",
+  "paths": [
+    "e2e/continuation-reflow.spec.ts",
+    "e2e/read-only-demo-journey.ts",
+    "e2e/r22-viewport-zoom.spec.ts",
+    "playwright.r22-local.config.ts"
+  ],
+  "files": [
+    {
+      "path": "e2e/continuation-reflow.spec.ts",
+      "sha256": "1d997c38b4fa9058f8b0a946f78ebbec8a1f2162a4510eb148f41c5e8f1a6092"
+    },
+    {
+      "path": "e2e/read-only-demo-journey.ts",
+      "sha256": "f8c93a6605aed75ce1f312d3629c6ebd181d6874ef061df1a7e2ba7918fe9760"
+    },
+    {
+      "path": "e2e/r22-viewport-zoom.spec.ts",
+      "sha256": "36f603d871e1af21c27b3164d9768de7d4fa944ffdf914e90c39e08dc819e950"
+    },
+    {
+      "path": "playwright.r22-local.config.ts",
+      "sha256": "67432e26136078facbc3410e0ad22bc6ee0f5d935d2c8396e82545c731892c03"
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-gFc8D6
+[WebServer] (node:42536) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+Running 3 tests using 1 worker
+
+(node:32412) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-gFc8D6
+[WebServer] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+  x  1 [full390] › e2e\r22-viewport-zoom.spec.ts:46:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial (12.4s)
+(node:40044) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-gFc8D6
+  x  2 [desktop100] › e2e\r22-viewport-zoom.spec.ts:46:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial (7.0s)
+(node:25076) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-gFc8D6
+  x  3 [desktop200] › e2e\r22-viewport-zoom.spec.ts:46:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial (8.0s)
+[local-browser-evidence] historical bytes unchanged: 9
+
+
+  1) [full390] › e2e\r22-viewport-zoom.spec.ts:46:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+        "clipping": Array [],
+        "ownTextFits": true,
+    -   "unobscured": true,
+    +   "unobscured": false,
+        "viewport": true,
+      }
+
+       at read-only-demo-journey.ts:86
+
+      84 |     };
+      85 |   });
+    > 86 |   expect(geometry).toEqual({ clipping: [], viewport: true, unobscured: true, ownTextFits: true });
+         |                    ^
+      87 | }
+      88 |
+      89 | // Find the real sequential tab stop, rather than using locator.focus() to make
+        at assertReadable (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\read-only-demo-journey.ts:86:20)
+        at C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\r22-viewport-zoom.spec.ts:214:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-gFc8D6\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-full390\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .worktrees\local-browser-runs\run-gFc8D6\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-full390\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-gFc8D6\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-full390\trace.zip
+    Usage:
+
+        npx playwright show-trace .worktrees\local-browser-runs\run-gFc8D6\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-full390\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [desktop100] › e2e\r22-viewport-zoom.spec.ts:46:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+        "clipping": Array [],
+        "ownTextFits": true,
+    -   "unobscured": true,
+    +   "unobscured": false,
+        "viewport": true,
+      }
+
+       at read-only-demo-journey.ts:86
+
+      84 |     };
+      85 |   });
+    > 86 |   expect(geometry).toEqual({ clipping: [], viewport: true, unobscured: true, ownTextFits: true });
+         |                    ^
+      87 | }
+      88 |
+      89 | // Find the real sequential tab stop, rather than using locator.focus() to make
+        at assertReadable (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\read-only-demo-journey.ts:86:20)
+        at C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\r22-viewport-zoom.spec.ts:214:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-gFc8D6\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop100\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .worktrees\local-browser-runs\run-gFc8D6\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop100\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-gFc8D6\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop100\trace.zip
+    Usage:
+
+        npx playwright show-trace .worktrees\local-browser-runs\run-gFc8D6\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop100\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [desktop200] › e2e\r22-viewport-zoom.spec.ts:46:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+        "clipping": Array [],
+        "ownTextFits": true,
+    -   "unobscured": true,
+    +   "unobscured": false,
+        "viewport": true,
+      }
+
+       at read-only-demo-journey.ts:86
+
+      84 |     };
+      85 |   });
+    > 86 |   expect(geometry).toEqual({ clipping: [], viewport: true, unobscured: true, ownTextFits: true });
+         |                    ^
+      87 | }
+      88 |
+      89 | // Find the real sequential tab stop, rather than using locator.focus() to make
+        at assertReadable (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\read-only-demo-journey.ts:86:20)
+        at C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\r22-viewport-zoom.spec.ts:214:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-gFc8D6\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop200\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .worktrees\local-browser-runs\run-gFc8D6\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop200\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-gFc8D6\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop200\trace.zip
+    Usage:
+
+        npx playwright show-trace .worktrees\local-browser-runs\run-gFc8D6\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop200\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [full390] › e2e\r22-viewport-zoom.spec.ts:46:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial 
+    [desktop100] › e2e\r22-viewport-zoom.spec.ts:46:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial 
+    [desktop200] › e2e\r22-viewport-zoom.spec.ts:46:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial 

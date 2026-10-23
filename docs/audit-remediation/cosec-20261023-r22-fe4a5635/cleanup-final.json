@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-23T11:28:34.6843834Z",
+  "port": 5180,
+  "listener_count": 0,
+  "matching_owned_browser_processes": [],
+  "profiles_removed": false,
+  "profiles_scope": "New profiles retained only in ignored own run paths; no native credentials used",
+  "database_clients_created": false,
+  "database_fixture_created": false
+}

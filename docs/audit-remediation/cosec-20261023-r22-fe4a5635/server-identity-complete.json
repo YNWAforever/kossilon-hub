@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-23T11:22:46.4617481Z",
+  "connections": [
+    {
+      "LocalAddress": "127.0.0.1",
+      "LocalPort": 5180,
+      "OwningProcess": 40888
+    }
+  ],
+  "processes": [
+    {
+      "ProcessId": 40888,
+      "ParentProcessId": 23404,
+      "ExecutablePath": "C:\\Program Files\\nodejs\\node.exe",
+      "CommandLine": "\"node\"   \"C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\.bin\\\\..\\vite\\bin\\vite.js\" dev --host 127.0.0.1 --port 5180"
+    }
+  ]
+}
