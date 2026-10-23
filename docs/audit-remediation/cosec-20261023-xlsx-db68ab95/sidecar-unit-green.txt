@@ -1,0 +1,16 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/nar-import/mixed-xlsx-fixture.test.ts (6 tests) 214ms
+ ✓ |unit| src/features/nar-import/xlsx/workbook.test.ts (22 tests) 120ms
+ ✓ |unit| src/features/nar-import/mapping.test.ts (25 tests) 11ms
+ ✓ |unit| src/features/nar-import/normalize.test.ts (30 tests) 12ms
+
+ Test Files  4 passed (4)
+      Tests  83 passed (83)
+   Start at  12:43:20
+   Duration  1.65s (transform 199ms, setup 0ms, import 320ms, tests 357ms, environment 1ms)
+
+JSON report written to C:/Users/laich/Documents/kossilon-hub/cosec-20261023/.worktrees/mixed-xlsx-sidecar-8f400ed9da5d48c28c91d3b989701748/unit-green.json

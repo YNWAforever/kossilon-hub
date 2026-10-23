@@ -1,0 +1,52 @@
+{
+  "run_id": "cosec-20261023-xlsx-db68ab95",
+  "source_file": "db/mixed-first.xlsx",
+  "source_sha256": "4f7082dfd0ee171aa3c0f66b4e651056a63eae609bf837b7d0c3f9de6f91bd05",
+  "source_bytes": 15819,
+  "parser_version": "kossilon-xlsx-1",
+  "physical_and_parsed_rows": 500,
+  "valid_rows": 350,
+  "duplicate_rows": 100,
+  "invalid_rows": 50,
+  "preview": {
+    "selected": 500,
+    "eligible": 350,
+    "blocked": 150
+  },
+  "cancelled": {
+    "pending": 0,
+    "applied": 37,
+    "conflict": 150,
+    "failed": 0,
+    "cancelled": 313
+  },
+  "retry_chunks": [
+    100,
+    100,
+    100,
+    13
+  ],
+  "final": {
+    "distinct_companies": 350,
+    "unapplied_rows": 150,
+    "outbox": 0,
+    "journals": 350,
+    "applied_rows": 350,
+    "paid": 0,
+    "batch_status": "pending_review",
+    "cases": 350
+  },
+  "fixture_cleanup": {
+    "runId": "cosec-20261023-xlsx-db68ab95",
+    "phase": "cleanup-readback",
+    "companies": 0,
+    "cases": 0,
+    "batches": 0,
+    "jobs": 0,
+    "users": 0,
+    "teams": 0
+  },
+  "native_auth": false,
+  "http": false,
+  "provider_dispatch": false
+}

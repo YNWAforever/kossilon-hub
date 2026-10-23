@@ -1,0 +1,6 @@
+{
+  "original_commit": "7862c9ba9deb6a61ed181696bf087d23c6ae089c",
+  "from": "src/features/nar-import/xlsx/workbook.test.ts",
+  "to": "src/test/xlsx-fixture.ts",
+  "executable_body_equal_after_removing_exports_and_EOL_normalization": true
+}

@@ -1,0 +1,13 @@
+{
+  "run_id": "cosec-20261023-xlsx-db68ab95",
+  "checked_utc": "2026-10-23T04:42:03.139Z",
+  "identity": {
+    "db": "cosec_xlsx_db68ab95",
+    "username": "cosec_runner",
+    "server_address": "172.17.0.2/32",
+    "server_port": 5432,
+    "system_id": "7699718958797586471"
+  },
+  "tcp_and_container_system_id_equal": true,
+  "public_tables": []
+}

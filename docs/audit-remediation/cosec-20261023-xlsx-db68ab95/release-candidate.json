@@ -1,0 +1,97 @@
+{
+  "run_id": "cosec-20261023-xlsx-db68ab95",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "candidate_root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "fc87ad44cc1408174ad91bf74d0c382138e55256",
+  "parent_sha": "7862c9ba9deb6a61ed181696bf087d23c6ae089c",
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "phase": "LOCAL_MIXED_BINARY_XLSX_VERIFIED_NATIVE_BLOCKED",
+  "release_gate": "NO_GO",
+  "auth_runtime_verified": false,
+  "deployed": false,
+  "runtime_logic_changed": false,
+  "source_manifest": "source-candidate.json",
+  "source_diff": "source.patch",
+  "evidence_manifest": "evidence-manifest.json",
+  "input": {
+    "duplicate": 100,
+    "bytes": 15819,
+    "rows": 500,
+    "valid": 350,
+    "sha256": "4f7082dfd0ee171aa3c0f66b4e651056a63eae609bf837b7d0c3f9de6f91bd05",
+    "invalid": 50,
+    "parser": "kossilon-xlsx-1",
+    "path": "db/mixed-first.xlsx"
+  },
+  "checks": {
+    "build": {
+      "manifest": "build-artifact-manifest.json",
+      "deployed": false,
+      "log": "build-final.txt",
+      "exit_code": 0,
+      "preset": "cloudflare-module"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 1,
+      "log": "lint-final.txt",
+      "exit_code": 0
+    },
+    "unit": {
+      "skipped": 0,
+      "files": 266,
+      "failed": 0,
+      "log": "unit-final.txt",
+      "passed": 2470
+    },
+    "acceptance": {
+      "records": 184,
+      "native_not_run": 114,
+      "receipt": "acceptance-integrity.json",
+      "native_passes": 0,
+      "original_fields_preserved": true,
+      "native_blocked": 70
+    },
+    "typecheck": {
+      "log": "typecheck.txt",
+      "exit_code": 0
+    },
+    "db": {
+      "files": 2,
+      "receipt": "db/db-500-first.json",
+      "readback": "readback-summary.json",
+      "passed": 2,
+      "events": [
+        "db/xlsx-events-first.jsonl",
+        "db/normalized-events-first.jsonl"
+      ],
+      "log": "db/db-500-first.txt",
+      "new_mixed_test": 1,
+      "prior_normalized_test": 1,
+      "failed": 0,
+      "full_previous_db_suite_rerun": false
+    },
+    "browser": {
+      "prior_demo_not_reclassified": true,
+      "run_this_batch": false,
+      "native_auth": false
+    }
+  },
+  "cleanup": "cleanup-final.json",
+  "remaining": "blockers.md",
+  "production": {
+    "sha_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "accessed": false,
+    "current_verified": false
+  },
+  "external_actions": {
+    "production_migration": false,
+    "provider_dispatch": false,
+    "filing": false,
+    "real_payment": false,
+    "push": false,
+    "merge": false,
+    "deploy": false
+  }
+}
