@@ -2,6 +2,14 @@ import type postgres from "postgres";
 import type { AuthRole } from "./types";
 import type { SqlClient } from "@/server/db/client";
 
+/** A confirmed missing/ineligible staff row, distinct from a failed DB read. */
+export class StaffStateUnavailableError extends Error {
+  constructor() {
+    super("Staff user is inactive, inconsistent or ineligible.");
+    this.name = "StaffStateUnavailableError";
+  }
+}
+
 /** Keep a verified identity's access state stable until the domain write commits. */
 export async function lockActiveStaffUser(tx: postgres.TransactionSql, userId: string) {
   return readActiveStaffUser(tx, userId, true);
@@ -18,6 +26,6 @@ export async function readActiveStaffUser(
       and u.team_id is not distinct from sp.team_id
     ${lock ? tx`for share of u,sp` : tx``}
   `;
-  if (!user) throw new Error("Staff user is inactive, inconsistent or ineligible.");
+  if (!user) throw new StaffStateUnavailableError();
   return user;
 }

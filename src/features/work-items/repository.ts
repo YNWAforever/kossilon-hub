@@ -5,7 +5,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type postgres from "postgres";
-import { lockActiveStaffUser } from "@/features/auth/staff-state";
+import { lockActiveStaffUser, StaffStateUnavailableError } from "@/features/auth/staff-state";
 import { rankAssignmentCandidates } from "./assignment";
 import { snapshotSla, thresholdFor } from "./sla";
 import { enqueueNotification } from "@/features/notifications/outbox";
@@ -232,6 +232,17 @@ export function assignmentDecisionFor(input: {
     recommendation,
     overrideReason: requiresOverride ? overrideReason : null,
   };
+}
+
+function assignmentConflict(code: "WORK_ITEM_ASSIGNMENT_STALE" | "WORK_ITEM_ASSIGNEE_UNAVAILABLE") {
+  return Object.assign(
+    new Error(
+      code === "WORK_ITEM_ASSIGNMENT_STALE"
+        ? "Work item assignment is stale."
+        : "Selected assignee is no longer eligible. Refresh recommendations.",
+    ),
+    { statusCode: 409, code },
+  );
 }
 
 export function escalationTransitionsFor(
@@ -607,7 +618,7 @@ export function createWorkItemRepository(
         const item = await getWorkItem(tx, input.workItemId, true);
         if (!item) throw new Error("Work item not found.");
         if (item.version !== input.expectedVersion)
-          throw new Error("Work item assignment is stale.");
+          throw assignmentConflict("WORK_ITEM_ASSIGNMENT_STALE");
         if (input.expectedTeamId && item.teamId !== input.expectedTeamId) {
           throw new Error("Forbidden: work item moved outside the actor's team.");
         }
@@ -615,7 +626,13 @@ export function createWorkItemRepository(
           throw new Error("Closed work items cannot be assigned.");
         }
         const assignmentTarget = input.assignmentTarget ?? "owner";
-        const currentActor = await lockActiveStaffUser(tx, input.assignedById);
+        const currentActor = await lockActiveStaffUser(tx, input.assignedById).catch(
+          (error: unknown) => {
+            if (error instanceof StaffStateUnavailableError)
+              throw Object.assign(error, { statusCode: 403, code: "WORK_ITEM_ACTOR_UNAVAILABLE" });
+            throw error;
+          },
+        );
         if (
           currentActor.role !== "Admin" &&
           (currentActor.role !== "Manager" ||
@@ -624,12 +641,18 @@ export function createWorkItemRepository(
         ) {
           throw new Error("Forbidden: current Manager team or Admin required.");
         }
-        await lockActiveStaffUser(tx, input.selectedUserId);
+        await lockActiveStaffUser(tx, input.selectedUserId).catch((error: unknown) => {
+          if (error instanceof StaffStateUnavailableError)
+            throw assignmentConflict("WORK_ITEM_ASSIGNEE_UNAVAILABLE");
+          throw error;
+        });
         const recommendations = await recommendationsFor(tx, item, readNow(), {
           assignmentTarget,
           requiredRole: input.requiredRole,
           separationOfDuties: input.separationOfDuties,
         });
+        if (!recommendations.some((option) => option.userId === input.selectedUserId))
+          throw assignmentConflict("WORK_ITEM_ASSIGNEE_UNAVAILABLE");
         const decision = assignmentDecisionFor({
           selectedUserId: input.selectedUserId,
           recommendations,
@@ -646,7 +669,7 @@ export function createWorkItemRepository(
               update work_items set reviewer_id = ${input.selectedUserId},
                 version = version + 1, updated_at = now()
               where id = ${item.id} and version = ${input.expectedVersion} returning *`;
-        if (!updated[0]) throw new Error("Work item assignment is stale.");
+        if (!updated[0]) throw assignmentConflict("WORK_ITEM_ASSIGNMENT_STALE");
         await tx`
           insert into assignment_events (
             work_item_id, previous_assignee_id, assigned_to_id, assigned_by_id,

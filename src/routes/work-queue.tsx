@@ -1,7 +1,7 @@
 import { pageTitle } from "@/lib/page-title";
 import { describeWorkItemTitle } from "@/features/work-items/title";
 import { formatDateTime } from "@/lib/format-date";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, type SearchSchemaInput } from "@tanstack/react-router";
 import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
@@ -108,6 +108,7 @@ function WorkQueueSession() {
   } = search;
   const effectiveSla = view === "breached" ? ("breach" as const) : sla;
   const [assignmentItem, setAssignmentItem] = useState<PersistedWorkItem | null>(null);
+  const assignmentsNeedingRead = useRef(new Set<string>());
   const [acknowledgementItem, setAcknowledgementItem] = useState<PersistedWorkItem | null>(null);
   const canManage = session?.role === "Admin" || session?.role === "Manager";
   const filters = {
@@ -135,6 +136,14 @@ function WorkQueueSession() {
   const retained = useRetainedPage(readScope, response);
   const page = retained?.page;
   const items = useMemo(() => page?.items ?? [], [page]);
+  const currentAssignmentRow = queueQuery.data?.items.find((row) => row.id === assignmentItem?.id);
+  const assignmentQueueIssue = queueQuery.isError
+    ? "未能重新讀取目前隊列，請重新讀取工作及建議人選。"
+    : !currentAssignmentRow
+      ? "此工作不在目前隊列，請核對範圍後重新讀取。"
+      : currentAssignmentRow.status === "completed" || currentAssignmentRow.status === "cancelled"
+        ? "此工作已關閉，不能分配。請重新讀取目前隊列。"
+        : null;
   const owners = useMemo(
     () =>
       assignmentLabels(
@@ -515,13 +524,28 @@ function WorkQueueSession() {
           下一頁工作（每頁 50 項）
         </Button>
       ) : null}
-      {assignmentItem && items.some((i) => i.id === assignmentItem.id) ? (
+      {assignmentItem ? (
         <AssignmentDialog
-          key={actorScope}
+          key={`${actorScope}:${assignmentItem.id}`}
           item={assignmentItem}
           actorScope={actorScope}
+          queueIssue={assignmentQueueIssue}
+          initialReadRequired={assignmentsNeedingRead.current.has(assignmentItem.id)}
+          onReadRequired={() => {
+            assignmentsNeedingRead.current.add(assignmentItem.id);
+          }}
+          onReviewed={() => {
+            assignmentsNeedingRead.current.delete(assignmentItem.id);
+          }}
+          onReload={async () => {
+            const result = await queueQuery.refetch();
+            // A failed refetch can still contain cached rows. Never review those as fresh.
+            if (result.isError || !result.data) throw new Error("Queue reread failed.");
+            return result.data.items.find((item) => item.id === assignmentItem.id) ?? null;
+          }}
           onClose={() => setAssignmentItem(null)}
           onAssigned={() => {
+            assignmentsNeedingRead.current.delete(assignmentItem.id);
             setAssignmentItem(null);
             void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
           }}
@@ -544,34 +568,70 @@ function WorkQueueSession() {
 function AssignmentDialog({
   item,
   actorScope,
+  queueIssue,
+  initialReadRequired,
+  onReadRequired,
+  onReviewed,
+  onReload,
   onClose,
   onAssigned,
 }: {
   item: PersistedWorkItem;
   actorScope: string;
+  queueIssue: string | null;
+  initialReadRequired: boolean;
+  onReadRequired: () => void;
+  onReviewed: () => void;
+  onReload: () => Promise<PersistedWorkItem | null>;
   onClose: () => void;
   onAssigned: () => void;
 }) {
   const [selected, setSelected] = useState("");
   const [reason, setReason] = useState("");
   const [target, setTarget] = useState<"owner" | "reviewer">("owner");
+  // Keep the reviewed snapshot fixed until an explicit, successful reread.
+  const [reviewedItem, setReviewedItem] = useState(item);
+  const [readRequired, setReadRequired] = useState(initialReadRequired);
+  const [message, setMessage] = useState<string | null>(
+    initialReadRequired
+      ? "上次分配結果或隊列狀態未能確認。請重新讀取工作及建議人選，再選擇並確認。"
+      : null,
+  );
+  const [busy, setBusy] = useState(false);
+  const actionInFlight = useRef(false);
+  const mustReread = useRef(initialReadRequired);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const recommendations = useQuery({
     queryKey: ["work-item-recommendations", item.id, actorScope, target, item.version],
     queryFn: () =>
       recommendWorkItemAssignees({ data: { workItemId: item.id, assignmentTarget: target } }),
+    retry: false,
   });
   const assign = useMutation({
-    mutationFn: () =>
-      assignWorkItem({
-        data: {
-          workItemId: item.id,
-          assigneeId: selected,
-          expectedVersion: item.version,
-          assignmentTarget: target,
-          overrideReason: reason.trim() || undefined,
-        },
-      }),
-    onSuccess: onAssigned,
+    mutationFn: (input: Parameters<typeof assignWorkItem>[0]) => assignWorkItem(input),
+    retry: false,
+    onSuccess: () => {
+      if (mounted.current) onAssigned();
+    },
+    onError: (error) => {
+      // Even an unknown transport error may follow a committed write.
+      mustReread.current = true;
+      if (!mounted.current) return;
+      onReadRequired();
+      setReadRequired(true);
+      setSelected("");
+      setMessage(assignmentFailureMessage(error));
+    },
+    onSettled: () => {
+      actionInFlight.current = false;
+      if (mounted.current) setBusy(false);
+    },
   });
   const options = activeAssignmentOptions(recommendations.data ?? []);
   const labels = assignmentLabels(options);
@@ -581,30 +641,125 @@ function AssignmentDialog({
     (selectedRecommendation.rank !== 1 ||
       selectedRecommendation.factors.capacityUtilization >= 100),
   );
+  const closed = reviewedItem.status === "completed" || reviewedItem.status === "cancelled";
+  const canConfirm = Boolean(
+    !busy &&
+    !readRequired &&
+    !queueIssue &&
+    !closed &&
+    !recommendations.isError &&
+    !recommendations.isFetching &&
+    selectedRecommendation &&
+    (!requiresReason || reason.trim()),
+  );
+  useEffect(() => {
+    if (!queueIssue) return;
+    mustReread.current = true;
+    onReadRequired();
+    setReadRequired(true);
+    setSelected("");
+    setMessage(queueIssue);
+  }, [queueIssue, onReadRequired]);
+  useEffect(() => {
+    if (
+      selected &&
+      (recommendations.isError ||
+        (recommendations.isSuccess && !recommendations.isFetching && !selectedRecommendation))
+    ) {
+      setSelected("");
+    }
+  }, [
+    selected,
+    selectedRecommendation,
+    recommendations.isError,
+    recommendations.isSuccess,
+    recommendations.isFetching,
+  ]);
+
+  const reload = async () => {
+    if (actionInFlight.current) return;
+    actionInFlight.current = true;
+    mustReread.current = true;
+    setBusy(true);
+    setReadRequired(true);
+    setSelected("");
+    setMessage(null);
+    try {
+      // Settle BOTH reads before unlocking; neither cached data nor a partial read suffices.
+      const [work, candidates] = await Promise.allSettled([
+        onReload(),
+        recommendations.refetch({ throwOnError: true }),
+      ]);
+      if (!mounted.current) return;
+      if (
+        work.status === "rejected" ||
+        candidates.status === "rejected" ||
+        candidates.value.isError ||
+        !candidates.value.data
+      ) {
+        setMessage("未能重新讀取工作及建議人選，請重新讀取後再確認。");
+      } else if (!work.value) {
+        setMessage("此工作不在目前隊列，未能確認分配。請核對範圍後重新讀取。");
+      } else if (work.value.status === "completed" || work.value.status === "cancelled") {
+        setReviewedItem(work.value);
+        setMessage("此工作已關閉，不能分配。請重新讀取目前隊列。");
+      } else {
+        setReviewedItem(work.value);
+        mustReread.current = false;
+        onReviewed();
+        setReadRequired(false);
+        setMessage("已重新讀取目前分配及建議人選。請重新選擇人選，再確認分配。");
+      }
+    } finally {
+      actionInFlight.current = false;
+      if (mounted.current) setBusy(false);
+    }
+  };
+  const close = () => {
+    if (!actionInFlight.current) onClose();
+  };
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-xl gap-0 p-0">
+    <Dialog open onOpenChange={(open) => !open && close()}>
+      <DialogContent
+        className="max-w-xl gap-0 p-0"
+        onEscapeKeyDown={(event) => {
+          if (actionInFlight.current) event.preventDefault();
+        }}
+        onInteractOutside={(event) => {
+          if (actionInFlight.current) event.preventDefault();
+        }}
+      >
         <div className="border-b border-border px-5 py-4">
           <DialogHeader>
             <DialogTitle>分配工作項目</DialogTitle>
-            <DialogDescription>{describeWorkItemTitle(item.title)}</DialogDescription>
+            <DialogDescription>{describeWorkItemTitle(reviewedItem.title)}</DialogDescription>
           </DialogHeader>
         </div>
         <div className="max-h-[55vh] space-y-2 overflow-y-auto p-5">
+          <p className="text-sm text-muted-foreground">
+            目前負責同事：{reviewedItem.ownerName ?? (reviewedItem.ownerId ? "姓名待補" : "未分配")}
+            {" · "}覆核人：
+            {reviewedItem.reviewerName ?? (reviewedItem.reviewerId ? "姓名待補" : "未分配")}
+            {" · "}
+            {WORK_ITEM_STATUS_LABELS[reviewedItem.status]} · 版本 {reviewedItem.version}
+          </p>
           <Select
             aria-label="分配角色"
             value={target}
+            disabled={busy}
             onChange={(event) => {
+              if (actionInFlight.current) return;
               setTarget(event.target.value as "owner" | "reviewer");
               setSelected("");
-              setReason("");
             }}
           >
             <option value="owner">負責同事</option>
             <option value="reviewer">覆核人</option>
           </Select>
-          {recommendations.isError ? <p role="alert">可分配名單未能載入，請重新載入。</p> : null}
+          {recommendations.isError && !message ? (
+            <p role="alert">可分配名單未能載入，請重新載入。</p>
+          ) : null}
           {recommendations.isLoading ? (
             <p className="text-sm text-muted-foreground">建議人選載入中…</p>
           ) : null}
@@ -614,28 +769,53 @@ function AssignmentDialog({
               option={option}
               label={labels.get(option.userId)!}
               selected={selected === option.userId}
-              onSelect={() => setSelected(option.userId)}
+              disabled={busy || recommendations.isFetching || recommendations.isError || closed}
+              onSelect={() => {
+                if (!actionInFlight.current) setSelected(option.userId);
+              }}
             />
           ))}
-          {requiresReason ? (
+          {requiresReason || reason ? (
             <Textarea
               aria-label="例外理由"
               value={reason}
+              disabled={busy}
               onChange={(event) => setReason(event.target.value)}
               placeholder="不選首選人選或超出工作量的理由"
               className="mt-3 min-h-20 w-full"
             />
           ) : null}
-          {assign.isError ? (
-            <p className="text-sm text-destructive">未能儲存分配，請重新整理再試。</p>
+          {message ? (
+            <p role={readRequired ? "alert" : "status"} className="text-sm">
+              {message}
+            </p>
           ) : null}
+          {closed && !message ? <p role="alert">此工作已關閉，不能分配。</p> : null}
+          <Button disabled={busy} onClick={() => void reload()}>
+            重新讀取工作及建議人選
+          </Button>
         </div>
         <DialogFooter className="border-t border-border px-5 py-4">
-          <Button onClick={onClose}>取消</Button>
+          <Button disabled={busy} onClick={close}>
+            取消
+          </Button>
           <Button
             variant="primary"
-            disabled={!selected || (requiresReason && !reason.trim()) || assign.isPending}
-            onClick={() => assign.mutate()}
+            disabled={!canConfirm}
+            onClick={() => {
+              if (actionInFlight.current || mustReread.current || !canConfirm) return;
+              actionInFlight.current = true;
+              setBusy(true);
+              assign.mutate({
+                data: {
+                  workItemId: reviewedItem.id,
+                  assigneeId: selected,
+                  expectedVersion: reviewedItem.version,
+                  assignmentTarget: target,
+                  overrideReason: reason.trim() || undefined,
+                },
+              });
+            }}
           >
             確認分配
           </Button>
@@ -643,6 +823,29 @@ function AssignmentDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+function assignmentFailureMessage(error: unknown): string {
+  const detail =
+    error && typeof error === "object" ? (error as { code?: unknown; message?: unknown }) : {};
+  if (
+    detail.code === "WORK_ITEM_ASSIGNMENT_STALE" ||
+    detail.message === "Work item assignment is stale."
+  )
+    return "其他同事已更新分配，你的分配未有覆寫目前記錄。請重新讀取工作及建議人選，再選擇並確認。";
+  if (
+    detail.code === "WORK_ITEM_ASSIGNEE_UNAVAILABLE" ||
+    detail.message === "Selected assignee is no longer eligible. Refresh recommendations." ||
+    detail.message === "Selected assignee is not eligible for this work item."
+  )
+    return "人選已不符合分配資格，未能儲存。請重新讀取工作及建議人選，再選擇合資格人選。";
+  if (
+    detail.code === "WORK_ITEM_ACTOR_UNAVAILABLE" ||
+    detail.message === "Forbidden: inactive users cannot assign work." ||
+    detail.message === "Forbidden: inactive staff actor."
+  )
+    return "目前帳戶已不能執行分配。請重新讀取工作及建議人選，並核對帳戶權限。";
+  return "未能確認分配結果。請重新讀取工作及建議人選，再選擇並確認；系統不會自動重送。";
 }
 
 function AcknowledgementDialog({
@@ -702,17 +905,20 @@ function RecommendationOption({
   option,
   label,
   selected,
+  disabled,
   onSelect,
 }: {
   option: AssignmentRecommendation & AssignmentOption;
   label: string;
   selected: boolean;
+  disabled?: boolean;
   onSelect: () => void;
 }) {
   return (
     <button
       type="button"
       aria-pressed={selected}
+      disabled={disabled}
       onClick={onSelect}
       className={cn(
         "grid w-full grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border p-3 text-left",
