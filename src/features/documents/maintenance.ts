@@ -1,6 +1,7 @@
 import type postgres from "postgres";
 import type { SqlClient } from "@/server/db/client";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import { lockStaffLifecycleShared } from "@/features/auth/staff-lifecycle";
 import { createDocumentRepository } from "./repository";
 import { assertStaffDocumentAccess } from "./authorization";
 import { caseAssignmentVersionSql } from "@/features/annual-return/assignment-version";
@@ -77,6 +78,8 @@ export async function assignDocumentCase(
   assignment: Assignment,
   expectedVersion: string,
 ) {
+  // The bulk worker admits before its locks; direct callers must do likewise.
+  await lockStaffLifecycleShared(tx);
   const current = await prepareDocumentAssignment(tx, actor, id, assignment);
   if (current.version !== expectedVersion)
     throw Object.assign(new Error("Document assignment version changed."), { statusCode: 409 });

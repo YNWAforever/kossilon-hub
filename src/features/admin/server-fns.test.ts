@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
-import { updateStaffForActor, listStaffForActor } from "./server-fns";
+import {
+  updateStaffForActor,
+  listStaffForActor,
+  previewHandoverForActor,
+  executeHandoverForActor,
+  cancelHandoverForActor,
+} from "./server-fns";
 const admin: AuthenticatedActor = {
   authUserId: "verified-admin",
   userId: crypto.randomUUID(),
@@ -38,5 +44,46 @@ describe("Admin command authorization", () => {
       updateStaffForActor(admin, { ...input, actorId: "forged" } as typeof input, repository),
     ).rejects.toThrow();
     expect(repository.updateStaff).not.toHaveBeenCalled();
+  });
+  it("UC186 guards preview and confirmation before repository access, including forged actor input", async () => {
+    const selection = {
+      userId: input.userId,
+      expectedVersion: 1,
+      owner: null,
+      reviewer: null,
+      reason: "合成離職責任交接",
+    };
+    const command = { ...selection, fingerprint: "a".repeat(64), operationId: crypto.randomUUID() };
+    const repository = {
+      previewHandover: vi.fn(),
+      executeHandover: vi.fn(),
+      cancelHandover: vi.fn(),
+    };
+    for (const role of ["Manager", "Staff", "Client"] as const) {
+      await expect(cancelHandoverForActor({ ...admin, role }, command, repository)).rejects.toThrow(
+        /Admin|Forbidden/,
+      );
+      await expect(
+        previewHandoverForActor({ ...admin, role }, selection, repository),
+      ).rejects.toThrow(/Admin|Forbidden/);
+      await expect(
+        executeHandoverForActor({ ...admin, role }, command, repository),
+      ).rejects.toThrow(/Admin|Forbidden/);
+    }
+    await expect(
+      executeHandoverForActor({ ...admin, active: false }, command, repository),
+    ).rejects.toThrow();
+    await expect(
+      executeHandoverForActor(
+        admin,
+        { ...command, actorId: admin.userId } as typeof command,
+        repository,
+      ),
+    ).rejects.toThrow();
+    expect(repository.previewHandover).not.toHaveBeenCalled();
+    expect(repository.executeHandover).not.toHaveBeenCalled();
+    expect(repository.cancelHandover).not.toHaveBeenCalled();
+    await executeHandoverForActor(admin, command, repository);
+    expect(repository.executeHandover).toHaveBeenCalledExactlyOnceWith(admin, command);
   });
 });

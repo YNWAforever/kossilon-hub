@@ -1,0 +1,1367 @@
+// UC186, exact disposable target gate; injected identity is not native Auth/RLS.
+import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
+import { appendFileSync, closeSync, openSync, realpathSync } from "node:fs";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { getCurrentTest } from "@vitest/runner";
+import { expect, it, onTestFinished, vi } from "vitest";
+import type { SqlClient } from "@/server/db/client";
+import type postgres from "postgres";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import type { HandoverSelection } from "./types";
+const RUN = "cosec-20261024-handover-exec-a30e04f1",
+  ROOT = "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023";
+type Target = {
+  uri: string;
+  containerId: string;
+  database: string;
+  identity: { systemId: string };
+};
+type Gate = {
+  verifyEmptyTarget(): Promise<Target>;
+  verifyOwnedTarget(): Promise<Target>;
+  publicTarget(t: Target): object;
+  sealForDisposal(
+    ok: boolean,
+    ids: object,
+    cleanup: { allClientsClosed: boolean; count: number; pids: number[] },
+  ): Promise<void>;
+};
+const id = () => `a30e04f1-0186-4186-8186-${randomBytes(6).toString("hex")}`;
+it.skipIf(process.env.COSEC_UC186_RUN_ID !== RUN)(
+  "UC186 lawful handover and responsibility admission versus disable",
+  async () => {
+    assert.equal(realpathSync(process.cwd()), ROOT);
+    const signal = getCurrentTest()?.context.signal;
+    assert(signal);
+    const task = journey(signal);
+    onTestFinished(async () => {
+      await task.catch(() => undefined);
+    });
+    await task;
+  },
+  240_000,
+);
+async function journey(signal: AbortSignal) {
+  const attempt = process.env.COSEC_UC186_ATTEMPT!;
+  assert.match(attempt, /^(red|green)(?:-r[2-9])?$/);
+  const folder = resolve(ROOT, "docs/audit-remediation", RUN, "db");
+  assert.equal(folder, process.env.COSEC_UC186_EVENTS_DIR);
+  const fd = openSync(resolve(folder, `UC186-${attempt}.jsonl`), "wx"),
+    record = (phase: string, details: object = {}) =>
+      appendFileSync(
+        fd,
+        JSON.stringify({ run: RUN, attempt, phase, utc: new Date().toISOString(), ...details }) +
+          "\n",
+      );
+  const ids = { team: id(), users: [id(), id()], profiles: [id(), id()] };
+  const raw: SqlClient[] = [],
+    pids: number[] = [],
+    errors: unknown[] = [];
+  let gate: Gate | undefined,
+    ok = false;
+  const fetcher = vi.fn(() => {
+    throw new Error("External HTTP forbidden in local UC186");
+  });
+  try {
+    signal.throwIfAborted();
+    record("planned-ids", { ids });
+    gate = (await import(
+      /* @vite-ignore */ pathToFileURL(resolve(folder, "../isolated-db-runner.mjs")).href
+    )) as Gate;
+    const target = await gate.verifyEmptyTarget();
+    assert.equal(target.containerId, process.env.COSEC_UC186_TARGET_ID);
+    assert.equal(target.identity.systemId, process.env.COSEC_UC186_SYSTEM_ID);
+    assert.equal(target.uri, process.env.TEST_DATABASE_URL);
+    record("before-application-import-or-client", gate.publicTarget(target));
+    vi.stubGlobal("fetch", fetcher);
+    const [
+      { createSqlClient },
+      { guardSqlTestLifetime },
+      { createAdminRepository },
+      { requireActor },
+      { createIncorporationRepository },
+    ] = await Promise.all([
+      import("@/server/db/client"),
+      import("@/test/sql-test-lifetime"),
+      import("./repository"),
+      import("@/features/auth/neon-auth-server"),
+      import("@/features/incorporation/repository"),
+    ]);
+    async function client() {
+      const checked = await gate!.verifyOwnedTarget();
+      assert.equal(checked.containerId, target.containerId);
+      assert.equal(checked.identity.systemId, target.identity.systemId);
+      const c = createSqlClient(checked.uri, { max: 1, ssl: false });
+      raw.push(c);
+      const sql = guardSqlTestLifetime(c, () => signal);
+      const [r] =
+        await sql`select current_database() database,pg_backend_pid() pid,(select system_identifier::text from pg_control_system()) system_id`;
+      assert.equal(r.database, target.database);
+      assert.equal(r.system_id, target.identity.systemId);
+      pids.push(Number(r.pid));
+      await sql`set statement_timeout='15000'`;
+      await sql`set lock_timeout='8000'`;
+      record("client-identity", r);
+      return sql;
+    }
+    const writer = await client(),
+      disabling = await client(),
+      creating = await client(),
+      observer = await client();
+    expect(new Set(pids).size).toBe(4);
+    await writer.begin(async (tx) => {
+      await tx`insert into teams(id,name) values(${ids.team},${RUN})`;
+      for (const [i, user] of ids.users.entries()) {
+        const role = i === 0 ? "Admin" : "Staff";
+        await tx`insert into users(id,name,email,role,team_id) values(${user},${RUN + ":" + role},${user + "@example.test"},${role},${ids.team})`;
+        await tx`insert into staff_profiles(id,user_id,auth_user_id,role,team_id) values(${ids.profiles[i]},${user},${RUN + ":" + user},${role},${ids.team})`;
+      }
+    });
+    const admin = await requireActor(new Request("https://example.test/admin"), {
+      sql: observer,
+      auth: {
+        getSession: async () => ({
+          user: { id: RUN + ":" + ids.users[0], email: "synthetic@example.test" },
+        }),
+        signOut: async () => new Response(null, { status: 204 }),
+      },
+    });
+    const remove = {
+      userId: ids.users[1],
+      expectedVersion: 1,
+      role: "Staff" as const,
+      teamId: ids.team,
+      active: false,
+    };
+    let release!: () => void, ready!: () => void;
+    const hold = new Promise<void>((r) => {
+        release = r;
+      }),
+      barrier = new Promise<void>((r) => {
+        ready = r;
+      });
+    const wrapped = new Proxy(disabling, {
+      get(target, key) {
+        if (key !== "begin") return Reflect.get(target, key, target);
+        return (run: (tx: SqlClient) => Promise<unknown>) =>
+          target.begin(async (tx) => {
+            const value = await run(tx as unknown as SqlClient);
+            ready();
+            await hold;
+            signal.throwIfAborted();
+            return value;
+          });
+      },
+    });
+    const first = createAdminRepository({ sql: wrapped }).updateStaff(admin, remove);
+    let joined: Promise<PromiseSettledResult<unknown>[]> = Promise.allSettled([first]);
+    let waited = false;
+    try {
+      await Promise.race([barrier, first]);
+      const second = createIncorporationRepository({ sql: creating }).createCase({
+        proposedCompanyNameEn: RUN,
+        proposedCompanyNameZh: null,
+        proposedRegisteredOffice: "Synthetic",
+        proposedCompanySecretary: "Synthetic",
+        registeredCapital: 10000,
+        businessNature: "Synthetic",
+        ownerId: ids.users[1],
+        teamId: ids.team,
+        targetCompletionDate: "2026-11-01",
+        actorId: ids.users[0],
+      });
+      joined = Promise.allSettled([first, second]);
+      const deadline = Date.now() + 4000;
+      while (Date.now() < deadline) {
+        signal.throwIfAborted();
+        const [r] =
+          await observer`select wait_event_type,pg_blocking_pids(pid) blockers from pg_stat_activity where pid=${pids[2]}`;
+        if (r?.wait_event_type === "Lock" && r.blockers.includes(pids[1])) {
+          waited = true;
+          record("observed-disable-before-create-wait", r);
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 20));
+      }
+    } finally {
+      release();
+      await joined;
+    }
+    const outcomes = await joined;
+    const [state] =
+      await observer`select u.active user_active,sp.active profile_active,sp.access_revision,(select count(*)::int from incorporation_cases where owner_id=u.id) owned_cases from users u join staff_profiles sp on sp.user_id=u.id where u.id=${ids.users[1]}`;
+    record("disable-before-create-result", {
+      waited,
+      outcomes: outcomes.map((r) =>
+        r.status === "fulfilled"
+          ? { status: r.status, value: r.value }
+          : { status: r.status, message: String(r.reason) },
+      ),
+      state,
+    });
+    expect(waited).toBe(true);
+    expect(outcomes[0].status).toBe("fulfilled");
+    expect(outcomes[1].status).toBe("rejected");
+    expect(state).toMatchObject({ user_active: false, profile_active: false, owned_cases: 0 });
+    record("creation-race-refused-after-disable", { state });
+    await extendJourney({
+      writer,
+      disabling,
+      creating,
+      observer,
+      pids,
+      admin,
+      ids,
+      signal,
+      record,
+    });
+    expect(fetcher).not.toHaveBeenCalled();
+    record("journey-passed", {
+      externalHttpCalls: 0,
+      nativeAuth: false,
+      nativeHttp: false,
+      dbRls: false,
+    });
+    ok = true;
+  } catch (error) {
+    errors.push(error);
+    record("failed-preserved", { message: error instanceof Error ? error.message : String(error) });
+  } finally {
+    const ends = await Promise.allSettled(raw.map((c) => c.end({ timeout: 5 })));
+    for (const e of ends) if (e.status === "rejected") errors.push(e.reason);
+    try {
+      if (gate)
+        await gate.sealForDisposal(ok && errors.length === 0, ids, {
+          allClientsClosed: ends.every((e) => e.status === "fulfilled"),
+          count: raw.length,
+          pids,
+        });
+    } catch (e) {
+      errors.push(e);
+    }
+    vi.unstubAllGlobals();
+    closeSync(fd);
+  }
+  if (errors.length) throw new AggregateError(errors, "UC186 journey failed; retained evidence");
+}
+
+/** One graph and four already gated clients; no second fixture or external provider. */
+async function extendJourney(context: {
+  writer: SqlClient;
+  disabling: SqlClient;
+  creating: SqlClient;
+  observer: SqlClient;
+  pids: number[];
+  admin: AuthenticatedActor;
+  ids: { team: string; users: string[]; profiles: string[] };
+  signal: AbortSignal;
+  record: (phase: string, details?: object) => void;
+}) {
+  const { writer, disabling, creating, observer, pids, admin, ids, signal, record } = context;
+  const [
+    { createAdminRepository },
+    { createAnnualReturnRepository },
+    { createIncorporationRepository },
+    { createCorporateChangeRequestRepository },
+    { createWorkItemRepository },
+    { lockStaffLifecycleShared },
+    { requireActor },
+  ] = await Promise.all([
+    import("./repository"),
+    import("@/features/annual-return/repository"),
+    import("@/features/incorporation/repository"),
+    import("@/features/corporate-changes/repository"),
+    import("@/features/work-items/repository"),
+    import("@/features/auth/staff-lifecycle"),
+    import("@/features/auth/neon-auth-server"),
+  ]);
+  const people = {
+    source: id(),
+    owner: id(),
+    reviewer: id(),
+    otherOwner: id(),
+    otherReviewer: id(),
+    inactive: id(),
+    foreign: id(),
+    noSkill: id(),
+    manager: id(),
+    otherAdmin: id(),
+    reverse: id(),
+    ownerDisableFirst: id(),
+    ownerAssignFirst: id(),
+    reviewerDisableFirst: id(),
+    reviewerAssignFirst: id(),
+    empty: id(),
+  };
+  type PersonKey = keyof typeof people;
+  const profiles = Object.fromEntries(Object.keys(people).map((key) => [key, id()])) as Record<
+    PersonKey,
+    string
+  >;
+  const owned = {
+    people,
+    profiles,
+    foreignTeam: id(),
+    calendar: id(),
+    policies: [id(), id()],
+    companies: [id(), id(), id()],
+    pageCases: Array.from({ length: 97 }, id),
+    controls: { annual: id(), incorporation: id(), corporate: id(), work: [id(), id()] },
+    normalCases: [] as string[],
+    normalWork: [] as string[],
+    raceCases: [] as string[],
+    raceWork: [] as string[],
+    operations: [] as string[],
+  };
+  // Keep every allocated/returned ID in the existing failure/disposal seal.
+  Object.assign(ids, { extension: owned });
+  record("extension-planned-ids", { owned });
+  const actor = (key: PersonKey): AuthenticatedActor => ({
+    userId: people[key],
+    authUserId: RUN + ":" + people[key],
+    role: key === "manager" ? "Manager" : key === "otherAdmin" ? "Admin" : "Staff",
+    teamId: key === "foreign" ? owned.foreignTeam : ids.team,
+    active: key !== "inactive",
+  });
+  const session = (userId: string) => ({
+    getSession: async () => ({ user: { id: RUN + ":" + userId, email: userId + "@example.test" } }),
+    signOut: async () => new Response(null, { status: 204 }),
+  });
+  await writer.begin(async (tx) => {
+    await lockStaffLifecycleShared(tx);
+    await tx`insert into teams(id,name) values(${owned.foreignTeam},${RUN + ":foreign"})`;
+    for (const key of Object.keys(people) as PersonKey[]) {
+      const a = actor(key);
+      await tx`insert into users(id,name,email,role,team_id,active) values(${a.userId!},${RUN + ":" + key},${a.userId + "@example.test"},${a.role},${a.teamId},${a.active})`;
+      await tx`insert into staff_profiles(id,user_id,auth_user_id,role,team_id,active,capacity_points) values(${profiles[key]},${a.userId!},${a.authUserId},${a.role},${a.teamId},${a.active},10000)`;
+      if (key !== "noSkill")
+        await tx`insert into staff_skills(staff_profile_id,skill_key,proficiency) values(${profiles[key]},'annual-return',5)`;
+    }
+    const day = [{ start: "09:00", end: "18:00" }];
+    await tx`insert into business_calendars(id,name,weekly_schedule,effective_from,created_by) values(${owned.calendar},${RUN},${tx.json({ monday: day, tuesday: day, wednesday: day, thursday: day, friday: day, saturday: [], sunday: [] })},'2020-01-01',${admin.userId!})`;
+    for (const [index, workType] of ["annual_return_case", "corporate_change_request"].entries())
+      await tx`insert into sla_policies(id,policy_key,version,name,work_type,business_calendar_id,warning_minutes,due_minutes,effective_from,created_by) values(${owned.policies[index]},${RUN + ":" + workType},1,${RUN},${workType},${owned.calendar},60,120,'2020-01-01',${admin.userId!})`;
+    for (const companyId of owned.companies)
+      await tx`insert into companies(id,company_name,cr_number,br_number,incorporation_date,annual_return_basis_date,registered_office,company_secretary,status,assigned_owner_id,assigned_team_id,data_origin) values(${companyId},${RUN + ":company"},${companyId},${companyId},'2020-01-01','2026-01-01','Synthetic','Synthetic','active',${people.otherOwner},${ids.team},'client')`;
+  });
+  const oldSource = await requireActor(new Request("https://example.test/admin"), {
+    sql: observer,
+    auth: session(people.source),
+  });
+  const repo = createAdminRepository({ sql: creating });
+  const independent = createAdminRepository({ sql: observer });
+  const annual = createAnnualReturnRepository({ sql: creating });
+  const corporate = createCorporateChangeRequestRepository(undefined, { sql: creating });
+  const workRepo = createWorkItemRepository({ sql: creating });
+  const [template] = await observer<{ id: string }[]>`
+    select id from checklist_templates where service_type='Annual Return — Private Ltd' and active order by id limit 1`;
+  assert(template, "Migrated annual-return template required; no production seed permitted");
+  const a = await annual.createCaseRecord({
+    companyId: owned.companies[0],
+    templateId: template.id,
+    ownerId: people.source,
+    invoiceNumber: RUN + ":owner",
+    feeAmount: 1000,
+    actorId: admin.userId!,
+  });
+  const b = await annual.createCaseRecord({
+    companyId: owned.companies[1],
+    templateId: template.id,
+    ownerId: people.otherOwner,
+    invoiceNumber: RUN + ":reviewer",
+    feeAmount: 1000,
+    actorId: admin.userId!,
+  });
+  await annual.assignReviewer({
+    caseId: a.id,
+    reviewerId: people.otherReviewer,
+    actorId: admin.userId!,
+  });
+  await annual.assignReviewer({ caseId: b.id, reviewerId: people.source, actorId: admin.userId! });
+  const incorporationInput = (ownerId: string, label: string) => ({
+    proposedCompanyNameEn: RUN + ":" + label,
+    proposedCompanyNameZh: null,
+    proposedRegisteredOffice: "Synthetic",
+    proposedCompanySecretary: "Synthetic",
+    registeredCapital: 10000,
+    businessNature: "Synthetic",
+    ownerId,
+    teamId: ids.team,
+    targetCompletionDate: "2026-11-01",
+    actorId: admin.userId!,
+  });
+  const incorporation = await createIncorporationRepository({ sql: creating }).createCase(
+    incorporationInput(people.source, "normal-incorporation"),
+  );
+  const change = await corporate.createRequest({
+    companyId: owned.companies[2],
+    changeType: "name_change",
+    actorId: people.source,
+    quotedFee: 1000,
+    newNameEn: RUN + ":new name",
+    newNameZh: null,
+  });
+  owned.normalCases.push(a.id, b.id, incorporation.id, change.id);
+  const sourceWork = await observer<
+    {
+      id: string;
+      annual_return_case_id: string | null;
+      corporate_change_request_id: string | null;
+      owner_id: string | null;
+      reviewer_id: string | null;
+      version: number;
+    }[]
+  >`select id,annual_return_case_id,corporate_change_request_id,owner_id,reviewer_id,version from work_items where annual_return_case_id=any(${[a.id, b.id]}::uuid[]) or corporate_change_request_id=${change.id} order by id`;
+  expect(sourceWork).toHaveLength(3);
+  owned.normalWork.push(...sourceWork.map((w) => w.id));
+  record("normal-domain-creations", { cases: owned.normalCases, work: sourceWork });
+  await writer.begin(async (tx) => {
+    await lockStaffLifecycleShared(tx);
+    await tx`insert into incorporation_cases(id,proposed_company_name_en,proposed_registered_office,proposed_company_secretary,registered_capital,business_nature,owner_id,team_id,target_completion_date)
+      select u.id,${RUN + ":page"},'Synthetic','Synthetic',10000,'Synthetic',${people.source},${ids.team},'2026-11-01' from unnest(${owned.pageCases}::uuid[]) u(id)`;
+    await tx`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,current_status,owner_id,reviewer_id,locked_at,completed_at) values(${owned.controls.annual},${owned.companies[0]},2025,'2025-01-01','2025-02-12','Completed',${people.source},${people.otherReviewer},now(),now())`;
+    await tx`insert into incorporation_cases(id,proposed_company_name_en,proposed_registered_office,proposed_company_secretary,registered_capital,business_nature,status,owner_id,team_id,target_completion_date,company_id,completed_at) values(${owned.controls.incorporation},${RUN + ":terminal"},'Synthetic','Synthetic',10000,'Synthetic','Completed',${people.source},${ids.team},'2026-11-01',${owned.companies[0]},now())`;
+    await tx`insert into corporate_change_requests(id,company_id,change_type,status,owner_id,quoted_fee,new_name_en) values(${owned.controls.corporate},${owned.companies[2]},'name_change','Cancelled',${people.source},1000,${RUN + ":terminal"})`;
+    for (const [index, status] of ["open", "completed"].entries()) {
+      // Explicit synthetic controls, not claims that a filing/provider completed.
+      await tx`insert into work_items(id,company_id,case_type,annual_return_case_id,source_event_key,source_event_type,work_type,required_skill_key,title,status,owner_id,reviewer_id,team_id,sla_policy_version_id,sla_started_at,sla_warning_at,sla_due_at,completed_at)
+        values(${owned.controls.work[index]},${owned.companies[0]},'annual_return',${a.id},${RUN + ":control:" + index},'synthetic_control','annual_return_case','annual-return','Synthetic preservation control',${status},${index === 0 ? people.otherOwner : people.source},${people.otherReviewer},${ids.team},${owned.policies[0]},'2026-10-01T00:00:00Z','2026-10-01T01:00:00Z','2026-10-01T02:00:00Z',${index === 0 ? null : "2026-10-01T03:00:00Z"}::timestamptz)`;
+    }
+  });
+  const tables = await observer<{ table_name: string }[]>`
+    select table_name from information_schema.tables where table_schema='public' and table_type='BASE TABLE' order by table_name`;
+  assert(tables.length > 0);
+  const projectionQuery = tables
+    .map(({ table_name: table }) => {
+      assert.match(table, /^[a-z_][a-z0-9_]*$/);
+      return `select '${table}' table_name,coalesce(jsonb_agg(jsonb_build_object('row',to_jsonb(t),'xmin',t.xmin::text) order by to_jsonb(t)::text),'[]'::jsonb) rows from public."${table}" t`;
+    })
+    .join(" union all ");
+  async function projection() {
+    signal.throwIfAborted();
+    const rows = await observer.unsafe<{ table_name: string; rows: unknown }[]>(projectionQuery);
+    return Object.fromEntries(rows.map((r) => [r.table_name, r.rows]));
+  }
+  const errorFacts = (error: unknown) => {
+    const e = error as { message?: string; code?: string; statusCode?: number };
+    return { message: e?.message ?? String(error), code: e?.code, statusCode: e?.statusCode };
+  };
+  const conflictMessage = /^責任或員工版本已改變，請重新預覽。$/;
+  const currentAdminMessage = /^Forbidden: current verified active Admin profile required\.$/;
+  const workEligibilityMessage = /^接手人不符合此工作的角色、技能或分工要求。$/;
+  // Fixed per-scenario oracles: an unexpected SQL/transport/programming error
+  // must never be accepted as evidence of a domain or authorization refusal.
+  const denialMessages = new Map<string, RegExp>([
+    [
+      "same-team-different-company-parent-refused",
+      /^案件與工作(?:的公司或)?團隊不一致，請先核對。$/,
+    ],
+    ["staff-role", /^Forbidden: Admin access required\.$/],
+    ["manager-role", /^Forbidden: Admin access required\.$/],
+    ["client-role", /^Forbidden: staff access is required\.$/],
+    ["caller-inactive", /^Forbidden: staff account is inactive\.$/],
+    ["forged-admin-role", currentAdminMessage],
+    ["wrong-current-auth-id", currentAdminMessage],
+    ["wrong-current-user-id", currentAdminMessage],
+    ["inactive-receiver", /^接手人及所屬團隊必須有效。$/],
+    ["foreign-team-receiver", /^接手人必須屬於案件的業務團隊。$/],
+    ["missing-required-skill", workEligibilityMessage],
+    ["default-staff-role-required", workEligibilityMessage],
+    ["cross-duty-conflict", /^負責與覆核職責衝突。$/],
+    ["same-owner-reviewer", /^負責及覆核接手人必須分開。$/],
+    ["source-cannot-receive", /^接手人不能是來源員工。$/],
+    ["missing-owner-selection", /^請選擇所有所需的負責及覆核接手人。$/],
+    ["current-admin-profile-inconsistent", currentAdminMessage],
+    ["current-admin-both-inactive", currentAdminMessage],
+    ["receiver-user-profile-team-inconsistent", /^需要狀態一致的員工身份。$/],
+    ["source-revision-stale", conflictMessage],
+    ["receiver-revision-stale", conflictMessage],
+    ["page-needs-fingerprint", conflictMessage],
+    ["unwritable-parent", /^已鎖定或完成的案件不可交接。$/],
+    ["actual-parent-change-invalidates-execution", conflictMessage],
+    ["actual-parent-change-invalidates-next-page", conflictMessage],
+    [
+      "schema-read-fails-closed",
+      /^資料庫結構不相容或無法核實，操作未執行。請查看系統運作後重試。$/,
+    ],
+    ["real-parent-update-rolls-back-completely", /^Synthetic failure after parent update$/],
+    ["empty-execution-refused", /^沒有未交責任，沒有執行交接。$/],
+    ["cancelled-operation-fences-valid-fingerprint-late-submit", conflictMessage],
+    ["cancelled-operation-altered-payload", conflictMessage],
+    ["cancelled-operation-altered-actor", conflictMessage],
+    ["committed-cancel-altered-payload", conflictMessage],
+    ["committed-cancel-altered-actor", conflictMessage],
+    ["same-operation-altered-payload", conflictMessage],
+    ["same-operation-altered-actor", conflictMessage],
+    ["new-operation-cannot-reuse-stale-scope", conflictMessage],
+    [
+      "disabled-old-auth-identity",
+      /^Forbidden: staff account is inactive or access state is inconsistent\.$/,
+    ],
+    ["disabled-old-actor-cannot-create", /^Incorporation actor not found or inactive\.$/],
+    ["disabled-old-owner-cannot-receive-new-case", /^Incorporation owner not found or inactive\.$/],
+  ]);
+  async function denied(label: string, action: () => Promise<unknown>, statusCode?: number) {
+    const message = denialMessages.get(label);
+    assert(message, `Missing required denial message oracle: ${label}`);
+    const before = await projection();
+    record(label + "-before", { projection: before });
+    const [outcome] = await Promise.allSettled([Promise.resolve().then(action)]);
+    const after = await projection();
+    record(label, {
+      outcome: outcome.status,
+      error: outcome.status === "rejected" ? errorFacts(outcome.reason) : null,
+      projection: after,
+    });
+    expect(after).toEqual(before);
+    expect(outcome.status).toBe("rejected");
+    if (outcome.status === "rejected") {
+      expect(outcome.reason).toBeInstanceOf(Error);
+      const facts = errorFacts(outcome.reason);
+      expect(facts.message).toMatch(message);
+      if (statusCode !== undefined) expect(facts.statusCode).toBe(statusCode);
+      if (statusCode === 409 || facts.statusCode === 409)
+        expect(facts.code).toBe("HANDOVER_CONFLICT");
+      if (statusCode === 503 || facts.statusCode === 503)
+        expect(facts.code).toBe("SCHEMA_WRITE_BLOCKED");
+    }
+  }
+  const selection: HandoverSelection = {
+    userId: people.source,
+    expectedVersion: 1,
+    owner: { userId: people.owner, expectedVersion: 1 },
+    reviewer: { userId: people.reviewer, expectedVersion: 1 },
+    reason: "Synthetic explicit user-entered handover reason",
+  };
+  const ownerWork = sourceWork.find((w) => w.annual_return_case_id === a.id)!;
+  await writer.begin(async (tx) => {
+    await lockStaffLifecycleShared(tx);
+    await tx`update work_items set company_id=${owned.companies[1]} where id=${ownerWork.id}`;
+  });
+  await denied("same-team-different-company-parent-refused", () =>
+    repo.previewHandover(admin, selection),
+  );
+  await writer.begin(async (tx) => {
+    await lockStaffLifecycleShared(tx);
+    await tx`update work_items set company_id=${owned.companies[0]} where id=${ownerWork.id}`;
+  });
+  await writer.begin(async (tx) => {
+    await lockStaffLifecycleShared(tx);
+    await tx`update work_items set status='blocked',version=version+1 where id=${ownerWork.id}`;
+  });
+  ownerWork.version++;
+  const [blockedBefore] =
+    await observer`select id,status,version from work_items where id=${ownerWork.id}`;
+  expect(blockedBefore).toMatchObject({ status: "blocked", version: ownerWork.version });
+  record("blocked-owner-work-precondition", { work: blockedBefore });
+  const beforePreview = await projection();
+  const firstPage = await repo.previewHandover(admin, selection);
+  expect(firstPage).toMatchObject({ caseCount: 101, workItemCount: 3, nextCursor: 100 });
+  expect(firstPage.entries).toHaveLength(100);
+  const lastPage = await repo.previewHandover(admin, {
+    ...selection,
+    cursor: 100,
+    fingerprint: firstPage.fingerprint,
+  });
+  expect(lastPage.entries).toHaveLength(4);
+  expect(lastPage.nextCursor).toBeNull();
+  expect(lastPage.fingerprint).toBe(firstPage.fingerprint);
+  const entryIds = [...firstPage.entries, ...lastPage.entries].map((e) => e.id);
+  expect(new Set(entryIds).size).toBe(104);
+  expect(entryIds.sort()).toEqual(
+    [...owned.normalCases, ...owned.pageCases, ...owned.normalWork].sort(),
+  );
+  expect(await projection()).toEqual(beforePreview);
+  record("preview-cancellation-and-104-entry-pagination-read-only", {
+    firstPage,
+    lastPage,
+    projection: beforePreview,
+  });
+  const operationId = id();
+  owned.operations.push(operationId);
+  let command = { ...selection, fingerprint: firstPage.fingerprint, operationId };
+  for (const [label, identity] of [
+    ["staff-role", actor("source")],
+    ["manager-role", actor("manager")],
+    ["client-role", { ...actor("source"), role: "Client" as const }],
+    ["caller-inactive", { ...admin, active: false }],
+    ["forged-admin-role", { ...actor("manager"), role: "Admin" as const }],
+    ["wrong-current-auth-id", { ...admin, authUserId: RUN + ":unknown-auth" }],
+    ["wrong-current-user-id", { ...admin, userId: people.source }],
+  ] as const)
+    await denied(label, () => repo.executeHandover(identity, command));
+  for (const [label, replacement] of [
+    ["inactive-receiver", "inactive"],
+    ["foreign-team-receiver", "foreign"],
+    ["missing-required-skill", "noSkill"],
+    ["default-staff-role-required", "manager"],
+    ["cross-duty-conflict", "otherReviewer"],
+  ] as const)
+    await denied(label, () =>
+      repo.previewHandover(admin, {
+        ...selection,
+        owner: { userId: people[replacement], expectedVersion: 1 },
+      }),
+    );
+  await denied("same-owner-reviewer", () =>
+    repo.previewHandover(admin, { ...selection, reviewer: selection.owner }),
+  );
+  await denied("source-cannot-receive", () =>
+    repo.previewHandover(admin, {
+      ...selection,
+      owner: { userId: people.source, expectedVersion: 1 },
+    }),
+  );
+  await denied("missing-owner-selection", () =>
+    repo.previewHandover(admin, { ...selection, owner: null }),
+  );
+  await writer.begin(async (tx) => {
+    await lockStaffLifecycleShared(tx);
+    await tx`update staff_profiles set active=false where user_id=${people.otherAdmin}`;
+  });
+  await denied("current-admin-profile-inconsistent", () =>
+    repo.executeHandover(actor("otherAdmin"), command),
+  );
+  await writer.begin(async (tx) => {
+    await lockStaffLifecycleShared(tx);
+    await tx`update users set active=false where id=${people.otherAdmin}`;
+  });
+  await denied("current-admin-both-inactive", () =>
+    repo.executeHandover(actor("otherAdmin"), command),
+  );
+  await writer.begin(async (tx) => {
+    await lockStaffLifecycleShared(tx);
+    await tx`update users set active=true where id=${people.otherAdmin}`;
+    await tx`update staff_profiles set active=true where user_id=${people.otherAdmin}`;
+    await tx`update staff_profiles set team_id=${owned.foreignTeam} where user_id=${people.owner}`;
+  });
+  await denied("receiver-user-profile-team-inconsistent", () =>
+    repo.previewHandover(admin, selection),
+  );
+  await writer.begin(async (tx) => {
+    await lockStaffLifecycleShared(tx);
+    await tx`update staff_profiles set team_id=${ids.team} where user_id=${people.owner}`;
+  });
+  await denied(
+    "source-revision-stale",
+    () => repo.executeHandover(admin, { ...command, expectedVersion: 2 }),
+    409,
+  );
+  await denied(
+    "receiver-revision-stale",
+    () =>
+      repo.executeHandover(admin, {
+        ...command,
+        owner: { userId: people.owner, expectedVersion: 2 },
+      }),
+    409,
+  );
+  await denied(
+    "page-needs-fingerprint",
+    () => repo.previewHandover(admin, { ...selection, cursor: 100 }),
+    409,
+  );
+  await writer.begin(async (tx) => {
+    await lockStaffLifecycleShared(tx);
+    await tx`update annual_return_cases set locked_at=now() where id=${a.id}`;
+  });
+  await denied("unwritable-parent", () => repo.previewHandover(admin, selection));
+  await writer.begin(async (tx) => {
+    await lockStaffLifecycleShared(tx);
+    await tx`update annual_return_cases set locked_at=null where id=${a.id}`;
+    await tx`update incorporation_cases set business_nature='Synthetic revised after preview',updated_at=now() where id=${incorporation.id}`;
+  });
+  await denied(
+    "actual-parent-change-invalidates-execution",
+    () => repo.executeHandover(admin, command),
+    409,
+  );
+  await denied(
+    "actual-parent-change-invalidates-next-page",
+    () =>
+      repo.previewHandover(admin, {
+        ...selection,
+        cursor: 100,
+        fingerprint: firstPage.fingerprint,
+      }),
+    409,
+  );
+  const current = await repo.previewHandover(admin, selection);
+  command = { ...command, fingerprint: current.fingerprint };
+  // Inject at the transport boundary AFTER a real parent UPDATE has executed.
+  // All other SQL remains real, and the production outer transaction must roll back.
+  let updatedBeforeFailure = false,
+    catalogFailureInjected = false;
+  function faultClient(mode: "after-parent" | "catalog" | "lost-response") {
+    return new Proxy(creating, {
+      get(target, key) {
+        if (key !== "begin") return Reflect.get(target, key, target);
+        return async (run: (tx: postgres.TransactionSql) => Promise<unknown>) => {
+          const result = await target.begin(async (tx) => {
+            const wrappedTx = new Proxy(tx, {
+              apply(query, receiver, args: unknown[]) {
+                const text = Array.isArray(args[0]) ? args[0].join(" ") : "";
+                if (mode === "catalog" && text.includes("to_regclass('schema_migrations')")) {
+                  catalogFailureInjected = true;
+                  record("injected-catalog-transport-failure");
+                  throw new Error("Synthetic catalog transport failure");
+                }
+                // Preserve lazy tagged-template fragments; awaiting every tag
+                // would execute nested column-name fragments as standalone SQL.
+                const value = Reflect.apply(query, receiver, args);
+                if (
+                  mode === "after-parent" &&
+                  /^\s*update annual_return_cases\s+set\b/i.test(text)
+                ) {
+                  return Promise.resolve(value).then(async () => {
+                    const readback =
+                      await tx`select id,owner_id,reviewer_id,xmin::text xmin from annual_return_cases where id=any(${[a.id, b.id]}::uuid[]) order by id`;
+                    expect(
+                      readback.some(
+                        (r) => r.owner_id === people.owner || r.reviewer_id === people.reviewer,
+                      ),
+                    ).toBe(true);
+                    updatedBeforeFailure = true;
+                    record("injected-after-real-parent-update", { readback });
+                    throw new Error("Synthetic failure after parent update");
+                  });
+                }
+                return value;
+              },
+            });
+            return run(wrappedTx);
+          });
+          if (mode === "lost-response")
+            throw new Error("Synthetic response lost after committed handover");
+          return result;
+        };
+      },
+    });
+  }
+  await denied(
+    "schema-read-fails-closed",
+    () => createAdminRepository({ sql: faultClient("catalog") }).executeHandover(admin, command),
+    503,
+  );
+  expect(catalogFailureInjected).toBe(true);
+  await denied("real-parent-update-rolls-back-completely", () =>
+    createAdminRepository({ sql: faultClient("after-parent") }).executeHandover(admin, command),
+  );
+  expect(updatedBeforeFailure).toBe(true);
+  // The empty selection is a read-only preview, never a fake successful handover.
+  const empty = { ...selection, userId: people.empty, reviewer: null };
+  const beforeEmpty = await projection();
+  const emptyPage = await repo.previewHandover(admin, empty);
+  expect(emptyPage).toMatchObject({
+    caseCount: 0,
+    workItemCount: 0,
+    entries: [],
+    nextCursor: null,
+  });
+  expect(await projection()).toEqual(beforeEmpty);
+  const emptyOperation = id();
+  owned.operations.push(emptyOperation);
+  await denied("empty-execution-refused", () =>
+    repo.executeHandover(admin, {
+      ...empty,
+      fingerprint: emptyPage.fingerprint,
+      operationId: emptyOperation,
+    }),
+  );
+  expect(await independent.readHandoverReceipt(admin, emptyOperation)).toBeNull();
+  // Cancellation is a durable fence for an unknown/delayed operation, not undo.
+  const cancelledOperation = id();
+  owned.operations.push(cancelledOperation);
+  const cancelledCommand = { ...command, operationId: cancelledOperation };
+  const beforeCancel = await projection();
+  expect(await repo.cancelHandover(admin, cancelledCommand)).toEqual({
+    status: "cancelled",
+    operationId: cancelledOperation,
+  });
+  const afterCancel = await projection();
+  for (const table of Object.keys(beforeCancel))
+    if (table !== "staff_access_events") expect(afterCancel[table]).toEqual(beforeCancel[table]);
+  const accessRows = (snapshot: typeof beforeCancel) =>
+    snapshot.staff_access_events as { row: { id: string } }[];
+  expect(accessRows(afterCancel)).toHaveLength(accessRows(beforeCancel).length + 1);
+  expect(accessRows(afterCancel).filter((r) => r.row.id !== cancelledOperation)).toEqual(
+    accessRows(beforeCancel),
+  );
+  const [cancelJournal] =
+    await observer`select id,target_user_id,actor_user_id,event_type,old_role,new_role,old_team_id,new_team_id,metadata from staff_access_events where id=${cancelledOperation}`;
+  expect(cancelJournal).toMatchObject({
+    id: cancelledOperation,
+    target_user_id: people.source,
+    actor_user_id: admin.userId!,
+    event_type: "access_changed",
+    old_role: "Staff",
+    new_role: "Staff",
+    old_team_id: ids.team,
+    new_team_id: ids.team,
+    metadata: {
+      command: "staff_handover_cancelled",
+      selection,
+      fingerprint: cancelledCommand.fingerprint,
+    },
+  });
+  expect(cancelJournal.metadata.requestHash).toMatch(/^[a-f0-9]{64}$/);
+  expect(await independent.cancelHandover(admin, cancelledCommand)).toEqual({
+    status: "cancelled",
+    operationId: cancelledOperation,
+  });
+  expect(await independent.readHandoverReceipt(admin, cancelledOperation)).toBeNull();
+  expect((await repo.previewHandover(admin, selection)).fingerprint).toBe(command.fingerprint);
+  expect(await projection()).toEqual(afterCancel);
+  await denied(
+    "cancelled-operation-fences-valid-fingerprint-late-submit",
+    () => repo.executeHandover(admin, cancelledCommand),
+    409,
+  );
+  await denied(
+    "cancelled-operation-altered-payload",
+    () =>
+      repo.cancelHandover(admin, { ...cancelledCommand, reason: "Altered cancellation reason" }),
+    409,
+  );
+  await denied(
+    "cancelled-operation-altered-actor",
+    () => repo.cancelHandover(actor("otherAdmin"), cancelledCommand),
+    409,
+  );
+  record("cancellation-before-late-submit-only-immutable-journal-changed", {
+    cancelledOperation,
+    cancelJournal,
+    projection: afterCancel,
+  });
+  const beforeCommit = await projection();
+  await expect(
+    createAdminRepository({ sql: faultClient("lost-response") }).executeHandover(admin, command),
+  ).rejects.toThrow("Synthetic response lost after committed handover");
+  const afterCommit = await projection();
+  const receipt = await independent.readHandoverReceipt(admin, operationId);
+  assert(receipt, "Committed handover receipt missing on independent connection");
+  expect(receipt).toMatchObject({
+    operationId,
+    userId: people.source,
+    actorId: admin.userId!,
+    expectedVersion: 2,
+    caseCount: 101,
+    workItemCount: 3,
+    remainingCases: 0,
+    remainingWorkItems: 0,
+    replayed: true,
+  });
+  expect(await repo.executeHandover(admin, command)).toEqual(receipt);
+  expect(await projection()).toEqual(afterCommit);
+  record("committed-response-loss-receipt-and-stale-version-replay", {
+    receipt,
+    projection: afterCommit,
+  });
+  const [blockedAfter] =
+    await observer`select id,status,version,owner_id from work_items where id=${ownerWork.id}`;
+  record("blocked-owner-work-after-handover", { work: blockedAfter });
+  expect(blockedAfter.status).toBe("blocked");
+  const cancelAfterCommit = await independent.cancelHandover(admin, command);
+  expect(cancelAfterCommit).toMatchObject({
+    status: "committed",
+    receipt: {
+      operationId,
+      userId: people.source,
+      actorId: admin.userId!,
+      expectedVersion: 2,
+      caseCount: 101,
+      workItemCount: 3,
+      remainingCases: 0,
+      remainingWorkItems: 0,
+    },
+  });
+  expect(await projection()).toEqual(afterCommit);
+  await denied(
+    "committed-cancel-altered-payload",
+    () => repo.cancelHandover(admin, { ...command, reason: "Altered committed cancellation" }),
+    409,
+  );
+  await denied(
+    "committed-cancel-altered-actor",
+    () => repo.cancelHandover(actor("otherAdmin"), command),
+    409,
+  );
+  record("cancellation-after-commit-returns-receipt-without-undo-or-audit", { cancelAfterCommit });
+  await denied(
+    "same-operation-altered-payload",
+    () => repo.executeHandover(admin, { ...command, reason: "Altered user-entered reason" }),
+    409,
+  );
+  await denied(
+    "same-operation-altered-actor",
+    () => repo.executeHandover(actor("otherAdmin"), command),
+    409,
+  );
+  const duplicateOperation = id();
+  owned.operations.push(duplicateOperation);
+  await denied(
+    "new-operation-cannot-reuse-stale-scope",
+    () => repo.executeHandover(admin, { ...command, operationId: duplicateOperation }),
+    409,
+  );
+  const [saved] =
+    await observer`select id,event_type,metadata from staff_access_events where id=${operationId}`;
+  expect(saved).toMatchObject({
+    id: operationId,
+    event_type: "access_changed",
+    metadata: { command: "staff_handover", selection, moves: expect.any(Array) },
+  });
+  expect(saved.metadata.requestHash).toMatch(/^[a-f0-9]{64}$/);
+  expect(saved.metadata.moves).toHaveLength(104);
+  const expectedMoves = [
+    { kind: "annual_return", id: a.id, role: "owner", from: people.source, to: people.owner },
+    { kind: "annual_return", id: b.id, role: "reviewer", from: people.source, to: people.reviewer },
+    {
+      kind: "incorporation",
+      id: incorporation.id,
+      role: "owner",
+      from: people.source,
+      to: people.owner,
+    },
+    {
+      kind: "corporate_change",
+      id: change.id,
+      role: "owner",
+      from: people.source,
+      to: people.owner,
+    },
+    ...owned.pageCases.map((caseId) => ({
+      kind: "incorporation",
+      id: caseId,
+      role: "owner",
+      from: people.source,
+      to: people.owner,
+    })),
+    ...sourceWork.map((w) => ({
+      kind: "work_item",
+      id: w.id,
+      role: w.annual_return_case_id === b.id ? "reviewer" : "owner",
+      from: people.source,
+      to: w.annual_return_case_id === b.id ? people.reviewer : people.owner,
+    })),
+  ];
+  expect(saved.metadata.moves).toEqual(expect.arrayContaining(expectedMoves));
+  expect(saved.metadata.result).toMatchObject({ ...receipt, replayed: false });
+  const casesAfter =
+    await observer`select id,owner_id,reviewer_id from annual_return_cases where id=any(${[a.id, b.id]}::uuid[]) order by id`;
+  expect(casesAfter.find((r) => r.id === a.id)).toMatchObject({
+    owner_id: people.owner,
+    reviewer_id: people.otherReviewer,
+  });
+  expect(casesAfter.find((r) => r.id === b.id)).toMatchObject({
+    owner_id: people.otherOwner,
+    reviewer_id: people.reviewer,
+  });
+  const [incorporationAfter] =
+    await observer`select owner_id from incorporation_cases where id=${incorporation.id}`;
+  const [corporateAfter] =
+    await observer`select owner_id from corporate_change_requests where id=${change.id}`;
+  expect(incorporationAfter.owner_id).toBe(people.owner);
+  expect(corporateAfter.owner_id).toBe(people.owner);
+  const pageOwners =
+    await observer`select id,owner_id from incorporation_cases where id=any(${owned.pageCases}::uuid[]) order by id`;
+  expect(pageOwners).toHaveLength(97);
+  expect(pageOwners.every((r) => r.owner_id === people.owner)).toBe(true);
+  const workAfter =
+    await observer`select id,owner_id,reviewer_id,version from work_items where id=any(${owned.normalWork}::uuid[]) order by id`;
+  for (const before of sourceWork)
+    expect(workAfter.find((r) => r.id === before.id)).toMatchObject({
+      owner_id: before.owner_id === people.source ? people.owner : before.owner_id,
+      reviewer_id: before.reviewer_id === people.source ? people.reviewer : before.reviewer_id,
+      version: before.version + 1,
+    });
+  const assignments =
+    await observer`select work_item_id,assigned_to_id,assigned_by_id,expected_version,override_reason,recommendation_factors from assignment_events where recommendation_factors->>'handoverOperationId'=${operationId} order by work_item_id`;
+  expect(assignments).toHaveLength(3);
+  expect(
+    assignments.every(
+      (r) => r.assigned_by_id === admin.userId && r.override_reason === selection.reason,
+    ),
+  ).toBe(true);
+  for (const w of sourceWork)
+    expect(assignments.find((r) => r.work_item_id === w.id)).toMatchObject({
+      assigned_to_id: w.annual_return_case_id === b.id ? people.reviewer : people.owner,
+      expected_version: w.version,
+      recommendation_factors: {
+        handoverOperationId: operationId,
+        assignmentTarget: w.annual_return_case_id === b.id ? "reviewer" : "owner",
+      },
+    });
+  const timeline =
+    await observer`select metadata from timeline_events where event_type='work_item_assigned' and metadata->>'handoverOperationId'=${operationId}`;
+  expect(timeline).toHaveLength(3);
+  const domainAudit =
+    await observer`select case_id,metadata from annual_return_audit_events where metadata->>'operationId'=${operationId}`;
+  expect(domainAudit.map((r) => r.case_id).sort()).toEqual([a.id, b.id].sort());
+  // Compare all unaffected tables and each terminal/unrelated row including xmin.
+  const changedTables = new Set([
+    "annual_return_cases",
+    "incorporation_cases",
+    "corporate_change_requests",
+    "work_items",
+    "assignment_events",
+    "timeline_events",
+    "annual_return_audit_events",
+    "staff_profiles",
+    "staff_access_events",
+  ]);
+  for (const table of Object.keys(beforeCommit))
+    if (!changedTables.has(table)) expect(afterCommit[table]).toEqual(beforeCommit[table]);
+  const otherProfiles = (snapshot: typeof beforeCommit) =>
+    (snapshot.staff_profiles as { row: { id: string } }[]).filter(
+      (r) => r.row.id !== profiles.source,
+    );
+  expect(otherProfiles(afterCommit)).toEqual(otherProfiles(beforeCommit));
+  const [sourceAfterHandover] =
+    await observer`select sp.access_revision,sp.active,sp.role,sp.team_id from staff_profiles sp where sp.user_id=${people.source}`;
+  expect(sourceAfterHandover).toMatchObject({
+    access_revision: 2,
+    active: true,
+    role: "Staff",
+    team_id: ids.team,
+  });
+  const preserved: [string, string[]][] = [
+    ["annual_return_cases", [owned.controls.annual]],
+    ["incorporation_cases", [owned.controls.incorporation]],
+    ["corporate_change_requests", [owned.controls.corporate]],
+    ["work_items", owned.controls.work],
+  ];
+  for (const [table, preservedIds] of preserved) {
+    const rows = (snapshot: typeof beforeCommit) =>
+      (snapshot[table] as { row: { id: string } }[]).filter((r) => preservedIds.includes(r.row.id));
+    expect(rows(afterCommit)).toHaveLength(preservedIds.length);
+    expect(rows(afterCommit)).toEqual(rows(beforeCommit));
+  }
+  const preservedAudit = (snapshot: typeof beforeCommit) => ({
+    assignment: (snapshot.assignment_events as { row: { work_item_id: string } }[]).filter((r) =>
+      owned.controls.work.includes(r.row.work_item_id),
+    ),
+    annual: (snapshot.annual_return_audit_events as { row: { case_id: string } }[]).filter(
+      (r) => r.row.case_id === owned.controls.annual,
+    ),
+    timeline: (
+      snapshot.timeline_events as { row: { case_id: string; metadata: { workItemId?: string } } }[]
+    ).filter(
+      (r) =>
+        r.row.case_id === owned.controls.annual ||
+        owned.controls.work.includes(r.row.metadata?.workItemId ?? ""),
+    ),
+  });
+  expect(preservedAudit(afterCommit)).toEqual(preservedAudit(beforeCommit));
+  record("handover-independent-domain-audit-and-preservation-readback", {
+    saved,
+    casesAfter,
+    pageOwners,
+    workAfter,
+    assignments,
+    timeline,
+    domainAudit,
+    preserved,
+  });
+  await independent.updateStaff(admin, {
+    userId: people.source,
+    expectedVersion: 2,
+    role: "Staff",
+    teamId: ids.team,
+    active: false,
+  });
+  await denied("disabled-old-auth-identity", () =>
+    requireActor(new Request("https://example.test/admin"), {
+      sql: creating,
+      auth: session(people.source),
+    }),
+  );
+  await denied("disabled-old-actor-cannot-create", () =>
+    createIncorporationRepository({ sql: creating }).createCase({
+      ...incorporationInput(people.owner, "old-actor"),
+      actorId: oldSource.userId!,
+    }),
+  );
+  await denied("disabled-old-owner-cannot-receive-new-case", () =>
+    createIncorporationRepository({ sql: creating }).createCase(
+      incorporationInput(people.source, "old-owner"),
+    ),
+  );
+  const [disabledSource] =
+    await observer`select u.active user_active,sp.active profile_active,sp.access_revision from users u join staff_profiles sp on sp.user_id=u.id where u.id=${people.source}`;
+  expect(disabledSource).toMatchObject({
+    user_active: false,
+    profile_active: false,
+    access_revision: 3,
+  });
+
+  function holdTransaction(client: SqlClient) {
+    let ready!: () => void, release!: () => void;
+    const entered = new Promise<void>((r) => {
+      ready = r;
+    });
+    const held = new Promise<void>((r) => {
+      release = r;
+    });
+    const sql = new Proxy(client, {
+      get(target, key) {
+        if (key !== "begin") return Reflect.get(target, key, target);
+        return (run: (tx: postgres.TransactionSql) => Promise<unknown>) =>
+          target.begin(async (tx) => {
+            const result = await run(tx);
+            ready();
+            await held;
+            signal.throwIfAborted();
+            return result;
+          });
+      },
+    });
+    return { sql, entered, release: () => release() };
+  }
+  async function observedRace<A, B>(
+    label: string,
+    firstClient: SqlClient,
+    firstCall: (sql: SqlClient) => Promise<A>,
+    firstPid: number,
+    secondCall: () => Promise<B>,
+    secondPid: number,
+  ) {
+    const held = holdTransaction(firstClient),
+      first = firstCall(held.sql);
+    let joined: Promise<PromiseSettledResult<unknown>[]> = Promise.allSettled([first]);
+    try {
+      await Promise.race([held.entered, first]);
+      const second = secondCall();
+      joined = Promise.allSettled([first, second]);
+      let blocking: { blockers: number[]; wait_event_type: string; wait_event: string } | undefined;
+      const deadline = Date.now() + 4000;
+      while (Date.now() < deadline) {
+        signal.throwIfAborted();
+        const [activity] = await observer<
+          { blockers: number[]; wait_event_type: string; wait_event: string }[]
+        >`
+          select pg_blocking_pids(pid) blockers,wait_event_type,wait_event from pg_stat_activity where pid=${secondPid}`;
+        if (activity?.wait_event_type === "Lock" && activity.blockers.includes(firstPid)) {
+          blocking = activity;
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 20));
+      }
+      record(label + "-observed-wait", { firstPid, secondPid, blocking });
+      expect(blocking?.blockers).toContain(firstPid);
+      expect(blocking?.wait_event).toBe("advisory");
+    } finally {
+      held.release();
+      await joined;
+    }
+    const outcomes = await joined;
+    record(label + "-outcomes", {
+      outcomes: outcomes.map((r) =>
+        r.status === "fulfilled"
+          ? { status: r.status, value: r.value }
+          : { status: r.status, error: errorFacts(r.reason) },
+      ),
+    });
+    return outcomes as [PromiseSettledResult<A>, PromiseSettledResult<B>];
+  }
+  const reverse = await observedRace(
+    "create-before-disable",
+    creating,
+    (sql) =>
+      createIncorporationRepository({ sql }).createCase(
+        incorporationInput(people.reverse, "reverse-race"),
+      ),
+    pids[2],
+    () =>
+      createAdminRepository({ sql: disabling }).updateStaff(admin, {
+        userId: people.reverse,
+        expectedVersion: 1,
+        role: "Staff",
+        teamId: ids.team,
+        active: false,
+      }),
+    pids[1],
+  );
+  expect(reverse[0].status).toBe("fulfilled");
+  expect(reverse[1].status).toBe("rejected");
+  if (reverse[0].status === "fulfilled") owned.raceCases.push(reverse[0].value.id);
+  if (reverse[1].status === "rejected")
+    expect(errorFacts(reverse[1].reason).message).toMatch(/Outstanding handover/);
+  const [reverseState] =
+    await observer`select u.active user_active,sp.active profile_active,sp.access_revision,(select count(*)::int from incorporation_cases where owner_id=u.id) owned_cases,(select count(*)::int from staff_access_events where target_user_id=u.id) audits from users u join staff_profiles sp on sp.user_id=u.id where u.id=${people.reverse}`;
+  expect(reverseState).toMatchObject({
+    user_active: true,
+    profile_active: true,
+    access_revision: 1,
+    owned_cases: 1,
+    audits: 0,
+  });
+  record("create-before-disable-independent-readback", { reverseState });
+
+  // Actual normal corporate creation has required_skill_key NULL; no synthetic skill fallback.
+  const nullSkillCase = await corporate.createRequest({
+    companyId: owned.companies[2],
+    changeType: "name_change",
+    actorId: people.otherOwner,
+    quotedFee: 1000,
+    newNameEn: RUN + ":null-skill",
+    newNameZh: null,
+  });
+  owned.raceCases.push(nullSkillCase.id);
+  const [nullSkillWork] =
+    await observer`select id,required_skill_key,version from work_items where corporate_change_request_id=${nullSkillCase.id}`;
+  owned.raceWork.push(nullSkillWork.id);
+  expect(nullSkillWork.required_skill_key).toBeNull();
+  const [skillCount] =
+    await observer`select count(*)::int n from staff_skills where staff_profile_id=${profiles.noSkill}`;
+  expect(skillCount.n).toBe(0);
+  const recommendations = await workRepo.recommendAssignees(nullSkillWork.id);
+  expect(recommendations.some((r) => r.userId === people.noSkill)).toBe(true);
+  expect(
+    recommendations.some(
+      (r) =>
+        r.userId === people.manager || r.userId === people.inactive || r.userId === people.foreign,
+    ),
+  ).toBe(false);
+  const assigned = await workRepo.assign({
+    workItemId: nullSkillWork.id,
+    selectedUserId: people.noSkill,
+    assignedById: admin.userId!,
+    expectedVersion: 1,
+    overrideReason: "Synthetic explicit null-skill assignment",
+  });
+  expect(assigned).toMatchObject({ ownerId: people.noSkill, version: 2 });
+  const nullSkillAudit =
+    await observer`select recommendation_factors from assignment_events where work_item_id=${nullSkillWork.id}`;
+  expect(nullSkillAudit).toHaveLength(1);
+  expect(nullSkillAudit[0].recommendation_factors).not.toHaveProperty("handoverOperationId");
+  const [nullSkillTimeline] =
+    await observer`select metadata from timeline_events where event_type='work_item_assigned' and metadata->>'workItemId'=${nullSkillWork.id}`;
+  expect(nullSkillTimeline.metadata).not.toHaveProperty("handoverOperationId");
+  record("normal-corporate-null-skill-recommendation-and-assignment", {
+    nullSkillCase: nullSkillCase.id,
+    nullSkillWork,
+    recommendations,
+    assigned,
+    nullSkillAudit,
+  });
+  for (const [target, disableFirst, person] of [
+    ["owner", true, "ownerDisableFirst"],
+    ["owner", false, "ownerAssignFirst"],
+    ["reviewer", true, "reviewerDisableFirst"],
+    ["reviewer", false, "reviewerAssignFirst"],
+  ] as const) {
+    const case_ = await corporate.createRequest({
+      companyId: owned.companies[2],
+      changeType: "name_change",
+      actorId: people.otherOwner,
+      quotedFee: 1000,
+      newNameEn: RUN + ":" + person,
+      newNameZh: null,
+    });
+    owned.raceCases.push(case_.id);
+    const [item] =
+      await observer`select id,owner_id,reviewer_id,version from work_items where corporate_change_request_id=${case_.id}`;
+    owned.raceWork.push(item.id);
+    const assign = (sql: SqlClient) =>
+      createWorkItemRepository({ sql }).assign({
+        workItemId: item.id,
+        selectedUserId: people[person],
+        assignedById: admin.userId!,
+        expectedVersion: item.version,
+        assignmentTarget: target,
+        overrideReason: "Synthetic explicit assignment race reason",
+      });
+    const disable = (sql: SqlClient) =>
+      createAdminRepository({ sql }).updateStaff(admin, {
+        userId: people[person],
+        expectedVersion: 1,
+        role: "Staff",
+        teamId: ids.team,
+        active: false,
+      });
+    const label =
+      target + (disableFirst ? "-disable-before-assignment" : "-assignment-before-disable");
+    const beforeRace = await projection();
+    record(label + "-before", { projection: beforeRace });
+    const outcomes = disableFirst
+      ? await observedRace(label, disabling, disable, pids[1], () => assign(creating), pids[2])
+      : await observedRace(label, creating, assign, pids[2], () => disable(disabling), pids[1]);
+    expect(outcomes[0].status).toBe("fulfilled");
+    expect(outcomes[1].status).toBe("rejected");
+    if (outcomes[1].status === "rejected") {
+      if (disableFirst)
+        expect(errorFacts(outcomes[1].reason)).toMatchObject({
+          statusCode: 409,
+          code: "WORK_ITEM_ASSIGNEE_UNAVAILABLE",
+        });
+      else expect(errorFacts(outcomes[1].reason).message).toMatch(/Outstanding handover/);
+    }
+    const [readback] =
+      await observer`select w.id,w.owner_id,w.reviewer_id,w.version,w.xmin::text xmin,u.active user_active,sp.active profile_active,sp.access_revision from work_items w cross join users u join staff_profiles sp on sp.user_id=u.id where w.id=${item.id} and u.id=${people[person]}`;
+    const events =
+      await observer`select assigned_to_id,expected_version,recommendation_factors from assignment_events where work_item_id=${item.id}`;
+    const assignmentTimeline =
+      await observer`select metadata from timeline_events where event_type='work_item_assigned' and metadata->>'workItemId'=${item.id}`;
+    const access =
+      await observer`select event_type from staff_access_events where target_user_id=${people[person]}`;
+    expect(readback).toMatchObject({
+      owner_id: !disableFirst && target === "owner" ? people[person] : item.owner_id,
+      reviewer_id: !disableFirst && target === "reviewer" ? people[person] : item.reviewer_id,
+      version: item.version + (disableFirst ? 0 : 1),
+      user_active: !disableFirst,
+      profile_active: !disableFirst,
+      access_revision: disableFirst ? 2 : 1,
+    });
+    expect(events).toHaveLength(disableFirst ? 0 : 1);
+    expect(assignmentTimeline).toHaveLength(disableFirst ? 0 : 1);
+    expect(access).toHaveLength(disableFirst ? 1 : 0);
+    if (disableFirst) expect(access[0].event_type).toBe("disabled");
+    else
+      expect(events[0]).toMatchObject({
+        assigned_to_id: people[person],
+        expected_version: item.version,
+        recommendation_factors: { assignmentTarget: target },
+      });
+    const afterRace = await projection();
+    const raceChanged = new Set(
+      disableFirst
+        ? ["users", "staff_profiles", "staff_access_events"]
+        : ["work_items", "assignment_events", "timeline_events"],
+    );
+    for (const table of Object.keys(beforeRace))
+      if (!raceChanged.has(table)) expect(afterRace[table]).toEqual(beforeRace[table]);
+    const unrelatedWork = (snapshot: typeof beforeRace) =>
+      (snapshot.work_items as { row: { id: string } }[]).filter((r) => r.row.id !== item.id);
+    expect(unrelatedWork(afterRace)).toEqual(unrelatedWork(beforeRace));
+    record(label + "-independent-readback", {
+      item,
+      readback,
+      events,
+      assignmentTimeline,
+      access,
+      projection: afterRace,
+    });
+  }
+  record("extension-complete", {
+    owned,
+    scenarios: [
+      "normal-create-three-domains",
+      "reviewer-only-annual",
+      "104-entry-full-scope",
+      "preview-read-only",
+      "complete-projection-xmin-refusals",
+      "post-parent-update-rollback",
+      "response-loss-replay-receipt",
+      "cancel-fences-late-submit",
+      "cancel-after-commit-no-undo",
+      "terminal-unrelated-preservation",
+      "disable-old-identity",
+      "reverse-create-race",
+      "null-skill-normal-corporate",
+      "owner-reviewer-assignment-disable-both-orders",
+    ],
+  });
+}

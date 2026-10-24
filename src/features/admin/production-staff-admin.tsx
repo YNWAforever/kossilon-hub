@@ -23,6 +23,7 @@ import {
   type UpdateStaffInput,
 } from "./types";
 import { staffInvitationCapability } from "./auth-provider";
+import { StaffHandoverPanel } from "./staff-handover-panel";
 export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
   const [q, setQ] = useState(""),
     [role, setRole] = useState("all"),
@@ -306,6 +307,7 @@ function StaffRow({
             </div>
           ) : null}
           {blocked ? <p>必須先完成轉交，才可停用、移隊或改為客戶。</p> : null}
+          {open ? <StaffHandoverPanel member={member} actorScope={actorScope} /> : null}
           <Button
             variant="primary"
             disabled={
@@ -330,7 +332,12 @@ function StaffRow({
           ) : (
             audit.data?.map((event) => (
               <p key={event.id}>
-                {event.event_type} · {event.actor_name} ·{" "}
+                {event.command === "staff_handover"
+                  ? `責任交接 · 操作 ${event.id}`
+                  : event.command === "staff_handover_cancelled"
+                    ? `取消交接 · 操作 ${event.id}`
+                    : event.event_type}{" "}
+                · {event.actor_name} ·{" "}
                 {new Date(event.created_at).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })}
               </p>
             ))

@@ -2,6 +2,8 @@ import type postgres from "postgres";
 import { getSqlClient, type SqlClient } from "@/server/db/client";
 import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import { lockStaffLifecycleExclusive } from "@/features/auth/staff-lifecycle";
+import { createStaffHandoverRepository } from "./handover";
 import {
   staffFiltersSchema,
   updateStaffSchema,
@@ -160,7 +162,7 @@ export function createAdminRepository({ sql = getSqlClient() }: { sql?: Query } 
     const data = updateStaffSchema.parse(input);
     return transact(async (tx) => {
       // Same shared invariant lock used by preserved lifecycle code. Never count separately per target.
-      await tx`select pg_advisory_xact_lock(hashtext('kossilon_staff_admin_lifecycle'))`;
+      await lockStaffLifecycleExclusive(tx);
       await requireCurrentAdmin(tx, actor);
       const row = await target(tx, data.userId, true);
       if (row.access_revision !== data.expectedVersion) throw new StaffAccessConflictError();
@@ -194,6 +196,7 @@ export function createAdminRepository({ sql = getSqlClient() }: { sql?: Query } 
     });
   }
   return {
+    ...createStaffHandoverRepository({ sql }),
     listStaff,
     updateStaff,
     previewReassignment,
@@ -212,8 +215,9 @@ export function createAdminRepository({ sql = getSqlClient() }: { sql?: Query } 
           event_type: string;
           created_at: string;
           actor_name: string;
+          command: string | null;
         }[]
-      >`select e.id,e.event_type,e.created_at::text,u.name actor_name from staff_access_events e join users u on u.id=e.actor_user_id where e.target_user_id=${userId} order by e.created_at desc,e.id desc limit 50`;
+      >`select e.id,e.event_type,e.metadata->>'command' command,e.created_at::text,u.name actor_name from staff_access_events e join users u on u.id=e.actor_user_id where e.target_user_id=${userId} order by e.created_at desc,e.id desc limit 50`;
     },
   };
 }

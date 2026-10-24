@@ -68,6 +68,14 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 describe("verified staff maintenance UI", () => {
+  it("UC186 provides an explicit preview for lawful owner/reviewer handover", async () => {
+    mount();
+    await screen.findByText(/Mei Lam · Annual return/);
+    const details = screen.getByText("維護帳戶／轉交預覽").closest("details")!;
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
+    expect(await screen.findByRole("button", { name: "預覽責任交接" })).toBeTruthy();
+  });
   it("UC186 warns that a truncated preview and the work queue are not the complete handover scope", async () => {
     api.preview.mockResolvedValue({
       userId: member.userId,

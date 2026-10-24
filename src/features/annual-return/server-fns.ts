@@ -1078,8 +1078,11 @@ export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method:
     } = await loadAnnualReturnServerDependencies();
     const actor = await getCurrentAnnualReturnActor(getRequest());
     const sql = getSqlClient();
+    const { lockStaffLifecycleShared } = await import("@/features/auth/staff-lifecycle");
 
     return sql.begin(async (tx) => {
+      // Admit before WhatsApp queueing locks company, case and staff rows.
+      await lockStaffLifecycleShared(tx);
       const annualReturnRepository = createAnnualReturnRepository({ sql: tx });
       const whatsAppRepository = createWhatsAppRepository({ sql: tx });
 

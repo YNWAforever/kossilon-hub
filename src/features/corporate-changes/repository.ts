@@ -7,6 +7,8 @@ import {
 } from "@/server/db/client";
 import { createClientRepository } from "@/features/clients/repository";
 import { rethrowClientWriteError } from "@/features/clients/errors";
+import { lockStaffLifecycleShared } from "@/features/auth/staff-lifecycle";
+import { lockActiveStaffUser } from "@/features/auth/staff-state";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { CorporateChangeRequestNotFoundError } from "./errors";
 import { createCorporateChangeRequestSchema } from "./create-input";
@@ -44,11 +46,15 @@ function withTransaction<T>(
   client: QueryClient,
   handler: (tx: TransactionSqlClient) => Promise<T>,
 ): Promise<T> {
+  const admitted = async (tx: TransactionSqlClient): Promise<T> => {
+    await lockStaffLifecycleShared(tx);
+    return handler(tx);
+  };
   if ("begin" in client) {
-    return client.begin(handler) as Promise<T>;
+    return client.begin(admitted) as Promise<T>;
   }
 
-  return handler(client);
+  return admitted(client);
 }
 
 type RequestRow = {
@@ -311,6 +317,8 @@ export function createCorporateChangeRequestRepository(
     }
     try {
       return await withTransaction(sql, async (tx) => {
+        // The actor is also the request and initial work-item owner.
+        await lockActiveStaffUser(tx, input.actorId);
         const companyRows = await tx<{ id: string; assigned_team_id: string }[]>`
           select id, assigned_team_id from companies where id = ${input.companyId} for update
         `;

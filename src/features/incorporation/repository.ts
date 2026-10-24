@@ -1,5 +1,7 @@
 import type postgres from "postgres";
 import { rethrowClientWriteError } from "@/features/clients/errors";
+import { lockStaffLifecycleShared } from "@/features/auth/staff-lifecycle";
+import { lockActiveStaffUser, StaffStateUnavailableError } from "@/features/auth/staff-state";
 import {
   createSqlClient,
   getSqlClient,
@@ -134,11 +136,15 @@ function withTransaction<T>(
   client: QueryClient,
   handler: (tx: TransactionSqlClient) => Promise<T>,
 ): Promise<T> {
+  const admitted = async (tx: TransactionSqlClient): Promise<T> => {
+    await lockStaffLifecycleShared(tx);
+    return handler(tx);
+  };
   if ("begin" in client) {
-    return client.begin(handler) as Promise<T>;
+    return client.begin(admitted) as Promise<T>;
   }
 
-  return handler(client as TransactionSqlClient);
+  return admitted(client as TransactionSqlClient);
 }
 
 export function createIncorporationRepository(
@@ -282,20 +288,22 @@ export function createIncorporationRepository(
   }
 
   async function assertActor(tx: TransactionSqlClient, actorId: string): Promise<void> {
-    const rows = await tx<{ id: string }[]>`
-      select id from users where id = ${actorId} and active limit 1
-    `;
-    if (rows.length === 0) throw new Error("Incorporation actor not found or inactive.");
+    await lockActiveStaffUser(tx, actorId).catch((error: unknown) => {
+      if (error instanceof StaffStateUnavailableError)
+        throw new Error("Incorporation actor not found or inactive.");
+      throw error;
+    });
   }
 
   async function createCase(input: CreateIncorporationCaseInput): Promise<IncorporationCase> {
     return withTransaction(sql, async (tx) => {
       await assertActor(tx, input.actorId);
 
-      const ownerRows = await tx<{ id: string }[]>`
-        select id from users where id = ${input.ownerId} and active limit 1
-      `;
-      if (ownerRows.length !== 1) throw new Error("Incorporation owner not found or inactive.");
+      await lockActiveStaffUser(tx, input.ownerId).catch((error: unknown) => {
+        if (error instanceof StaffStateUnavailableError)
+          throw new Error("Incorporation owner not found or inactive.");
+        throw error;
+      });
 
       const templateRows = await tx<{ documents: { label: string; required: boolean }[] }[]>`
         select documents from checklist_templates

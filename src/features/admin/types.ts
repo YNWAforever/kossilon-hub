@@ -26,6 +26,73 @@ export const updateStaffSchema = z
 export const reassignmentPreviewSchema = z
   .object({ userId: z.string().uuid(), expectedVersion: z.number().int().positive() })
   .strict();
+const recipientSchema = reassignmentPreviewSchema;
+export const handoverSelectionSchema = reassignmentPreviewSchema
+  .extend({
+    owner: recipientSchema.nullable(),
+    reviewer: recipientSchema.nullable(),
+    reason: z.string().trim().min(5).max(500),
+  })
+  .strict();
+export const handoverPageSchema = handoverSelectionSchema
+  .extend({
+    cursor: z.number().int().nonnegative().optional(),
+    fingerprint: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
+  })
+  .strict();
+export const handoverCommandSchema = handoverSelectionSchema
+  .extend({
+    fingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+    operationId: z.string().uuid(),
+  })
+  .strict();
+export type HandoverSelection = z.infer<typeof handoverSelectionSchema>;
+export type HandoverCommand = z.infer<typeof handoverCommandSchema>;
+export type HandoverEntry = {
+  kind: "annual_return" | "incorporation" | "corporate_change" | "work_item";
+  id: string;
+  title: string;
+  status: string;
+  owner: boolean;
+  reviewer: boolean;
+};
+export type HandoverPage = {
+  fingerprint: string;
+  caseCount: number;
+  workItemCount: number;
+  entries: HandoverEntry[];
+  nextCursor: number | null;
+};
+export type HandoverReceipt = {
+  operationId: string;
+  userId: string;
+  actorId: string;
+  expectedVersion: number;
+  caseCount: number;
+  workItemCount: number;
+  remainingCases: number;
+  remainingWorkItems: number;
+  replayed: boolean;
+};
+export type HandoverCancellation =
+  | { status: "cancelled"; operationId: string }
+  | { status: "committed"; receipt: HandoverReceipt };
+export const handoverReceiptSchema = z
+  .object({
+    operationId: z.string().uuid(),
+    userId: z.string().uuid(),
+    actorId: z.string().uuid(),
+    expectedVersion: z.number().int().positive(),
+    caseCount: z.number().int().nonnegative(),
+    workItemCount: z.number().int().nonnegative(),
+    remainingCases: z.number().int().nonnegative(),
+    remainingWorkItems: z.number().int().nonnegative(),
+    replayed: z.boolean(),
+  })
+  .strict();
 export type StaffFilters = z.infer<typeof staffFiltersSchema>;
 export type UpdateStaffInput = z.infer<typeof updateStaffSchema>;
 export type StaffMember = {

@@ -5,6 +5,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import { lockActiveStaffUser } from "@/features/auth/staff-state";
+import { lockStaffLifecycleShared } from "@/features/auth/staff-lifecycle";
 import { assertCaseAssignmentVersion } from "./assignment-version";
 import { assertCaseAssignmentTarget } from "./assignment-target";
 import {
@@ -692,11 +693,15 @@ function withTransaction<T>(
   client: QueryClient,
   handler: (tx: TransactionSqlClient) => Promise<T>,
 ): Promise<T> {
+  const admitted = async (tx: TransactionSqlClient): Promise<T> => {
+    await lockStaffLifecycleShared(tx);
+    return handler(tx);
+  };
   if ("begin" in client) {
-    return client.begin(handler) as Promise<T>;
+    return client.begin(admitted) as Promise<T>;
   }
 
-  return handler(client);
+  return admitted(client);
 }
 
 export function createAnnualReturnRepository(

@@ -6,6 +6,7 @@ import {
 } from "@/server/db/client";
 import type postgres from "postgres";
 import { lockActiveStaffUser, StaffStateUnavailableError } from "@/features/auth/staff-state";
+import { lockStaffLifecycleShared } from "@/features/auth/staff-lifecycle";
 import { rankAssignmentCandidates } from "./assignment";
 import { snapshotSla, thresholdFor } from "./sla";
 import { enqueueNotification } from "@/features/notifications/outbox";
@@ -131,6 +132,8 @@ export type AssignWorkItemInput = {
   requiredRole?: AssignmentRole;
   separationOfDuties?: boolean;
   overrideReason?: string;
+  handoverOperationId?: string;
+  preserveStatus?: boolean;
   expectedTeamId?: string;
 };
 export type AssignmentDecision = {
@@ -261,7 +264,11 @@ export function escalationTransitionsFor(
 }
 
 function withTransaction<T>(client: QueryClient, fn: (tx: Tx) => Promise<T>): Promise<T> {
-  return "begin" in client ? (client.begin(fn) as Promise<T>) : fn(client);
+  const admitted = async (tx: Tx): Promise<T> => {
+    await lockStaffLifecycleShared(tx);
+    return fn(tx);
+  };
+  return "begin" in client ? (client.begin(admitted) as Promise<T>) : admitted(client);
 }
 async function getWorkItem(
   client: QueryClient,
@@ -394,6 +401,8 @@ export async function ensureWorkItemForEvent(
   tx: Tx,
   event: EnsureWorkItemEvent,
 ): Promise<PersistedWorkItem> {
+  // Callers must also admit their outer transaction before taking domain locks.
+  await lockStaffLifecycleShared(tx);
   const existing = await tx<
     WorkItemRow[]
   >`select * from work_items where source_event_key = ${event.sourceEventKey}`;
@@ -667,7 +676,7 @@ export function createWorkItemRepository(
         const updated =
           assignmentTarget === "owner"
             ? await tx<WorkItemRow[]>`
-              update work_items set owner_id = ${input.selectedUserId}, status = 'in_progress',
+                update work_items set owner_id = ${input.selectedUserId}, status = ${input.preserveStatus ? item.status : "in_progress"},
                 version = version + 1, updated_at = now()
               where id = ${item.id} and version = ${input.expectedVersion} returning *`
             : await tx<WorkItemRow[]>`
@@ -687,6 +696,9 @@ export function createWorkItemRepository(
               selected: decision.recommendation.factors,
               recommendations,
               assignmentTarget,
+              ...(input.handoverOperationId !== undefined
+                ? { handoverOperationId: input.handoverOperationId }
+                : {}),
             })}, ${decision.decision},
             ${decision.overrideReason}, ${input.expectedVersion})`;
         await tx`
@@ -700,6 +712,9 @@ export function createWorkItemRepository(
               assignedToId: input.selectedUserId,
               decision: decision.decision,
               expectedVersion: input.expectedVersion,
+              ...(input.handoverOperationId !== undefined
+                ? { handoverOperationId: input.handoverOperationId }
+                : {}),
             })})`;
         return mapWorkItem(updated[0]);
       });

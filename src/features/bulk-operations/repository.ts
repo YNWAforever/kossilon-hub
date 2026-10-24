@@ -8,6 +8,7 @@ import { createWorkItemRepository } from "@/features/work-items/repository";
 import { assignmentDecisionFor } from "@/features/work-items/repository";
 import { workItemSearchPatterns } from "@/features/work-items/queue-query";
 import { readActiveStaffUser } from "@/features/auth/staff-state";
+import { lockStaffLifecycleShared } from "@/features/auth/staff-lifecycle";
 import { assertBulkManager } from "./authorization";
 import { assertCaseAssignmentTarget } from "@/features/annual-return/assignment-target";
 import { applyAssignment } from "./assignment-adapter";
@@ -572,6 +573,8 @@ export function createBulkOperationsRepository({
     let selected: ItemRow | undefined;
     try {
       return await sql.begin(async (tx) => {
+        // Nested assignments/maintenance must already be admitted before job locks.
+        await lockStaffLifecycleShared(tx);
         const j = await lockedLease(tx, lease);
         if (j.cancel_requested) return false;
         const [item] = await tx<
