@@ -1,0 +1,40 @@
+{
+  "run_id": "cosec-20261025-ap01-form-61f03672",
+  "files": [
+    {
+      "path": "AUTHORIZATION-FORM.md",
+      "bytes": 5266,
+      "sha256": "02c7bc285a228ee23d371e8da82419b7712e6271ba1efefa0d79d87d0634da16"
+    },
+    {
+      "path": "DELIVERY.md",
+      "bytes": 2168,
+      "sha256": "60eed3585f5a24192682d642f298bed6e12426b799ee02da089088b526de3c8f"
+    },
+    {
+      "path": "baseline.json",
+      "bytes": 7565,
+      "sha256": "0b4da88f7a1bcdcbcb4402c8b8ed7c276de576be3e7a1868324d05a1c00d100b"
+    },
+    {
+      "path": "commit-delivery.ps1",
+      "bytes": 2054,
+      "sha256": "199f7d29facc318ce251e15865c5c7404786d44a44e0d44e7e54230f4eca3a6b"
+    },
+    {
+      "path": "form-status.json",
+      "bytes": 2553,
+      "sha256": "5ccbc4ac23d5431cab4e29717dbc3fd63472376f05b9dad33a2cebfe43fdacc6"
+    },
+    {
+      "path": "package.mjs",
+      "bytes": 9544,
+      "sha256": "4f580abfeffd39ed34a48b59a470487b704148701bcac9048203b3771719eea4"
+    },
+    {
+      "path": "release-candidate.json",
+      "bytes": 1121,
+      "sha256": "797e802d93943e0dd9706dd82835db1c9303d34a61f1a6b9a20fd8c52cda5cfb"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "run_id": "cosec-20261025-ap01-form-61f03672",
+  "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "evidence_base": "caefa0f2f88d4694d83800fbfaa0d8b2468abfa1",
+  "phase": "SINGLE_FILLABLE_AP01_METADATA_AUTHORIZATION_FORM_ONLY",
+  "form": "AUTHORIZATION-FORM.md",
+  "form_status": "form-status.json",
+  "parent_request": "../cosec-20261025-ap01-meta-a7885f7a/metadata-only-request.json",
+  "source_files_reference": "../cosec-20261025-ap00-07447c43/baseline.json",
+  "original_acceptance_csv": "../cosec-20261025-native-plan-fccb7c22/acceptance-results.csv",
+  "original_acceptance_csv_sha256": "287bafceb836b4e42b96cfbc006ee83dd9ac65900100d1ba199f93631537e6fb",
+  "original_acceptance_csv_evidence_base": "../cosec-20261025-build-d29cd5ec/",
+  "product_changes": 0,
+  "execution_enabled": false,
+  "approved_packet_ids": [],
+  "actual_metadata_reads": 0,
+  "native_actions": 0,
+  "resources_created": 0,
+  "external_accesses": 0,
+  "deployed": false,
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "release_gate": "NO_GO",
+  "evidence_manifest": "evidence-manifest.json"
+}
