@@ -6,6 +6,7 @@
  * with reality — db-integration-files.convention.test.ts enforces it.
  */
 export const DB_INTEGRATION_TEST_FILES = [
+  "src/features/admin/last-admin.integration.test.ts",
   "src/server/restore-rehearsal.integration.test.ts",
   "src/server/write-admission.integration.test.ts",
   "src/server/maintenance-schema.integration.test.ts",
