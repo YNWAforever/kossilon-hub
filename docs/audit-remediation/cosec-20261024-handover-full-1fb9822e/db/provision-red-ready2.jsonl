@@ -1,0 +1,2 @@
+{"run":"cosec-20261024-handover-full-1fb9822e","attempt":"red-ready2","action":"provision","phase":"resource-gate","utc":"2026-10-24T14:17:11.223Z","freeBytes":3073052672,"minimumBytes":3221225472,"cleanupOnly":false}
+{"run":"cosec-20261024-handover-full-1fb9822e","attempt":"red-ready2","action":"provision","phase":"failed-preserved","utc":"2026-10-24T14:17:11.224Z","name":"AssertionError","message":"Parent SQL resource gate requires 3 GiB free RAM"}

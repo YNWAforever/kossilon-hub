@@ -1,0 +1,13 @@
+{
+  "checked_utc": "2026-10-24T14:28:28.519Z",
+  "run": "cosec-20261024-handover-full-1fb9822e",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "docker_context": "desktop-linux",
+  "endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+  "matching_containers": [],
+  "cache_exists": false,
+  "db_clients_created": 0,
+  "fixtures_created": 0,
+  "cleanup_required": false,
+  "operation": "read-only exact run-label inventory; no resources stopped or removed"
+}

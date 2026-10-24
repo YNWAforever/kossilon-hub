@@ -1,0 +1,11 @@
+{
+  "scope": "Four-file null-required-skill prerequisite only; not complete UC186",
+  "reviewer": "Parfit; read-only source review, no tests or SQL launched",
+  "findings": [
+    {"finding": "Preserve pre-existing empty skill-key short-circuit", "resolution": "repository.ts guard explicitly rejects empty string; NULL alone becomes no skill requirement", "status": "RESOLVED_STATIC"}
+  ],
+  "reviewed_invariants": ["active user/profile with matching role/team", "exact active skill still required for non-null key", "owner and reviewer separation in both directions", "null skill scores zero proficiency; workload/capacity/continuity/ties unchanged"],
+  "limitations": ["SQL path NOT_RUN", "teams.active and live availability are existing behavior, not newly verified", "full handover command and lifecycle race protections not implemented", "native Auth/HTTP/RLS/browser not verified"],
+  "remaining_full_uc186_gaps": true,
+  "product_ready": false
+}

@@ -1,0 +1,72 @@
+{
+  "run_id": "cosec-20261024-handover-full-1fb9822e",
+  "source_sha": "209aef6c78fe1ded6ad3a68eba4eaa9bd7304243",
+  "parent_sha": "7a70e3be143cf771b6693f4ec2bb491817f74ca9",
+  "previous_candidate": "4e5b4532091d125d79ca19244a0699f26832166a",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "branch": "codex/cosec-20261023",
+  "phase": "UC186_NULL_SKILL_PREREQUISITE_ONLY",
+  "release_gate": "NO_GO",
+  "full_uc186": "INCOMPLETE",
+  "deployed": false,
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "checks": {
+    "targeted": {
+      "receipt": "targeted-accepted.json",
+      "log": "targeted-accepted.txt",
+      "exit_code": 0,
+      "tests": 36,
+      "files": 8
+    },
+    "typecheck": {
+      "receipt": "typecheck-accepted.json",
+      "log": "typecheck-accepted.txt",
+      "exit_code": 0
+    },
+    "lint": {
+      "receipt": "lint-accepted.json",
+      "log": "lint-accepted.txt",
+      "exit_code": 0
+    },
+    "build": {
+      "result": "NOT_RUN_RESOURCE",
+      "receipt": "resource-checks.jsonl",
+      "free_bytes": 2163892224,
+      "minimum_gib": 3
+    },
+    "sql": {
+      "result": "NOT_RUN_RESOURCE",
+      "clients": 0,
+      "fixtures": 0,
+      "containers": 0,
+      "full_handover": "NOT_IMPLEMENTED",
+      "concurrency": "NOT_RUN"
+    }
+  },
+  "full_unit": "NOT_RUN_THIS_BATCH",
+  "auth_runtime_verified": false,
+  "native_http_db_rls_verified": false,
+  "isolated_runtime": {
+    "result": "NOT_RUN",
+    "clients": 0,
+    "fixtures": 0,
+    "resources_created": 0,
+    "cleanup": "NOT_NEEDED"
+  },
+  "remaining_local": [
+    "full lawful cross-business owner/reviewer handover command",
+    "idempotent operation retry/receipt, positive audit and readback",
+    "new-case/assignment versus disable both orders",
+    "real SQL null-skill recommendation path",
+    "build after RAM gate"
+  ],
+  "native_plan": "NATIVE-PLAN.md",
+  "coverage": "COVERAGE.md",
+  "blockers": "blockers.md",
+  "rollback": "ordinary new commit reverting 209aef6c78fe1ded6ad3a68eba4eaa9bd7304243; retain evidence; no DB or production effects",
+  "evidence_manifest": "evidence-manifest.json"
+}

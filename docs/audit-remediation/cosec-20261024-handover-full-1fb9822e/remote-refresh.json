@@ -1,0 +1,28 @@
+{
+  "checked_utc": "2026-10-24T14:20:16.504Z",
+  "operation": "GitHub connector compare_commits(main,main), read only; no fetch/ref mutation",
+  "result": {
+    "repository_full_name": "YNWAforever/kossilon-hub",
+    "base": "main",
+    "head": "main",
+    "status": "identical",
+    "ahead_by": 0,
+    "behind_by": 0,
+    "total_commits": 0,
+    "too_large": null,
+    "base_commit": {
+      "sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+      "url": "https://api.github.com/repos/YNWAforever/kossilon-hub/commits/1c57a67213af72bff8d776694e6ed8c986b921db",
+      "html_url": "https://github.com/YNWAforever/kossilon-hub/commit/1c57a67213af72bff8d776694e6ed8c986b921db"
+    },
+    "merge_base_commit": {
+      "sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+      "url": "https://api.github.com/repos/YNWAforever/kossilon-hub/commits/1c57a67213af72bff8d776694e6ed8c986b921db",
+      "html_url": "https://github.com/YNWAforever/kossilon-hub/commit/1c57a67213af72bff8d776694e6ed8c986b921db"
+    },
+    "files": []
+  },
+  "local_main_ref": "c1b41a81d76ed98f3ddd98a3e69fc3db3a6f0360",
+  "local_main_note": "Local main differs from connector-resolved remote main. Read local delta; did not move either ref. Candidate evidence remains bound to 7a70e3b/4e5b453.",
+  "git_cli_lookup": "NOT_AVAILABLE: DNS resolution failed before remote access"
+}

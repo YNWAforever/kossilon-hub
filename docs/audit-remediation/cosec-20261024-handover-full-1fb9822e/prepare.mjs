@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+const dir=import.meta.dirname,root=resolve(dir,'../../..'),old=join(dir,'../cosec-20261024-handover-657a8815');assert.equal(process.cwd(),root);
+const write=(n,s)=>writeFileSync(join(dir,n),s,{flag:'wx'}),read=n=>readFileSync(join(old,n),'utf8');
+const sub=s=>s.replaceAll('cosec-20261024-handover-657a8815','cosec-20261024-handover-full-1fb9822e').replaceAll('handover-657a8815','handover-full-1fb9822e').replaceAll('cosec_handover_657a8815','cosec_handover_full_1fb9822e').replaceAll('src/features/admin/handover-scope.integration.test.ts','src/features/admin/handover-execution.integration.test.ts');
+for(const name of ['resource-gate.mjs','capture-remote-final.ps1','git-blob-verify.mjs','freeze-source.mjs','make-manifest.mjs','check-local-cleanup.ps1'])write(name,sub(read(name)));
+let runner=sub(read('isolated-db-runner.mjs'));
+runner=runner.replace("'src/features/admin/types.ts',","'src/features/admin/types.ts','src/features/admin/handover.ts','src/features/auth/staff-lifecycle.ts','src/features/work-items/repository.ts','src/features/work-items/assignment.ts','src/features/nar-import/apply.ts','src/features/bulk-operations/repository.ts',");
+runner=runner.replace('return Object.fromEntries(files.map((file)', 'return Object.fromEntries(files.filter(file=>existsSync(join(ROOT,file))).map((file)');
+write('isolated-db-runner.mjs',runner);
+let checks=sub(read('run-checks.mjs')).replace("'src/features/admin/production-staff-admin.interaction.test.tsx','--maxWorkers'","'src/features/admin/production-staff-admin.interaction.test.tsx','src/features/work-items/assignment.test.ts','--maxWorkers'");
+checks=checks.replace("const selected = [","const selected = ['src/features/work-items/assignment.test.ts',");
+write('run-checks.mjs',checks);
+let capture=read('capture.mjs').replace("base='d2f96c899e30661943b2a59740c2e266a976d9d2'","base='7a70e3be143cf771b6693f4ec2bb491817f74ca9'").replaceAll('cosec-20261024-admin-ab8690c7','cosec-20261024-handover-657a8815').replaceAll('9c3afceae55014a024b547d47daf9d7d97e9cc44','4e5b4532091d125d79ca19244a0699f26832166a').replace("'prior-evidence-integrity.json'","'baseline.json'").replaceAll('2534','2655').replace('prior.length,18','prior.length,19').replace('across18','across19');
+write('capture.mjs',capture);
+console.log('Prepared UC186 same-target-gate helpers; no DB/client/container launched.');

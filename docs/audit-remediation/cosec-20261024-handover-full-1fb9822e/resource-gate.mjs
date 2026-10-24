@@ -1,0 +1,10 @@
+import { freemem, totalmem } from 'node:os';
+import { appendFileSync } from 'node:fs';
+import { join } from 'node:path';
+const stage=process.argv[2],minGiB=Number(process.argv[3]);
+if(!stage||!Number.isFinite(minGiB)||minGiB<=0)throw Error('Stage and positive RAM gate required');
+const free=freemem(),ok=free>=minGiB*2**30;
+const receipt={checked_utc:new Date().toISOString(),stage,free_bytes:free,total_bytes:totalmem(),minimum_gib:minGiB,allowed:ok,started:false,policy:'Bounded local test resource budget; no processes or shared resources stopped'};
+appendFileSync(join(import.meta.dirname,'resource-checks.jsonl'),JSON.stringify(receipt)+'\n');
+console.log(JSON.stringify(receipt));
+if(!ok)process.exitCode=3;
