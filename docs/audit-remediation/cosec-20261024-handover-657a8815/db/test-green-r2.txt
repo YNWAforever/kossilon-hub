@@ -1,0 +1,13 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |db| src/features/admin/handover-scope.integration.test.ts (1 test) 6038ms
+   ✓ UC186 lists all business responsibilities and refuses unsafe staff removal without partial writes  6037ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  18:49:26
+   Duration  6.32s (transform 756ms, setup 0ms, import 79ms, tests 6.04s, environment 0ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

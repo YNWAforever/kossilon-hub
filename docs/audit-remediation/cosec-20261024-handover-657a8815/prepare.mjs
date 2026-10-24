@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+const folder=import.meta.dirname,root=resolve(folder,'../../..'),previous=join(folder,'../cosec-20261024-admin-ab8690c7');
+assert.equal(process.cwd(),root);
+const write=(n,s)=>writeFileSync(join(folder,n),s,{flag:'wx'}),read=n=>readFileSync(join(previous,n),'utf8');
+const replace=s=>s.replaceAll('cosec-20261024-admin-ab8690c7','cosec-20261024-handover-657a8815').replaceAll('admin-ab8690c7','handover-657a8815').replaceAll('cosec_admin_ab8690c7','cosec_handover_657a8815').replaceAll('COSEC_UC185','COSEC_UC186').replaceAll('src/features/admin/last-admin.integration.test.ts','src/features/admin/handover-scope.integration.test.ts');
+for(const name of ['resource-gate.mjs','capture-remote-final.ps1','git-blob-verify.mjs','freeze-source.mjs','make-manifest.mjs','check-local-cleanup.ps1'])write(name,replace(read(name)));
+let runner=replace(read('isolated-db-runner.mjs'));
+runner=runner.replace('const NAME = "kossilon-cosec-handover-657a8815-r3";',`const SLOT=process.env.COSEC_UC186_SLOT??process.argv[3];assert(['red','green'].includes(SLOT),'Exact owned resource slot required');\nconst NAME = 'kossilon-cosec-handover-657a8815-'+SLOT;`);
+runner=runner.replace('`${RUN}-db-r3`','`${RUN}-db-${SLOT}`').replace('COSEC_UC186_RUN_ID: RUN,','COSEC_UC186_RUN_ID: RUN, COSEC_UC186_SLOT:SLOT,');
+runner=runner.replace("'src/features/admin/types.ts',","'src/features/admin/types.ts','src/features/admin/production-staff-admin.tsx','src/features/incorporation/repository.ts','src/features/corporate-changes/repository.ts',");
+write('isolated-db-runner.mjs',runner);
+let checks=replace(read('run-checks.mjs')).replace("'src/features/admin/server-fns.test.ts','--maxWorkers'","'src/features/admin/production-staff-admin.interaction.test.tsx','--maxWorkers'");
+write('run-checks.mjs',checks);
+console.log('Prepared isolated UC186 runner from verified UC185 gate; no DB/client/container launched.');

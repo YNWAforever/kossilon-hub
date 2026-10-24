@@ -1,0 +1,18 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/admin/production-staff-admin.interaction.test.tsx (6 tests) 474ms
+ ✓ |unit| src/routes/-admin-guard.test.tsx (3 tests) 191ms
+ ✓ |unit| src/features/auth/neon-auth-server.test.ts (2 tests) 17ms
+ ✓ |unit| src/features/auth/authorization.test.ts (7 tests) 18ms
+ ✓ |unit| src/features/admin/server-fns.test.ts (4 tests) 6ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 6ms
+ ✓ |unit| src/features/auth/staff-state.test.ts (4 tests) 3ms
+
+ Test Files  7 passed (7)
+      Tests  28 passed (28)
+   Start at  18:51:27
+   Duration  28.70s (transform 2.91s, setup 0ms, import 9.43s, tests 716ms, environment 17.12s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
