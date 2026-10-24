@@ -1,0 +1,22 @@
+{
+  "check": "local document/CSV integrity only",
+  "original_rows": 184,
+  "original_json_parsed": 184,
+  "original_bytes_unchanged": true,
+  "counts": [
+    "F:35",
+    "LA:34",
+    "R:15",
+    "UC:100"
+  ],
+  "mapped_uc": 100,
+  "original_oracles_and_relations_unchanged": true,
+  "packet_references_valid": true,
+  "native": [
+    "BLOCKED:70",
+    "NOT_RUN:114"
+  ],
+  "native_pass": 0,
+  "product_tests_executed": 0,
+  "native_actions_executed": 0
+}

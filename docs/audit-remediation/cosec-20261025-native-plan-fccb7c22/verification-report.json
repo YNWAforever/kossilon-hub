@@ -1,0 +1,21 @@
+{
+  "check": "LOCAL_DOCUMENT_SOURCE_AND_EVIDENCE_INTEGRITY_ONLY",
+  "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "evidence_base": "531887acce5468f7321a3a2919a7afaa20dedac1",
+  "source_git_blobs": 674,
+  "artifact_files": 433,
+  "original_rows": 184,
+  "mapped_UCs": 100,
+  "packets": 13,
+  "approved_packets": 0,
+  "native_pass": 0,
+  "prior_runs": 22,
+  "prior_manifested_files": 2862,
+  "current_manifested_files": 20,
+  "application_tests_executed": [],
+  "native_actions_executed": 0,
+  "resources_created": 0,
+  "external_accesses": 0,
+  "release_gate": "NO_GO",
+  "push_merge_deploy": false
+}

@@ -1,0 +1,10 @@
+{
+  "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "evidence_base": "531887acce5468f7321a3a2919a7afaa20dedac1",
+  "source_files_verified": 674,
+  "product_changes": 0,
+  "local_artifact_manifest": "../cosec-20261025-build-d29cd5ec/artifact-manifest.json",
+  "local_artifact_manifest_sha256": "189606711dca25c7dbc522903f6657b002efab2edca33ee9bf4a7c22f74ca1b4",
+  "native_runtime": null,
+  "deployed": false
+}

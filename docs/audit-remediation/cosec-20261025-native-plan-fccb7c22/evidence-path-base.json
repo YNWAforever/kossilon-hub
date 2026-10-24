@@ -1,0 +1,6 @@
+{
+  "csv": "acceptance-results.csv",
+  "byte_identical_to": "../cosec-20261025-build-d29cd5ec/acceptance-results.csv",
+  "evidence_paths_resolve_relative_to": "../cosec-20261025-build-d29cd5ec/",
+  "status": "Copied original matrix; no result changed"
+}

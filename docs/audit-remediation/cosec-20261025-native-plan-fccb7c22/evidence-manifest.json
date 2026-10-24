@@ -1,0 +1,105 @@
+{
+  "run_id": "cosec-20261025-native-plan-fccb7c22",
+  "files": [
+    {
+      "path": "APPROVAL-CHECKLIST.md",
+      "bytes": 18895,
+      "sha256": "5634029bbdba0fdd19b1a87e58966f06575d0a949770165dde36b8a9ec5c8ade"
+    },
+    {
+      "path": "COVERAGE.md",
+      "bytes": 3365,
+      "sha256": "496f0a92c40ce331ef87320c9909025764326de0caab3170b36ea655b67b4c2b"
+    },
+    {
+      "path": "DELIVERY.md",
+      "bytes": 3414,
+      "sha256": "1d2032419d6460b31d5457ab29fbaf6244e65c1c66ba0658cdaaa52c56d0c6a7"
+    },
+    {
+      "path": "acceptance-results.csv",
+      "bytes": 1256996,
+      "sha256": "287bafceb836b4e42b96cfbc006ee83dd9ac65900100d1ba199f93631537e6fb"
+    },
+    {
+      "path": "approval-request.json",
+      "bytes": 9323,
+      "sha256": "20ad7c792f6a23b37b478005ea14ba4c065f69a29cd1f806ac64a730f5f5db96"
+    },
+    {
+      "path": "authoring-finish.mjs",
+      "bytes": 1057,
+      "sha256": "1a2337cc198a7059dc28440eb6f45166df5ef617b24a5649ad9d4a7ee88a2870"
+    },
+    {
+      "path": "authoring-notes.md",
+      "bytes": 591,
+      "sha256": "6732c7b301a56f64d20829ff5852ab81fd7dbb2d50857cbafc70e5c331631062"
+    },
+    {
+      "path": "baseline.json",
+      "bytes": 126819,
+      "sha256": "5078716cbe3aeebbadbfc8526183752a5a1a68047b34d75055a1470e31564d57"
+    },
+    {
+      "path": "blockers.md",
+      "bytes": 1909,
+      "sha256": "c0a92b2ece911b0296d0800f1ab206874d7595e7bd3c35c09845504105e72316"
+    },
+    {
+      "path": "commit-delivery.ps1",
+      "bytes": 2089,
+      "sha256": "37afb6068bb2e47a99cd535b722fd710afad37fd1e3d2781a1a773da42bf805c"
+    },
+    {
+      "path": "coverage-assessment.json",
+      "bytes": 794,
+      "sha256": "676b7176b669be91959f5de1e29225e03cac9578b0451e73058817f5a07351c8"
+    },
+    {
+      "path": "document-check.json",
+      "bytes": 478,
+      "sha256": "fc5d2837c26daf738c01f887712eef0a971653767916e4d8a20e4c96f9f40916"
+    },
+    {
+      "path": "document-check.ps1",
+      "bytes": 3148,
+      "sha256": "a4c1acf9a8e06e568bbb5d31bf4dbc29dfbd7a2b7234055accb2122902ba1a9f"
+    },
+    {
+      "path": "evidence-path-base.json",
+      "bytes": 254,
+      "sha256": "1e24bb139ce67cd23c0b89fe538e86aa910ecaae91f36f58ddd178f37722c847"
+    },
+    {
+      "path": "native-scenario-map.csv",
+      "bytes": 39083,
+      "sha256": "f50954198c73f2366e5c8905a2da083bc90c0ac3107f9d541dc9e534dacc2c13"
+    },
+    {
+      "path": "prepare.mjs",
+      "bytes": 4820,
+      "sha256": "86297ebaae5e29ddd29eb54078069ba247ae0cddeb197cf4fd8d6ab140097fe5"
+    },
+    {
+      "path": "release-candidate.json",
+      "bytes": 1092,
+      "sha256": "32017d69963199bed50861d03c1a155a3eb13a4caa9eccf425b0818f669f948c"
+    },
+    {
+      "path": "scope-map.ps1",
+      "bytes": 3599,
+      "sha256": "1c5ede5c0af515e3a7e58eee705e8c72ad1307ad2be5eaedcbb4d118ce57274c"
+    },
+    {
+      "path": "source-candidate.json",
+      "bytes": 421,
+      "sha256": "9975fcf4d90e9b332244d9d831c25091640197f62c4f1848322a3b98de229b10"
+    },
+    {
+      "path": "verify.mjs",
+      "bytes": 6829,
+      "sha256": "ee405eeaad29001863cfc9132f7f11dc7a3986eb874a4deb298606fda47d4bd1"
+    }
+  ]
+}
