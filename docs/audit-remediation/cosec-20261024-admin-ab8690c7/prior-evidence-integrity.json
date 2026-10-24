@@ -1,0 +1,109 @@
+{
+  "prior": [
+    {
+      "run_id": "cosec-20261023-79d324f0",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "c4036e7134c6a4c3779431e5d8ff57d504806cb92a0e98f21de5a31f7df4718d",
+      "verified_files": 399
+    },
+    {
+      "run_id": "cosec-20261023-assignment-86b2aa9a",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "2b4cd76b923ab6040c1c9b4a65ef38e5b87c7af4e29afcbb99bae068dec2cef2",
+      "verified_files": 106
+    },
+    {
+      "run_id": "cosec-20261023-clients-d20c646a",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "38844f22e96ecd144a0d5846287549e71c96b03aa6c54186d96011b46238991f",
+      "verified_files": 152
+    },
+    {
+      "run_id": "cosec-20261023-cont-d55d8d7e",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "f4a74e9634d8fe97aef6bfe24452d05d508f629679ddd6184563dd59845a1b1a",
+      "verified_files": 108
+    },
+    {
+      "run_id": "cosec-20261023-payment-21be5584",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "47f5c61134cdd669dd2fb02ef107364483813e44dd9404078aeaeace1852154d",
+      "verified_files": 101
+    },
+    {
+      "run_id": "cosec-20261023-r22-fe4a5635",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "de00aaccc89f09b01c8b2dbecc52ec6e1dee2749f4db322e87ea82d8951329df",
+      "verified_files": 394
+    },
+    {
+      "run_id": "cosec-20261023-xlsx-db68ab95",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "3579ca5e233f675eb5fa9a5fe6e85244ebc4f35c591f9039bb9900d650821bc5",
+      "verified_files": 45
+    },
+    {
+      "run_id": "cosec-20261024-checklist-59870455",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "2069cf5e66570c61b8a1e30f04c77a1013e6a155d666e1bebab34c5ed6e66624",
+      "verified_files": 108
+    },
+    {
+      "run_id": "cosec-20261024-export-9dd9e445",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "8700f6ac0edf93ee7160b2a65201c395971fe5e7297d148c71f671476c95beaf",
+      "verified_files": 114
+    },
+    {
+      "run_id": "cosec-20261024-rejection-4e52ac19",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "b92795f040e46954686c84a1fb3e63bcffc0383cb58abbf69ebb3b5727a424bc",
+      "verified_files": 116
+    },
+    {
+      "run_id": "cosec-20261024-routes-e4b761c9",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "946e38a2e1ab0d6aa224e75b4162836d90581888f777ae475c15047334567bc4",
+      "verified_files": 115
+    },
+    {
+      "run_id": "cosec-20261024-upload-98d2f4c9",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "3042a5777a84e081ba747da46a2418ad651eec7988e189d767bfbaad99bb027b",
+      "verified_files": 195
+    },
+    {
+      "run_id": "cosec-20261024-missing-d74e4679",
+      "manifest_file": "evidence-manifest-final.json",
+      "manifest_sha256": "82a9c482a2e88c2484c2a56b2ea5fae7373294a650667a42374b1721e0de4a34",
+      "verified_files": 76
+    },
+    {
+      "run_id": "cosec-20261024-transfer-f7337fb9",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "03ad801b69e02151dfc15dcc828614b1240e64aeac940ea1b83dc1f32e397b94",
+      "verified_files": 130
+    },
+    {
+      "run_id": "cosec-20261024-schema-d69e7b0e",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "d112c79bb1993b3148bea3550703a3109cec03a8860722dc39d1f069e6fcde44",
+      "verified_files": 108
+    },
+    {
+      "run_id": "cosec-20261024-writegate-ac7d801e",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "956ff24df2cc6acd99da9ea7183849bcdba982a304d09e12ac37a805c4a3330a",
+      "verified_files": 84
+    },
+    {
+      "run_id": "cosec-20261024-restore-5aa3e18c",
+      "manifest_file": "evidence-manifest.json",
+      "manifest_sha256": "892ca4aa0cc67d4f12bff5562d53dc8f317b7d657ce33e00f2506930bc31893f",
+      "verified_files": 84
+    }
+  ],
+  "total_files": 2435,
+  "all_original_bytes_preserved": true,
+  "UC164_manifest": "Use FINAL manifest; original63-file manifest is retained pre-packaging history"
+}

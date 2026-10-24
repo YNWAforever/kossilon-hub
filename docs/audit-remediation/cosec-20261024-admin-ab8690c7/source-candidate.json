@@ -1,0 +1,25 @@
+{
+  "source_sha": "9c3afceae55014a024b547d47daf9d7d97e9cc44",
+  "parent_sha": "e629583fbc4559e80f6b9c2cbb560928c7a1603b",
+  "tested_head": "e629583fbc4559e80f6b9c2cbb560928c7a1603b",
+  "paths": [
+    "src/features/admin/last-admin.integration.test.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "files": [
+    {
+      "path": "src/features/admin/last-admin.integration.test.ts",
+      "bytes": 18655,
+      "sha256": "5e7cb94e647159981eda1d4ef0192d532c4e07a98abdeb4a8bd60233300a6d4a"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "bytes": 3556,
+      "sha256": "db1ff72dcd7ee49395aa7a5bae13e0c1e24ea739fd38e9c69ffb6769a851ef2f"
+    }
+  ],
+  "source_freeze": "source-post-checks.json",
+  "source_files_verified": 668,
+  "all_final_checked_source_bytes_equal_committed": true,
+  "product_logic_changed": false
+}

@@ -1,0 +1,14 @@
+{
+  "first": {
+    "test_snapshot_matches": true,
+    "runner_snapshot_matches": true,
+    "exit_code": 0,
+    "scope": "narrower original harness"
+  },
+  "second": {
+    "source_test_equals_final": true,
+    "runner_snapshot_matches": true,
+    "exit_code": 0,
+    "scope": "before post-child catalog dependency provenance check"
+  }
+}

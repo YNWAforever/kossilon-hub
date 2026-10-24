@@ -1,0 +1,10 @@
+{
+  "source_sha": "9c3afceae55014a024b547d47daf9d7d97e9cc44",
+  "parent_sha": "e629583fbc4559e80f6b9c2cbb560928c7a1603b",
+  "paths": [
+    "src/features/admin/last-admin.integration.test.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "product_logic_changed": false,
+  "operation": "ordinary local commit only; no push/merge/deploy"
+}

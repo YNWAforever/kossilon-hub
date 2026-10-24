@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+const folder=import.meta.dirname,root=resolve(folder,'../../..'),previous=join(folder,'../cosec-20261024-restore-5aa3e18c');
+assert.equal(process.cwd(),root);
+const write=(name,text)=>writeFileSync(join(folder,name),text,{flag:'wx'});
+const read=name=>readFileSync(join(previous,name),'utf8');
+const replace=text=>text.replaceAll('cosec-20261024-restore-5aa3e18c','cosec-20261024-admin-ab8690c7');
+write('verify-git-evidence.mjs',replace(read('verify-git-evidence.mjs')));
+write('commit-evidence.ps1',replace(read('commit-evidence.ps1')).replace('record UC193 restore and UC189 GET admission acceptance','record UC185 last-Admin local acceptance'));
+write('verify-acceptance.ps1',read('verify-acceptance.ps1').replaceAll('../cosec-20261024-writegate-ac7d801e/','../cosec-20261024-restore-5aa3e18c/').replace("@('UC189','UC193')","@('UC185')").replaceAll('UC189/UC193-only','UC185-only').replaceAll('UC189 scope drift','UC185 scope drift'));
+let verify=replace(read('verify-delivery.mjs')).replaceAll('db/test-second.jsonl','db/test-third.jsonl').replace('prior.prior.length,16','prior.prior.length,17').replaceAll('2351','2435').replaceAll('667','668').replaceAll('verified_prior_runs:16','verified_prior_runs:17').replace('full_unit:candidate.checks.unit.summary','full_unit:candidate.full_unit');
+write('verify-delivery.mjs',verify);
+console.log('Prepared scoped acceptance, manifest and committed Git blob verifiers.');

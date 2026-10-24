@@ -1,0 +1,90 @@
+{
+  "run_id": "cosec-20261024-admin-ab8690c7",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "9c3afceae55014a024b547d47daf9d7d97e9cc44",
+  "parent_sha": "e629583fbc4559e80f6b9c2cbb560928c7a1603b",
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "production_sha_user_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "phase": "LOCAL_UC185_LAST_ADMIN_PARTIAL_SCOPED_NATIVE_BLOCKED",
+  "release_gate": "NO_GO",
+  "deployed": false,
+  "auth_runtime_verified": false,
+  "native_http_db_rls_verified": false,
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "source_manifest": "source-candidate.json",
+  "evidence_manifest": "evidence-manifest.json",
+  "checks": {
+    "targeted": {
+      "receipt": "targeted-final2.json",
+      "log": "targeted-final2.txt",
+      "exit_code": 0,
+      "summary": {
+        "tests": 25,
+        "files": 7
+      }
+    },
+    "typecheck": {
+      "receipt": "typecheck-final2.json",
+      "log": "typecheck-final2.txt",
+      "exit_code": 0
+    },
+    "lint": {
+      "receipt": "lint-final2.json",
+      "log": "lint-final2.txt",
+      "exit_code": 0
+    },
+    "build": {
+      "receipt": "build-final2.json",
+      "log": "build-final2.txt",
+      "exit_code": 0
+    },
+    "sql": {
+      "log": "db/test-third.txt",
+      "journal": "db/test-third.jsonl",
+      "tests": 1,
+      "files": 1,
+      "exit_code": 0,
+      "scope": "one final real SQL journey including two repository-owned transaction/advisory-lock races and complete refused-state/audit readback",
+      "phases": [
+        "sole-admin-disable-demote-retries-refused-no-write",
+        "roles-identity-denied-and-current-noop-preserved",
+        "disabled-session-stale-retry-and-fresh-noop",
+        "independent-actor-row-revision-and-audit-readback",
+        "journey-passed"
+      ],
+      "first_pass_with_narrower_harness_preserved": "db/test-first.txt"
+    }
+  },
+  "full_unit": {
+    "status": "NOT_RUN_THIS_BATCH",
+    "reason": "Only a new gated DB acceptance file and its exclusion registry changed; 25 related unit/component checks cover guards, auth and registry; earlier 2768 result remains historical."
+  },
+  "isolated_sql": {
+    "container_id": "57bcd1b87aa1d3690623ac5ca4ba7927e6f2bd766193ca2005695fe481cc8e35",
+    "system_id": "7700171542743150630",
+    "databases": [
+      "cosec_admin_ab8690c7"
+    ],
+    "removed": true,
+    "external_http_calls": 0,
+    "auth": "injected session adapter with real SQL current-identity mapping, actor-service/repository and independent reads; disposable superuser, no native Auth/HTTP/RLS"
+  },
+  "product_bug_disposition": "Existing advisory lock/last-Admin/version/identity guards passed unchanged; no new product defect or invented red regression",
+  "browser": "NOT_RUN_THIS_BATCH",
+  "limitations": [
+    "No native Auth/session transport, HTTP error serialization, DB RLS, browser cancel/back/reload or provider account lifecycle acceptance",
+    "Two synthetic Admins and two deterministic lock-overlap orders; no complete account/handover/DDL concurrency audit",
+    "UC186 handover, invitations, calendars, provider integrations and all original native gaps remain outside this scoped UC185 proof"
+  ],
+  "rollback": {
+    "action": "ordinary new commit reverting 9c3afceae55014a024b547d47daf9d7d97e9cc44; preserve audit evidence and published history",
+    "migration_added": false,
+    "production_action": false
+  }
+}
