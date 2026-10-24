@@ -83,7 +83,7 @@ export type StaffCandidate = {
 export type AssignmentInput = {
   assignmentTarget: "owner" | "reviewer";
   requiredRole: AssignmentRole;
-  requiredSkillKey: string;
+  requiredSkillKey: string | null;
   teamId: string;
   caseId: string | null;
   ownerId: string | null;

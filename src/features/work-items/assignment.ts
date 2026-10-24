@@ -24,7 +24,11 @@ function eligible(candidate: StaffCandidate, input: AssignmentInput): boolean {
   if (!candidate.active || !candidate.available) return false;
   if (candidate.role !== input.requiredRole) return false;
   if (!candidate.teamIds.includes(input.teamId)) return false;
-  if (!candidate.skills.some((skill) => skill.key === input.requiredSkillKey)) return false;
+  if (
+    input.requiredSkillKey !== null &&
+    !candidate.skills.some((skill) => skill.key === input.requiredSkillKey)
+  )
+    return false;
   if (input.separationOfDuties) {
     const conflictingUserId = input.assignmentTarget === "owner" ? input.reviewerId : input.ownerId;
     if (candidate.userId === conflictingUserId) return false;
@@ -37,8 +41,10 @@ function recommendationFor(
   input: AssignmentInput,
 ): Omit<AssignmentRecommendation, "rank"> {
   const skill = candidate.skills.find((item) => item.key === input.requiredSkillKey);
-  if (!skill) throw new Error("Eligible assignment candidate must have the required skill.");
-  if (!Number.isInteger(skill.proficiency) || skill.proficiency < 1 || skill.proficiency > 5) {
+  if (!skill && input.requiredSkillKey !== null)
+    throw new Error("Eligible assignment candidate must have the required skill.");
+  const proficiency = skill?.proficiency ?? 0;
+  if (skill && (!Number.isInteger(proficiency) || proficiency < 1 || proficiency > 5)) {
     throw new Error("Skill proficiency must be an integer from 1 to 5.");
   }
 
@@ -50,14 +56,14 @@ function recommendationFor(
       : 1_000;
   const continuityBonus =
     input.caseId !== null && candidate.caseIds.includes(input.caseId) ? 30 : 0;
-  const score = skill.proficiency * 100 - weightedWorkload - capacityUtilization + continuityBonus;
+  const score = proficiency * 100 - weightedWorkload - capacityUtilization + continuityBonus;
 
   return {
     staffId: candidate.staffId,
     userId: candidate.userId,
     score,
     factors: {
-      skillProficiency: skill.proficiency,
+      skillProficiency: proficiency,
       workloadPoints: weightedWorkload,
       capacityUtilization,
       continuityBonus,

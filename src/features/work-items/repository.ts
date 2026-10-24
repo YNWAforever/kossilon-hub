@@ -284,7 +284,7 @@ async function recommendationsFor(
     separationOfDuties?: boolean;
   } = {},
 ): Promise<(AssignmentRecommendation & AssignmentOption)[]> {
-  if (!item.teamId || !item.requiredSkillKey) return [];
+  if (!item.teamId || item.requiredSkillKey === "") return [];
   const rows = await client<
     {
       staff_id: string;
@@ -293,19 +293,21 @@ async function recommendationsFor(
       team_id: string | null;
       capacity_points: number;
       active: boolean;
-      skill_key: string;
-      proficiency: number;
+      skill_key: string | null;
+      proficiency: number | null;
       display_name: string;
       team_name: string | null;
     }[]
   >`
     select sp.id staff_id, sp.user_id, sp.role, sp.team_id, sp.capacity_points,
       sp.active, ss.skill_key, ss.proficiency, u.name display_name,t.name team_name
-    from staff_profiles sp join staff_skills ss on ss.staff_profile_id = sp.id
+    from staff_profiles sp
+    left join staff_skills ss on ss.staff_profile_id = sp.id
+      and ss.active = true and ss.skill_key = ${item.requiredSkillKey}
     join users u on u.id=sp.user_id and u.active=true and u.role=sp.role and u.team_id=sp.team_id
     left join teams t on t.id=sp.team_id
-    where sp.active = true and ss.active = true and sp.team_id = ${item.teamId}
-      and ss.skill_key = ${item.requiredSkillKey}
+    where sp.active = true and sp.team_id = ${item.teamId}
+      and (${item.requiredSkillKey}::text is null or ss.skill_key is not null)
   `;
   const work = await client<
     {
@@ -330,7 +332,10 @@ async function recommendationsFor(
     active: row.active,
     available: true,
     capacityPoints: row.capacity_points,
-    skills: [{ key: row.skill_key, proficiency: row.proficiency }],
+    skills:
+      row.skill_key !== null && row.proficiency !== null
+        ? [{ key: row.skill_key, proficiency: row.proficiency }]
+        : [],
     activeWork: work
       .filter((entry) => entry.user_id === row.user_id)
       .map((entry) => ({
