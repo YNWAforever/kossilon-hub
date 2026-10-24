@@ -1,0 +1,1085 @@
+import { createHash, randomUUID } from "node:crypto";
+import { appendFileSync, closeSync, openSync, realpathSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { getCurrentTest } from "@vitest/runner";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import {
+  requireClientCompanyAccess,
+  type NeonSessionAdapter,
+} from "@/features/auth/neon-auth-server";
+import { createSqlClient, type SqlClient } from "@/server/db/client";
+import { guardSqlTestLifetime } from "@/test/sql-test-lifetime";
+import {
+  createDocumentRepository,
+  type DocumentUploadIntent,
+  type PrivateDocument,
+} from "./repository";
+import {
+  createDocumentUploadIntentForActor,
+  finalizeDocumentUploadForActor,
+  listDocumentPageForActor,
+  type DocumentOperationDependencies,
+} from "./server-fns";
+import type { DocumentStorage, StoredObjectMetadata } from "./types";
+
+// Collection is inert: no dotenv, artifact, client constructor or provider call.
+// The parent MUST first verify its NEW disposable container/image/labels/mounts,
+// mapped TCP route and server identity, then supply this sanitized environment.
+// These URL/env/path checks supplement that metadata gate; loopback is not proof.
+// This is real SQL plus an injected session adapter and byte-holding memory store.
+// It does not exercise native Auth, HTTP/RPC transport, RLS, R2 or any scanner.
+const RUN = "cosec-20261024-upload-98d2f4c9";
+const DATABASE = "cosec_upload_98d2f4c9";
+const DB_USER = "cosec_runner";
+const ROOT = "c:\\users\\laich\\documents\\kossilon-hub\\cosec-20261023";
+const run = process.env.COSEC_UC150_RUN_ID;
+const PDF_SIZE = 10 * 1024 * 1024 - 1024;
+
+type Identity = {
+  database: string;
+  db_role: string;
+  system_id: string;
+  server_address: string;
+  server_port: number;
+  pid: number;
+};
+
+async function identity(sql: SqlClient) {
+  const [row] = await sql<Identity[]>`select current_database() database,current_user db_role,
+    (select system_identifier::text from pg_control_system()) system_id,
+    inet_server_addr()::text server_address,inet_server_port() server_port,pg_backend_pid() pid`;
+  return row;
+}
+
+function assertIdentity(value: Identity, systemId: string) {
+  expect(value.database).toBe(DATABASE);
+  expect(value.db_role).toBe(DB_USER);
+  expect(value.system_id).toBe(systemId);
+  expect(value.server_port).toBe(5432);
+  expect(value.server_address).toBeTruthy();
+}
+
+async function fixtureCounts(sql: SqlClient) {
+  const [row] = await sql`select
+    (select count(*)::int from teams) teams,
+    (select count(*)::int from users) users,
+    (select count(*)::int from staff_profiles) profiles,
+    (select count(*)::int from client_company_memberships) memberships,
+    (select count(*)::int from companies) companies,
+    (select count(*)::int from annual_return_cases) cases,
+    (select count(*)::int from annual_return_checklist_items) checklist,
+    (select count(*)::int from documents) documents,
+    (select count(*)::int from document_versions) versions,
+    (select count(*)::int from document_upload_intents) intents,
+    (select count(*)::int from document_scan_jobs) scan_jobs,
+    (select count(*)::int from document_analysis_jobs) analysis_jobs,
+    (select count(*)::int from timeline_events) timeline,
+    (select count(*)::int from annual_return_audit_events) audits,
+    (select count(*)::int from work_items) work_items,
+    (select count(*)::int from notification_outbox) outbox`;
+  return row;
+}
+
+type ObservedRow = { id: string; data: Record<string, unknown>; row_version: string };
+type FixtureIds = ReturnType<typeof plannedIds>;
+
+function plannedIds() {
+  return {
+    team: randomUUID(),
+    staff: randomUUID(),
+    profile: randomUUID(),
+    companies: [randomUUID(), randomUUID()],
+    cases: [randomUUID(), randomUUID(), randomUUID()],
+    checklist: [randomUUID(), randomUUID(), randomUUID()],
+    memberships: [randomUUID(), randomUUID(), randomUUID(), randomUUID()],
+    clientAuth: randomUUID(),
+    otherClientAuth: randomUUID(),
+    colleagueAuth: randomUUID(),
+    requests: {
+      lostResponse: randomUUID(),
+      concurrent: randomUUID(),
+      expired: randomUUID(),
+      additive: randomUUID(),
+    },
+  };
+}
+
+// The independent observer reads full persisted rows AND xmin. A replay that
+// refreshes a timestamp, checklist receipt or job instead of reading it fails.
+async function snapshot(sql: SqlClient, ids: FixtureIds) {
+  const intents = await sql<ObservedRow[]>`select i.id,to_jsonb(i) data,i.xmin::text row_version
+    from document_upload_intents i where i.company_id=any(${ids.companies}::uuid[]) order by i.id`;
+  const documents = await sql<ObservedRow[]>`select d.id,to_jsonb(d) data,d.xmin::text row_version
+    from documents d where d.company_id=any(${ids.companies}::uuid[]) order by d.id`;
+  const versions = await sql<ObservedRow[]>`select v.id,to_jsonb(v) data,v.xmin::text row_version
+    from document_versions v join documents d on d.id=v.document_id
+    where d.company_id=any(${ids.companies}::uuid[]) order by v.id`;
+  const scans = await sql<ObservedRow[]>`select j.id,to_jsonb(j) data,j.xmin::text row_version
+    from document_scan_jobs j join document_upload_intents i on i.id=j.intent_id
+    where i.company_id=any(${ids.companies}::uuid[]) order by j.id`;
+  const analyses = await sql<ObservedRow[]>`select j.id,to_jsonb(j) data,j.xmin::text row_version
+    from document_analysis_jobs j join document_versions v on v.id=j.document_version_id
+    join documents d on d.id=v.document_id
+    where d.company_id=any(${ids.companies}::uuid[]) order by j.id`;
+  const checklist = await sql<ObservedRow[]>`select c.id,to_jsonb(c) data,c.xmin::text row_version
+    from annual_return_checklist_items c where c.id=any(${ids.checklist}::uuid[]) order by c.id`;
+  const timeline = await sql<ObservedRow[]>`select e.id,to_jsonb(e) data,e.xmin::text row_version
+    from timeline_events e where e.company_id=any(${ids.companies}::uuid[]) order by e.id`;
+  const audits = await sql<ObservedRow[]>`select e.id,to_jsonb(e) data,e.xmin::text row_version
+    from annual_return_audit_events e where e.case_id=any(${ids.cases}::uuid[]) order by e.id`;
+  return { intents, documents, versions, scans, analyses, checklist, timeline, audits };
+}
+
+function sha256(bytes: Uint8Array) {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+function syntheticPdf() {
+  // A minimal PDF with real xref offsets, padded with whitespace before xref.
+  // No scanner/parser verdict is manufactured from the .pdf name or these bytes.
+  const chunks = [Buffer.from("%PDF-1.4\n% Synthetic UC150 local acceptance\n")];
+  const offsets: number[] = [];
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] /Contents 4 0 R >>",
+    "<< /Length 4 >>\nstream\nq Q\nendstream",
+  ];
+  for (const [index, object] of objects.entries()) {
+    offsets.push(chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0));
+    chunks.push(Buffer.from(`${index + 1} 0 obj\n${object}\nendobj\n`));
+  }
+  const trailerAt = (offset: number) =>
+    Buffer.from(
+      "xref\n0 5\n0000000000 65535 f \n" +
+        offsets.map((n) => `${String(n).padStart(10, "0")} 00000 n \n`).join("") +
+        `trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n${offset}\n%%EOF\n`,
+    );
+  let xref = PDF_SIZE - trailerAt(PDF_SIZE).byteLength;
+  xref = PDF_SIZE - trailerAt(xref).byteLength;
+  const result = Buffer.alloc(PDF_SIZE, 0x20);
+  Buffer.concat(chunks).copy(result);
+  const trailer = trailerAt(xref);
+  if (xref + trailer.byteLength !== PDF_SIZE) throw new Error("Synthetic PDF size drift.");
+  trailer.copy(result, xref);
+  return result;
+}
+
+describe.skipIf(!run)("UC150 ambiguous upload retry on parent-owned disposable SQL", () => {
+  it("reauthorizes committed retries and serializes identical create/finalize without extra receipts or jobs", async () => {
+    const databaseUrl = process.env.DATABASE_URL;
+    const testDatabaseUrl = process.env.TEST_DATABASE_URL;
+    const targetId = process.env.COSEC_UC150_TARGET_ID;
+    const systemId = process.env.COSEC_UC150_SYSTEM_ID;
+    const directory = process.env.COSEC_UC150_EVENTS_DIR;
+    const attempt = process.env.COSEC_UC150_ATTEMPT;
+    if (
+      run !== RUN ||
+      !databaseUrl ||
+      !testDatabaseUrl ||
+      databaseUrl !== testDatabaseUrl ||
+      process.env.COSEC_UC150_DB_NAME !== DATABASE ||
+      !targetId ||
+      !/^[a-f0-9]{64}$/.test(targetId) ||
+      !systemId ||
+      !/^\d+$/.test(systemId) ||
+      !directory ||
+      !attempt ||
+      !/^green(?:[1-9]\d*)?$/.test(attempt)
+    )
+      throw new Error(
+        "Parent-gated UC150 target, matching DB markers and fresh green attempt required.",
+      );
+    let target: URL;
+    try {
+      target = new URL(databaseUrl);
+    } catch {
+      throw new Error("Invalid parent-gated UC150 TCP URL.");
+    }
+    if (
+      target.protocol !== "postgresql:" ||
+      target.hostname !== "127.0.0.1" ||
+      !target.port ||
+      target.username !== DB_USER ||
+      target.pathname !== "/" + DATABASE ||
+      target.search ||
+      target.hash
+    )
+      throw new Error("UC150 URL differs from the parent's direct mapped TCP target.");
+    const folder = resolve(directory);
+    if (
+      realpathSync(process.cwd()).toLowerCase() !== ROOT ||
+      folder !== resolve("docs/audit-remediation", RUN, "db") ||
+      realpathSync(folder) !== folder ||
+      realpathSync(dirname(folder)) !== dirname(folder)
+    )
+      throw new Error("UC150 evidence path is outside the exact run or redirected.");
+    const signal = getCurrentTest()?.context.signal;
+    if (!signal) throw new Error("Running test lifetime required.");
+    signal.throwIfAborted();
+    const pending = scenario(databaseUrl, targetId, systemId, folder, attempt, signal);
+    onTestFinished(async () => {
+      // Drain the scenario, both concurrent writers AND raw teardown on abort.
+      await pending.catch(() => undefined);
+    });
+    await pending;
+  }, 120_000);
+});
+
+async function scenario(
+  databaseUrl: string,
+  targetId: string,
+  systemId: string,
+  folder: string,
+  attempt: string,
+  signal: AbortSignal,
+) {
+  const fd = openSync(resolve(folder, `sidecar-UC150-SQL-${attempt}.jsonl`), "wx");
+  const record = (phase: string, values: object) => {
+    const receipt = { runId: RUN, attempt, phase, ...values };
+    appendFileSync(fd, JSON.stringify(receipt) + "\n");
+    console.info(JSON.stringify(receipt));
+  };
+  const ids = plannedIds();
+  const failures: unknown[] = [];
+  let rawA: SqlClient | undefined;
+  let rawB: SqlClient | undefined;
+  let observerRaw: SqlClient | undefined;
+  let fixtureCreationStarted = false;
+  let fixturesCommitted = false;
+  let assertionsPassed = false;
+  const stored = new Map<string, { metadata: StoredObjectMetadata; bytes: Uint8Array }>();
+  try {
+    record("planned-ids", {
+      targetId,
+      ids,
+      nativeAuth: false,
+      nativeStorage: false,
+      nativeScanner: false,
+      nativeHttp: false,
+    });
+    signal.throwIfAborted();
+    // No constructor before all parent/env/path gates above.
+    rawA = createSqlClient(databaseUrl, { max: 1, ssl: false });
+    rawB = createSqlClient(databaseUrl, { max: 1, ssl: false });
+    observerRaw = createSqlClient(databaseUrl, { max: 1, ssl: false });
+    const writerA = guardSqlTestLifetime(rawA, () => signal);
+    const writerB = guardSqlTestLifetime(rawB, () => signal);
+    const observer = guardSqlTestLifetime(observerRaw, () => signal);
+    const identities = await Promise.all([
+      identity(writerA),
+      identity(writerB),
+      identity(observer),
+    ]);
+    record("tcp-identity", { targetId, identities });
+    for (const value of identities) assertIdentity(value, systemId);
+    expect(new Set(identities.map((value) => value.pid)).size).toBe(3);
+    expect(new Set(identities.map((value) => value.server_address)).size).toBe(1);
+    const baseline = await fixtureCounts(observer);
+    record("empty-fixture-gate", { baseline });
+    expect(Object.values(baseline).every((n) => n === 0)).toBe(true);
+
+    fixtureCreationStarted = true;
+    await writerA.begin(async (tx) => {
+      await tx`insert into teams(id,name) values(${ids.team},${RUN + ":" + ids.team})`;
+      await tx`insert into users(id,name,email,role,team_id,active)
+        values(${ids.staff},'Synthetic UC150 owner',${ids.staff + "@example.test"},'Staff',${ids.team},true)`;
+      await tx`insert into staff_profiles(id,user_id,auth_user_id,role,team_id,active)
+        values(${ids.profile},${ids.staff},${RUN + ":" + ids.staff},'Staff',${ids.team},true)`;
+      for (const [index, companyId] of ids.companies.entries()) {
+        // Client-origin ONLY in this run-owned empty disposable database. No seed.
+        await tx`insert into companies(id,company_name,cr_number,br_number,incorporation_date,
+          annual_return_basis_date,registered_office,company_secretary,assigned_owner_id,assigned_team_id,data_origin)
+          values(${companyId},${`Synthetic UC150 ${index}`},${companyId},${companyId},'2025-01-01',
+            '2026-01-01','Synthetic office','Synthetic secretary',${ids.staff},${ids.team},'client')`;
+      }
+      for (const [index, caseId] of ids.cases.entries()) {
+        await tx`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,
+          current_status,owner_id,reviewer_id)
+          values(${caseId},${ids.companies[index === 2 ? 1 : 0]},${2026 + index},'2026-01-01',
+            '2026-02-12','Documents pending',${ids.staff},${ids.staff})`;
+        await tx`insert into annual_return_checklist_items(id,case_id,item_label,due_date,status)
+          values(${ids.checklist[index]},${caseId},${`Synthetic UC150 signed form ${index}`},'2026-02-12','Missing')`;
+      }
+      await tx`insert into client_company_memberships(id,auth_user_id,company_id,active) values
+        (${ids.memberships[0]},${ids.clientAuth},${ids.companies[0]},true),
+        (${ids.memberships[1]},${ids.clientAuth},${ids.companies[1]},false),
+        (${ids.memberships[2]},${ids.otherClientAuth},${ids.companies[1]},true),
+        (${ids.memberships[3]},${ids.colleagueAuth},${ids.companies[0]},true)`;
+    });
+    fixturesCommitted = true;
+    record("fixtures-committed", { ids });
+
+    const bytes = syntheticPdf();
+    const checksum = sha256(bytes);
+    expect(bytes.byteLength).toBe(PDF_SIZE);
+    expect(bytes.subarray(0, 8).toString()).toBe("%PDF-1.4");
+    record("pdf-byte-fixture", { sizeBytes: bytes.byteLength, checksum, parsedOrScanned: false });
+    const storage: DocumentStorage = {
+      put: vi.fn(async (input) => {
+        signal.throwIfAborted();
+        const body = input.body instanceof Uint8Array ? input.body : new Uint8Array(input.body);
+        expect(body.byteLength).toBe(input.sizeBytes);
+        expect(sha256(body)).toBe(input.checksum);
+        const metadata: StoredObjectMetadata = {
+          objectKey: input.objectKey,
+          checksum: input.checksum,
+          contentType: input.contentType,
+          sizeBytes: input.sizeBytes,
+        };
+        const existing = stored.get(input.objectKey);
+        if (existing) {
+          // A concurrent initial PUT may repeat identical bytes at the same key.
+          expect(existing.metadata).toEqual(metadata);
+          expect(sha256(existing.bytes)).toBe(sha256(body));
+        } else stored.set(input.objectKey, { metadata, bytes: Uint8Array.from(body) });
+        return metadata;
+      }),
+      get: vi.fn(async (key) => {
+        const value = stored.get(key);
+        return value ? { ...value.metadata, body: Uint8Array.from(value.bytes).buffer } : null;
+      }),
+      head: vi.fn(async (key) => stored.get(key)?.metadata ?? null),
+      delete: vi.fn(async (key) => {
+        stored.delete(key);
+      }),
+    };
+    const createScanner = vi.fn(() => {
+      throw new Error("UC150 must not construct a scanner or manufacture a clean verdict.");
+    });
+    const request = new Request("https://example.test/uc150");
+    const auth = (authUserId: string): NeonSessionAdapter => ({
+      getSession: async () => ({ user: { id: authUserId, email: "uc150@example.test" } }),
+      signOut: async () => new Response(),
+    });
+    const client: AuthenticatedActor = {
+      authUserId: ids.clientAuth,
+      userId: null,
+      role: "Client",
+      teamId: null,
+      active: true,
+    };
+    const dependencies = (sql: SqlClient): DocumentOperationDependencies => ({
+      repository: createDocumentRepository({ sql }),
+      storage,
+      createScanner,
+      authorizeDocument: async (candidate, subject) => {
+        if (!candidate.active) throw new Error("Forbidden: inactive UC150 actor.");
+        // Session transport is injected, but identity/membership are real SQL.
+        const current = await requireClientCompanyAccess(request, subject.companyId, {
+          sql,
+          auth: auth(candidate.authUserId),
+        });
+        expect(current).toEqual(candidate);
+      },
+    });
+    const depsA = dependencies(writerA);
+    const depsB = dependencies(writerB);
+    const reader = dependencies(observer);
+    type UploadInput = Parameters<typeof createDocumentUploadIntentForActor>[1] & {
+      uploadRequestId: string;
+    };
+    const input: UploadInput = {
+      companyId: ids.companies[0],
+      caseId: ids.cases[0],
+      checklistItemId: ids.checklist[0],
+      uploadRequestId: ids.requests.lostResponse,
+      category: "signature",
+      fileName: "uc150-near-limit.pdf",
+      contentType: "application/pdf",
+      sizeBytes: bytes.byteLength,
+      checksum,
+    };
+    const create = (value: UploadInput = input, deps = depsA, actor = client) =>
+      createDocumentUploadIntentForActor(actor, value, deps);
+    const finalize = (id: string, deps = depsA, actor = client, body: Uint8Array = bytes) =>
+      finalizeDocumentUploadForActor(actor, id, body, deps);
+    const read = () => snapshot(observer, ids);
+    const putCalls = () => vi.mocked(storage.put).mock.calls.length;
+    const rememberIntent = (label: string, value: DocumentUploadIntent, requestId: string) => {
+      record("actual-intent", {
+        label,
+        intentId: value.id,
+        objectKey: value.objectKey,
+        companyId: value.companyId,
+        caseId: value.caseId,
+        requestId,
+      });
+      expect(value.requestedByAuthUserId).toBe(ids.clientAuth);
+      expect(value.objectKey.startsWith("documents/")).toBe(true);
+      for (const privateValue of [input.fileName, checksum, ids.clientAuth, ids.companies[0]])
+        expect(value.objectKey).not.toContain(privateValue);
+    };
+    const unchangedRejection = async (
+      label: string,
+      operation: () => Promise<unknown>,
+      concealed?: DocumentUploadIntent,
+    ) => {
+      const before = await read();
+      const calls = putCalls();
+      const keys = [...stored.keys()];
+      let caught: unknown;
+      try {
+        await operation();
+      } catch (error) {
+        caught = error;
+      }
+      expect(caught, label).toBeInstanceOf(Error);
+      if (concealed && caught instanceof Error) {
+        for (const privateValue of [concealed.id, concealed.objectKey, checksum])
+          expect(caught.message, label).not.toContain(privateValue);
+      }
+      expect(await read(), label).toEqual(before);
+      expect(putCalls(), label).toBe(calls);
+      expect([...stored.keys()], label).toEqual(keys);
+      expect(createScanner, label).not.toHaveBeenCalled();
+      record("refusal-readback", { label, unchanged: true, storagePutCalls: calls });
+    };
+    const assertReceipt = async (
+      intent: DocumentUploadIntent,
+      document: PrivateDocument,
+      checklistId: string,
+    ) => {
+      const state = await read();
+      const persisted = state.intents.filter((row) => row.id === intent.id);
+      expect(persisted).toHaveLength(1);
+      expect(persisted[0].data).toMatchObject({
+        document_id: document.id,
+        status: "quarantined",
+        scan_verdict_source: null,
+        scan_provider_reference: null,
+        scanned_at: null,
+        scan_document_version_id: null,
+        checksum_sha256: checksum,
+        expected_size_bytes: bytes.byteLength,
+      });
+      expect(state.documents.filter((row) => row.id === document.id)).toHaveLength(1);
+      expect(state.documents.find((row) => row.id === document.id)?.data).toMatchObject({
+        storage_url: intent.objectKey,
+        verification_status: "pending",
+        verified_at: null,
+        verified_by: null,
+        reviewed_document_version_id: null,
+      });
+      const versions = state.versions.filter((row) => row.data.intent_id === intent.id);
+      expect(versions).toHaveLength(1);
+      expect(versions[0]).toMatchObject({
+        id: document.currentVersionId,
+        data: {
+          document_id: document.id,
+          version_number: 1,
+          declared_checksum_sha256: checksum,
+          declared_byte_size: bytes.byteLength,
+          verified_checksum_sha256: null,
+          verified_byte_size: null,
+          verified_at: null,
+          superseded_by_version_id: null,
+        },
+      });
+      const scans = state.scans.filter((row) => row.data.intent_id === intent.id);
+      const analyses = state.analyses.filter(
+        (row) => row.data.document_version_id === document.currentVersionId,
+      );
+      expect(scans).toHaveLength(1);
+      expect(scans[0].data).toMatchObject({
+        document_version_id: document.currentVersionId,
+        checksum_sha256: checksum,
+        status: "pending",
+        attempt_count: 0,
+        reason: "initial",
+        completed_at: null,
+      });
+      expect(analyses).toHaveLength(1);
+      expect(analyses[0].data).toMatchObject({
+        status: "pending",
+        attempt_count: 0,
+        reason: "initial",
+        completed_at: null,
+      });
+      expect(state.checklist.find((row) => row.id === checklistId)?.data).toMatchObject({
+        document_id: document.id,
+        status: "Received",
+        verified_at: null,
+      });
+      expect(state.checklist.find((row) => row.id === checklistId)?.data.received_at).toBeTruthy();
+      expect(state.timeline).toEqual([]);
+      expect(state.audits).toEqual([]);
+      const object = stored.get(intent.objectKey);
+      expect(object?.metadata).toEqual({
+        objectKey: intent.objectKey,
+        checksum,
+        contentType: "application/pdf",
+        sizeBytes: bytes.byteLength,
+      });
+      expect(object?.bytes.byteLength).toBe(bytes.byteLength);
+      if (!object) throw new Error("UC150 received object missing from memory storage.");
+      expect(sha256(object.bytes)).toBe(checksum);
+      expect(createScanner).not.toHaveBeenCalled();
+      return state;
+    };
+
+    // Lost CREATE response: the database commits, then the caller sees a transport
+    // error. We do not substitute a pre-commit exception or guess the old ID.
+    const committed: { intent?: DocumentUploadIntent; document?: PrivateDocument } = {};
+    await expect(
+      (async () => {
+        committed.intent = await create();
+        rememberIntent("create-committed-response-lost", committed.intent, input.uploadRequestId);
+        throw new Error("UC150 simulated CREATE response lost AFTER commit");
+      })(),
+    ).rejects.toThrow("UC150 simulated CREATE response lost AFTER commit");
+    const afterLostCreate = await read();
+    expect(afterLostCreate.intents).toHaveLength(1);
+    expect(afterLostCreate.documents).toEqual([]);
+    expect(afterLostCreate.versions).toEqual([]);
+    expect(afterLostCreate.scans).toEqual([]);
+    expect(afterLostCreate.analyses).toEqual([]);
+    if (!committed.intent) throw new Error("UC150 CREATE did not commit before response loss.");
+    const intent = await create(input, depsB);
+    expect(intent.id).toBe(committed.intent.id);
+    expect(intent.objectKey).toBe(committed.intent.objectKey);
+    expect(await read()).toEqual(afterLostCreate);
+    expect(putCalls()).toBe(0);
+    record("lost-create-retry-readback", { intent, state: afterLostCreate, unchanged: true });
+
+    const mismatches: [string, Partial<UploadInput>][] = [
+      ["same-request-different-filename", { fileName: "different.pdf" }],
+      [
+        "same-request-different-valid-file-metadata",
+        { category: "payment", fileName: "different.png", contentType: "image/png" },
+      ],
+      ["same-request-different-size", { sizeBytes: bytes.byteLength - 1 }],
+      ["same-request-different-checksum", { checksum: "b".repeat(64) }],
+      ["same-request-different-category", { category: "identity" }],
+      ["same-request-removed-case", { caseId: undefined, checklistItemId: undefined }],
+      ["same-request-different-case", { caseId: ids.cases[1], checklistItemId: ids.checklist[1] }],
+      ["same-request-removed-checklist", { checklistItemId: undefined }],
+      ["wrong-checklist-for-case", { checklistItemId: ids.checklist[1] }],
+      ["foreign-company-case", { caseId: ids.cases[2], checklistItemId: ids.checklist[2] }],
+    ];
+    for (const [label, change] of mismatches)
+      await unchangedRejection(label, () => create({ ...input, ...change }, depsB));
+    await unchangedRejection(
+      "inactive-company-membership",
+      () =>
+        create(
+          {
+            ...input,
+            companyId: ids.companies[1],
+            caseId: ids.cases[2],
+            checklistItemId: ids.checklist[2],
+          },
+          depsB,
+        ),
+      intent,
+    );
+    await unchangedRejection(
+      "other-client-cannot-create-in-company",
+      () => create(input, depsB, { ...client, authUserId: ids.otherClientAuth }),
+      intent,
+    );
+    const wrongBytes = Uint8Array.from(bytes);
+    wrongBytes[1024] ^= 1;
+    await unchangedRejection("created-wrong-checksum-body", () =>
+      finalize(intent.id, depsA, client, wrongBytes),
+    );
+    await unchangedRejection("created-wrong-size-body", () =>
+      finalize(intent.id, depsB, client, bytes.subarray(1)),
+    );
+
+    await expect(
+      (async () => {
+        committed.document = await finalize(intent.id);
+        record("actual-document", {
+          label: "finalize-committed-response-lost",
+          intentId: intent.id,
+          documentId: committed.document.id,
+          versionId: committed.document.currentVersionId,
+        });
+        throw new Error("UC150 simulated FINALIZE response lost AFTER commit");
+      })(),
+    ).rejects.toThrow("UC150 simulated FINALIZE response lost AFTER commit");
+    if (!committed.document) throw new Error("UC150 FINALIZE did not commit before response loss.");
+    const received = committed.document;
+    expect(received.currentVersionId).toBeTruthy();
+    const afterLostFinalize = await assertReceipt(intent, received, ids.checklist[0]);
+    const beforeReplayPuts = putCalls();
+    const replay = await finalize(intent.id, depsB);
+    expect(replay.id).toBe(received.id);
+    expect(replay.currentVersionId).toBe(received.currentVersionId);
+    expect(replay).toMatchObject({ uploadStatus: "quarantined", reviewStatus: "pending" });
+    expect(await read()).toEqual(afterLostFinalize);
+    expect(putCalls()).toBe(beforeReplayPuts);
+    expect((await create(input, depsB)).id).toBe(intent.id);
+    expect(await read()).toEqual(afterLostFinalize);
+    record("lost-finalize-retry-readback", {
+      documentId: replay.id,
+      versionId: replay.currentVersionId,
+      sequentialExtraPuts: putCalls() - beforeReplayPuts,
+      unchanged: true,
+      state: afterLostFinalize,
+    });
+
+    // A committed receipt survives the CREATED intent's old 15-minute deadline.
+    // Only JS time advances; no scan, review, expiry or persisted row is patched.
+    const committedClock = vi
+      .spyOn(Date, "now")
+      .mockReturnValue(Date.parse(intent.expiresAt) + 1000);
+    try {
+      expect((await create(input, depsB)).id).toBe(intent.id);
+      const lateReplay = await finalize(intent.id, depsB);
+      expect(lateReplay.id).toBe(received.id);
+      expect(lateReplay.currentVersionId).toBe(received.currentVersionId);
+      expect(await read()).toEqual(afterLostFinalize);
+      expect(putCalls()).toBe(beforeReplayPuts);
+      record("committed-replay-after-created-expiry", {
+        intentId: intent.id,
+        documentId: lateReplay.id,
+        versionId: lateReplay.currentVersionId,
+        unchanged: true,
+      });
+    } finally {
+      committedClock.mockRestore();
+    }
+
+    await unchangedRejection("committed-wrong-checksum-body", () =>
+      finalize(intent.id, depsB, client, wrongBytes),
+    );
+    await unchangedRejection("committed-wrong-size-body", () =>
+      finalize(intent.id, depsA, client, bytes.subarray(1)),
+    );
+    await unchangedRejection(
+      "committed-inactive-actor",
+      () => finalize(intent.id, depsB, { ...client, active: false }),
+      intent,
+    );
+    await unchangedRejection(
+      "committed-other-client",
+      () => finalize(intent.id, depsB, { ...client, authUserId: ids.otherClientAuth }),
+      intent,
+    );
+    await unchangedRejection(
+      "committed-same-company-different-uploader",
+      () => finalize(intent.id, depsB, { ...client, authUserId: ids.colleagueAuth }),
+      intent,
+    );
+    await writerA`update client_company_memberships set active=false
+      where id=${ids.memberships[0]} and auth_user_id=${ids.clientAuth} and company_id=${ids.companies[0]}`;
+    try {
+      await unchangedRejection(
+        "committed-membership-revoked",
+        () => finalize(intent.id, depsB),
+        intent,
+      );
+      await unchangedRejection(
+        "create-replay-membership-revoked",
+        () => create(input, depsB),
+        intent,
+      );
+    } finally {
+      await writerA`update client_company_memberships set active=true
+        where id=${ids.memberships[0]} and auth_user_id=${ids.clientAuth} and company_id=${ids.companies[0]}`;
+    }
+    expect(await read()).toEqual(afterLostFinalize);
+
+    // Hold the authoritative case row on the observer to make both real writer
+    // requests overlap at the repository lock boundary, then release and drain.
+    // No fake repository/SQL executor or artificial successful row is involved.
+    async function overlapping<T>(
+      label: string,
+      caseId: string,
+      a: () => Promise<T>,
+      b: () => Promise<T>,
+    ) {
+      let pending: Promise<PromiseSettledResult<T>[]> | undefined;
+      let results: PromiseSettledResult<T>[] = [];
+      try {
+        await observer.begin(async (tx) => {
+          await tx`select id from annual_return_cases where id=${caseId} and company_id=${ids.companies[0]} for update`;
+          pending = Promise.allSettled([a(), b()]);
+          let blockers: { pid: number; blockers: number[] }[] = [];
+          for (let attempt = 0; attempt < 250; attempt++) {
+            signal.throwIfAborted();
+            blockers = await tx<
+              { pid: number; blockers: number[] }[]
+            >`select pid,pg_blocking_pids(pid) blockers
+              from pg_stat_activity where pid=any(${identities.slice(0, 2).map((value) => value.pid)}::int[]) order by pid`;
+            if (blockers.length === 2 && blockers.every((row) => row.blockers.length > 0)) break;
+            await new Promise((resolveWait) => setTimeout(resolveWait, 20));
+          }
+          record("concurrent-writers-blocked", {
+            label,
+            caseId,
+            blockers,
+            observerPid: identities[2].pid,
+            writerPids: identities.slice(0, 2).map((value) => value.pid),
+          });
+          expect(blockers).toHaveLength(2);
+          expect(blockers.every((row) => row.blockers.length > 0)).toBe(true);
+          expect(blockers.some((row) => row.blockers.includes(identities[2].pid))).toBe(true);
+        });
+      } finally {
+        // Both branches settle before scenario cleanup, including failed assertions.
+        if (pending) results = await pending;
+      }
+      expect(results).toHaveLength(2);
+      const values: T[] = [];
+      for (const result of results) {
+        if (result.status === "rejected") throw result.reason;
+        values.push(result.value);
+      }
+      return values;
+    }
+    const concurrentInput: UploadInput = {
+      ...input,
+      caseId: ids.cases[1],
+      checklistItemId: ids.checklist[1],
+      uploadRequestId: ids.requests.concurrent,
+    };
+    const concurrentCreates = await overlapping(
+      "create",
+      ids.cases[1],
+      () => create(concurrentInput, depsA),
+      () => create(concurrentInput, depsB),
+    );
+    expect(concurrentCreates[0].id).toBe(concurrentCreates[1].id);
+    expect(concurrentCreates[0].objectKey).toBe(concurrentCreates[1].objectKey);
+    const concurrentIntent = concurrentCreates[0];
+    rememberIntent("concurrent-create", concurrentIntent, concurrentInput.uploadRequestId);
+    expect(concurrentIntent.id).not.toBe(intent.id);
+    expect(concurrentIntent.objectKey).not.toBe(intent.objectKey);
+    const beforeConcurrentPuts = putCalls();
+    const concurrentFinalizes = await overlapping(
+      "finalize",
+      ids.cases[1],
+      () => finalize(concurrentIntent.id, depsA),
+      () => finalize(concurrentIntent.id, depsB),
+    );
+    expect(concurrentFinalizes[0].id).toBe(concurrentFinalizes[1].id);
+    expect(concurrentFinalizes[0].currentVersionId).toBe(concurrentFinalizes[1].currentVersionId);
+    const concurrentDocument = concurrentFinalizes[0];
+    expect(concurrentDocument.id).not.toBe(received.id);
+    const afterConcurrent = await assertReceipt(
+      concurrentIntent,
+      concurrentDocument,
+      ids.checklist[1],
+    );
+    expect(afterConcurrent.intents).toHaveLength(2);
+    expect(afterConcurrent.documents).toHaveLength(2);
+    expect(afterConcurrent.versions).toHaveLength(2);
+    expect(afterConcurrent.scans).toHaveLength(2);
+    expect(afterConcurrent.analyses).toHaveLength(2);
+    expect(stored.size).toBe(2);
+    const afterConcurrentPuts = putCalls();
+    const concurrentReplay = await finalize(concurrentIntent.id, depsA);
+    expect(concurrentReplay.id).toBe(concurrentDocument.id);
+    expect(concurrentReplay.currentVersionId).toBe(concurrentDocument.currentVersionId);
+    expect(await read()).toEqual(afterConcurrent);
+    expect(putCalls()).toBe(afterConcurrentPuts);
+    record("concurrent-observer-readback", {
+      intentId: concurrentIntent.id,
+      documentId: concurrentDocument.id,
+      versionId: concurrentDocument.currentVersionId,
+      state: afterConcurrent,
+      physicalPutCalls: afterConcurrentPuts - beforeConcurrentPuts,
+      totalPutCalls: afterConcurrentPuts,
+      concurrentIdenticalPutMayRepeat: true,
+      sequentialExtraPuts: putCalls() - afterConcurrentPuts,
+    });
+
+    // An uncommitted CREATED intent really expires. Advancing Date.now is the
+    // sole stimulus; this does not rewrite persisted expiry or review/scan state.
+    const expiredInput: UploadInput = { ...input, uploadRequestId: ids.requests.expired };
+    const expired = await create(expiredInput);
+    rememberIntent("created-awaiting-expiry", expired, expiredInput.uploadRequestId);
+    const expiredClock = vi
+      .spyOn(Date, "now")
+      .mockReturnValue(Date.parse(expired.expiresAt) + 1000);
+    try {
+      await unchangedRejection("expired-created-finalize", () => finalize(expired.id, depsB));
+      // PLAN.md requires an authoritative read of expired, uncommitted metadata
+      // so the UI may explicitly start a new attempt. It must not renew it.
+      const beforeExpiredRead = await read();
+      const beforeExpiredPuts = putCalls();
+      const expiredReplay = await create(expiredInput, depsB);
+      expect(expiredReplay).toMatchObject({
+        id: expired.id,
+        status: "created",
+        documentId: null,
+        expiresAt: expired.expiresAt,
+      });
+      expect(await read()).toEqual(beforeExpiredRead);
+      expect(putCalls()).toBe(beforeExpiredPuts);
+      record("expired-created-readback", {
+        intentId: expired.id,
+        sameExpiry: true,
+        unchanged: true,
+        noDocument: true,
+      });
+    } finally {
+      expiredClock.mockRestore();
+    }
+    const [expiredRow] =
+      await observer`select status,document_id,scanned_at from document_upload_intents where id=${expired.id}`;
+    expect(expiredRow).toEqual({ status: "created", document_id: null, scanned_at: null });
+    expect(stored.has(expired.objectKey)).toBe(false);
+
+    // The same UUID belongs to a different request namespace for another
+    // authorized uploader. It must neither disclose nor reuse the first intent.
+    const colleague: AuthenticatedActor = { ...client, authUserId: ids.colleagueAuth };
+    const beforeColleague = await read();
+    const colleagueIntent = await create(input, depsB, colleague);
+    record("actual-intent", {
+      label: "same-token-different-authorized-uploader",
+      requestId: input.uploadRequestId,
+      intentId: colleagueIntent.id,
+      objectKey: colleagueIntent.objectKey,
+      authUserId: colleague.authUserId,
+    });
+    expect(colleagueIntent.requestedByAuthUserId).toBe(colleague.authUserId);
+    expect(colleagueIntent.id).not.toBe(intent.id);
+    expect(colleagueIntent.objectKey).not.toBe(intent.objectKey);
+    expect(stored.has(colleagueIntent.objectKey)).toBe(false);
+    const afterColleague = await read();
+    expect(afterColleague.documents).toEqual(beforeColleague.documents);
+    expect(afterColleague.versions).toEqual(beforeColleague.versions);
+    expect(afterColleague.scans).toEqual(beforeColleague.scans);
+    expect(afterColleague.analyses).toEqual(beforeColleague.analyses);
+    expect(afterColleague.checklist).toEqual(beforeColleague.checklist);
+    expect((await create(input, depsA, colleague)).id).toBe(colleagueIntent.id);
+    expect(await read()).toEqual(afterColleague);
+    await unchangedRejection(
+      "original-uploader-cannot-finalize-colleague-intent",
+      () => finalize(colleagueIntent.id, depsA),
+      colleagueIntent,
+    );
+
+    // Dedupe is request scoped. A new deliberate upload of identical bytes
+    // remains additive; it cannot globally borrow another upload's receipt.
+    const beforeAdditive = await read();
+    const additiveIntent = await create({ ...input, uploadRequestId: ids.requests.additive });
+    rememberIntent("new-request-same-bytes", additiveIntent, ids.requests.additive);
+    const additive = await finalize(additiveIntent.id, depsB);
+    expect(additive.id).not.toBe(received.id);
+    expect(additive.currentVersionId).not.toBe(received.currentVersionId);
+    expect(additiveIntent.objectKey).not.toBe(intent.objectKey);
+    const finalState = await read();
+    expect(finalState.intents).toHaveLength(5);
+    expect(finalState.documents).toHaveLength(3);
+    expect(finalState.versions).toHaveLength(3);
+    expect(finalState.scans).toHaveLength(3);
+    expect(finalState.analyses).toHaveLength(3);
+    expect(finalState.checklist).toEqual(beforeAdditive.checklist);
+    expect(finalState.timeline).toEqual([]);
+    expect(finalState.audits).toEqual([]);
+    const originalIds = new Set(beforeAdditive.documents.map((row) => row.id));
+    expect(finalState.documents.filter((row) => originalIds.has(row.id))).toEqual(
+      beforeAdditive.documents,
+    );
+    expect(
+      finalState.versions.filter((row) => beforeAdditive.versions.some((old) => old.id === row.id)),
+    ).toEqual(beforeAdditive.versions);
+    expect(
+      finalState.intents.filter((row) => beforeAdditive.intents.some((old) => old.id === row.id)),
+    ).toEqual(beforeAdditive.intents);
+    expect(
+      finalState.scans.filter((row) => beforeAdditive.scans.some((old) => old.id === row.id)),
+    ).toEqual(beforeAdditive.scans);
+    expect(
+      finalState.analyses.filter((row) => beforeAdditive.analyses.some((old) => old.id === row.id)),
+    ).toEqual(beforeAdditive.analyses);
+    expect(
+      finalState.scans.every(
+        (row) => row.data.status === "pending" && row.data.attempt_count === 0,
+      ),
+    ).toBe(true);
+    expect(
+      finalState.analyses.every(
+        (row) => row.data.status === "pending" && row.data.attempt_count === 0,
+      ),
+    ).toBe(true);
+    expect(
+      finalState.versions.every(
+        (row) => row.data.verified_checksum_sha256 === null && row.data.verified_at === null,
+      ),
+    ).toBe(true);
+    expect(stored.size).toBe(3);
+    for (const object of stored.values()) {
+      expect(object.bytes.byteLength).toBe(PDF_SIZE);
+      expect(sha256(object.bytes)).toBe(checksum);
+    }
+    const page = await listDocumentPageForActor(
+      client,
+      { companyId: ids.companies[0], caseId: ids.cases[0] },
+      reader,
+    );
+    expect(page.documents.map((row) => row.id).sort()).toEqual([received.id, additive.id].sort());
+    for (const row of page.documents)
+      expect(row).toMatchObject({
+        reviewStatus: "pending",
+        uploadStatus: "quarantined",
+        rejectionReason: null,
+        scanVerdictSource: null,
+        checksum,
+        sizeBytes: PDF_SIZE,
+      });
+    const empty = await listDocumentPageForActor(
+      { ...client, authUserId: ids.otherClientAuth },
+      { companyId: ids.companies[1], caseId: ids.cases[2] },
+      reader,
+    );
+    expect(empty.documents).toEqual([]);
+    expect(
+      (
+        await listDocumentPageForActor(
+          client,
+          { companyId: ids.companies[0], caseId: ids.cases[2] },
+          reader,
+        )
+      ).documents,
+    ).toEqual([]);
+    await unchangedRejection(
+      "list-other-client-no-leak",
+      () =>
+        listDocumentPageForActor(
+          { ...client, authUserId: ids.otherClientAuth },
+          { companyId: ids.companies[0], caseId: ids.cases[0] },
+          reader,
+        ),
+      intent,
+    );
+    await unchangedRejection(
+      "list-inactive-membership-no-leak",
+      () =>
+        listDocumentPageForActor(
+          client,
+          { companyId: ids.companies[1], caseId: ids.cases[2] },
+          reader,
+        ),
+      intent,
+    );
+    expect(createScanner).not.toHaveBeenCalled();
+    expect(storage.delete).not.toHaveBeenCalled();
+    expect(await read()).toEqual(finalState);
+    record("observer-readback", {
+      ids,
+      documents: page.documents,
+      received: { id: received.id, versionId: received.currentVersionId },
+      concurrent: { id: concurrentDocument.id, versionId: concurrentDocument.currentVersionId },
+      additive: { id: additive.id, versionId: additive.currentVersionId },
+      byteCount: PDF_SIZE,
+      checksum,
+      storedObjectKeys: [...stored.keys()],
+      storagePutCalls: putCalls(),
+      state: finalState,
+      nativeAuth: false,
+      nativeHttp: false,
+      nativeStorage: false,
+      scannerCalls: createScanner.mock.calls.length,
+      byteOffsetOrMultipartResume: false,
+    });
+    assertionsPassed = true;
+    record("assertions-complete", { assertionsPassed });
+  } catch (error) {
+    record("scenario-failed", { fixturesCommitted, assertionsPassed, ids });
+    failures.push(error);
+  } finally {
+    try {
+      if (rawA && rawB && observerRaw && fixtureCreationStarted) {
+        // Raw clients are reserved for awaited teardown after lifetime abortion.
+        // Identity drift preserves the target and exact IDs; never blindly delete.
+        for (const sql of [rawA, rawB, observerRaw]) assertIdentity(await identity(sql), systemId);
+        await rawA.begin(async (tx) => {
+          // These parents are freshly generated, logged before creation, and
+          // established only after the all-zero baseline. Discover descendants
+          // from their exact IDs, freeze/log all child IDs before any deletion.
+          const intents = await tx<
+            { id: string; object_key: string; company_id: string; case_id: string | null }[]
+          >`
+            select id,object_key,company_id,case_id from document_upload_intents
+            where company_id=any(${ids.companies}::uuid[])`;
+          const documents = await tx<{ id: string; storage_url: string }[]>`
+            select id,storage_url from documents where company_id=any(${ids.companies}::uuid[])`;
+          const intentIds = intents.map((row) => row.id);
+          const documentIds = documents.map((row) => row.id);
+          const versions = await tx<{ id: string }[]>`select id from document_versions
+            where document_id=any(${documentIds}::uuid[])`;
+          const versionIds = versions.map((row) => row.id);
+          const scans = await tx<{ id: string }[]>`select id from document_scan_jobs
+            where intent_id=any(${intentIds}::uuid[])`;
+          const analyses = await tx<{ id: string }[]>`select id from document_analysis_jobs
+            where document_version_id=any(${versionIds}::uuid[])`;
+          const events = await tx<{ id: string }[]>`select id from timeline_events
+            where company_id=any(${ids.companies}::uuid[])`;
+          const audits = await tx<{ id: string }[]>`select id from annual_return_audit_events
+            where case_id=any(${ids.cases}::uuid[])`;
+          record("exact-cleanup-ids", {
+            ids,
+            intents,
+            documents,
+            versions,
+            scans,
+            analyses,
+            events,
+            audits,
+            memoryObjects: [...stored.entries()].map(([objectKey, value]) => ({
+              objectKey,
+              checksum: sha256(value.bytes),
+              sizeBytes: value.bytes.byteLength,
+            })),
+          });
+          await tx`delete from timeline_events where id=any(${events.map((row) => row.id)}::uuid[])`;
+          await tx`delete from annual_return_audit_events where id=any(${audits.map((row) => row.id)}::uuid[])`;
+          await tx`delete from annual_return_checklist_items where id=any(${ids.checklist}::uuid[])
+            and case_id=any(${ids.cases}::uuid[])`;
+          await tx`delete from document_analysis_jobs where id=any(${analyses.map((row) => row.id)}::uuid[])`;
+          await tx`delete from document_scan_jobs where id=any(${scans.map((row) => row.id)}::uuid[])`;
+          await tx`delete from document_versions where id=any(${versionIds}::uuid[])
+            and document_id=any(${documentIds}::uuid[])`;
+          await tx`delete from document_upload_intents where id=any(${intentIds}::uuid[])`;
+          await tx`delete from documents where id=any(${documentIds}::uuid[])`;
+          await tx`delete from client_company_memberships where id=any(${ids.memberships}::uuid[])`;
+          await tx`delete from annual_return_cases where id=any(${ids.cases}::uuid[])`;
+          await tx`delete from companies where id=any(${ids.companies}::uuid[])`;
+          await tx`delete from staff_profiles where id=${ids.profile} and user_id=${ids.staff}`;
+          await tx`delete from users where id=${ids.staff}`;
+          await tx`delete from teams where id=${ids.team}`;
+          const ownedKeys = new Set([
+            ...intents.map((row) => row.object_key),
+            ...documents.map((row) => row.storage_url),
+          ]);
+          for (const key of stored.keys()) expect(ownedKeys.has(key)).toBe(true);
+        });
+        const remaining = await fixtureCounts(observerRaw);
+        record("cleanup-readback", { ids, remaining, assertionsPassed });
+        expect(Object.values(remaining).every((n) => n === 0)).toBe(true);
+        // Memory only, never an object-store provider cleanup.
+        const memoryKeys = [...stored.keys()];
+        for (const key of memoryKeys) stored.delete(key);
+        expect(stored.size).toBe(0);
+        record("memory-cleanup", { exactKeys: memoryKeys, remaining: stored.size });
+      } else
+        record("no-fixture-creation-to-clean", { fixtureCreationStarted, fixturesCommitted, ids });
+    } catch (error) {
+      record("cleanup-failed-preserve-target", {
+        fixtureCreationStarted,
+        fixturesCommitted,
+        assertionsPassed,
+        ids,
+      });
+      failures.push(error);
+    } finally {
+      const closes = await Promise.allSettled([rawA?.end(), rawB?.end(), observerRaw?.end()]);
+      for (const result of closes) if (result.status === "rejected") failures.push(result.reason);
+      try {
+        closeSync(fd);
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+  }
+  if (failures.length === 1) throw failures[0];
+  if (failures.length > 1)
+    throw new AggregateError(failures, "UC150 scenario and teardown failed.");
+}

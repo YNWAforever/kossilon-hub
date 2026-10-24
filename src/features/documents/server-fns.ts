@@ -16,6 +16,8 @@ import type {
   DocumentRepository,
   DocumentRecoveryRequest,
   DocumentListFilters,
+  DocumentUploadIntent,
+  PrivateDocument,
 } from "./repository";
 import { assertDocumentServable, canApproveDocument, documentSafetyOf } from "./safety";
 import { createDeterministicDocumentScanner } from "./scanner";
@@ -224,6 +226,17 @@ async function sha256Hex(body: Uint8Array): Promise<string> {
   );
 }
 
+// Keep the repository (and SQL client module) behind the server-only boundary,
+// just like createDocumentContextForRequest's lazy repository import.
+const committedUploadDocument = createServerOnlyFn(
+  async (intent: DocumentUploadIntent, document: PrivateDocument | null) => {
+    const assertCommittedUploadMatchesDocument: typeof import("./repository").assertCommittedUploadMatchesDocument =
+      (await import("./repository")).assertCommittedUploadMatchesDocument;
+    assertCommittedUploadMatchesDocument(intent, document);
+    return document;
+  },
+);
+
 function bytesFromBase64(value: string): Uint8Array {
   const binary = atob(value);
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
@@ -236,6 +249,7 @@ export async function createDocumentUploadIntentForActor(
     caseId?: string;
     checklistItemId?: string;
     replacementDocumentId?: string;
+    uploadRequestId?: string;
     recovery?: DocumentRecoveryRequest;
     category: (typeof DOCUMENT_CATEGORIES)[number];
     fileName: string;
@@ -245,6 +259,10 @@ export async function createDocumentUploadIntentForActor(
   },
   dependencies: DocumentOperationDependencies,
 ) {
+  if (input.uploadRequestId !== undefined) {
+    z.string().uuid().parse(input.uploadRequestId);
+    if (input.recovery) throw new Error("Recovery cannot include an upload request ID.");
+  }
   if (input.recovery) assertStaffAccess(actor);
   await authorizeCompanyScope(actor, input, dependencies);
   let recoveryObjectState: "missing" | undefined;
@@ -285,7 +303,11 @@ export async function createDocumentUploadIntentForActor(
     contentType: input.contentType,
     expectedSizeBytes: input.sizeBytes,
     checksum: input.checksum,
-    objectKey: createOpaqueDocumentKey(input),
+    // The authenticated actor comes only from the request resolver. Hash both
+    // values so storage paths disclose neither actor nor client request IDs.
+    objectKey: input.uploadRequestId
+      ? `documents/request-${await sha256Hex(new TextEncoder().encode(JSON.stringify([actor.authUserId, input.uploadRequestId.toLowerCase()])))}`
+      : createOpaqueDocumentKey(input),
     expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
   });
 }
@@ -326,16 +348,26 @@ export async function finalizeDocumentUploadForActor(
 ) {
   const intent = await dependencies.repository.getUploadIntent(intentId);
   if (!intent) throw new Error("Upload intent not found.");
-  if (intent.status !== "created") throw new Error("Upload intent cannot be finalized.");
-  if (Date.parse(intent.expiresAt) <= Date.now()) throw new Error("Upload intent expired.");
   await authorizeIntentById(actor, intentId, dependencies);
-  if (actor.role === "Client" && intent.requestedByAuthUserId !== actor.authUserId) {
+  if (intent.requestedByAuthUserId !== actor.authUserId) {
     throw new Error("Forbidden: upload intent belongs to another user.");
   }
   if (body.byteLength !== intent.expectedSizeBytes)
     throw new Error("Uploaded size does not match intent.");
   if ((await sha256Hex(body)) !== intent.checksum)
     throw new Error("Uploaded checksum does not match intent.");
+  if (intent.documentId) {
+    const document = await committedUploadDocument(
+      intent,
+      await dependencies.repository.getDocument(intent.documentId),
+    );
+    // Recheck authority after asynchronous readback; a replay never bypasses
+    // a membership revocation or actor change while the operation was pending.
+    await authorizeIntentById(actor, intentId, dependencies);
+    return document;
+  }
+  if (intent.status !== "created") throw new Error("Upload intent cannot be finalized.");
+  if (Date.parse(intent.expiresAt) <= Date.now()) throw new Error("Upload intent expired.");
   await dependencies.storage.put({
     objectKey: intent.objectKey,
     body,
@@ -343,6 +375,7 @@ export async function finalizeDocumentUploadForActor(
     contentType: intent.contentType,
     sizeBytes: intent.expectedSizeBytes,
   });
+  await authorizeIntentById(actor, intentId, dependencies);
   return dependencies.repository.finalizeUploadIntent({
     intentId,
     uploadedBy: actor.userId,
@@ -504,6 +537,7 @@ const createIntentSchema = z
     caseId: z.string().uuid().optional(),
     checklistItemId: z.string().uuid().optional(),
     replacementDocumentId: z.string().uuid().optional(),
+    uploadRequestId: z.string().uuid().optional(),
     recovery: z
       .object({
         documentId: z.string().uuid(),
@@ -518,7 +552,10 @@ const createIntentSchema = z
     sizeBytes: z.number().int().positive().max(MAX_UPLOAD_BYTES),
     checksum: z.string().regex(/^[0-9a-f]{64}$/),
   })
-  .strict();
+  .strict()
+  .refine((input) => !input.recovery || !input.uploadRequestId, {
+    message: "Recovery cannot include an upload request ID.",
+  });
 const intentIdSchema = z.object({ intentId: z.string().uuid() }).strict();
 const documentIdSchema = z.object({ documentId: z.string().uuid() }).strict();
 
