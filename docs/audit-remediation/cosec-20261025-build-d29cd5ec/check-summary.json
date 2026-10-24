@@ -1,0 +1,59 @@
+{
+  "run_id": "cosec-20261025-build-d29cd5ec",
+  "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "checks": {
+    "unit": {
+      "result": "PASS",
+      "receipt": "../cosec-20261024-handover-exec-a30e04f1/unit-final.json",
+      "log": "../cosec-20261024-handover-exec-a30e04f1/unit-final.txt",
+      "tests": 2780,
+      "files": 288,
+      "execution": "INHERITED_SAME_SOURCE_NOT_RERUN_THIS_RUN",
+      "evidence_run": "cosec-20261024-handover-exec-a30e04f1"
+    },
+    "sql": {
+      "result": "PASS_LOCAL_INJECTED_SESSION_SUPERUSER",
+      "tests": 1,
+      "files": 1,
+      "log": "../cosec-20261024-handover-exec-a30e04f1/db/test-green-r4.txt",
+      "journey": "../cosec-20261024-handover-exec-a30e04f1/db/UC186-green-r4.jsonl",
+      "execution": "INHERITED_SAME_SOURCE_NOT_RERUN_THIS_RUN",
+      "evidence_run": "cosec-20261024-handover-exec-a30e04f1"
+    },
+    "typecheck": {
+      "result": "PASS",
+      "receipt": "../cosec-20261024-handover-exec-a30e04f1/typecheck-accepted.json",
+      "log": "../cosec-20261024-handover-exec-a30e04f1/typecheck-accepted.txt",
+      "execution": "INHERITED_SAME_SOURCE_NOT_RERUN_THIS_RUN",
+      "evidence_run": "cosec-20261024-handover-exec-a30e04f1"
+    },
+    "lint": {
+      "result": "PASS",
+      "receipt": "../cosec-20261024-handover-exec-a30e04f1/lint-accepted.json",
+      "log": "../cosec-20261024-handover-exec-a30e04f1/lint-accepted.txt",
+      "execution": "INHERITED_SAME_SOURCE_NOT_RERUN_THIS_RUN",
+      "evidence_run": "cosec-20261024-handover-exec-a30e04f1"
+    },
+    "build": {
+      "result": "PASS",
+      "execution": "EXECUTED_THIS_RUN",
+      "receipt": "build.json",
+      "log": "build.txt",
+      "duration_ms": 34670
+    }
+  },
+  "all_required_local_checks_have_same_source_evidence": true,
+  "this_run_executed": [
+    "build"
+  ],
+  "not_run_this_run": [
+    "unit",
+    "SQL",
+    "typecheck",
+    "lint",
+    "CI",
+    "native Auth/HTTP/RLS/browser/provider"
+  ],
+  "native_pass": 0,
+  "release_gate": "NO_GO"
+}
