@@ -15,3 +15,17 @@
 Unit/component/SQL/typecheck/lint/build本輪均NOT_RUN；先前同來源通過只作歷史。外部讀取、metadata執行、QA登入、Auth/app API、DB client/query、資源建立均0。沒有push/merge/deploy、正式資料或權限變更。原生70BLOCKED/114NOT_RUN/0PASS，BLOCKED／NO_GO。
 
 尚待target、既有平台metadata存取及人類明示時窗/配額授權；填值本身不代表批准，也不關閉QA identity、DB實際身份/catalog/RLS或完整員工旅程等後續關卡。回復只需普通新commit revert本輪文件，無遠端資源／業務操作要撤銷，不改已發布歷史。
+
+## 原表本機查找補填（2026-10-25 HKT；基線19858ef0）
+
+依最新使用者指示只更新原AUTHORIZATION-FORM.md、其form-status.json及本交付附註，**沒有新建準備包／目錄**。HEAD核對為19858ef0fdd27c70cea4a91010f17a1be0b16f49，候選完整SHA及manifest hash不變，開始時無dirty工作。
+
+查找範圍是本worktree既有非秘密docs/runbooks、歷史Vercel／Neon metadata、R01 staging Phase A/B1回條、當前生成Wrangler metadata，以及五個已登記同repo worktree的`.vercel/project.json`存在性。沒有讀.env／credential store、沒有呼叫平台connector或網絡。結果：**未找到可核實適用本輪／候選4d63818的既有隔離目標**。
+
+原表逐項加入來源：2026-10-03歷史Vercel demo project `prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm`及team ID；2026-10-04舊R01 no-compute DB branch `br-fragrant-sunset-aosoylhr`。兩者僅作線索，沒有同版部署、可用URL、owner、目前存取／隔離或二者綁定的證據，不能合併為UAT target。SQL技術角色neondb_owner、GitHub登入／平台team均不代填資源owner。Runbook的production／demo網址也不作現有UAT證明。
+
+原表授權決定明填NOT_AUTHORIZED；20次／10MiB／30分鐘仍PROPOSED_NOT_APPROVED，批准者與HKT起迄UNKNOWN。Owner及目前平台唯讀存取方式／範圍UNKNOWN；QA Admin／DB憑證仍不需要。仍欠最小三組：選定隔離target＋owner及可信metadata識別；現行平台唯讀存取＋精確scope；批准者／HKT起迄及配額明示批准。沒有環境可直接填無，不自行建立。
+
+查找前已核對674個來源Git blobs、2909個prior manifested files及原19858ef0表單bundle的hash、原184列CSV。舊evidence-manifest.json／verification-report.json維持原樣，仍證明19858ef0 Git版本；它們不是更新後三個工作檔的manifest。初表bytes保留於Git19858ef0，舊失敗／CSV／100UC map均未改。補填後只做本機diff、JSON/hash與Git歷史完整性核對；不重跑舊package verifier來把新表冒充原frozen bundle。
+
+本輪只補表，應用測試與metadata執行均NOT_RUN；不連外、不登入QA、不連DB、不建資源、不push/merge/deploy。Native仍70BLOCKED／114NOT_RUN／0PASS、BLOCKED／NO_GO。

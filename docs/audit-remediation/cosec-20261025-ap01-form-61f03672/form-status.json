@@ -1,12 +1,12 @@
 {
   "purpose": "Audit snapshot of the blank form, not another editable input form",
   "single_editable_form": "AUTHORIZATION-FORM.md",
-  "form_sha256": "02c7bc285a228ee23d371e8da82419b7712e6271ba1efefa0d79d87d0634da16",
-  "status": "PREPARED_UNFILLED_NOT_APPROVED_NOT_EXECUTED",
+  "form_sha256": "1d1095da251888555751f44a33e69404943d14e450f75c278fd6b257090ddefb",
+  "status": "LOCAL_NON_SECRET_RECORDS_RECONCILED_NOT_AUTHORIZED",
   "prefilled": {
     "repo": "https://github.com/YNWAforever/kossilon-hub.git",
     "branch": "codex/cosec-20261023",
-    "evidence_base": "caefa0f2f88d4694d83800fbfaa0d8b2468abfa1",
+    "evidence_base": "19858ef0fdd27c70cea4a91010f17a1be0b16f49",
     "source_sha_expected": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
     "source_files": 674,
     "local_artifact_manifest": "../cosec-20261025-build-d29cd5ec/artifact-manifest.json",
@@ -23,7 +23,6 @@
     "existing_platform_readonly_access_reference": null,
     "readonly_permission_scope": null,
     "request_manifest_reference": null,
-    "decision": null,
     "approver": null,
     "valid_hkt_from": null,
     "valid_hkt_until": null,
@@ -66,5 +65,110 @@
   "execution_enabled": false,
   "actual_external_reads": 0,
   "native_pass": 0,
-  "release_gate": "NO_GO"
+  "release_gate": "NO_GO",
+  "initial_form_evidence_base": "caefa0f2f88d4694d83800fbfaa0d8b2468abfa1",
+  "decision": "NOT_AUTHORIZED",
+  "local_lookup": {
+    "checked_hkt": "2026-10-25 02:55:07 +08:00",
+    "head_at_lookup": "19858ef0fdd27c70cea4a91010f17a1be0b16f49",
+    "existing_target_result": "未找到可核實適用本輪／候選4d63818的既有隔離目標",
+    "source_scope": "Known local non-secret docs/provider metadata/R01 receipts/runbook/generated metadata and registered same-repo worktree Vercel project-file existence; no claim about all files on this computer",
+    "current_target_url": "UNKNOWN",
+    "resource_owner": "UNKNOWN",
+    "current_platform_readonly_access_and_scope": "UNKNOWN",
+    "sources": [
+      {
+        "path": "docs/audit-remediation/evidence/2026-10-03-r03-target-vercel.json",
+        "sha256": "295d8d4a2e0039016ab51ca1e4dc6aa082de10abddedcdff8ee0783e50e6cde2"
+      },
+      {
+        "path": "docs/audit-remediation/evidence/2026-10-03-r03-target-neon.json",
+        "sha256": "bc9eb4b28ffd1084f852bf8be4b3a51496cec2db115a15427a216b7927d8964b"
+      },
+      {
+        "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-a-result.md",
+        "sha256": "d3ca9c9c7bd925fe63bea9be92bd17452edac46eca3148ff7be7d2e3dc9f2271"
+      },
+      {
+        "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-b1-result.md",
+        "sha256": "4c0de22500d8c97cc20cca9e3661ad05a6dfeb1aaca19381503792bbdab9c48a"
+      },
+      {
+        "path": "docs/audit-remediation/runtime-parity-and-db-owners.md",
+        "sha256": "0968a9188e2e0bab6005efc733c6cb83f5d2805bbdb661c40fbdaa626e5a10b1"
+      },
+      {
+        "path": "docs/audit-remediation/oct3-runtime-target-review.md",
+        "sha256": "2631ab9be63bdf295406a8573cf5ca58ee08c3ea53a336bc87a8998ba432c0cf"
+      },
+      {
+        "path": "docs/runbooks/neon-auth-demo.md",
+        "sha256": "df6bde569f423575156c557db22b4a7b92523b91503c6ec8f3fac8af33be220a"
+      },
+      {
+        "path": ".wrangler/deploy/config.json",
+        "sha256": "0e719b6178e037b91ffbca229857d3f0b87c0ae4f0df06f7931152a3d60f9b6a"
+      },
+      {
+        "path": ".output/server/wrangler.json",
+        "sha256": "bf00fef01db6a55cee7b7912d96da62aec269fbcf6d57ea8adddc4393008109f"
+      }
+    ],
+    "historical_candidates": [
+      {
+        "type": "Vercel project metadata",
+        "project_name": "kossilon-hub-demo",
+        "project_id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+        "team_id": "team_qvzlsFmfCsLkgItSypqHjw3z",
+        "recorded_utc": "2026-10-03T09:55:47.2202119Z",
+        "recorded_source_main": "60a7b9745ce4e66fe3c4e34848a6aba498a6fc26",
+        "source": "docs/audit-remediation/evidence/2026-10-03-r03-target-vercel.json",
+        "selected_for_AP01": false,
+        "current_existence_owner_access_isolation_or_candidate_binding_verified": false
+      },
+      {
+        "type": "Historical no-compute staging branch",
+        "project_id": "red-morning-00331124",
+        "branch_id": "br-fragrant-sunset-aosoylhr",
+        "branch_name": "kossilon-r01-staging-20261004",
+        "recorded_hkt": "2026-10-04 09:59:54 +08:00",
+        "recorded_candidate": "257fb9d0be17525a305f38bd26001ad8fa45deb8",
+        "source": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-a-result.md",
+        "selected_for_AP01": false,
+        "current_existence_owner_access_isolation_or_candidate_binding_verified": false
+      }
+    ],
+    "excluded_inferences": [
+      "No production URL as UAT",
+      "No repository user, current user or team ID inferred as resource owner",
+      "No SQL technical owner used as platform readonly access",
+      "No historical demo project linked to historical DB branch without evidence",
+      "No prior resource-creation approval reused for this task"
+    ],
+    "new_preparation_packages": 0,
+    "network_calls": 0,
+    "registered_worktree_vercel_project_files": [
+      {
+        "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\kossilon-hub-work\\.vercel\\project.json",
+        "exists": false
+      },
+      {
+        "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.vercel\\project.json",
+        "exists": false
+      },
+      {
+        "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r12-f25-ci-20261009\\.vercel\\project.json",
+        "exists": false
+      },
+      {
+        "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009\\.vercel\\project.json",
+        "exists": false
+      },
+      {
+        "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.vercel\\project.json",
+        "exists": false
+      }
+    ]
+  },
+  "historical_evidence_note": "Original evidence-manifest.json and verification-report.json remain frozen for Git19858ef0, not for the three edited current files; original form bytes remain in that commit."
 }
