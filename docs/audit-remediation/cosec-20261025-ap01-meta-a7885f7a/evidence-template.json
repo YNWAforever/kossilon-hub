@@ -1,0 +1,12 @@
+{
+  "template_only":true,
+  "status":"NOT_RUN",
+  "observed_at_hkt":null,
+  "E0_scope":{"owner":null,"target_url_for_string_comparison_only":null,"exact_project_and_resource_ids":null,"existing_platform_access_reference":null,"approved_by":null,"valid_hkt_from":null,"valid_hkt_until":null,"request_manifest":[]},
+  "E1_deployment":{"request_id":null,"metadata_source":null,"project_id":null,"deployment_id":null,"runtime_id":null,"metadata_url_binding":null,"expected_source_sha":"4d63818fe2562146f85e9a7b9917d8f0eb58f4c1","observed_source_sha":null,"retrieved_at_hkt":null,"response_sha256":null,"disposition":"NOT_RUN"},
+  "E2_DB_resource":{"request_id":null,"metadata_source":null,"provider_project_id":null,"branch_id":null,"database_id_or_name":null,"declared_endpoint_id":null,"retrieved_at_hkt":null,"response_sha256":null,"actual_server_identity":null,"actual_role_or_catalog_verified":false,"disposition":"NOT_RUN"},
+  "E3_Auth_binding":{"request_id":null,"metadata_source":null,"tenant_or_issuer_id":null,"app_binding":null,"retrieved_at_hkt":null,"response_sha256":null,"QA_session_or_role_verified":false,"disposition":"NOT_RUN"},
+  "E4_provenance":{"request_id":null,"metadata_source":null,"ci_run_or_check_ids":null,"ci_source_sha":null,"ci_results":null,"artifact_checksum_value":null,"artifact_checksum_kind":null,"artifact_checksum_scope":null,"local_manifest_sha256":"189606711dca25c7dbc522903f6657b002efab2edca33ee9bf4a7c22f74ca1b4","artifact_binding_verified":false,"security_disposition_source":null,"retrieved_at_hkt":null,"response_sha256":null,"disposition":"NOT_RUN"},
+  "E5_read_ledger":{"entries":[],"attempts_used":0,"bytes_used":0,"failed_attempts":0,"retry_or_pages_used":0},
+  "E6_disposition":{"metadata_status":"NOT_RUN","unknowns":[],"mismatches":[],"evidence_sha256_manifest":null,"native_Auth_DB_RLS_runtime_pass":false,"release_gate":"NO_GO"}
+}
