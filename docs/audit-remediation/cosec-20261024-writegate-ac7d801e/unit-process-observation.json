@@ -1,0 +1,22 @@
+{
+  "checked_utc": "2026-10-24T07:58:00.0491151Z",
+  "scope": "Only current run-checks root processes and their Node descendants; read-only, no processes stopped",
+  "processes": [
+    {
+      "ProcessId": 24292,
+      "ParentProcessId": 3920,
+      "CreationDate": "2026-10-24T15:57:43.850683+08:00",
+      "WorkingSetSize": 54464512,
+      "KernelModeTime": 937500,
+      "UserModeTime": 156250
+    },
+    {
+      "ProcessId": 23328,
+      "ParentProcessId": 24292,
+      "CreationDate": "2026-10-24T15:57:44.068221+08:00",
+      "WorkingSetSize": 781639680,
+      "KernelModeTime": 77031250,
+      "UserModeTime": 103750000
+    }
+  ]
+}

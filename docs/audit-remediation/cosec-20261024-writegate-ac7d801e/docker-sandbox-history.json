@@ -1,0 +1,8 @@
+{
+  "phase": "provision1 context check",
+  "result": "BLOCKED_BEFORE_CONTAINER_CLIENT_OR_MIGRATION",
+  "reason": "Workspace sandbox denied Docker Desktop named-pipe image metadata access",
+  "endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+  "followup": "Exact read-only pinned image inspect permitted under escalation and matched expected local image; provisioning still requires fresh3GiB resource and target gate",
+  "auto_review_rejection": false
+}

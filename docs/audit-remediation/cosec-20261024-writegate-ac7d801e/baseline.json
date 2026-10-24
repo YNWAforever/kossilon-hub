@@ -1,0 +1,37 @@
+{
+  "base": "495fc88061a874b285e0fd7131b042243ab74b92",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "origin": "https://github.com/YNWAforever/kossilon-hub.git",
+  "intake_status": "clean before owned edits, verified in PLAN.md and intake command",
+  "status_at_capture": "?? docs/audit-remediation/cosec-20261024-writegate-ac7d801e/auth.before.snapshot\n?? docs/audit-remediation/cosec-20261024-writegate-ac7d801e/capture-evidence.mjs\n?? docs/audit-remediation/cosec-20261024-writegate-ac7d801e/freeze-source.mjs\n?? docs/audit-remediation/cosec-20261024-writegate-ac7d801e/git-blob-verify.mjs\n?? docs/audit-remediation/cosec-20261024-writegate-ac7d801e/isolated-db-runner.mjs\n?? docs/audit-remediation/cosec-20261024-writegate-ac7d801e/maintenance.before.snapshot\n?? docs/audit-remediation/cosec-20261024-writegate-ac7d801e/resource-gate.mjs\n?? docs/audit-remediation/cosec-20261024-writegate-ac7d801e/run-checks.mjs\n?? docs/audit-remediation/cosec-20261024-writegate-ac7d801e/webhook-test.before.snapshot\n?? docs/audit-remediation/cosec-20261024-writegate-ac7d801e/webhook.before.snapshot\n",
+  "worktrees": "worktree C:/Users/laich/Documents/kossilon-hub/kossilon-hub-work\nHEAD 76ad310ca8bad75a7ce44c82c9e20db734fd6eaa\nbranch refs/heads/codex/outbox-safety\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree\nHEAD 38123c96ed84fae84e41f17d4dea606c7a8938d0\nbranch refs/heads/codex/r03-role-review-package-20261005\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r12-f25-ci-20261009\nHEAD c9417b925d2134d7c2aef1d45be5d52da8154e50\nbranch refs/heads/codex/staff-remediation-20261012\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r13-dependency-audit-20261009\nHEAD 01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e\nbranch refs/heads/codex/audit-r13-dependency-gates-20261009\n\nworktree C:/Users/laich/Documents/kossilon-hub/cosec-20261023\nHEAD 495fc88061a874b285e0fd7131b042243ab74b92\nbranch refs/heads/codex/cosec-20261023\n\n",
+  "main_readonly": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "production_historical_not_accessed": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "snapshots": [
+    {
+      "path": "src/features/auth/neon-auth-server.ts",
+      "snapshot": "auth.before.snapshot",
+      "bytes": 6101,
+      "sha256": "9a7c297fd8b3ee07e88a900e1d0bc589793500134bd5b786f9a74badae9aad56"
+    },
+    {
+      "path": "src/features/whatsapp/webhook.ts",
+      "snapshot": "webhook.before.snapshot",
+      "bytes": 6867,
+      "sha256": "99ba24bec882e33e3b19578b79425daa5c794e7c26dc98e0092028a3aa067459"
+    },
+    {
+      "path": "src/features/whatsapp/webhook.test.ts",
+      "snapshot": "webhook-test.before.snapshot",
+      "bytes": 16057,
+      "sha256": "b6313443a41d937cd92d443dcf2a0223f3172b4bf442b36a3c8b4cc629fcb99d"
+    },
+    {
+      "path": "src/server/maintenance.ts",
+      "snapshot": "maintenance.before.snapshot",
+      "bytes": 23134,
+      "sha256": "d83611bee92c270f90b690174c0d953ea4884b59c3ebbe2a04ed36c176c0e9e4"
+    }
+  ]
+}

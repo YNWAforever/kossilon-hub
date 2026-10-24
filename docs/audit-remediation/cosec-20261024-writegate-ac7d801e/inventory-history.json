@@ -1,0 +1,6 @@
+{
+  "result": "Initial inventory assertion failed before writing inventory artifact",
+  "reason": "Evidence server-fns uses getCurrentAnnualReturnActor from annual-return/session rather than a direct auth import",
+  "resolution": "Read exact helper source: getCurrentAnnualReturnActor -> requireStaffActor -> requireActor; inventory explicitly includes that known root, all74/17 and independent static review retained",
+  "product_change": false
+}

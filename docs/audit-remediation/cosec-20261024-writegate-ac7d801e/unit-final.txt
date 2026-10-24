@@ -1,0 +1,1522 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/test/dev-worktree-watch.test.ts (3 tests) 6700ms
+   ✓ watches active source and excludes children from a plain root  4263ms
+   ✓ watches active source and excludes children from a nested root  1194ms
+   ✓ watches active source and excludes children from a glob characters root  1240ms
+ ✓ |unit| src/features/annual-return/components/production-command-center.interaction.test.tsx (23 tests) 5035ms
+     ✓ says nothing about more pages when the server returns no cursor  392ms
+     ✓ terminates 201 records at the actual final cursor  769ms
+     ✓ terminates 400 records at the actual final cursor  1424ms
+     ✓ terminates 401 records at the actual final cursor  1345ms
+ ✓ |unit| src/routes/-work-queue.interaction.test.tsx (30 tests) 4764ms
+     ✓ UC130: rereads manager A's assignment before manager B can deliberately confirm again (0)  546ms
+     ✓ discards the old actor's dialog and does not close a new dialog on late success  346ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx (25 tests) 2731ms
+ ✓ |unit| src/features/annual-return/components/payment-pagination.test.tsx (20 tests) 2296ms
+   ✓ proof101 remains reachable without loading case pages  1002ms
+ ✓ |unit| src/features/work-items/sla-performance.test.ts (1 test) 3789ms
+   ✓ calculates 100 independent weekend SLA snapshots within the ordinary test lifetime  3788ms
+ ✓ |unit| src/routes/-upload-resume.interaction.test.tsx (12 tests) 2190ms
+   ✓ reuses one logical upload after a near-limit PDF commits but its response is lost  1408ms
+ ✓ |unit| src/routes/-case-subroutes.interaction.test.tsx (22 tests) 2093ms
+     ✓ opens the linked detail, changes DOM and URL, and restores page3 on Back/Forward  876ms
+ ✓ |unit| src/components/corporate-changes/share-transfer-validation.test.tsx (11 tests) 1781ms
+ ✓ |unit| src/routes/-annual-returns-workflow.test.ts (9 tests) 5198ms
+     ✓ marks only WhatsApp Automation active on its nested route  4583ms
+ ✓ |unit| vite.config.test.ts (5 tests) 1487ms
+     ✓ injects source locations before TanStack recompiles route files  1479ms
+ ✓ |unit| src/features/nar-import/xlsx/zip.test.ts (3 tests) 1406ms
+     ✓ refuses an entry that inflates past the limit however small it claims to be  555ms
+     ✓ exhausts the shared budget on real bytes, not on declared ones  832ms
+ ✓ |unit| src/components/bulk-selection-toolbar.test.tsx (20 tests) 2430ms
+     ✓ F30 / UC110: creates a server-counted snapshot while total is unknown  305ms
+ ✓ |unit| src/features/clients/components/production-client-detail.interaction.test.tsx (17 tests) 1158ms
+ ✓ |unit| src/lib/demo-store-boundary.test.ts (9 tests) 1158ms
+     ✓ mounts demo-only files only from something that branches on dataMode  472ms
+ ✓ |unit| src/features/whatsapp/components/production-inbox.pagination.test.tsx (7 tests) 1129ms
+     ✓ reaches conversation 101 without changing the selected conversation  572ms
+ ✓ |unit| src/features/corporate-changes/components/production-corporate-change-detail.test.tsx (15 tests) 1110ms
+ ✓ |unit| src/routes/-whatsapp-data-mode.test.tsx (7 tests) 572ms
+     ✓ still renders the automation screen through the parent outlet in production mode  410ms
+ ✓ |unit| src/routes/-settings-save.interaction.test.tsx (4 tests) 835ms
+     ✓ binds the draft to its observed revision across another admin's refetch  550ms
+ ✓ |unit| src/routes/-clients-url-context.test.tsx (21 tests) 1462ms
+   ✓ restores q/status/team/includeFixtures/cursor from a copied page3 URL  567ms
+ ✓ |unit| src/components/bulk-export.interaction.test.tsx (5 tests) 1156ms
+     ✓ downloads the mocked saved-job CSV bytes with the results filename and releases its URL  357ms
+ ✓ |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx (9 tests) 1054ms
+     ✓ clicks every production command with case-scoped payloads and refreshes cache  318ms
+ ✓ |unit| src/features/auth/auth-router-recovery.test.tsx (9 tests) 1168ms
+     ✓ retains sign-out through root error Retry while remote sign-out is pending  380ms
+ ✓ |unit| scripts/audit-performance-samples.test.ts (15 tests) 958ms
+     ✓ runs the real CSV flag with complete/incomplete exits while preserving the default JSON mode  383ms
+     ✓ refuses malformed/oversized input and unknown flags before any CSV stdout  562ms
+ ✓ |unit| src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx (9 tests) 975ms
+ ✓ |unit| src/routes/-document-rejection.interaction.test.tsx (6 tests) 709ms
+   ✓ shows the actionable returned reason to the client, including after fresh-cache reopen  342ms
+ ✓ |unit| scripts/audit-performance-report.test.ts (26 tests) 725ms
+     ✓ reports actual CLI exits for complete/incomplete/invalid input without exposing values  541ms
+ ✓ |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx (4 tests) 671ms
+ ✓ |unit| src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx (5 tests) 859ms
+ ✓ |unit| src/routes/-missing-record.interaction.test.tsx (13 tests) 792ms
+ ✓ |unit| src/features/auth/auth-context-neon.test.tsx (26 tests) 785ms
+ ✓ |unit| src/routes/-operations.interaction.test.tsx (9 tests) 731ms
+     ✓ labels and converts UTC run, queue and verification timestamps across HK midnight  437ms
+ ✓ |unit| src/features/annual-return/components/production-case-detail.return-context.test.tsx (5 tests) 270ms
+ ✓ |unit| src/features/auth/auth-signout-remount.test.tsx (6 tests) 695ms
+ ✓ |unit| src/routes/-portal-reachability.test.tsx (11 tests) 228ms
+ ✓ |unit| src/routes/-documents-search.interaction.test.tsx (1 test) 506ms
+   ✓ sends global filters to the RPC and restarts at page one after paging  505ms
+ ✓ |unit| scripts/validate-firm-runtime.test.ts (5 tests) 477ms
+ ✓ |unit| src/features/clients/components/service-subscriptions-section.test.tsx (7 tests) 634ms
+ ✓ |unit| src/routes/-portal-context-boundary.test.tsx (20 tests) 421ms
+ ✓ |unit| src/features/clients/components/client-case-return-context.test.tsx (7 tests) 644ms
+ ✓ |unit| src/routes/-login.interaction.test.tsx (23 tests) 608ms
+ ✓ |unit| src/features/annual-return/work-views-today.test.tsx (5 tests) 561ms
+     ✓ keeps numeric search and both cursors on every business detail link  459ms
+ ✓ |unit| src/features/incorporation/components/case-lists.test.tsx (8 tests) 410ms
+ ✓ |unit| src/routes/-imports-access.test.tsx (6 tests) 568ms
+   ✓ blocks Manager import deep links without any read  317ms
+ ✓ |unit| src/features/whatsapp/components/production-inbox.interaction.test.tsx (13 tests) 556ms
+ ✓ |unit| src/routes/-today.interaction.test.tsx (4 tests) 507ms
+     ✓ uses server totals and offers explicit next-page navigation  448ms
+ ✓ |unit| src/routes/-documents-production-data.test.tsx (18 tests) 520ms
+ ✓ |unit| src/components/clients/controller-form-dialog.test.tsx (6 tests) 950ms
+     ✓ records a controller with the entered fields  402ms
+ ✓ |unit| src/routes/-payments.interaction.test.tsx (5 tests) 437ms
+ ✓ |unit| src/features/nar-import/apply-panel.test.tsx (5 tests) 534ms
+ ✓ |unit| src/features/documents/text-extraction.test.ts (21 tests) 581ms
+ ✓ |unit| src/features/clients/components/production-client-register.interaction.test.tsx (6 tests) 529ms
+ ✓ |unit| src/routes/-clients-data-mode.test.tsx (4 tests) 209ms
+ ✓ |unit| src/server/dependency-security-f25.test.ts (10 tests) 519ms
+     ✓ preserves mammoth CLI input and output-format arguments after the parser change  373ms
+ ✓ |unit| src/components/incorporation/create-incorporation-case-dialog.test.tsx (3 tests) 666ms
+     ✓ creates a case with the entered fields  375ms
+ ✓ |unit| src/components/navigation.test.tsx (5 tests) 340ms
+ ✓ |unit| src/components/clients/shareholding-form-dialog.test.tsx (3 tests) 357ms
+ ✓ |unit| src/lib/-mock-data-importers.test.ts (3 tests) 354ms
+     ✓ is imported only by the known exceptions  344ms
+ ✓ |unit| src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx (3 tests) 298ms
+ ✓ |unit| src/routes/-settings-admin-guard.test.tsx (3 tests) 443ms
+     ✓ shows settings content to an admin  336ms
+ ✓ |unit| scripts/validate-neon-auth-demo.test.ts (22 tests) 347ms
+ ✓ |unit| src/features/incorporation/components/production-incorporation-detail.test.tsx (4 tests) 252ms
+ ✓ |unit| src/lib/knowledge-base.test.ts (2 tests) 287ms
+ ✓ |unit| src/routes/-admin-guard.test.tsx (3 tests) 192ms
+ ✓ |unit| src/routes/-settings-templates.test.tsx (2 tests) 114ms
+ ✓ |unit| src/components/clients/officer-form-dialog.test.tsx (3 tests) 352ms
+ ✓ |unit| src/features/annual-return/components/case-findings.interaction.test.tsx (3 tests) 298ms
+ ✓ |unit| src/features/whatsapp/components/message-intake.interaction.test.tsx (2 tests) 270ms
+ ✓ |unit| src/components/clients/inspection-request-form-dialog.test.tsx (2 tests) 269ms
+ ✓ |unit| src/features/admin/production-staff-admin.interaction.test.tsx (3 tests) 273ms
+ ✓ |unit| src/features/annual-return/components/demo-case-detail.interaction.test.tsx (6 tests) 238ms
+ ✓ |unit| src/features/annual-return/components/case-handoff.interaction.test.tsx (3 tests) 246ms
+ ✓ |unit| src/components/ui/field.test.tsx (3 tests) 132ms
+ ✓ |unit| src/features/annual-return/components/scoped-pickers.interaction.test.tsx (4 tests) 213ms
+ ✓ |unit| src/routes/-portal-identity.interaction.test.tsx (1 test) 224ms
+ ✓ |unit| src/components/clients/resolve-inspection-request-dialog.test.tsx (2 tests) 364ms
+ ✓ |unit| src/components/ui/button.test.tsx (4 tests) 138ms
+ ✓ |unit| src/routes/-annual-returns-data-mode.test.tsx (8 tests) 236ms
+ ✓ |unit| src/features/documents/document-recovery-panel.test.tsx (4 tests) 211ms
+ ✓ |unit| src/features/documents/text-extraction.convention.test.ts (7 tests) 232ms
+ ✓ |unit| src/components/record-unavailable.test.tsx (2 tests) 120ms
+ ✓ |unit| src/features/nar-import/mixed-xlsx-fixture.test.ts (6 tests) 181ms
+ ✓ |unit| src/components/status-text-contrast.convention.test.ts (2 tests) 147ms
+ ✓ |unit| scripts/local-browser-evidence.test.ts (6 tests) 173ms
+ ✓ |unit| src/routes/-dashboard-modes.test.tsx (4 tests) 350ms
+ ✓ |unit| src/routes/-settings.interaction.test.tsx (5 tests) 207ms
+ ✓ |unit| src/components/demo-unavailable.test.tsx (1 test) 115ms
+ ✓ |unit| src/lib/use-retained-page.test.tsx (1 test) 115ms
+ ✓ |unit| src/features/documents/live-scanner.test.ts (19 tests) 117ms
+ ✓ |unit| src/routes/-root-auth-recovery.test.tsx (9 tests) 143ms
+ ✓ |unit| src/components/page-header.convention.test.ts (4 tests) 116ms
+ ✓ |unit| src/components/page-header.test.tsx (3 tests) 137ms
+ ✓ |unit| src/features/work-items/business-calendar.test.ts (10 tests) 136ms
+ ✓ |unit| src/features/clients/components/demo-client-notice.test.tsx (2 tests) 112ms
+ ✓ |unit| src/components/ui/skeleton.test.tsx (2 tests) 103ms
+ ✓ |unit| src/features/whatsapp/webhook.test.ts (27 tests) 53ms
+ ✓ |unit| src/features/documents/analysis-golden.test.ts (10 tests) 104ms
+ ✓ |unit| src/features/documents/ai-provider.test.ts (25 tests) 85ms
+ ✓ |unit| src/routes/-payments-demo.test.tsx (2 tests) 92ms
+ ✓ |unit| src/features/nar-import/xlsx/workbook.test.ts (22 tests) 92ms
+stdout | src/server/cron-wiring.test.ts > runScheduledMaintenanceForWorker > does not run if Vercel owns the slot or the owner is missing
+scheduled maintenance skipped { owner: 'vercel', source: 'cloudflare' }
+
+stdout | src/server/cron-wiring.test.ts > runScheduledMaintenanceForWorker > does not run if Vercel owns the slot or the owner is missing
+scheduled maintenance skipped { owner: 'paused', source: 'cloudflare' }
+
+stdout | src/server/cron-wiring.test.ts > runScheduledMaintenanceForWorker > converts the scheduled time into the maintenance clock
+scheduled maintenance { runId: '99393c77-c9cf-4b0e-a8a1-f53c56dba0bc', recorded: true }
+
+ ✓ |unit| src/server/cron-wiring.test.ts (11 tests) 48ms
+ ✓ |unit| src/features/whatsapp/webhook-schema.test.ts (3 tests) 63ms
+ ✓ |unit| src/components/ui/field.convention.test.ts (2 tests) 110ms
+ ✓ |unit| src/features/notifications/runtime-dispatch.test.ts (13 tests) 46ms
+ ✓ |unit| src/features/incorporation/case-list-page.test.ts (25 tests) 45ms
+ ✓ |unit| src/server/handoff-export-http.test.ts (3 tests) 34ms
+ ✓ |unit| src/routes/-root-error-contract.test.tsx (3 tests) 44ms
+ ✓ |unit| src/features/work-items/sla.test.ts (6 tests) 51ms
+ ✓ |unit| scripts/cosec-delivery.test.ts (7 tests) 65ms
+ ✓ |unit| src/server/maintenance.test.ts (18 tests) 43ms
+ ✓ |unit| src/features/notifications/dispatcher.test.ts (36 tests) 53ms
+ ✓ |unit| src/components/ui/button.convention.test.ts (2 tests) 45ms
+ ✓ |unit| src/features/whatsapp/media-download.test.ts (11 tests) 43ms
+ ✓ |unit| src/features/annual-return/handoff-destination.test.ts (8 tests) 45ms
+ ✓ |unit| src/server/r2-s3-bucket.test.ts (10 tests) 37ms
+ ✓ |unit| src/server/maintenance-trigger-runtime.test.ts (21 tests) 35ms
+ ✓ |unit| src/lib/daily-digest.test.ts (6 tests) 20ms
+ ✓ |unit| src/features/whatsapp/woztell.test.ts (29 tests) 35ms
+ ✓ |unit| src/features/annual-return/server-fns.test.ts (17 tests) 38ms
+ ✓ |unit| src/features/annual-return/server-fns.authorization.test.ts (31 tests) 38ms
+ ✓ |unit| src/features/annual-return/components/risk-pill.test.tsx (1 test) 29ms
+ ✓ |unit| src/features/dashboard/demo-dashboard-data.test.ts (10 tests) 23ms
+ ✓ |unit| src/server/maintenance-trigger.test.ts (7 tests) 28ms
+ ✓ |unit| src/features/annual-return/evidence-server-fns.test.ts (5 tests) 23ms
+ ✓ |unit| src/server/maintenance-http.test.ts (6 tests) 31ms
+ ✓ |unit| src/routes/-page-title.convention.test.ts (3 tests) 28ms
+ ✓ |unit| src/features/auth/write-admission.test.ts (11 tests) 24ms
+ ✓ |unit| src/features/documents/upload-retry.test.ts (36 tests) 31ms
+ ✓ |unit| src/features/annual-return/workflow.test.ts (34 tests) 28ms
+ ✓ |unit| src/server/tanstack-transport-security.test.ts (6 tests) 36ms
+ ✓ |unit| src/features/annual-return/follow-up-server-fns.test.ts (10 tests) 37ms
+ ✓ |unit| src/features/auth/neon-auth-magic-link.test.ts (5 tests) 37ms
+ ✓ |unit| src/features/dashboard/dashboard-data.test.ts (6 tests) 32ms
+ ✓ |unit| src/features/auth/neon-auth-proxy.test.ts (3 tests) 27ms
+ ✓ |unit| src/server/db/client.test.ts (1 test) 20ms
+ ✓ |unit| src/components/kpi-card.test.tsx (2 tests) 13ms
+ ✓ |unit| src/features/operations/server-fns.test.ts (21 tests) 15ms
+ ✓ |unit| src/features/documents/upload-resume.test.ts (7 tests) 20ms
+ ✓ |unit| src/features/work-items/server-orchestration.test.ts (6 tests) 24ms
+ ✓ |unit| src/features/bulk-operations/snapshot-scope.unit.test.ts (4 tests) 42ms
+ ✓ |unit| src/features/documents/analysis-worker.test.ts (26 tests) 53ms
+ ✓ |unit| src/features/annual-return/session.test.ts (2 tests) 23ms
+ ✓ |unit| src/features/whatsapp/intake-server-fns.test.ts (2 tests) 26ms
+ ✓ |unit| src/features/documents/ocr-provider.test.ts (3 tests) 26ms
+ ✓ |unit| src/features/documents/server-fns.test.ts (26 tests) 28ms
+ ✓ |unit| src/features/annual-return/handoff-server-fns.test.ts (2 tests) 22ms
+ ✓ |unit| src/features/clients/company-work.unit.test.ts (5 tests) 26ms
+ ✓ |unit| src/features/corporate-changes/create.test.ts (16 tests) 13ms
+ ✓ |unit| src/features/annual-return/evidence-service.test.ts (24 tests) 18ms
+ ✓ |unit| src/features/notifications/resend-transport.test.ts (8 tests) 23ms
+ ✓ |unit| src/lib/hong-kong-time.test.ts (7 tests) 21ms
+stdout | scripts/db-seed-annual-return.test.ts > annual return seed fixtures > excludes password-like keys from every generated insert row
+Seeded 3 companies and annual return cases.
+
+ ✓ |unit| scripts/db-seed-annual-return.test.ts (8 tests) 18ms
+ ✓ |unit| scripts/db-reset-neon-auth-demo.test.ts (6 tests) 12ms
+ ✓ |unit| src/features/clients/create-command.test.ts (18 tests) 15ms
+ ✓ |unit| src/features/operations/health.test.ts (19 tests) 11ms
+ ✓ |unit| src/features/auth/authorization.test.ts (7 tests) 16ms
+ ✓ |unit| src/features/service-subscriptions/reminder-draft.test.ts (2 tests) 14ms
+ ✓ |unit| src/features/checklist-templates/server-fns.test.ts (19 tests) 9ms
+ ✓ |unit| scripts/db-seed-neon-auth-demo.test.ts (31 tests) 14ms
+ ✓ |unit| src/features/documents/document-list.unit.test.ts (11 tests) 17ms
+ ✓ |unit| src/features/annual-return/package-manifest.test.ts (20 tests) 15ms
+ ✓ |unit| src/features/auth/neon-auth-server.test.ts (2 tests) 25ms
+ ✓ |unit| src/features/annual-return/work-views.test.ts (14 tests) 15ms
+ ✓ |unit| scripts/audit-uat-ledger.test.ts (4 tests) 20ms
+ ✓ |unit| src/routes/-production-authorization.test.ts (5 tests) 13ms
+ ✓ |unit| src/features/incorporation/checklist-command.test.ts (27 tests) 14ms
+ ✓ |unit| src/features/whatsapp/server-fns.test.ts (20 tests) 28ms
+ ✓ |unit| src/features/whatsapp/history-pagination.test.ts (9 tests) 13ms
+ ✓ |unit| src/features/annual-return/work-views-other-page.test.ts (8 tests) 10ms
+ ✓ |unit| src/features/operations/schema-health.test.ts (13 tests) 8ms
+ ✓ |unit| scripts/dependency-parser-security.test.ts (2 tests) 9ms
+ ✓ |unit| src/features/bulk-operations/result-export.test.ts (16 tests) 13ms
+ ✓ |unit| src/lib/annual-return-store.test.ts (13 tests) 11ms
+ ✓ |unit| scripts/verify-firm-deployment.test.ts (16 tests) 8ms
+ ✓ |unit| src/features/documents/scan-worker.test.ts (20 tests) 15ms
+ ✓ |unit| src/features/documents/scanner.test.ts (7 tests) 7ms
+ ✓ |unit| src/features/operations/capabilities.test.ts (23 tests) 9ms
+ ✓ |unit| src/server/runtime-env.test.ts (20 tests) 13ms
+ ✓ |unit| src/features/notifications/outbox.test.ts (32 tests) 11ms
+ ✓ |unit| src/server/non-scheduled-schema.test.ts (1 test) 9ms
+ ✓ |unit| src/features/nar-import/mapping.test.ts (25 tests) 12ms
+ ✓ |unit| src/features/annual-return/case-history.test.ts (32 tests) 10ms
+ ✓ |unit| src/lib/ai-agent.test.ts (12 tests) 8ms
+ ✓ |unit| src/features/nar-import/normalize.test.ts (30 tests) 13ms
+ ✓ |unit| src/features/annual-return/requirement-template.test.ts (24 tests) 11ms
+ ✓ |unit| src/features/bulk-operations/membership.test.ts (1 test) 10ms
+ ✓ |unit| src/features/work-items/server-fns.test.ts (5 tests) 8ms
+ ✓ |unit| src/features/operations/release-compatibility.test.ts (20 tests) 8ms
+ ✓ |unit| src/features/annual-return/client-portal-server-fns.test.ts (10 tests) 9ms
+ ✓ |unit| src/features/annual-return/whatsapp-reminders.test.ts (8 tests) 8ms
+ ✓ |unit| src/features/incorporation/repository-read.test.ts (10 tests) 8ms
+ ✓ |unit| src/features/incorporation/read.test.ts (15 tests) 10ms
+ ✓ |unit| src/features/documents/findings.test.ts (16 tests) 5ms
+ ✓ |unit| src/features/documents/safety.test.ts (16 tests) 5ms
+ ✓ |unit| src/features/corporate-changes/create-input.test.ts (15 tests) 17ms
+ ✓ |unit| src/features/clients/register-view-state.test.ts (26 tests) 13ms
+ ✓ |unit| src/features/documents/analysis-checks.test.ts (19 tests) 7ms
+ ✓ |unit| src/features/work-items/queue-page.test.ts (4 tests) 8ms
+ ✓ |unit| src/features/nar-import/apply-server.test.ts (5 tests) 10ms
+ ✓ |unit| src/features/documents/storage.test.ts (4 tests) 10ms
+ ✓ |unit| src/features/nar-import/server-fns.test.ts (2 tests) 6ms
+ ✓ |unit| src/features/annual-return/evidence-file-types.test.ts (8 tests) 6ms
+ ✓ |unit| src/features/clients/authorization.test.ts (10 tests) 6ms
+ ✓ |unit| src/features/annual-return/readiness.test.ts (19 tests) 11ms
+ ✓ |unit| src/features/admin/server-fns.test.ts (4 tests) 9ms
+ ✓ |unit| src/features/bulk-operations/server-fns.test.ts (5 tests) 6ms
+ ✓ |unit| src/features/annual-return/package-archive.test.ts (2 tests) 8ms
+ ✓ |unit| src/features/annual-return/board-filters.test.ts (13 tests) 4ms
+ ✓ |unit| src/features/annual-return/permissions.test.ts (18 tests) 8ms
+ ✓ |unit| src/features/annual-return/requirements.test.ts (15 tests) 7ms
+ ✓ |unit| src/features/documents/versions.test.ts (20 tests) 11ms
+ ✓ |unit| src/features/work-items/assignment.test.ts (7 tests) 5ms
+ ✓ |unit| src/features/documents/lazy-storage.test.ts (3 tests) 5ms
+ ✓ |unit| src/features/annual-return/handoff.test.ts (17 tests) 10ms
+ ✓ |unit| src/features/auth/session.test.ts (11 tests) 7ms
+ ✓ |unit| src/features/whatsapp/conversations.test.ts (17 tests) 8ms
+ ✓ |unit| src/features/documents/rejection-projection.test.ts (7 tests) 7ms
+ ✓ |unit| src/features/whatsapp/approved-templates.test.ts (5 tests) 6ms
+ ✓ |unit| src/features/documents/findings-review.test.ts (18 tests) 9ms
+ ✓ |unit| src/lib/date-math.test.ts (11 tests) 5ms
+ ✓ |unit| src/routes/-nested-route-outlet.convention.test.ts (2 tests) 6ms
+ ✓ |unit| scripts/audit-staging-config.test.ts (7 tests) 4ms
+ ✓ |unit| src/features/annual-return/daily-view-state.test.ts (4 tests) 5ms
+ ✓ |unit| src/features/clients/client-return-context.test.ts (30 tests) 6ms
+ ✓ |unit| src/server/cron.test.ts (4 tests) 8ms
+ ✓ |unit| src/features/work-items/queue-view-state.test.ts (11 tests) 10ms
+ ✓ |unit| src/features/corporate-changes/read.test.ts (8 tests) 10ms
+ ✓ |unit| src/features/auth/neon-auth-client.test.ts (2 tests) 11ms
+ ✓ |unit| src/lib/checklist-item-label.test.ts (5 tests) 6ms
+ ✓ |unit| src/features/annual-return/outstanding.test.ts (18 tests) 8ms
+ ✓ |unit| src/features/annual-return/work-views-other.test.ts (11 tests) 5ms
+ ✓ |unit| src/features/auth/route-guard.test.ts (17 tests) 8ms
+ ✓ |unit| src/features/corporate-changes/server-fns.test.ts (6 tests) 5ms
+ ✓ |unit| src/features/annual-return/components/production-case-detail.test.ts (1 test) 8ms
+ ✓ |unit| src/features/incorporation/authorization.test.ts (9 tests) 9ms
+ ✓ |unit| src/features/annual-return/follow-ups.test.ts (11 tests) 10ms
+ ✓ |unit| src/features/auth/staff-state.test.ts (4 tests) 7ms
+ ✓ |unit| src/features/documents/scan-jobs.test.ts (8 tests) 7ms
+ ✓ |unit| src/features/corporate-changes/authorization.test.ts (9 tests) 7ms
+ ✓ |unit| src/lib/entity-id.test.ts (15 tests) 7ms
+ ✓ |unit| scripts/dependency-locks.test.ts (2 tests) 8ms
+ ✓ |unit| src/features/operations/schema-readiness.test.ts (7 tests) 17ms
+ ✓ |unit| src/features/clients/identifiers.test.ts (21 tests) 6ms
+ ✓ |unit| src/routes/-annual-returns-table-layout.test.ts (4 tests) 6ms
+ ✓ |unit| src/lib/text-tokens.test.ts (9 tests) 7ms
+ ✓ |unit| src/features/documents/authorization.test.ts (19 tests) 8ms
+ ✓ |unit| src/features/whatsapp/fallback-templates.test.ts (8 tests) 4ms
+ ✓ |unit| src/routes/-final-review-restorations.test.ts (6 tests) 6ms
+ ✓ |unit| src/features/work-items/assignment-labels.test.ts (5 tests) 4ms
+ ✓ |unit| scripts/audit-document-lineage.test.ts (3 tests) 8ms
+ ✓ |unit| src/lib/format-date.test.ts (6 tests) 6ms
+ ✓ |unit| src/server/db/production-schema.test.ts (8 tests) 5ms
+ ✓ |unit| src/lib/client-portal-store.test.ts (4 tests) 7ms
+ ✓ |unit| src/features/annual-return/reminder-sweep.test.ts (15 tests) 9ms
+ ✓ |unit| src/features/whatsapp/session-window.test.ts (9 tests) 7ms
+ ✓ |unit| src/features/incorporation/workflow.test.ts (7 tests) 5ms
+ ✓ |unit| src/features/documents/scanner-selection.test.ts (7 tests) 9ms
+ ✓ |unit| src/features/corporate-changes/workflow.test.ts (9 tests) 11ms
+ ✓ |unit| src/features/clients/data-origin.test.ts (2 tests) 6ms
+ ✓ |unit| src/features/annual-return/board-metrics.test.ts (8 tests) 4ms
+ ✓ |unit| src/lib/error-details.test.ts (4 tests) 5ms
+ ✓ |unit| src/features/notifications/simulated-transport.test.ts (1 test) 4ms
+ ✓ |unit| scripts/audit-data-origin.test.ts (1 test) 3ms
+ ✓ |unit| src/server/provider-mode.test.ts (7 tests) 6ms
+ ✓ |unit| src/lib/reminder-cadence.test.ts (9 tests) 3ms
+ ✓ |unit| src/features/work-items/title.test.ts (11 tests) 6ms
+ ✓ |unit| src/server/application-schema.test.ts (2 tests) 4ms
+ ✓ |unit| src/features/clients/errors.test.ts (8 tests) 4ms
+ ✓ |unit| src/features/notifications/local-transport.test.ts (1 test) 5ms
+ ✓ |unit| src/lib/serialization-adapters.test.ts (4 tests) 3ms
+ ✓ |unit| src/features/whatsapp/config.test.ts (3 tests) 4ms
+ ✓ |unit| src/features/whatsapp/webhook-route.test.ts (3 tests) 3ms
+ ✓ |unit| src/features/documents/repository.test.ts (2 tests) 3ms
+ ✓ |unit| src/test/fixture-sequence-coverage.convention.test.ts (2 tests) 4ms
+ ✓ |unit| src/lib/format-label.test.ts (6 tests) 3ms
+ ✓ |unit| src/features/auth/query-scope.test.ts (1 test) 4ms
+ ✓ |unit| src/features/auth/role-labels.test.ts (1 test) 3ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 5ms
+ ✓ |unit| src/features/annual-return/follow-up-repository.test.ts (1 test) 5ms
+ ✓ |unit| src/routes/-settings-sections.test.ts (3 tests) 5ms
+ ✓ |unit| scripts/verify-dev-server-imports.test.ts (2 tests) 2ms
+ ✓ |unit| src/features/documents/local-r2.test.ts (2 tests) 5ms
+ ✓ |unit| src/routes/-work-queue-case-links.test.tsx (4 tests) 3ms
+ ✓ |unit| src/features/whatsapp/phone.test.ts (7 tests) 3ms
+ ✓ |unit| src/routes/-operations-dispatch-labels.test.ts (2 tests) 3ms
+ ✓ |unit| src/features/runtime/data-mode.test.ts (2 tests) 2ms
+
+ Test Files  286 passed (286)
+      Tests  2767 passed (2767)
+   Start at  15:52:11
+   Duration  331.21s (transform 13.69s, setup 0ms, import 81.20s, tests 84.20s, environment 102.06s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/routes/-work-queue.interaction.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+stderr | src/routes/-settings-save.interaction.test.tsx > actual settings save feedback > retains failed input, exposes a live error, and retries only on an explicit click
+Encountered two children with the same key, `11111111-1111-4111-8111-111111111111:1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL q=a&q=b
+SearchParamError: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "array",
+    "path": [
+      "q"
+    ],
+    "message": "Expected string, received array"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "code": "invalid_type",\n' +
+    '    "expected": "string",\n' +
+    '    "received": "array",\n' +
+    '    "path": [\n' +
+    '      "q"\n' +
+    '    ],\n' +
+    '    "message": "Expected string, received array"\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "code": "invalid_type",
+      "expected": "string",
+      "received": "array",
+      "path": [
+        "q"
+      ],
+      "message": "Expected string, received array"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        code: 'invalid_type',
+        expected: 'string',
+        received: 'array',
+        path: [ 'q', [length]: 1 ],
+        message: 'Expected string, received array'
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL status=active&status=inactive
+SearchParamError: [
+  {
+    "expected": "'all' | 'active' | 'inactive'",
+    "received": "array",
+    "code": "invalid_type",
+    "path": [
+      "status"
+    ],
+    "message": "Expected 'all' | 'active' | 'inactive', received array"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    `    "expected": "'all' | 'active' | 'inactive'",\n` +
+    '    "received": "array",\n' +
+    '    "code": "invalid_type",\n' +
+    '    "path": [\n' +
+    '      "status"\n' +
+    '    ],\n' +
+    `    "message": "Expected 'all' | 'active' | 'inactive', received array"\n` +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "expected": "'all' | 'active' | 'inactive'",
+      "received": "array",
+      "code": "invalid_type",
+      "path": [
+        "status"
+      ],
+      "message": "Expected 'all' | 'active' | 'inactive', received array"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        expected: "'all' | 'active' | 'inactive'",
+        received: 'array',
+        code: 'invalid_type',
+        path: [ 'status', [length]: 1 ],
+        message: "Expected 'all' | 'active' | 'inactive', received array"
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL team=all&team=other
+SearchParamError: [
+  {
+    "code": "invalid_union",
+    "unionErrors": [
+      {
+        "issues": [
+          {
+            "received": [
+              "all",
+              "other"
+            ],
+            "code": "invalid_literal",
+            "expected": "all",
+            "path": [
+              "team"
+            ],
+            "message": "Invalid literal value, expected \"all\""
+          }
+        ],
+        "name": "ZodError"
+      },
+      {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "received": "array",
+            "path": [
+              "team"
+            ],
+            "message": "Expected string, received array"
+          }
+        ],
+        "name": "ZodError"
+      }
+    ],
+    "path": [
+      "team"
+    ],
+    "message": "Invalid input"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "code": "invalid_union",\n' +
+    '    "unionErrors": [\n' +
+    '      {\n' +
+    '        "issues": [\n' +
+    '          {\n' +
+    '            "received": [\n' +
+    '              "all",\n' +
+    '              "other"\n' +
+    '            ],\n' +
+    '            "code": "invalid_literal",\n' +
+    '            "expected": "all",\n' +
+    '            "path": [\n' +
+    '              "team"\n' +
+    '            ],\n' +
+    '            "message": "Invalid literal value, expected \\"all\\""\n' +
+    '          }\n' +
+    '        ],\n' +
+    '        "name": "ZodError"\n' +
+    '      },\n' +
+    '      {\n' +
+    '        "issues": [\n' +
+    '          {\n' +
+    '            "code": "invalid_type",\n' +
+    '            "expected": "string",\n' +
+    '            "received": "array",\n' +
+    '            "path": [\n' +
+    '              "team"\n' +
+    '            ],\n' +
+    '            "message": "Expected string, received array"\n' +
+    '          }\n' +
+    '        ],\n' +
+    '        "name": "ZodError"\n' +
+    '      }\n' +
+    '    ],\n' +
+    '    "path": [\n' +
+    '      "team"\n' +
+    '    ],\n' +
+    '    "message": "Invalid input"\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "code": "invalid_union",
+      "unionErrors": [
+        {
+          "issues": [
+            {
+              "received": [
+                "all",
+                "other"
+              ],
+              "code": "invalid_literal",
+              "expected": "all",
+              "path": [
+                "team"
+              ],
+              "message": "Invalid literal value, expected \"all\""
+            }
+          ],
+          "name": "ZodError"
+        },
+        {
+          "issues": [
+            {
+              "code": "invalid_type",
+              "expected": "string",
+              "received": "array",
+              "path": [
+                "team"
+              ],
+              "message": "Expected string, received array"
+            }
+          ],
+          "name": "ZodError"
+        }
+      ],
+      "path": [
+        "team"
+      ],
+      "message": "Invalid input"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        code: 'invalid_union',
+        unionErrors: [ [ZodError], [ZodError], [length]: 2 ],
+        path: [ 'team', [length]: 1 ],
+        message: 'Invalid input'
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL includeFixtures=true&includeFixtures=false
+SearchParamError: [
+  {
+    "code": "invalid_type",
+    "expected": "boolean",
+    "received": "array",
+    "path": [
+      "includeFixtures"
+    ],
+    "message": "Expected boolean, received array"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "code": "invalid_type",\n' +
+    '    "expected": "boolean",\n' +
+    '    "received": "array",\n' +
+    '    "path": [\n' +
+    '      "includeFixtures"\n' +
+    '    ],\n' +
+    '    "message": "Expected boolean, received array"\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "code": "invalid_type",
+      "expected": "boolean",
+      "received": "array",
+      "path": [
+        "includeFixtures"
+      ],
+      "message": "Expected boolean, received array"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        code: 'invalid_type',
+        expected: 'boolean',
+        received: 'array',
+        path: [ 'includeFixtures', [length]: 1 ],
+        message: 'Expected boolean, received array'
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL cursor=a&cursor=b
+SearchParamError: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "array",
+    "path": [
+      "cursor"
+    ],
+    "message": "Expected string, received array"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "code": "invalid_type",\n' +
+    '    "expected": "string",\n' +
+    '    "received": "array",\n' +
+    '    "path": [\n' +
+    '      "cursor"\n' +
+    '    ],\n' +
+    '    "message": "Expected string, received array"\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "code": "invalid_type",
+      "expected": "string",
+      "received": "array",
+      "path": [
+        "cursor"
+      ],
+      "message": "Expected string, received array"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        code: 'invalid_type',
+        expected: 'string',
+        received: 'array',
+        path: [ 'cursor', [length]: 1 ],
+        message: 'Expected string, received array'
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL status=unknown
+SearchParamError: [
+  {
+    "received": "unknown",
+    "code": "invalid_enum_value",
+    "options": [
+      "all",
+      "active",
+      "inactive"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'all' | 'active' | 'inactive', received 'unknown'"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "received": "unknown",\n' +
+    '    "code": "invalid_enum_value",\n' +
+    '    "options": [\n' +
+    '      "all",\n' +
+    '      "active",\n' +
+    '      "inactive"\n' +
+    '    ],\n' +
+    '    "path": [\n' +
+    '      "status"\n' +
+    '    ],\n' +
+    `    "message": "Invalid enum value. Expected 'all' | 'active' | 'inactive', received 'unknown'"\n` +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "received": "unknown",
+      "code": "invalid_enum_value",
+      "options": [
+        "all",
+        "active",
+        "inactive"
+      ],
+      "path": [
+        "status"
+      ],
+      "message": "Invalid enum value. Expected 'all' | 'active' | 'inactive', received 'unknown'"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        received: 'unknown',
+        code: 'invalid_enum_value',
+        options: [ 'all', 'active', 'inactive', [length]: 3 ],
+        path: [ 'status', [length]: 1 ],
+        message: "Invalid enum value. Expected 'all' | 'active' | 'inactive', received 'unknown'"
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL team=wrong
+SearchParamError: [
+  {
+    "validation": "uuid",
+    "code": "invalid_string",
+    "message": "Invalid uuid",
+    "path": [
+      "team"
+    ]
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "validation": "uuid",\n' +
+    '    "code": "invalid_string",\n' +
+    '    "message": "Invalid uuid",\n' +
+    '    "path": [\n' +
+    '      "team"\n' +
+    '    ]\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "validation": "uuid",
+      "code": "invalid_string",
+      "message": "Invalid uuid",
+      "path": [
+        "team"
+      ]
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        validation: 'uuid',
+        code: 'invalid_string',
+        message: 'Invalid uuid',
+        path: [ 'team', [length]: 1 ]
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL includeFixtures=maybe
+SearchParamError: [
+  {
+    "code": "invalid_type",
+    "expected": "boolean",
+    "received": "string",
+    "path": [
+      "includeFixtures"
+    ],
+    "message": "Expected boolean, received string"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "code": "invalid_type",\n' +
+    '    "expected": "boolean",\n' +
+    '    "received": "string",\n' +
+    '    "path": [\n' +
+    '      "includeFixtures"\n' +
+    '    ],\n' +
+    '    "message": "Expected boolean, received string"\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "code": "invalid_type",
+      "expected": "boolean",
+      "received": "string",
+      "path": [
+        "includeFixtures"
+      ],
+      "message": "Expected boolean, received string"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        code: 'invalid_type',
+        expected: 'boolean',
+        received: 'string',
+        path: [ 'includeFixtures', [length]: 1 ],
+        message: 'Expected boolean, received string'
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL q=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+SearchParamError: [
+  {
+    "code": "too_big",
+    "maximum": 200,
+    "type": "string",
+    "inclusive": true,
+    "exact": false,
+    "message": "String must contain at most 200 character(s)",
+    "path": [
+      "q"
+    ]
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "code": "too_big",\n' +
+    '    "maximum": 200,\n' +
+    '    "type": "string",\n' +
+    '    "inclusive": true,\n' +
+    '    "exact": false,\n' +
+    '    "message": "String must contain at most 200 character(s)",\n' +
+    '    "path": [\n' +
+    '      "q"\n' +
+    '    ]\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "code": "too_big",
+      "maximum": 200,
+      "type": "string",
+      "inclusive": true,
+      "exact": false,
+      "message": "String must contain at most 200 character(s)",
+      "path": [
+        "q"
+      ]
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        code: 'too_big',
+        maximum: 200,
+        type: 'string',
+        inclusive: true,
+        exact: false,
+        message: 'String must contain at most 200 character(s)',
+        path: [ 'q', [length]: 1 ]
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/features/auth/auth-router-recovery.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+stderr | src/features/auth/auth-signout-remount.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+stderr | src/routes/-login.interaction.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+stderr | src/routes/-documents-production-data.test.tsx > /documents against data the types say is impossible > rejects present invalid parsed caseId 123 without reading cached all scope
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["annual-returns","detail","123"]
+
+stderr | src/routes/-documents-production-data.test.tsx > /documents against data the types say is impossible > rejects present invalid parsed caseId true without reading cached all scope
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["annual-returns","detail","true"]
+
+stderr | src/routes/-documents-production-data.test.tsx > /documents against data the types say is impossible > rejects present invalid parsed caseId null without reading cached all scope
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["annual-returns","detail","null"]
+
+stderr | src/routes/-documents-production-data.test.tsx > /documents against data the types say is impossible > rejects present invalid parsed caseId  without reading cached all scope
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["annual-returns","detail",""]
+
+stderr | src/routes/-documents-production-data.test.tsx > /documents against data the types say is impossible > rejects present invalid parsed caseId 123&caseId=456 without reading cached all scope
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["annual-returns","detail","123&caseId=456"]
+
+stderr | src/routes/-documents-production-data.test.tsx > /documents against data the types say is impossible > does not expose a cached all-document list for an invalid filter
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["annual-returns","detail","invalid"]
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > bounds the sum of page evidence, not each page separately
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > reads the text layer and page count of a digital PDF
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > counts every page
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > reports a truncated PDF as unreadable rather than throwing
+Warning: Indexing all PDF objects
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > reads a PDF even when the upload declared something else
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > cuts text at the limit and says so
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > stops reading pages once the text limit is passed
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > reports truncation when it stopped early, even if the text fits
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > reads every page, one at a time, when the limit is not reached
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > still reads a PDF of exactly MAX_EXTRACTED_PAGES pages
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > strips NUL characters, which Postgres text cannot store
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > configures no font or CMap data URL
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > makes no network request
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/text-extraction.test.ts > extractPdfText > does not detach the caller's buffer
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/routes/-clients-data-mode.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+stderr | src/routes/-clients-data-mode.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+stderr | src/features/documents/live-scanner.test.ts > createLiveDocumentScanner > submits the stored bytes and returns the provider's own reference
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/whatsapp/webhook.test.ts > createWhatsAppWebhookHandler > refuses a forged body and never touches the database
+whatsapp webhook rejected: signature did not verify { hadSignatureHeader: true, bodyBytes: 194 }
+
+stderr | src/features/whatsapp/webhook.test.ts > createWhatsAppWebhookHandler > refuses a delivery with no signature at all
+whatsapp webhook rejected: signature did not verify { hadSignatureHeader: false, bodyBytes: 172 }
+
+stderr | src/features/whatsapp/webhook.test.ts > createWhatsAppWebhookHandler > refuses to acknowledge a delivery the database could not store
+whatsapp webhook could not be persisted null
+
+stderr | src/features/whatsapp/webhook.test.ts > createWhatsAppWebhookHandler > closes the repository and reports 503 when the whole write path throws
+whatsapp webhook failed Error
+
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > keeps an invalid date-age policy unknown: -1
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > keeps an invalid date-age policy unknown: NaN
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > keeps an invalid date-age policy unknown: Infinity
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > A: cites real parsed text, page, offsets and SHA for a complete labelled form
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > C: preserves three different confirmed/waived/unknown applicability decisions
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > D: reports a wrong name/year while treating instructions inside the document as inert evidence
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > keeps page boundaries instead of attributing every word to the first page
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/server/cron-wiring.test.ts > runScheduledMaintenanceForWorker > rethrows so a failed run is visible to the platform
+scheduled maintenance failed {
+  runId: 'ef4fc299-2953-4b9a-84a0-499606fcc444',
+  phase: 'start_or_record'
+}
+
+stderr | src/features/whatsapp/webhook-schema.test.ts > UC189 HMAC write admission before repository > uses the concrete schema gate when production config supplies no override
+whatsapp webhook failed ApplicationSchemaError
+
+stderr | src/features/whatsapp/webhook-schema.test.ts > UC189 HMAC write admission before repository > returns retryable 503 without constructing a writer or acknowledging incompatible schema
+whatsapp webhook failed Error
+
+stderr | src/features/whatsapp/webhook-schema.test.ts > UC189 HMAC write admission before repository > returns retryable 503 without constructing a writer or acknowledging incompatible schema
+whatsapp webhook failed Error
+
+stderr | src/features/whatsapp/webhook-schema.test.ts > UC189 HMAC write admission before repository > rejects bad HMAC before any schema query
+whatsapp webhook rejected: signature did not verify { hadSignatureHeader: true, bodyBytes: 191 }
+
+stderr | src/features/notifications/runtime-dispatch.test.ts > runtime notification dispatch > persists retry state through the selected transport and always closes
+notification dispatch failed {
+  id: '11111111-1111-4111-8111-111111111111',
+  notificationType: 'follow_up',
+  channel: 'whatsapp',
+  errorCode: 'dispatch_failed'
+}
+
+stderr | src/server/maintenance.test.ts > maintenance run record > does not let a failed record write fail the run
+scheduled maintenance record failed Error
+
+stderr | src/features/notifications/dispatcher.test.ts > a dispatch whose outcome is unknown is never re-sent > exhausts an explicitly unknown transport outcome without scheduling another send
+notification dispatch failed {
+  id: '00000000-0000-0000-0000-000000000001',
+  notificationType: 'test',
+  channel: 'whatsapp',
+  errorCode: 'dispatch_failed'
+}
+
+stderr | src/features/notifications/dispatcher.test.ts > a dispatch whose outcome is unknown is never re-sent > fails rather than retries when the provider already accepted the send
+notification dispatch failed {
+  id: '00000000-0000-0000-0000-000000000001',
+  notificationType: 'test',
+  channel: 'whatsapp',
+  errorCode: 'woztell_accepted_without_message_id'
+}
+notification accepted by the provider but not recorded {
+  id: '00000000-0000-0000-0000-000000000001',
+  companyId: '00000000-0000-0000-0000-000000000002',
+  notificationType: 'test',
+  errorCode: 'woztell_accepted_without_message_id'
+}
+
+stderr | src/features/notifications/dispatcher.test.ts > a dispatch whose outcome is unknown is never re-sent > spends the attempt budget so the accepted send can never be claimed again
+notification dispatch failed {
+  id: '00000000-0000-0000-0000-000000000001',
+  notificationType: 'test',
+  channel: 'whatsapp',
+  errorCode: 'woztell_accepted_without_message_id'
+}
+notification accepted by the provider but not recorded {
+  id: '00000000-0000-0000-0000-000000000001',
+  companyId: '00000000-0000-0000-0000-000000000002',
+  notificationType: 'test',
+  errorCode: 'woztell_accepted_without_message_id'
+}
+
+stderr | src/features/notifications/dispatcher.test.ts > a dispatch whose outcome is unknown is never re-sent > leaves the attempt budget alone on an ordinary permanent failure
+notification dispatch failed {
+  id: '00000000-0000-0000-0000-000000000001',
+  notificationType: 'test',
+  channel: 'whatsapp',
+  errorCode: 'dispatch_failed'
+}
+
+stderr | src/features/notifications/dispatcher.test.ts > notification dispatcher > retries transient failures and permanently fails the final attempt
+notification dispatch failed {
+  id: '00000000-0000-0000-0000-000000000001',
+  notificationType: 'test',
+  channel: 'whatsapp',
+  errorCode: 'dispatch_failed'
+}
+
+stderr | src/features/notifications/dispatcher.test.ts > notification dispatcher > retries transient failures and permanently fails the final attempt
+notification dispatch failed {
+  id: '00000000-0000-0000-0000-000000000001',
+  notificationType: 'test',
+  channel: 'whatsapp',
+  errorCode: 'dispatch_failed'
+}
+
+stderr | src/features/notifications/dispatcher.test.ts > notification dispatcher > still counts the send when linking the provider id fails
+whatsapp provider id could not be linked Error: connection lost
+    at Object.<anonymous> (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/notifications/dispatcher.test.ts:415:21)
+    at Object.Mock [as attachProviderMessageId] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/spy/dist/index.js:332:34)
+    at Object.dispatchDue (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/notifications/dispatcher.ts:194:50)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/notifications/dispatcher.test.ts:403:5
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | src/features/notifications/dispatcher.test.ts > WhatsApp session window resolution > fails the dispatch when outside the window with no template mapped
+notification dispatch failed {
+  id: '00000000-0000-0000-0000-000000000001',
+  notificationType: 'unmapped_type',
+  channel: 'whatsapp',
+  errorCode: 'whatsapp_no_fallback_template'
+}
+
+stderr | src/features/dashboard/dashboard-data.test.ts > dashboard data loader > carries the real cause through instead of a fixed string
+Dashboard annual-return load failed Error: connection terminated unexpectedly
+    at Object.getAnnualReturnDashboardMetrics (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:63:15)
+    at loadDashboardData (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.ts:73:20)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:61:24
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+
+stderr | src/features/dashboard/dashboard-data.test.ts > dashboard data loader > distinguishes an authorization failure from an outage
+Dashboard annual-return load failed Error: Forbidden: staff access required
+    at Object.getAnnualReturnDashboardMetrics (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:76:15)
+    at loadDashboardData (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.ts:73:20)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:74:24
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+
+stderr | src/features/dashboard/dashboard-data.test.ts > dashboard data loader > distinguishes an authorization failure from an outage
+Dashboard annual-return load failed Error: connection terminated unexpectedly
+    at Object.getAnnualReturnDashboardMetrics (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:86:19)
+    at loadDashboardData (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.ts:73:20)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:84:15
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | src/features/dashboard/dashboard-data.test.ts > dashboard data loader > still degrades rather than throwing, and reports no cases
+Dashboard annual-return load failed Error: boom
+    at Object.getAnnualReturnDashboardMetrics (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:115:15)
+    at loadDashboardData (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.ts:73:20)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:113:24
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+
+stderr | src/features/operations/server-fns.test.ts > buildOperationsHealth > keeps a failed metrics query unknown without losing successful independent reads
+operations read unavailable {
+  correlationId: '33c2c981-497d-4aa9-8693-0b985d5f0911',
+  read: 'queueDepths'
+}
+
+stderr | src/features/operations/server-fns.test.ts > buildOperationsHealth > reports schema query failure as unavailable and retains other runtime evidence
+operations read unavailable {
+  correlationId: '0888b789-1388-4951-bbb5-89bb130b2b75',
+  read: 'schemaLedger'
+}
+
+stderr | src/features/operations/server-fns.test.ts > buildOperationsHealth > still reports when the schema is behind and every other read fails
+operations read unavailable {
+  correlationId: 'ab451623-3a9e-4da1-86e4-80bc28163b3b',
+  read: 'listRecentRuns'
+}
+operations read unavailable {
+  correlationId: 'ab451623-3a9e-4da1-86e4-80bc28163b3b',
+  read: 'listRecentScheduledRuns'
+}
+operations read unavailable {
+  correlationId: 'ab451623-3a9e-4da1-86e4-80bc28163b3b',
+  read: 'queueDepths'
+}
+
+stderr | src/features/operations/server-fns.test.ts > buildOperationsHealth > names how far behind it is when the ledger exists but is short
+operations read unavailable {
+  correlationId: 'cb8349b7-1da7-4d29-af3f-1b5e711e2563',
+  read: 'queueDepths'
+}
+
+stderr | src/features/operations/server-fns.test.ts > buildOperationsHealth > keeps an unexplained read failure unknown without pretending the schema caused it
+operations read unavailable {
+  correlationId: '7808c855-61d7-48bf-a39c-de2e78096f8e',
+  read: 'queueDepths'
+}
+
+stderr | src/features/operations/server-fns.test.ts > buildOperationsHealth > flags nothing when the maintenance state could not be read at all
+operations read unavailable {
+  correlationId: '752707f0-4d2e-4c7f-96fd-f8d8968f1d4f',
+  read: 'listRecentScheduledRuns'
+}
+operations read unavailable {
+  correlationId: '752707f0-4d2e-4c7f-96fd-f8d8968f1d4f',
+  read: 'queueDepths'
+}
+

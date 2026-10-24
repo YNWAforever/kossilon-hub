@@ -1,0 +1,84 @@
+{
+  "source_sha": "bdeb13db4c53985cbf2a202d119b8d6045d9f8eb",
+  "parent_sha": "495fc88061a874b285e0fd7131b042243ab74b92",
+  "tested_head": "495fc88061a874b285e0fd7131b042243ab74b92",
+  "paths": [
+    "src/features/auth/neon-auth-server.ts",
+    "src/features/auth/write-admission.test.ts",
+    "src/features/whatsapp/webhook-schema.test.ts",
+    "src/features/whatsapp/webhook.test.ts",
+    "src/features/whatsapp/webhook.ts",
+    "src/server/application-schema.test.ts",
+    "src/server/application-schema.ts",
+    "src/server/maintenance.ts",
+    "src/server/non-scheduled-schema.test.ts",
+    "src/server/write-admission.integration.test.ts",
+    "src/test/db-integration-files.ts",
+    "src/test/schema-catalog-double.ts"
+  ],
+  "files": [
+    {
+      "path": "src/features/auth/neon-auth-server.ts",
+      "bytes": 6439,
+      "sha256": "43d2aaa4be89dd67983732de93e24b40b9aff105b23bc3071fdb015f1a997563"
+    },
+    {
+      "path": "src/features/auth/write-admission.test.ts",
+      "bytes": 4042,
+      "sha256": "6dcd72b5d1a8924f98bc3aad92c5f41897125d9eba5baf4ee7261badffc18e11"
+    },
+    {
+      "path": "src/features/whatsapp/webhook-schema.test.ts",
+      "bytes": 3213,
+      "sha256": "f059d98f4281cbcbf9423962a57f947486343c4fc790b6ec29074aa93a7ef63a"
+    },
+    {
+      "path": "src/features/whatsapp/webhook.test.ts",
+      "bytes": 16457,
+      "sha256": "012f963cd001a46faea420c78b7d98916c2d50fabc9c001a71bacc60c416c6e9"
+    },
+    {
+      "path": "src/features/whatsapp/webhook.ts",
+      "bytes": 7311,
+      "sha256": "69a4cd69dc0ec4cde77e8532c464540e3050956ff146f7f26e0e7dc8feb40e9c"
+    },
+    {
+      "path": "src/server/application-schema.test.ts",
+      "bytes": 1125,
+      "sha256": "6c738cc9fd75d40c529d844794055fe09d4ce12e0e738258aec8c881d00d1505"
+    },
+    {
+      "path": "src/server/application-schema.ts",
+      "bytes": 1031,
+      "sha256": "f574624ab7aa445ee6dfbc815d8b484110c540b5dd470a49f6f21045f1fcce13"
+    },
+    {
+      "path": "src/server/maintenance.ts",
+      "bytes": 23295,
+      "sha256": "3f6da807a406dd59a0023e0a01a5a83977297536d1f90419b66eda03165777d4"
+    },
+    {
+      "path": "src/server/non-scheduled-schema.test.ts",
+      "bytes": 1118,
+      "sha256": "346283c2a4065d3b7723974948a25ea64359ca45c6f191776abfd21c0a058325"
+    },
+    {
+      "path": "src/server/write-admission.integration.test.ts",
+      "bytes": 20277,
+      "sha256": "d2be46da39ab3d84da61c328520196b13489313b1cd6f1f3d3f0ad7ed9b49e87"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "bytes": 3447,
+      "sha256": "0789f35924037ae57ff2632a21d5e852429221352360b8cce9567fd4e36ff945"
+    },
+    {
+      "path": "src/test/schema-catalog-double.ts",
+      "bytes": 2315,
+      "sha256": "db482f36ce6d71c2a5e0fba324210e41cad0795761bfad86c69fd20dd6d05f1a"
+    }
+  ],
+  "source_freeze": "source-post-checks.json",
+  "source_files_verified": 664,
+  "all_final_checked_source_bytes_equal_committed": true
+}

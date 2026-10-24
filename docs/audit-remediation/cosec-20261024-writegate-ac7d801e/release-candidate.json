@@ -1,0 +1,102 @@
+{
+  "run_id": "cosec-20261024-writegate-ac7d801e",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "bdeb13db4c53985cbf2a202d119b8d6045d9f8eb",
+  "parent_sha": "495fc88061a874b285e0fd7131b042243ab74b92",
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "production_sha_user_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "phase": "LOCAL_UC189_NON_SCHEDULED_PARTIAL_SCOPED_NATIVE_BLOCKED",
+  "release_gate": "NO_GO",
+  "deployed": false,
+  "auth_runtime_verified": false,
+  "native_http_db_rls_verified": false,
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "source_manifest": "source-candidate.json",
+  "evidence_manifest": "evidence-manifest.json",
+  "checks": {
+    "targeted": {
+      "receipt": "targeted-final.json",
+      "log": "targeted-final.txt",
+      "exit_code": 0,
+      "summary": {
+        "tests": 130,
+        "files": 15
+      }
+    },
+    "typecheck": {
+      "receipt": "typecheck-final.json",
+      "log": "typecheck-final.txt",
+      "exit_code": 0
+    },
+    "lint": {
+      "receipt": "lint-second.json",
+      "log": "lint-second.txt",
+      "exit_code": 0
+    },
+    "unit": {
+      "receipt": "unit-final.json",
+      "log": "unit-final.txt",
+      "exit_code": 0,
+      "summary": {
+        "tests": 2767,
+        "files": 286,
+        "skipped_tests": 0,
+        "skipped_files": 0
+      }
+    },
+    "build": {
+      "receipt": "build-final.json",
+      "log": "build-final.txt",
+      "exit_code": 0
+    },
+    "sql": {
+      "tests": 9,
+      "files": 1,
+      "exit_code": 0,
+      "log": "db/test-first.txt",
+      "journal": "db/test-first.jsonl",
+      "cases": [
+        "missing",
+        "unknown",
+        "same-count-diverged",
+        "no-ledger",
+        "missing-marker",
+        "missing-index",
+        "recovery",
+        "late-write-rollback",
+        "webhook-recovery"
+      ]
+    }
+  },
+  "source_inventory": {
+    "post_functions": 74,
+    "modules": 17,
+    "scope": "source-only; not74 executed native journeys"
+  },
+  "isolated_sql": {
+    "container_id": "0789aa90aa1233d210170281713fdd1804c6db881b7aa84ec3c315d5cd120211",
+    "system_id": "7700137624581926950",
+    "database": "cosec_writegate_ac7d801e",
+    "removed": true,
+    "external_http_calls": 0,
+    "auth": "injected session adapter + real SQL actor mapping; locally signed synthetic HMAC Request; disposable superuser, no native Auth/HTTP/RLS"
+  },
+  "browser": "NOT_RUN_THIS_BATCH",
+  "limitations": [
+    "migration ID parity and two physical outbox facts only; full schema/checksums/privileges and concurrent DDL not verified",
+    "representative client rollback; not every late provider/domain error atomicity",
+    "infrastructure Auth proxy/session/login recovery outside business DB gate",
+    "native compiled HTTP/Auth/RLS/browser reload/platform ticks/providers/production schema remain BLOCKED"
+  ],
+  "rollback": {
+    "action": "ordinary new commit reverting bdeb13db4c53985cbf2a202d119b8d6045d9f8eb; retain original evidence and published history",
+    "migration_added": false,
+    "production_action": false
+  }
+}

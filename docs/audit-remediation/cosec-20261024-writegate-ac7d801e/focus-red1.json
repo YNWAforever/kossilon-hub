@@ -1,0 +1,42 @@
+{
+  "kind": "focus",
+  "attempt": "red1",
+  "started": "2026-10-24T07:34:36.753Z",
+  "finished": "2026-10-24T07:35:14.291Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/auth/write-admission.test.ts",
+    "src/features/whatsapp/webhook-schema.test.ts",
+    "src/server/non-scheduled-schema.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "exit_code": 1,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ]
+}
