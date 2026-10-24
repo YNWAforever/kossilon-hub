@@ -1,0 +1,8 @@
+{
+  "operation": "prepare-acceptance.ps1 then verify-acceptance.ps1",
+  "verifier_result": "Verified original/native rows: 184; resolved evidence links: 1173",
+  "validation_file": "acceptance-validation.json",
+  "wrapper_error": "Acceptance verification failed",
+  "classification": "Wrapper inspected native LASTEXITCODE after a pure PowerShell script. That variable is unset or stale for this purpose; it does not represent the PowerShell verifier result. The verifier completed and wrote all_equal evidence before the wrapper throw.",
+  "correction": "Use terminating PowerShell errors/normal script return; validate structured receipt independently in verify-delivery.mjs. No original row, expected result or native status was changed to satisfy this wrapper."
+}

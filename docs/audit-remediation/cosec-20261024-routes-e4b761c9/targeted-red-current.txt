@@ -1,0 +1,2054 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/corporate-changes/components/production-corporate-change-detail.test.tsx (15 tests) 1275ms
+     ✓ enables Complete once status is Filed with Registrar and all required items are Verified  386ms
+ ❯ |unit| src/routes/-case-subroutes.interaction.test.tsx (22 tests | 12 failed) 13344ms
+     × opens the linked detail, changes DOM and URL, and restores page3 on Back/Forward 1553ms
+     × renders a copied detail URL and a fresh query client reads the same exact record 1028ms
+     × changes record identity without retaining the previous detail 1015ms
+     ✓ renders the trailing-slash list URL rather than an empty outlet 26ms
+     ✓ shows the empty list without a detail read 42ms
+     ✓ rejects a malformed detail before invoking the transport 15ms
+     ✓ shows an absent record without exposing the list or retrying 27ms
+     × keeps 403 role denied closed and recovers only on explicit retry 1056ms
+     × keeps 503 temporary unavailable closed and recovers only on explicit retry 1049ms
+     ✓ leaving a pending detail prevents its late read from replacing the list 36ms
+     × keeps an unsafe returnTo inside the allowed work list 1015ms
+     × opens the linked detail, changes DOM and URL, and restores page3 on Back/Forward 1162ms
+     × renders a copied detail URL and a fresh query client reads the same exact record 1037ms
+     × changes record identity without retaining the previous detail 1013ms
+     ✓ renders the trailing-slash list URL rather than an empty outlet 20ms
+     ✓ shows the empty list without a detail read 32ms
+     ✓ rejects a malformed detail before invoking the transport 15ms
+     ✓ shows an absent record without exposing the list or retrying 30ms
+     × keeps 403 role denied closed and recovers only on explicit retry 1055ms
+     × keeps 503 temporary unavailable closed and recovers only on explicit retry 1049ms
+     ✓ leaving a pending detail prevents its late read from replacing the list 35ms
+     × keeps an unsafe returnTo inside the allowed work list 1030ms
+ ✓ |unit| src/features/incorporation/components/case-lists.test.tsx (8 tests) 444ms
+ ✓ |unit| src/features/incorporation/components/production-incorporation-detail.test.tsx (4 tests) 242ms
+ ✓ |unit| src/routes/-nested-route-outlet.convention.test.ts (2 tests) 6ms
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  12 failed | 39 passed (51)
+   Start at  08:36:48
+   Duration  46.62s (transform 1.06s, setup 0ms, import 8.16s, tests 15.31s, environment 21.27s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-case-subroutes.interaction.test.tsx > UC160 /incorporation real router > opens the linked detail, changes DOM and URL, and restores page3 on Back/Forward
+TestingLibraryElementError: Unable to find role="heading" and name "QA UC160 1"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation?q=QA&sort=company&cursor=QA-page3"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m案件無法載入[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0m案件資料暫時無法載入，請稍後再試。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-rotate-cw h-4 w-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m重試[0m
+        [36m</button>[39m
+        [36m<a[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+          [33mdata-status[39m=[32m"active"[39m
+          [33mhref[39m=[32m"/incorporation"[39m
+        [36m>[39m
+          [0m返回公司註冊[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation?q=QA&sort=company&cursor=QA-page3"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m案件無法載入[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0m案件資料暫時無法載入，請稍後再試。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-rotate-cw h-4 w-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m重試[0m
+        [36m</button>[39m
+        [36m<a[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+          [33mdata-status[39m=[32m"active"[39m
+          [33mhref[39m=[32m"/incorporation"[39m
+        [36m>[39m
+          [0m返回公司註冊[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ expectDetail src/routes/-case-subroutes.interaction.test.tsx:70:18
+     68|   const detailUrl = `${path}/${routeCaseIds[0]}`;
+     69|   async function expectDetail() {
+     70|     await screen.findByRole("heading", { name: title });
+       |                  ^
+     71|     await screen.findByText("QA Office 1");
+     72|     expect(screen.queryByRole("form", { name: "案件篩選" })).toBeNull();
+ ❯ src/routes/-case-subroutes.interaction.test.tsx:79:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  |unit| src/routes/-case-subroutes.interaction.test.tsx > UC160 /incorporation real router > renders a copied detail URL and a fresh query client reads the same exact record
+TestingLibraryElementError: Unable to find role="heading" and name "QA UC160 1"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m案件無法載入[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0m案件資料暫時無法載入，請稍後再試。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-rotate-cw h-4 w-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m重試[0m
+        [36m</button>[39m
+        [36m<a[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+          [33mdata-status[39m=[32m"active"[39m
+          [33mhref[39m=[32m"/incorporation"[39m
+        [36m>[39m
+          [0m返回公司註冊[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m案件無法載入[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0m案件資料暫時無法載入，請稍後再試。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-rotate-cw h-4 w-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m重試[0m
+        [36m</button>[39m
+        [36m<a[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+          [33mdata-status[39m=[32m"active"[39m
+          [33mhref[39m=[32m"/incorporation"[39m
+        [36m>[39m
+          [0m返回公司註冊[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ expectDetail src/routes/-case-subroutes.interaction.test.tsx:70:18
+     68|   const detailUrl = `${path}/${routeCaseIds[0]}`;
+     69|   async function expectDetail() {
+     70|     await screen.findByRole("heading", { name: title });
+       |                  ^
+     71|     await screen.findByText("QA Office 1");
+     72|     expect(screen.queryByRole("form", { name: "案件篩選" })).toBeNull();
+ ❯ src/routes/-case-subroutes.interaction.test.tsx:93:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  |unit| src/routes/-case-subroutes.interaction.test.tsx > UC160 /incorporation real router > changes record identity without retaining the previous detail
+TestingLibraryElementError: Unable to find role="heading" and name "QA UC160 1"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m案件無法載入[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0m案件資料暫時無法載入，請稍後再試。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-rotate-cw h-4 w-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m重試[0m
+        [36m</button>[39m
+        [36m<a[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+          [33mdata-status[39m=[32m"active"[39m
+          [33mhref[39m=[32m"/incorporation"[39m
+        [36m>[39m
+          [0m返回公司註冊[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m案件無法載入[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0m案件資料暫時無法載入，請稍後再試。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-rotate-cw h-4 w-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m重試[0m
+        [36m</button>[39m
+        [36m<a[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+          [33mdata-status[39m=[32m"active"[39m
+          [33mhref[39m=[32m"/incorporation"[39m
+        [36m>[39m
+          [0m返回公司註冊[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ expectDetail src/routes/-case-subroutes.interaction.test.tsx:70:18
+     68|   const detailUrl = `${path}/${routeCaseIds[0]}`;
+     69|   async function expectDetail() {
+     70|     await screen.findByRole("heading", { name: title });
+       |                  ^
+     71|     await screen.findByText("QA Office 1");
+     72|     expect(screen.queryByRole("form", { name: "案件篩選" })).toBeNull();
+ ❯ src/routes/-case-subroutes.interaction.test.tsx:101:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  |unit| src/routes/-case-subroutes.interaction.test.tsx > UC160 /incorporation real router > keeps 403 role denied closed and recovers only on explicit retry
+ FAIL  |unit| src/routes/-case-subroutes.interaction.test.tsx > UC160 /incorporation real router > keeps 503 temporary unavailable closed and recovers only on explicit retry
+TestingLibraryElementError: Unable to find role="heading" and name "QA UC160 1"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m案件無法載入[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0m案件資料暫時無法載入，請稍後再試。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-rotate-cw h-4 w-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m重試[0m
+        [36m</button>[39m
+        [36m<a[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+          [33mdata-status[39m=[32m"active"[39m
+          [33mhref[39m=[32m"/incorporation"[39m
+        [36m>[39m
+          [0m返回公司註冊[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/incorporation"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m案件無法載入[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0m案件資料暫時無法載入，請稍後再試。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-rotate-cw h-4 w-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m重試[0m
+        [36m</button>[39m
+        [36m<a[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+          [33mdata-status[39m=[32m"active"[39m
+          [33mhref[39m=[32m"/incorporation"[39m
+        [36m>[39m
+          [0m返回公司註冊[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ expectDetail src/routes/-case-subroutes.interaction.test.tsx:70:18
+     68|   const detailUrl = `${path}/${routeCaseIds[0]}`;
+     69|   async function expectDetail() {
+     70|     await screen.findByRole("heading", { name: title });
+       |                  ^
+     71|     await screen.findByText("QA Office 1");
+     72|     expect(screen.queryByRole("form", { name: "案件篩選" })).toBeNull();
+ ❯ src/routes/-case-subroutes.interaction.test.tsx:140:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  |unit| src/routes/-case-subroutes.interaction.test.tsx > UC160 /incorporation real router > keeps an unsafe returnTo inside the allowed work list
+TestingLibraryElementError: Unable to find role="heading" and name "QA UC160 1"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/annual-returns"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m案件無法載入[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0m案件資料暫時無法載入，請稍後再試。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-rotate-cw h-4 w-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m重試[0m
+        [36m</button>[39m
+        [36m<a[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+          [33mdata-status[39m=[32m"active"[39m
+          [33mhref[39m=[32m"/incorporation"[39m
+        [36m>[39m
+          [0m返回公司註冊[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/annual-returns"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m案件無法載入[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0m案件資料暫時無法載入，請稍後再試。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-rotate-cw h-4 w-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m重試[0m
+        [36m</button>[39m
+        [36m<a[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+          [33mdata-status[39m=[32m"active"[39m
+          [33mhref[39m=[32m"/incorporation"[39m
+        [36m>[39m
+          [0m返回公司註冊[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ expectDetail src/routes/-case-subroutes.interaction.test.tsx:70:18
+     68|   const detailUrl = `${path}/${routeCaseIds[0]}`;
+     69|   async function expectDetail() {
+     70|     await screen.findByRole("heading", { name: title });
+       |                  ^
+     71|     await screen.findByText("QA Office 1");
+     72|     expect(screen.queryByRole("form", { name: "案件篩選" })).toBeNull();
+ ❯ src/routes/-case-subroutes.interaction.test.tsx:158:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  |unit| src/routes/-case-subroutes.interaction.test.tsx > UC160 /corporate-changes real router > opens the linked detail, changes DOM and URL, and restores page3 on Back/Forward
+TestingLibraryElementError: Unable to find an element with the text: QA Office 1. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/corporate-changes?q=QA&sort=company&cursor=QA-page3"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m公司變更申請[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m完成[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<dl[39m
+          [33mclass[39m=[32m"grid gap-4 md:grid-cols-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m變更類別[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m狀態[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m已提出[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m報價[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0mHKD [0m
+              [0m1,600[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+        [36m</dl>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m/>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/corporate-changes?q=QA&sort=company&cursor=QA-page3"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m公司變更申請[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m完成[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<dl[39m
+          [33mclass[39m=[32m"grid gap-4 md:grid-cols-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m變更類別[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m狀態[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m已提出[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m報價[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0mHKD [0m
+              [0m1,600[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+        [36m</dl>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m/>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ expectDetail src/routes/-case-subroutes.interaction.test.tsx:71:18
+     69|   async function expectDetail() {
+     70|     await screen.findByRole("heading", { name: title });
+     71|     await screen.findByText("QA Office 1");
+       |                  ^
+     72|     expect(screen.queryByRole("form", { name: "案件篩選" })).toBeNull();
+     73|     expect(get).toHaveBeenLastCalledWith({ data: { [field]: routeCaseI…
+ ❯ src/routes/-case-subroutes.interaction.test.tsx:79:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  |unit| src/routes/-case-subroutes.interaction.test.tsx > UC160 /corporate-changes real router > renders a copied detail URL and a fresh query client reads the same exact record
+TestingLibraryElementError: Unable to find an element with the text: QA Office 1. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/corporate-changes"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m公司變更申請[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m完成[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<dl[39m
+          [33mclass[39m=[32m"grid gap-4 md:grid-cols-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m變更類別[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m狀態[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m已提出[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m報價[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0mHKD [0m
+              [0m1,600[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+        [36m</dl>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m/>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/corporate-changes"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m公司變更申請[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m完成[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<dl[39m
+          [33mclass[39m=[32m"grid gap-4 md:grid-cols-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m變更類別[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m狀態[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m已提出[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m報價[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0mHKD [0m
+              [0m1,600[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+        [36m</dl>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m/>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ expectDetail src/routes/-case-subroutes.interaction.test.tsx:71:18
+     69|   async function expectDetail() {
+     70|     await screen.findByRole("heading", { name: title });
+     71|     await screen.findByText("QA Office 1");
+       |                  ^
+     72|     expect(screen.queryByRole("form", { name: "案件篩選" })).toBeNull();
+     73|     expect(get).toHaveBeenLastCalledWith({ data: { [field]: routeCaseI…
+ ❯ src/routes/-case-subroutes.interaction.test.tsx:93:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  |unit| src/routes/-case-subroutes.interaction.test.tsx > UC160 /corporate-changes real router > changes record identity without retaining the previous detail
+TestingLibraryElementError: Unable to find an element with the text: QA Office 1. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/corporate-changes"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m公司變更申請[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m完成[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<dl[39m
+          [33mclass[39m=[32m"grid gap-4 md:grid-cols-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m變更類別[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m狀態[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m已提出[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m報價[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0mHKD [0m
+              [0m1,600[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+        [36m</dl>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m/>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/corporate-changes"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m公司變更申請[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m完成[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<dl[39m
+          [33mclass[39m=[32m"grid gap-4 md:grid-cols-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m變更類別[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m狀態[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m已提出[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m報價[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0mHKD [0m
+              [0m1,600[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+        [36m</dl>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m/>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ expectDetail src/routes/-case-subroutes.interaction.test.tsx:71:18
+     69|   async function expectDetail() {
+     70|     await screen.findByRole("heading", { name: title });
+     71|     await screen.findByText("QA Office 1");
+       |                  ^
+     72|     expect(screen.queryByRole("form", { name: "案件篩選" })).toBeNull();
+     73|     expect(get).toHaveBeenLastCalledWith({ data: { [field]: routeCaseI…
+ ❯ src/routes/-case-subroutes.interaction.test.tsx:101:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  |unit| src/routes/-case-subroutes.interaction.test.tsx > UC160 /corporate-changes real router > keeps 403 role denied closed and recovers only on explicit retry
+ FAIL  |unit| src/routes/-case-subroutes.interaction.test.tsx > UC160 /corporate-changes real router > keeps 503 temporary unavailable closed and recovers only on explicit retry
+TestingLibraryElementError: Unable to find an element with the text: QA Office 1. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/corporate-changes"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m公司變更申請[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m完成[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<dl[39m
+          [33mclass[39m=[32m"grid gap-4 md:grid-cols-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m變更類別[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m狀態[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m已提出[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m報價[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0mHKD [0m
+              [0m1,600[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+        [36m</dl>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m/>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/corporate-changes"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m公司變更申請[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m完成[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<dl[39m
+          [33mclass[39m=[32m"grid gap-4 md:grid-cols-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m變更類別[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m狀態[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m已提出[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m報價[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0mHKD [0m
+              [0m1,600[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+        [36m</dl>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m/>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ expectDetail src/routes/-case-subroutes.interaction.test.tsx:71:18
+     69|   async function expectDetail() {
+     70|     await screen.findByRole("heading", { name: title });
+     71|     await screen.findByText("QA Office 1");
+       |                  ^
+     72|     expect(screen.queryByRole("form", { name: "案件篩選" })).toBeNull();
+     73|     expect(get).toHaveBeenLastCalledWith({ data: { [field]: routeCaseI…
+ ❯ src/routes/-case-subroutes.interaction.test.tsx:140:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  |unit| src/routes/-case-subroutes.interaction.test.tsx > UC160 /corporate-changes real router > keeps an unsafe returnTo inside the allowed work list
+TestingLibraryElementError: Unable to find an element with the text: QA Office 1. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/annual-returns"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m公司變更申請[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m完成[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<dl[39m
+          [33mclass[39m=[32m"grid gap-4 md:grid-cols-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m變更類別[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m狀態[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m已提出[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m報價[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0mHKD [0m
+              [0m1,600[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+        [36m</dl>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m/>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+      [33mhref[39m=[32m"/annual-returns"[39m
+    [36m>[39m
+      [0m返回工作列表[0m
+    [36m</a>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m公司變更申請[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m完成[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<dl[39m
+          [33mclass[39m=[32m"grid gap-4 md:grid-cols-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m變更類別[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m狀態[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0m已提出[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<dt[39m
+              [33mclass[39m=[32m"text-[10px] font-medium uppercase tracking-wider text-muted-foreground"[39m
+            [36m>[39m
+              [0m報價[0m
+            [36m</dt>[39m
+            [36m<dd[39m
+              [33mclass[39m=[32m"mt-1 text-sm"[39m
+            [36m>[39m
+              [0mHKD [0m
+              [0m1,600[0m
+            [36m</dd>[39m
+          [36m</div>[39m
+        [36m</dl>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"mb-3 text-sm font-semibold"[39m
+        [36m>[39m
+          [0m清單[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m/>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ expectDetail src/routes/-case-subroutes.interaction.test.tsx:71:18
+     69|   async function expectDetail() {
+     70|     await screen.findByRole("heading", { name: title });
+     71|     await screen.findByText("QA Office 1");
+       |                  ^
+     72|     expect(screen.queryByRole("form", { name: "案件篩選" })).toBeNull();
+     73|     expect(get).toHaveBeenLastCalledWith({ data: { [field]: routeCaseI…
+ ❯ src/routes/-case-subroutes.interaction.test.tsx:158:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+

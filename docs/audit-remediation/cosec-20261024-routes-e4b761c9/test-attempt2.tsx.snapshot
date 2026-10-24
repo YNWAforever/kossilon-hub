@@ -1,0 +1,164 @@
+// @vitest-environment jsdom
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createRootRouteWithContext, createRouter, createMemoryHistory, Outlet, RouterProvider } from "@tanstack/react-router";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import { changeRouteFixture, incorporationRouteFixture, routeCaseIds } from "@/test/case-route-fixtures";
+
+const rpc = vi.hoisted(() => ({ incList: vi.fn(), changeList: vi.fn(), incGet: vi.fn(), changeGet: vi.fn() }));
+vi.mock("@/features/incorporation/server-fns", () => ({
+  listIncorporationCasePage: rpc.incList, getIncorporationCase: rpc.incGet,
+  completeIncorporationCase: vi.fn(), updateIncorporationCaseStatus: vi.fn(), updateIncorporationChecklistItem: vi.fn(),
+}));
+vi.mock("@/features/corporate-changes/server-fns", () => ({
+  listCorporateChangeRequestPage: rpc.changeList, getCorporateChangeRequest: rpc.changeGet,
+  completeCorporateChangeRequest: vi.fn(), cancelCorporateChangeRequest: vi.fn(), updateCorporateChangeChecklistItemStatus: vi.fn(),
+}));
+vi.mock("@/features/clients/server-fns", () => ({
+  listClientPage: async () => ({ clients: [], nextCursor: null }),
+  listClientAssignmentOptions: async () => ({ owners: [], teams: [] }),
+}));
+vi.mock("@/components/incorporation/create-incorporation-case-dialog", () => ({ CreateIncorporationCaseDialog: () => null }));
+vi.mock("@/components/corporate-changes/create-corporate-change-request-dialog", () => ({ CreateCorporateChangeRequestDialog: () => null }));
+import { Route as IncRoute } from "./incorporation";
+import { Route as IncDetail } from "./incorporation.$id";
+import { Route as ChangeRoute } from "./corporate-changes";
+import { Route as ChangeDetail } from "./corporate-changes.$id";
+
+const actor: AuthenticatedActor = {
+  authUserId: "QA-UC160-Staff-A", userId: "e4b761c9-0160-4160-8160-000000000010",
+  role: "Staff", teamId: "e4b761c9-0160-4160-8160-000000000020", active: true,
+};
+const clients: QueryClient[] = [];
+async function view(url: string) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  clients.push(client);
+  const root = createRootRouteWithContext<{ queryClient: QueryClient; actor: AuthenticatedActor; dataMode: "production" }>()({
+    component: () => <QueryClientProvider client={client}><Outlet /></QueryClientProvider>,
+  });
+  const inc = IncRoute.update({ getParentRoute: () => root, id: "/incorporation", path: "/incorporation" } as never);
+  const incDetail = IncDetail.update({ getParentRoute: () => inc, id: "/$id", path: "/$id" } as never);
+  const changes = ChangeRoute.update({ getParentRoute: () => root, id: "/corporate-changes", path: "/corporate-changes" } as never);
+  const changeDetail = ChangeDetail.update({ getParentRoute: () => changes, id: "/$id", path: "/$id" } as never);
+  const router = createRouter({
+    routeTree: root.addChildren([inc.addChildren([incDetail]), changes.addChildren([changeDetail])]),
+    history: createMemoryHistory({ initialEntries: [url] }), context: { queryClient: client, actor, dataMode: "production" },
+    defaultPreload: false,
+  });
+  await router.load();
+  render(<RouterProvider router={router} />);
+  return router;
+}
+beforeEach(() => {
+  vi.resetAllMocks();
+  vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+  rpc.incList.mockResolvedValue({ items: routeCaseIds.map(incorporationRouteFixture), nextCursor: null });
+  rpc.changeList.mockResolvedValue({ items: routeCaseIds.map(id => ({ ...changeRouteFixture(id), companyName: `QA UC160 ${id.slice(-1)}` })), nextCursor: null });
+  rpc.incGet.mockImplementation(async ({ data }) => incorporationRouteFixture(data.id));
+  rpc.changeGet.mockImplementation(async ({ data }) => changeRouteFixture(data.requestId));
+});
+afterEach(() => { cleanup(); clients.splice(0).forEach(client => client.clear()); vi.restoreAllMocks(); });
+
+for (const [path, list, get, title, missing, field] of [
+  ["/incorporation", rpc.incList, rpc.incGet, "QA UC160 1", "找不到公司註冊案件", "id"],
+  ["/corporate-changes", rpc.changeList, rpc.changeGet, "公司變更申請", "找不到公司變更申請", "requestId"],
+] as const) describe(`UC160 ${path} real router`, () => {
+  const url = `${path}?q=QA&sort=company&cursor=QA-page3`;
+  const detailUrl = `${path}/${routeCaseIds[0]}`;
+  const marker = path === "/incorporation" ? "QA Office 1" : "HKD 1,601";
+  const secondMarker = path === "/incorporation" ? "QA Office 2" : "HKD 1,602";
+  async function expectDetail() {
+    await screen.findByRole("heading", { name: title });
+    await screen.findByText(marker);
+    expect(screen.queryByRole("form", { name: "案件篩選" })).toBeNull();
+    expect(get).toHaveBeenLastCalledWith({ data: { [field]: routeCaseIds[0] } });
+  }
+  it("opens the linked detail, changes DOM and URL, and restores page3 on Back/Forward", async () => {
+    const router = await view(url);
+    const open = path === "/incorporation" ? (await screen.findAllByRole("link", { name: "開啟" }))[0] : await screen.findByRole("link", { name: "QA UC160 1" });
+    fireEvent.click(open);
+    await expectDetail();
+    expect(router.state.location.pathname).toBe(detailUrl);
+    expect(router.state.location.search.returnTo).toBe(url);
+    expect(screen.getByRole("link", { name: "返回工作列表" }).getAttribute("href")).toBe(url);
+    await act(async () => { router.history.back(); });
+    await screen.findByLabelText("搜尋既有案件");
+    expect(router.state.location.href).toBe(url);
+    expect((screen.getByLabelText("搜尋既有案件") as HTMLInputElement).value).toBe("QA");
+    expect(list).toHaveBeenLastCalledWith({ data: { q: "QA", sort: "company", cursor: "QA-page3" } });
+    await act(async () => { router.history.forward(); });
+    await expectDetail();
+  });
+  it("renders a copied detail URL and a fresh query client reads the same exact record", async () => {
+    await view(detailUrl);
+    await expectDetail();
+    cleanup(); clients.splice(0).forEach(client => client.clear());
+    await view(detailUrl);
+    await expectDetail();
+    expect(get).toHaveBeenCalledTimes(2);
+  });
+  it("changes record identity without retaining the previous detail", async () => {
+    const router = await view(detailUrl);
+    await expectDetail();
+    await act(async () => { await router.navigate({ href: `${path}/${routeCaseIds[1]}` }); });
+    await screen.findByText(secondMarker);
+    expect(screen.queryByText(marker)).toBeNull();
+    expect(get).toHaveBeenLastCalledWith({ data: { [field]: routeCaseIds[1] } });
+  });
+  it("renders the trailing-slash list URL rather than an empty outlet", async () => {
+    await view(`${path}/?q=QA`);
+    await screen.findByRole("form", { name: "案件篩選" });
+    expect(list).toHaveBeenCalledWith({ data: { q: "QA" } });
+    expect(get).not.toHaveBeenCalled();
+  });
+  it("shows the empty list without a detail read", async () => {
+    list.mockResolvedValue({ items: [], nextCursor: null });
+    await view(path);
+    await screen.findByText(path === "/incorporation" ? "沒有符合篩選的公司註冊案件。" : "沒有符合篩選的公司變更申請。");
+    expect(get).not.toHaveBeenCalled();
+  });
+  it("rejects a malformed detail before invoking the transport", async () => {
+    await view(`${path}/invalid-id`);
+    await screen.findByRole("heading", { name: missing });
+    expect(get).not.toHaveBeenCalled();
+    expect(list).not.toHaveBeenCalled();
+  });
+  it("shows an absent record without exposing the list or retrying", async () => {
+    get.mockResolvedValue(null);
+    await view(detailUrl);
+    await screen.findByRole("heading", { name: missing });
+    expect(screen.queryByRole("button", { name: "重試" })).toBeNull();
+    expect(list).not.toHaveBeenCalled();
+  });
+  it.each(["403 role denied", "503 temporary unavailable"])("keeps %s closed and recovers only on explicit retry", async message => {
+    get.mockRejectedValueOnce(new Error(message));
+    const router = await view(detailUrl);
+    await screen.findByRole("alert");
+    expect(screen.queryByText(marker)).toBeNull();
+    expect(screen.queryByRole("form", { name: "案件篩選" })).toBeNull();
+    expect(get).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "重試" }));
+    await expectDetail();
+    expect(router.state.location.pathname).toBe(detailUrl);
+    expect(get).toHaveBeenCalledTimes(2);
+  });
+  it("leaving a pending detail prevents its late read from replacing the list", async () => {
+    let release!: (value: unknown) => void;
+    get.mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
+    const router = await view(detailUrl);
+    await waitFor(() => expect(get).toHaveBeenCalledTimes(1));
+    await act(async () => { await router.navigate({ href: path }); });
+    await screen.findByRole("form", { name: "案件篩選" });
+    await act(async () => { release(path === "/incorporation" ? incorporationRouteFixture(routeCaseIds[0]) : changeRouteFixture(routeCaseIds[0])); });
+    expect(router.state.location.pathname).toBe(path);
+    expect(screen.queryByText(marker)).toBeNull();
+    expect(screen.getByRole("form", { name: "案件篩選" })).toBeTruthy();
+  });
+  it("keeps an unsafe returnTo inside the allowed work list", async () => {
+    await view(`${detailUrl}?returnTo=${encodeURIComponent("https://external.invalid/private")}`);
+    await expectDetail();
+    const href = screen.getByRole("link", { name: "返回工作列表" }).getAttribute("href");
+    expect(href).toBe("/annual-returns");
+  });
+});

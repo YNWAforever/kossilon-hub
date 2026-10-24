@@ -1,0 +1,12 @@
+current_manifest_verified_files: 108
+prior_manifests_and_bytes_verified: {"runs":9,"files":1527}
+source_git_blob_identity: {"sha":"99b2dec789264003e254fa77eee362b6ef2d4189","files":640,"production_changes":0}
+acceptance_validation: {"rows":184,"original_types":{"R":15,"F":35,"UC":100,"LA":34},"immutable_fields":["record_type","id","title","historical_result","related_finding_ids","related_task_ids","related_uc_ids","related_la_ids","native_result","source_file","original_row_json"],"all_immutable_fields_equal":true,"scoped_rows":["F19","R15","R22","R26","UC160"],"native":{"NOT_RUN":114,"BLOCKED":70},"native_pass":0,"evidence_links_resolved":1173,"release_gate":"NO_GO"}
+checks: {"targeted":{"receipt":"targeted-verified.json","log":"targeted-verified.txt","exit_code":0,"summary":{"tests":92,"files":9}},"unit":{"receipt":"unit-verified.json","log":"unit-verified.txt","exit_code":0,"summary":{"tests":2617,"files":273}},"typecheck":{"receipt":"typecheck-final.json","log":"typecheck-final.txt","exit_code":0},"lint":{"receipt":"lint-final.json","log":"lint-final.txt","exit_code":0},"build":{"receipt":"build-final.json","log":"build-final.txt","exit_code":0},"browser":{"receipt":"browser-green2.json","log":"browser-green2.txt","exit_code":0}}
+local_browser: {"passed":12,"version":"155.0.4283.62","native":false}
+historical_negative_control: {"failed":2,"current_product_defects":0}
+original_snapshots: "4 exact Git blobs verified"
+final_source_freeze: "Final full unit/focused/browser/typecheck/lint/build reference source-verified.json; initial failures retained separately"
+owned_runtime_processes_remaining: 0
+native_matrix: {"BLOCKED":70,"NOT_RUN":114,"PASS":0}
+release_gate: "NO_GO"

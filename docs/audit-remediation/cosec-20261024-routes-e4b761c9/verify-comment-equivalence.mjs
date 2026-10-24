@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+import ts from 'typescript';
+const folder=import.meta.dirname,root=resolve(folder,'../../..');assert.equal(process.cwd(),root);
+const before=readFileSync(join(folder,'fixtures-fullunit-input.ts.snapshot'),'utf8');
+const after=readFileSync(join(root,'src/test/case-route-fixtures.ts'),'utf8');
+const lines=before.split('\n'),next=after.split('\n');assert.equal(lines.length,next.length);
+const changed=lines.map((line,index)=>line!==next[index]?index:null).filter(index=>index!==null);
+assert.deepEqual(changed,[3]);assert(lines[3].startsWith('// UC160 '));assert.equal(next[3],'// UC160 memory-only records; never seeded into a database.');
+const emit=source=>ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,removeComments:true}}).outputText;
+assert.equal(emit(before),emit(after));
+const sha=b=>createHash('sha256').update(b).digest('hex');
+writeFileSync(join(folder,'comment-equivalence.json'),JSON.stringify({path:'src/test/case-route-fixtures.ts',changed_lines:[4],change:'Remove accidental placeholder from comment only; no values/imports/types/logic changed',before_sha256:sha(before),after_sha256:sha(after),emitted_js_sha256:sha(emit(after)),typescript_version:ts.version,emitted_javascript_equal:true,fullunit_caveat:'Full unit started on source-final-tests.json; final focused/browser/typecheck/lint/build rerun after comment correction. Source bytes are not silently claimed identical.'},null,2)+'\n',{flag:'wx'});
+console.log('Only line4 comment changed; emitted JavaScript exactly equal.');

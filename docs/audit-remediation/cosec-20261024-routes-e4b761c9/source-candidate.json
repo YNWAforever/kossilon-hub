@@ -1,0 +1,38 @@
+{
+  "source_sha": "99b2dec789264003e254fa77eee362b6ef2d4189",
+  "parent_sha": "36dad48dc30a86329f0afcc2ffb46749be71e94e",
+  "tested_head": "36dad48dc30a86329f0afcc2ffb46749be71e94e",
+  "paths": [
+    "src/features/auth/auth-router-recovery.test.tsx",
+    "src/routes/-case-subroutes.interaction.test.tsx",
+    "src/test/case-route-fixtures.ts"
+  ],
+  "files": [
+    {
+      "path": "src/features/auth/auth-router-recovery.test.tsx",
+      "bytes": 13398,
+      "sha256": "38077cbf746b88a94fbfe85de7b3cc8665cdee37ec5d48465d5c93ba58c2a53b",
+      "git_blob_equal": true
+    },
+    {
+      "path": "src/routes/-case-subroutes.interaction.test.tsx",
+      "bytes": 10504,
+      "sha256": "e30d5b3960e078c79b97994221028a7453eeab3e6fb40fa7ca627490fbd409a3",
+      "git_blob_equal": true
+    },
+    {
+      "path": "src/test/case-route-fixtures.ts",
+      "bytes": 2117,
+      "sha256": "8ae66c9a39cd04e0effc6feff88375fe1b699cbdfaa218a4bf6fb10e12c55819",
+      "git_blob_equal": true
+    }
+  ],
+  "source_freeze": "source-verified.json",
+  "source_files_verified": 640,
+  "initial_failed_unit_input": "source-final-tests.json",
+  "comment_equivalence": "comment-equivalence.json",
+  "final_unit_input": "source-verified.json",
+  "production_changes": [],
+  "existing_fix": "43e2b9765cb8174fcd154b94c268c5b73e587373",
+  "historical_parent_sha": "29b63dd558bc239eeff908406e8292473a1e36ba"
+}

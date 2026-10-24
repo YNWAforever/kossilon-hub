@@ -1,0 +1,77 @@
+{
+  "run_id": "cosec-20261024-routes-e4b761c9",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "99b2dec789264003e254fa77eee362b6ef2d4189",
+  "parent_sha": "36dad48dc30a86329f0afcc2ffb46749be71e94e",
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "main_recheck": "remote-final.json",
+  "production_sha_user_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "phase": "LOCAL_UC160_SCOPED_VERIFIED_NATIVE_BLOCKED",
+  "release_gate": "NO_GO",
+  "deployed": false,
+  "auth_runtime_verified": false,
+  "native_http_db_verified": false,
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "source_manifest": "source-candidate.json",
+  "evidence_manifest": "evidence-manifest.json",
+  "checks": {
+    "targeted": {
+      "receipt": "targeted-verified.json",
+      "log": "targeted-verified.txt",
+      "exit_code": 0,
+      "summary": {
+        "tests": 92,
+        "files": 9
+      }
+    },
+    "unit": {
+      "receipt": "unit-verified.json",
+      "log": "unit-verified.txt",
+      "exit_code": 0,
+      "summary": {
+        "tests": 2617,
+        "files": 273
+      }
+    },
+    "typecheck": {
+      "receipt": "typecheck-final.json",
+      "log": "typecheck-final.txt",
+      "exit_code": 0
+    },
+    "lint": {
+      "receipt": "lint-final.json",
+      "log": "lint-final.txt",
+      "exit_code": 0
+    },
+    "build": {
+      "receipt": "build-final.json",
+      "log": "build-final.txt",
+      "exit_code": 0
+    },
+    "browser": {
+      "receipt": "browser-green2.json",
+      "log": "browser-green2.txt",
+      "exit_code": 0
+    }
+  },
+  "local_browser": {
+    "version": "155.0.4283.62",
+    "passed": 12,
+    "transport": "memory stub",
+    "report": "browser-results-green2.json"
+  },
+  "historical_control": {
+    "failed": 2,
+    "report": "browser-results-historical1.json"
+  },
+  "rollback": {
+    "action": "ordinary new commit reverting 99b2dec789264003e254fa77eee362b6ef2d4189; preserve historical evidence",
+    "production_action": false
+  }
+}

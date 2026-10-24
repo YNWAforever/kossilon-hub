@@ -1,0 +1,27 @@
+{
+  "run_id": "cosec-20261024-routes-e4b761c9",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "origin": "http://127.0.0.1:5173",
+  "host": "127.0.0.1",
+  "port": 5173,
+  "configFile": false,
+  "envFile": false,
+  "envDir": false,
+  "sourceHashes": {
+    "src/routes/incorporation.tsx": "6f5faed2659f65f39c215b69f53016804e2a8005326b7afc91a6d6d8b1315633",
+    "src/routes/incorporation.$id.tsx": "f82d3d046b155c2c990e73199540b4cf52afe288804cba82e1c9856d54782e2f",
+    "src/routes/corporate-changes.tsx": "4423afd278142ca42564aa2b0e6149a0c951f39f9ffd20b80207633d5a410c38",
+    "src/routes/corporate-changes.$id.tsx": "8a18469afd7d1b4f4b74ed913b027bb1f3392638492836851100fc0c12c7e3f1",
+    "src/features/incorporation/components/production-incorporation-list.tsx": "fd0c8030db35fe9db5b3f11733e6f3a61d1b53dc74b75294ebac5b270fb9932d",
+    "src/features/incorporation/components/production-incorporation-detail.tsx": "6694558aa3359b258a31dbff2eb8da87f07bb053f8772ba48c650ef46eb4c01d",
+    "src/features/corporate-changes/components/production-corporate-change-list.tsx": "f337f1abb2fa23be9c7cda111938b1007576ee908e54526d90d9c6579474d6a3",
+    "src/features/corporate-changes/components/production-corporate-change-detail.tsx": "8102208bae797c18dc0458aa1dad65ef45650e2c381d364d31660647cfc07282",
+    "src/test/case-route-fixtures.ts": "8ae66c9a39cd04e0effc6feff88375fe1b699cbdfaa218a4bf6fb10e12c55819"
+  },
+  "historical_overlay": null,
+  "fixture_ids": [
+    "e4b761c9-0160-4160-8160-000000000001",
+    "e4b761c9-0160-4160-8160-000000000002"
+  ],
+  "transport": "in-memory RPC stub; no native server/DB/auth/provider"
+}

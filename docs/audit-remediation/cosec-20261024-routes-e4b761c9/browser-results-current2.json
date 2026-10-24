@@ -1,0 +1,68 @@
+{
+  "run_id": "cosec-20261024-routes-e4b761c9",
+  "attempt": "current2",
+  "origin": "http://127.0.0.1:5173",
+  "sourceHashes": {
+    "src/routes/incorporation.tsx": "6f5faed2659f65f39c215b69f53016804e2a8005326b7afc91a6d6d8b1315633",
+    "src/routes/incorporation.$id.tsx": "f82d3d046b155c2c990e73199540b4cf52afe288804cba82e1c9856d54782e2f",
+    "src/routes/corporate-changes.tsx": "4423afd278142ca42564aa2b0e6149a0c951f39f9ffd20b80207633d5a410c38",
+    "src/routes/corporate-changes.$id.tsx": "8a18469afd7d1b4f4b74ed913b027bb1f3392638492836851100fc0c12c7e3f1",
+    "src/features/incorporation/components/production-incorporation-list.tsx": "fd0c8030db35fe9db5b3f11733e6f3a61d1b53dc74b75294ebac5b270fb9932d",
+    "src/features/incorporation/components/production-incorporation-detail.tsx": "6694558aa3359b258a31dbff2eb8da87f07bb053f8772ba48c650ef46eb4c01d",
+    "src/features/corporate-changes/components/production-corporate-change-list.tsx": "f337f1abb2fa23be9c7cda111938b1007576ee908e54526d90d9c6579474d6a3",
+    "src/features/corporate-changes/components/production-corporate-change-detail.tsx": "8102208bae797c18dc0458aa1dad65ef45650e2c381d364d31660647cfc07282",
+    "src/test/case-route-fixtures.ts": "126098bde1768ed593a2bb12f210e3b946154c737db67302229f9456b578245d"
+  },
+  "historical_overlay": false,
+  "browser_version": "155.0.4283.62",
+  "results": [
+    {
+      "name": "UC160 /incorporation link -> detail -> Back -> Forward -> real reload",
+      "status": "setup_failed",
+      "error": "expect(locator).toBeVisible() failed\n\nLocator: getByRole('form', { name: '案件篩選' })\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByRole('form', { name: '案件篩選' }) with timeout 30000ms\n  - waiting for getByRole('form', { name: '案件篩選' })\n",
+      "url": "http://127.0.0.1:5173/incorporation?q=QA&sort=company&cursor=QA-page3",
+      "dom": ""
+    }
+  ],
+  "blocked_external_origins": [],
+  "page_errors": [],
+  "console_errors": [
+    {
+      "name": "UC160 /incorporation link -> detail -> Back -> Forward -> real reload",
+      "error": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "name": "UC160 /incorporation link -> detail -> Back -> Forward -> real reload",
+      "error": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    }
+  ],
+  "http_errors": [
+    {
+      "name": "UC160 /incorporation link -> detail -> Back -> Forward -> real reload",
+      "url": "http://127.0.0.1:5173/src/features/incorporation/components/production-incorporation-list.tsx",
+      "status": 500
+    },
+    {
+      "name": "UC160 /incorporation link -> detail -> Back -> Forward -> real reload",
+      "url": "http://127.0.0.1:5173/src/features/corporate-changes/components/production-corporate-change-list.tsx",
+      "status": 500
+    }
+  ],
+  "resolutions": [
+    {
+      "id": "../server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/incorporation/components/production-incorporation-list.tsx"
+    },
+    {
+      "id": "../server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/incorporation/components/production-incorporation-detail.tsx"
+    },
+    {
+      "id": "../server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/corporate-changes/components/production-corporate-change-detail.tsx"
+    }
+  ],
+  "outer_error": "Harness setup failed; stop before remaining cases",
+  "native_auth_http_db": false,
+  "cleanup": "fresh contexts closed; own server/browser closed; no database or shared resources"
+}

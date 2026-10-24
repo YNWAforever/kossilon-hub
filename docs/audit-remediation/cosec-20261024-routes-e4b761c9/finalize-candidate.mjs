@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {readFileSync,readdirSync,statSync,writeFileSync} from 'node:fs';
+import {join,relative,resolve} from 'node:path';
+const folder=import.meta.dirname,root=resolve(folder,'../../..');assert.equal(process.cwd(),root);
+const git=(...args)=>execFileSync('git',args,{cwd:root,windowsHide:true});
+const json=name=>JSON.parse(readFileSync(join(folder,name),'utf8').replace(/^\uFEFF/,''));
+const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
+const write=(name,value)=>writeFileSync(join(folder,name),JSON.stringify(value,null,2)+'\n',{flag:'wx'});
+const base='36dad48dc30a86329f0afcc2ffb46749be71e94e',sha=git('rev-parse','HEAD').toString().trim();
+assert.equal(git('rev-parse','HEAD^').toString().trim(),base);
+const paths=git('diff','--name-only',base,sha).toString().trim().split(/\r?\n/).sort();
+assert.deepEqual(paths,['src/features/auth/auth-router-recovery.test.tsx','src/routes/-case-subroutes.interaction.test.tsx','src/test/case-route-fixtures.ts']);
+const before=json('source-final-tests.json'),final=json('source-verified.json'),equivalence=json('comment-equivalence.json');
+assert.deepEqual(json('source-pre-unit-verified.json').files,final.files);
+assert.deepEqual(json('source-post-checks.json').files,final.files);
+const differences=before.files.filter((row,index)=>row.sha256!==final.files[index].sha256).map(r=>r.path);
+assert.deepEqual(differences,['src/features/auth/auth-router-recovery.test.tsx','src/test/case-route-fixtures.ts']);assert(equivalence.emitted_javascript_equal);
+for(const row of final.files){const bytes=readFileSync(join(root,row.path));assert.equal(digest(bytes),row.sha256);assert.equal(digest(git('show',`${sha}:${row.path}`)),row.sha256)}
+const source={source_sha:sha,parent_sha:base,tested_head:before.head,paths,files:paths.map(path=>{const bytes=readFileSync(join(root,path));return{path,bytes:bytes.length,sha256:digest(bytes),git_blob_equal:true}}),source_freeze:'source-verified.json',source_files_verified:final.files.length,initial_failed_unit_input:'source-final-tests.json',comment_equivalence:'comment-equivalence.json',final_unit_input:'source-verified.json',production_changes:[],existing_fix:'43e2b9765cb8174fcd154b94c268c5b73e587373',historical_parent_sha:git('rev-parse','43e2b9765cb8174fcd154b94c268c5b73e587373^').toString().trim()};
+write('source-candidate.json',source);
+const checks={};
+for(const [name,attempt]of [['targeted','verified'],['unit','verified'],['typecheck','final'],['lint','final'],['build','final'],['browser','green2']]){
+  const stem=`${name}-${attempt}`,receipt=json(stem+'.json');assert.equal(receipt.exit_code,0);assert.equal(receipt.error,null);checks[name]={receipt:stem+'.json',log:stem+'.txt',exit_code:0};
+}
+const browser=json('browser-results-green2.json');assert.equal(browser.results.length,12);assert(browser.results.every(r=>r.status==='passed'));assert.equal(browser.outer_error,null);
+for(const field of ['blocked_external_origins','page_errors','console_errors','http_errors'])assert.deepEqual(browser[field],[]);
+for(const [path,hash]of Object.entries(browser.sourceHashes))assert.equal(digest(readFileSync(join(root,path))),hash);
+const historical=json('browser-results-historical1.json');assert.equal(historical.results.length,2);assert(historical.results.every(r=>r.status==='failed'&&r.url.includes('/e4b761c9-0160-4160-8160-000000000001?')&&r.dom.includes('搜尋既有案件')&&r.reads.length===0));
+assert.equal(digest(git('show',`${base}:src/features/auth/auth-router-recovery.test.tsx`)),digest(readFileSync(join(folder,'auth-router-before.tsx.snapshot'))));
+for(const field of ['blocked_external_origins','page_errors','console_errors','http_errors'])assert.deepEqual(historical[field],[]);
+assert.equal(historical.outer_error,null);
+const processReceipt=json('local-process-inspection-final.json');assert.deepEqual(processReceipt.matching_processes,[]);
+const remote=json('remote-final.json');assert.equal(remote.main_sha,'1c57a67213af72bff8d776694e6ed8c986b921db');
+const summary=kind=>{const text=readFileSync(join(folder,checks[kind].log),'utf8');const tests=text.match(/\n\s*Tests\s+(\d+) passed \((\d+)\)/),files=text.match(/\n\s*Test Files\s+(\d+) passed \((\d+)\)/);assert(tests&&files);assert.equal(tests[1],tests[2]);assert.equal(files[1],files[2]);return{tests:Number(tests[1]),files:Number(files[1])}};
+checks.unit.summary=summary('unit');checks.targeted.summary=summary('targeted');assert.deepEqual(checks.targeted.summary,{tests:92,files:9});assert.deepEqual(checks.unit.summary,{tests:2617,files:273});
+write('release-candidate.json',{run_id:'cosec-20261024-routes-e4b761c9',repo:'https://github.com/YNWAforever/kossilon-hub.git',root,branch:'codex/cosec-20261023',source_sha:sha,parent_sha:base,main_sha:remote.main_sha,main_recheck:'remote-final.json',production_sha_user_supplied_historical:'aa5d3cbddd895bca953b6eef7266ae1cc0b46215',phase:'LOCAL_UC160_SCOPED_VERIFIED_NATIVE_BLOCKED',release_gate:'NO_GO',deployed:false,auth_runtime_verified:false,native_http_db_verified:false,native_matrix:{BLOCKED:70,NOT_RUN:114,PASS:0},source_manifest:'source-candidate.json',evidence_manifest:'evidence-manifest.json',checks,local_browser:{version:browser.browser_version,passed:12,transport:'memory stub',report:'browser-results-green2.json'},historical_control:{failed:2,report:'browser-results-historical1.json'},rollback:{action:`ordinary new commit reverting ${sha}; preserve historical evidence`,production_action:false}});
+const output=join(root,'.output');const walk=dir=>readdirSync(dir).flatMap(name=>{const p=join(dir,name);return statSync(p).isDirectory()?walk(p):[p]});
+write('build-artifacts.json',{root:output,files:walk(output).sort().map(p=>{const bytes=readFileSync(p);return{path:relative(output,p).replaceAll('\\','/'),bytes:bytes.length,sha256:digest(bytes)}})});
+console.log(JSON.stringify({source_sha:sha,checks,production_changes:0,native_pass:0}));

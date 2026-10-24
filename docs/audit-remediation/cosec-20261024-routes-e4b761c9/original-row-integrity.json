@@ -1,0 +1,18 @@
+{
+  "rows": 184,
+  "immutable_fields": [
+    "record_type",
+    "id",
+    "title",
+    "historical_result",
+    "related_finding_ids",
+    "related_task_ids",
+    "related_uc_ids",
+    "related_la_ids",
+    "native_result",
+    "source_file",
+    "original_row_json"
+  ],
+  "all_equal": true,
+  "pending": "Final evidence path resolution after DELIVERY and candidate creation"
+}

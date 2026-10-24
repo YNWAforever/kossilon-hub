@@ -1,0 +1,13 @@
+{
+  "path": "src/test/case-route-fixtures.ts",
+  "changed_lines": [
+    4
+  ],
+  "change": "Remove accidental placeholder from comment only; no values/imports/types/logic changed",
+  "before_sha256": "126098bde1768ed593a2bb12f210e3b946154c737db67302229f9456b578245d",
+  "after_sha256": "8ae66c9a39cd04e0effc6feff88375fe1b699cbdfaa218a4bf6fb10e12c55819",
+  "emitted_js_sha256": "65c454c98d84614f25c82bb113edbe1de69b1b13ef0442d0c2bde71668fcea9e",
+  "typescript_version": "5.9.3",
+  "emitted_javascript_equal": true,
+  "fullunit_caveat": "Full unit started on source-final-tests.json; final focused/browser/typecheck/lint/build rerun after comment correction. Source bytes are not silently claimed identical."
+}

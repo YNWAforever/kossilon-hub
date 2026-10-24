@@ -1,0 +1,13 @@
+{
+  "agent_id": "01a16b6e-2dfc-74d2-9027-40901626c0f3",
+  "reviewed_base_head": "36dad48dc30a86329f0afcc2ffb46749be71e94e",
+  "dirty_source_freeze": "source-verified.json",
+  "scope": [
+    "src/routes/-case-subroutes.interaction.test.tsx",
+    "src/test/case-route-fixtures.ts",
+    "src/features/auth/auth-router-recovery.test.tsx"
+  ],
+  "findings": [],
+  "conclusion": "No actionable findings. DOM/record identity assertions detect URL-only navigation; auth deferred promise settles in finally and distinguishes pending from rejection.",
+  "limits": "Static read-only review only, no tests run or files changed. Composed router/mock transports; no native Auth/HTTP/DB acceptance."
+}

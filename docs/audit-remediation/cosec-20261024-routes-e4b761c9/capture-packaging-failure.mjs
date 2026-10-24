@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {writeFileSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+const root=resolve(import.meta.dirname,'../../..');assert.equal(process.cwd(),root);
+const result=spawnSync('git',['diff','--cached','--check'],{cwd:root,windowsHide:true,maxBuffer:8*1024*1024});
+assert.equal(result.status,2);const bytes=Buffer.concat([result.stdout,result.stderr]);
+writeFileSync(join(import.meta.dirname,'packaging-whitespace-failed.txt'),bytes,{flag:'wx'});
+writeFileSync(join(import.meta.dirname,'packaging-whitespace-failed.json'),JSON.stringify({command:['git','diff','--cached','--check'],exit_code:result.status,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),classification:'Raw CRLF evidence and captured failure log spaces/EOF. Not source test failure. No raw bytes normalized.',correction:'Check authored md/mjs/ps1 with cr-at-eol support; preserve raw csv/json/txt/snapshots under checksum and Git blob validation.'},null,2)+'\n',{flag:'wx'});
+console.log(JSON.stringify({exit_code:result.status,raw_output_bytes:bytes.length,captured:true}));
