@@ -30,15 +30,17 @@ export function ProductionCorporateChangeDetail({
   requestId: string;
   returnTo?: string;
 }) {
-  // A malformed link can never name a request; asking the server only fails
-  // its schema validation, which used to read as a temporary outage.
-  if (parseEntityId(requestId) === null) return <CorporateChangeNotFound />;
   return (
     <>
       <Button asChild>
         <a href={caseReturnPath(returnTo ?? "/corporate-changes")}>返回工作列表</a>
       </Button>
-      <CorporateChangeDetail requestId={requestId} />
+      {/* Keep the caller's safe return path even when the ID cannot name a request. */}
+      {parseEntityId(requestId) === null ? (
+        <CorporateChangeNotFound />
+      ) : (
+        <CorporateChangeDetail requestId={requestId} />
+      )}
     </>
   );
 }
