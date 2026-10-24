@@ -1,0 +1,49 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/admin/staff-handover-panel.interaction.test.tsx (6 tests | 1 failed) 2828ms
+     × UC186 preserves a newer pending operation when a superseded instance receives its old response 1129ms
+     ✓ requires all pages, cancellation writes nothing, then confirms once and independently reads current scope  417ms
+     ✓ retains the exact operation on lost response and remount; only explicit retry sends it again  390ms
+     ✓ reads a committed receipt after unknown response without issuing another command; scope read failure stays unresolved  422ms
+     ✓ never turns a preview error into empty scope, and empty scope cannot be submitted 61ms
+     ✓ preserves cancellation intent on lost response and remount; never re-executes the handover  406ms
+ ✓ |unit| src/features/admin/production-staff-admin.interaction.test.tsx (7 tests) 617ms
+ ✓ |unit| src/routes/-admin-guard.test.tsx (3 tests) 381ms
+     ✓ keeps demo staff roles and active flags read-only  328ms
+ ✓ |unit| src/features/auth/neon-auth-server.test.ts (2 tests) 17ms
+ ✓ |unit| src/features/auth/authorization.test.ts (7 tests) 20ms
+ ✓ |unit| src/features/admin/server-fns.test.ts (5 tests) 12ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 5ms
+ ✓ |unit| src/features/work-items/assignment.test.ts (8 tests) 5ms
+ ✓ |unit| src/features/auth/staff-state.test.ts (4 tests) 4ms
+
+ Test Files  1 failed | 8 passed (9)
+      Tests  1 failed | 43 passed (44)
+   Start at  00:05:12
+   Duration  40.23s (transform 3.99s, setup 0ms, import 13.53s, tests 3.89s, environment 20.16s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/admin/staff-handover-panel.interaction.test.tsx > UC186 explicit handover confirmation (mock RPC only) > UC186 preserves a newer pending operation when a superseded instance receives its old response
+AssertionError: expected undefined to be 'f8089595-cbd6-416d-8c54-237c880d7bb3' // Object.is equality
+
+- Expected:
+"f8089595-cbd6-416d-8c54-237c880d7bb3"
+
++ Received:
+undefined
+
+ ❯ src/features/admin/staff-handover-panel.interaction.test.tsx:166:87
+    164|         resolveA(receipt(commandA));
+    165|       });
+    166|       expect(JSON.parse(sessionStorage.getItem(key) ?? "null")?.comman…
+       |                                                                                       ^
+    167|         commandB.operationId,
+    168|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

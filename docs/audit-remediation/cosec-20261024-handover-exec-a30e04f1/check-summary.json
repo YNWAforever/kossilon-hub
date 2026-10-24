@@ -1,0 +1,40 @@
+{
+  "run_id": "cosec-20261024-handover-exec-a30e04f1",
+  "checks": {
+    "unit": {
+      "result": "PASS",
+      "receipt": "unit-final.json",
+      "log": "unit-final.txt",
+      "tests": 2780,
+      "files": 288
+    },
+    "typecheck": {
+      "result": "PASS",
+      "receipt": "typecheck-accepted.json",
+      "log": "typecheck-accepted.txt"
+    },
+    "lint": {
+      "result": "PASS",
+      "receipt": "lint-accepted.json",
+      "log": "lint-accepted.txt"
+    },
+    "build": {
+      "result": "NOT_RUN_RESOURCE",
+      "receipt": "resource-checks.jsonl",
+      "stage": "build-accepted",
+      "free_bytes": 1535733760,
+      "minimum_gib": 3
+    },
+    "sql": {
+      "result": "PASS_LOCAL_INJECTED_SESSION_SUPERUSER",
+      "tests": 1,
+      "files": 1,
+      "log": "db/test-green-r4.txt",
+      "journey": "db/UC186-green-r4.jsonl"
+    }
+  },
+  "all_required_local_checks_passed": false,
+  "native_pass": 0,
+  "release_gate": "NO_GO",
+  "historical_tests_not_reused": true
+}

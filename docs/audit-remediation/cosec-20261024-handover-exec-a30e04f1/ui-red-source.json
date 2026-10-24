@@ -1,0 +1,25 @@
+{
+  "note": "Selected mocked UI/ranker runtime sources before restoring handover entry; SQL test sidecar may change independently and is excluded from this unit run",
+  "files": [
+    {
+      "path": "src/features/admin/production-staff-admin.interaction.test.tsx",
+      "sha256": "1e09dd4744160bd38f8a7c1c19d39ee0059ab44aef1fc9e71d67df9ced8006f2"
+    },
+    {
+      "path": "src/features/admin/production-staff-admin.tsx",
+      "sha256": "3b9472c6f990be60df51e39226d93f70bd6267ecf03ee763f52dc775afdbd800"
+    },
+    {
+      "path": "src/features/work-items/assignment.ts",
+      "sha256": "8951a0c1a2cfe520cbf403b583c58a57756426666aa4bfc875e08ddf94a22d62"
+    },
+    {
+      "path": "src/features/work-items/assignment.test.ts",
+      "sha256": "0a9b8dd64af2976ab2f49ac8122ff91eaf2e747fac200c0344be6cd1b3ae0a75"
+    },
+    {
+      "path": "src/features/work-items/types.ts",
+      "sha256": "0b8d94a4b745703add989922d919d3522e908466a874755ff0883e435ac1d797"
+    }
+  ]
+}

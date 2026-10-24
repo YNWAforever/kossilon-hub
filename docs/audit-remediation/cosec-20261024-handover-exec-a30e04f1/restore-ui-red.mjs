@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {resolve,join} from 'node:path';
+import {createHash} from 'node:crypto';
+const root=resolve(import.meta.dirname,'../../..'),path='src/features/admin/production-staff-admin.interaction.test.tsx';
+assert.equal(process.cwd(),root);
+const snapshot=readFileSync(join(import.meta.dirname,'../cosec-20261024-handover-full-1fb9822e/handover-ui-red.test.tsx.snapshot'),'utf8');
+const block=`  it("UC186 provides an explicit preview for lawful owner/reviewer handover", async () => {
+    mount();
+    await screen.findByText(/Mei Lam · Annual return/);
+    const details = screen.getByText("維護帳戶／轉交預覽").closest("details")!;
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
+    expect(await screen.findByRole("button", { name: "預覽責任交接" })).toBeTruthy();
+  });
+`;
+assert.equal(snapshot.replace(block,''),readFileSync(join(root,path),'utf8'));
+writeFileSync(join(root,path),snapshot);
+const paths=[path,'src/features/admin/production-staff-admin.tsx','src/features/work-items/assignment.ts','src/features/work-items/assignment.test.ts','src/features/work-items/types.ts'];
+writeFileSync(join(import.meta.dirname,'ui-red-source.json'),JSON.stringify({note:'Selected mocked UI/ranker runtime sources before restoring handover entry; SQL test sidecar may change independently and is excluded from this unit run',files:paths.map(path=>({path,sha256:createHash('sha256').update(readFileSync(join(root,path))).digest('hex')}))},null,2)+'\n',{flag:'wx'});

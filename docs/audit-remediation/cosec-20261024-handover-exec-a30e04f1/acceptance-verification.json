@@ -1,0 +1,18 @@
+{
+  "original_rows": 184,
+  "original_json_rows_parsed": 184,
+  "counts": [
+    "F:35",
+    "LA:34",
+    "R:15",
+    "UC:100"
+  ],
+  "native": [
+    "BLOCKED:70",
+    "NOT_RUN:114"
+  ],
+  "native_pass": 0,
+  "local_appended_only": "UC186",
+  "layers_preserved": true,
+  "matched_uc186": 1
+}

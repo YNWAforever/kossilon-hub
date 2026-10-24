@@ -1,0 +1,406 @@
+import { useEffect, useState } from "react";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
+import {
+  listStaff,
+  previewReassignment,
+  previewStaffHandover,
+  executeStaffHandover,
+  readStaffHandoverReceipt,
+  cancelStaffHandover,
+} from "./server-fns";
+import {
+  handoverCommandSchema,
+  handoverSelectionSchema,
+  STAFF_ROLE_LABELS,
+  type StaffMember,
+  type HandoverCommand,
+  type HandoverPage,
+  type HandoverEntry,
+  type HandoverReceipt,
+} from "./types";
+
+function Entry({ entry }: { entry: HandoverEntry }) {
+  const label = `${entry.title} · ${entry.owner ? "負責" : ""}${entry.owner && entry.reviewer ? "／" : ""}${entry.reviewer ? "覆核" : ""}`;
+  if (entry.kind === "incorporation")
+    return (
+      <Link to="/incorporation/$id" params={{ id: entry.id }}>
+        {label}
+      </Link>
+    );
+  if (entry.kind === "corporate_change")
+    return (
+      <Link to="/corporate-changes/$id" params={{ id: entry.id }}>
+        {label}
+      </Link>
+    );
+  if (entry.kind === "annual_return")
+    return (
+      <Link to="/annual-returns/$id" params={{ id: entry.id }}>
+        {label}
+      </Link>
+    );
+  return <span>{label}</span>;
+}
+const failure = (e: unknown, fallback: string) =>
+  e instanceof Error && /^[\u3400-\u9fff]/.test(e.message) ? e.message : fallback;
+export function StaffHandoverPanel({
+  member,
+  actorScope,
+}: {
+  member: StaffMember;
+  actorScope: string;
+}) {
+  const client = useQueryClient(),
+    storageKey = `kossilon:handover:${actorScope}:${member.userId}`;
+  const [search, setSearch] = useState(""),
+    [owner, setOwner] = useState<StaffMember | null>(null),
+    [reviewer, setReviewer] = useState<StaffMember | null>(null),
+    [reason, setReason] = useState("");
+  const [page, setPage] = useState<HandoverPage | null>(null),
+    [entries, setEntries] = useState<HandoverEntry[]>([]),
+    [pending, setPending] = useState<HandoverCommand | null>(null);
+  const [busy, setBusy] = useState(false),
+    [intent, setIntent] = useState<"execute" | "cancel">("execute"),
+    [notice, setNotice] = useState(""),
+    [recoveryBlocked, setRecoveryBlocked] = useState(false),
+    [error, setError] = useState(""),
+    [conflict, setConflict] = useState(false),
+    [receipt, setReceipt] = useState<HandoverReceipt | null>(null),
+    [readback, setReadback] = useState<{ cases: number; work: number } | null>(null);
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(storageKey);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        const parsed = handoverCommandSchema.safeParse(cached?.command ?? cached);
+        if (parsed.success && parsed.data.userId === member.userId) {
+          setPending(parsed.data);
+          setIntent(cached?.intent === "cancel" ? "cancel" : "execute");
+        } else {
+          setRecoveryBlocked(true);
+          setError("待核實操作內容無法核實，請先查閱帳戶審計。");
+        }
+      }
+    } catch {
+      setRecoveryBlocked(true);
+      setError("未能讀取本機待核實操作，請先核對帳戶審計。");
+    }
+  }, [storageKey, member.userId]);
+  const staff = useInfiniteQuery({
+    queryKey: ["staff-admin", actorScope, "handover-recipients", search.trim()],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) =>
+      listStaff({
+        data: {
+          active: true,
+          limit: 50,
+          ...(search.trim() ? { q: search.trim() } : {}),
+          ...(pageParam ? { cursor: pageParam } : {}),
+        },
+      }),
+    getNextPageParam: (p) => p.nextCursor ?? undefined,
+    retry: false,
+  });
+  const options = [
+    ...new Map(
+      [
+        ...[owner, reviewer].filter((s): s is StaffMember => s !== null),
+        ...(staff.data?.pages.flatMap((p) => p.staff) ?? []),
+      ]
+        .filter(
+          (s) => s.active && !s.stateMismatch && s.role !== "Client" && s.userId !== member.userId,
+        )
+        .map((s) => [s.userId, s]),
+    ).values(),
+  ];
+  const selection = {
+    userId: member.userId,
+    expectedVersion: member.expectedVersion,
+    owner: owner ? { userId: owner.userId, expectedVersion: owner.expectedVersion } : null,
+    reviewer: reviewer
+      ? { userId: reviewer.userId, expectedVersion: reviewer.expectedVersion }
+      : null,
+    reason,
+  };
+  const valid = handoverSelectionSchema.safeParse(selection).success;
+  const resetPreview = () => {
+    setNotice("");
+    setPage(null);
+    setEntries([]);
+    setError("");
+    setReceipt(null);
+    setReadback(null);
+  };
+  async function preview(next = false) {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await previewStaffHandover({
+        data: {
+          ...selection,
+          ...(next && page?.nextCursor !== null
+            ? { cursor: page?.nextCursor ?? 0, fingerprint: page?.fingerprint }
+            : {}),
+        },
+      });
+      setEntries((previous) => (next ? [...previous, ...result.entries] : result.entries));
+      setPage(result);
+    } catch (e) {
+      resetPreview();
+      setError(failure(e, "未能取得一致預覽，請核對接手人後重試。"));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function verify(result: HandoverReceipt) {
+    setReceipt(result);
+    const current = (await listStaff({ data: { q: member.userId, limit: 100 } })).staff.find(
+      (s) => s.userId === member.userId,
+    );
+    if (!current || current.stateMismatch) throw new Error("已取得收據，但未能核實當前員工資料。");
+    const actual = await previewReassignment({
+      data: { userId: member.userId, expectedVersion: current.expectedVersion },
+    });
+    setReadback({ cases: actual.openCases, work: actual.openWorkItems });
+    sessionStorage.removeItem(storageKey);
+    setPending(null);
+    setConflict(false);
+    setPage(null);
+    setEntries([]);
+    for (const key of [
+      "staff-admin",
+      "work-queue",
+      "annual-return",
+      "clients",
+      "incorporation-cases",
+      "corporate-change-request",
+      "corporate-change-requests",
+      "today",
+      "today-other-business",
+      "work-item-recommendations",
+    ])
+      await client.invalidateQueries({ queryKey: [key] });
+  }
+  async function submit() {
+    if (recoveryBlocked || (pending && intent === "cancel")) return;
+    if (
+      !pending &&
+      (!page || page.nextCursor !== null || page.caseCount + page.workItemCount === 0)
+    )
+      return;
+    const command =
+      pending ??
+      handoverCommandSchema.parse({
+        ...selection,
+        fingerprint: page!.fingerprint,
+        operationId: crypto.randomUUID(),
+      });
+    setBusy(true);
+    setError("");
+    setConflict(false);
+    let sent = false,
+      known: HandoverReceipt | null = null;
+    try {
+      // Persist before the first request. Reload/roster revision changes must not
+      // silently replace an operation whose outcome is unknown.
+      sessionStorage.setItem(storageKey, JSON.stringify({ command, intent: "execute" }));
+      setIntent("execute");
+      setPending(command);
+      sent = true;
+      known = await executeStaffHandover({ data: command });
+      await verify(known);
+    } catch (e) {
+      const code =
+        (e as { status?: number; statusCode?: number })?.status ??
+        (e as { statusCode?: number })?.statusCode;
+      setConflict(code === 409);
+      setError(
+        failure(
+          e,
+          !sent && !pending
+            ? "未能保存待核實操作，尚未提交。"
+            : known
+              ? "已取得交接收據，但未能核實最新資料。請核對收據。"
+              : "未能確定提交結果；保留同一操作編號，請核對收據或重試。",
+        ),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function check() {
+    if (!pending) return;
+    setBusy(true);
+    setError("");
+    try {
+      const result = await readStaffHandoverReceipt({ data: { operationId: pending.operationId } });
+      if (!result) setError("未找到已提交收據；仍保留操作編號，可用同一編號重試。");
+      else await verify(result);
+    } catch (e) {
+      setError(failure(e, "未能核對收據，操作編號已保留。"));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function cancel() {
+    if (!pending) return;
+    setBusy(true);
+    setError("");
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify({ command: pending, intent: "cancel" }));
+      setIntent("cancel");
+      const result = await cancelStaffHandover({ data: pending });
+      if (result.status === "committed") await verify(result.receipt);
+      else {
+        sessionStorage.removeItem(storageKey);
+        setPending(null);
+        setConflict(false);
+        resetPreview();
+        setNotice("此操作已取消，沒有交接責任。可重新預覽。");
+        await client.invalidateQueries({ queryKey: ["staff-admin"] });
+      }
+    } catch (e) {
+      setError(failure(e, "未能核實取消結果；保留操作編號，請重試取消或核對收據。"));
+    } finally {
+      setBusy(false);
+    }
+  }
+  const frozen = busy || pending !== null || recoveryBlocked;
+  return (
+    <section aria-label={`${member.displayName} 的責任交接`} className="space-y-3 border-t pt-3">
+      <h3>交接全部未交責任</h3>
+      <p>帳戶變更須另行確認。交接會按當前業務團隊、技能及負責／覆核分工核對。</p>
+      <label>
+        搜尋接手人
+        <Input
+          aria-label="搜尋接手人"
+          value={search}
+          disabled={frozen}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </label>
+      {staff.isError ? <p role="alert">未能讀取接手人清單，請重試。</p> : null}
+      {staff.isSuccess && options.length === 0 ? <p>沒有符合條件的有效接手人。</p> : null}
+      {staff.hasNextPage ? (
+        <Button
+          disabled={frozen || staff.isFetchingNextPage}
+          onClick={() => void staff.fetchNextPage()}
+        >
+          載入更多接手人
+        </Button>
+      ) : null}
+      {staff.isError ? (
+        <Button disabled={frozen} onClick={() => void staff.refetch()}>
+          重試接手人清單
+        </Button>
+      ) : null}
+      {(["owner", "reviewer"] as const).map((role) => (
+        <label key={role} className="block">
+          {role === "owner" ? "負責接手人" : "覆核接手人"}
+          <Select
+            aria-label={role === "owner" ? "負責接手人" : "覆核接手人"}
+            value={(role === "owner" ? owner : reviewer)?.userId ?? ""}
+            disabled={frozen}
+            onChange={(e) => {
+              (role === "owner" ? setOwner : setReviewer)(
+                options.find((s) => s.userId === e.target.value) ?? null,
+              );
+              resetPreview();
+            }}
+          >
+            <option value="">如有此職責，請選擇接手人</option>
+            {options.map((s) => (
+              <option key={s.userId} value={s.userId}>
+                {s.displayName} · {s.teamName ?? "未有團隊"} · {STAFF_ROLE_LABELS[s.role]}
+              </option>
+            ))}
+          </Select>
+        </label>
+      ))}
+      <label>
+        交接原因
+        <Input
+          aria-label="交接原因"
+          value={reason}
+          disabled={frozen}
+          maxLength={500}
+          onChange={(e) => {
+            setReason(e.target.value);
+            resetPreview();
+          }}
+          placeholder="請填寫至少5字的交接原因"
+        />
+      </label>
+      <Button disabled={frozen || !valid || member.stateMismatch} onClick={() => void preview()}>
+        預覽責任交接
+      </Button>
+      {page ? (
+        <div>
+          <p>
+            將交接案件 {page.caseCount} 宗、工作 {page.workItemCount} 筆；已列出 {entries.length}{" "}
+            筆責任。
+          </p>
+          {entries.map((e) => (
+            <p key={`${e.kind}:${e.id}`}>
+              <Entry entry={e} />
+            </p>
+          ))}
+          {page.nextCursor !== null ? (
+            <>
+              <p>仍有未列出的責任，載入完整預覽後才可確認。</p>
+              <Button disabled={frozen} onClick={() => void preview(true)}>
+                載入下一頁責任
+              </Button>
+            </>
+          ) : null}
+          {page.caseCount + page.workItemCount === 0 ? <p>沒有未交責任，沒有執行交接。</p> : null}
+          <Button disabled={frozen} onClick={resetPreview}>
+            取消預覽
+          </Button>
+        </div>
+      ) : null}
+      <Button
+        disabled={
+          busy ||
+          recoveryBlocked ||
+          (pending !== null && intent === "cancel") ||
+          (!pending &&
+            (!page || page.nextCursor !== null || page.caseCount + page.workItemCount === 0))
+        }
+        onClick={() => void submit()}
+      >
+        {pending ? "用同一操作編號重試" : "確認交接全部責任"}
+      </Button>
+      {pending ? (
+        <div>
+          <p>待核實操作：{pending.operationId}</p>
+          <Button disabled={busy} onClick={() => void check()}>
+            核對交接收據
+          </Button>
+          {conflict ? <p>責任或版本已改變；請先核對收據或取消此待核實操作。</p> : null}
+          <Button disabled={busy} onClick={() => void cancel()}>
+            {intent === "cancel" ? "重試取消交接" : "取消待核實交接"}
+          </Button>
+        </div>
+      ) : null}
+      {busy ? <p role="status">正在核對責任及操作結果…</p> : null}
+      {error ? <p role="alert">{error}</p> : null}
+      {notice ? <p role="status">{notice}</p> : null}
+      {receipt ? (
+        <p>
+          已取得交接收據 {receipt.operationId}：案件 {receipt.caseCount} 宗、工作{" "}
+          {receipt.workItemCount} 筆。
+        </p>
+      ) : null}
+      {readback ? (
+        <p>
+          資料已重新讀取：目前未交案件 {readback.cases} 宗、工作 {readback.work} 筆。
+          {readback.cases + readback.work > 0 ? "仍有責任，請重新預覽後處理。" : "可核對帳戶變更。"}
+        </p>
+      ) : null}
+    </section>
+  );
+}

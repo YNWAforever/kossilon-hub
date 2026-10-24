@@ -1,0 +1,236 @@
+// UC186, exact disposable target gate; injected identity is not native Auth/RLS.
+import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
+import { appendFileSync, closeSync, openSync, realpathSync } from "node:fs";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { getCurrentTest } from "@vitest/runner";
+import { expect, it, onTestFinished, vi } from "vitest";
+import type { SqlClient } from "@/server/db/client";
+const RUN = "cosec-20261024-handover-exec-a30e04f1",
+  ROOT = "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023";
+type Target = {
+  uri: string;
+  containerId: string;
+  database: string;
+  identity: { systemId: string };
+};
+type Gate = {
+  verifyEmptyTarget(): Promise<Target>;
+  verifyOwnedTarget(): Promise<Target>;
+  publicTarget(t: Target): object;
+  sealForDisposal(
+    ok: boolean,
+    ids: object,
+    cleanup: { allClientsClosed: boolean; count: number; pids: number[] },
+  ): Promise<void>;
+};
+const id = () => `a30e04f1-0186-4186-8186-${randomBytes(6).toString("hex")}`;
+it.skipIf(process.env.COSEC_UC186_RUN_ID !== RUN)(
+  "UC186 lawful handover and responsibility admission versus disable",
+  async () => {
+    assert.equal(realpathSync(process.cwd()), ROOT);
+    const signal = getCurrentTest()?.context.signal;
+    assert(signal);
+    const task = journey(signal);
+    onTestFinished(async () => {
+      await task.catch(() => undefined);
+    });
+    await task;
+  },
+  180_000,
+);
+async function journey(signal: AbortSignal) {
+  const attempt = process.env.COSEC_UC186_ATTEMPT!;
+  assert.match(attempt, /^(red|green)(?:-r[2-9])?$/);
+  const folder = resolve(ROOT, "docs/audit-remediation", RUN, "db");
+  assert.equal(folder, process.env.COSEC_UC186_EVENTS_DIR);
+  const fd = openSync(resolve(folder, `UC186-${attempt}.jsonl`), "wx"),
+    record = (phase: string, details: object = {}) =>
+      appendFileSync(
+        fd,
+        JSON.stringify({ run: RUN, attempt, phase, utc: new Date().toISOString(), ...details }) +
+          "\n",
+      );
+  const ids = { team: id(), users: [id(), id()], profiles: [id(), id()] };
+  const raw: SqlClient[] = [],
+    pids: number[] = [],
+    errors: unknown[] = [];
+  let gate: Gate | undefined,
+    ok = false;
+  const fetcher = vi.fn(() => {
+    throw new Error("External HTTP forbidden in local UC186");
+  });
+  try {
+    signal.throwIfAborted();
+    record("planned-ids", { ids });
+    gate = (await import(
+      /* @vite-ignore */ pathToFileURL(resolve(folder, "../isolated-db-runner.mjs")).href
+    )) as Gate;
+    const target = await gate.verifyEmptyTarget();
+    assert.equal(target.containerId, process.env.COSEC_UC186_TARGET_ID);
+    assert.equal(target.identity.systemId, process.env.COSEC_UC186_SYSTEM_ID);
+    assert.equal(target.uri, process.env.TEST_DATABASE_URL);
+    record("before-application-import-or-client", gate.publicTarget(target));
+    vi.stubGlobal("fetch", fetcher);
+    const [
+      { createSqlClient },
+      { guardSqlTestLifetime },
+      { createAdminRepository },
+      { requireActor },
+      { createIncorporationRepository },
+    ] = await Promise.all([
+      import("@/server/db/client"),
+      import("@/test/sql-test-lifetime"),
+      import("./repository"),
+      import("@/features/auth/neon-auth-server"),
+      import("@/features/incorporation/repository"),
+    ]);
+    async function client() {
+      const checked = await gate!.verifyOwnedTarget();
+      assert.equal(checked.containerId, target.containerId);
+      assert.equal(checked.identity.systemId, target.identity.systemId);
+      const c = createSqlClient(checked.uri, { max: 1, ssl: false });
+      raw.push(c);
+      const sql = guardSqlTestLifetime(c, () => signal);
+      const [r] =
+        await sql`select current_database() database,pg_backend_pid() pid,(select system_identifier::text from pg_control_system()) system_id`;
+      assert.equal(r.database, target.database);
+      assert.equal(r.system_id, target.identity.systemId);
+      pids.push(Number(r.pid));
+      await sql`set statement_timeout='15000'`;
+      await sql`set lock_timeout='8000'`;
+      record("client-identity", r);
+      return sql;
+    }
+    const writer = await client(),
+      disabling = await client(),
+      creating = await client(),
+      observer = await client();
+    expect(new Set(pids).size).toBe(4);
+    await writer.begin(async (tx) => {
+      await tx`insert into teams(id,name) values(${ids.team},${RUN})`;
+      for (const [i, user] of ids.users.entries()) {
+        const role = i === 0 ? "Admin" : "Staff";
+        await tx`insert into users(id,name,email,role,team_id) values(${user},${RUN + ":" + role},${user + "@example.test"},${role},${ids.team})`;
+        await tx`insert into staff_profiles(id,user_id,auth_user_id,role,team_id) values(${ids.profiles[i]},${user},${RUN + ":" + user},${role},${ids.team})`;
+      }
+    });
+    const admin = await requireActor(new Request("https://example.test/admin"), {
+      sql: observer,
+      auth: {
+        getSession: async () => ({
+          user: { id: RUN + ":" + ids.users[0], email: "synthetic@example.test" },
+        }),
+        signOut: async () => new Response(null, { status: 204 }),
+      },
+    });
+    const remove = {
+      userId: ids.users[1],
+      expectedVersion: 1,
+      role: "Staff" as const,
+      teamId: ids.team,
+      active: false,
+    };
+    let release!: () => void, ready!: () => void;
+    const hold = new Promise<void>((r) => {
+        release = r;
+      }),
+      barrier = new Promise<void>((r) => {
+        ready = r;
+      });
+    const wrapped = new Proxy(disabling, {
+      get(target, key) {
+        if (key !== "begin") return Reflect.get(target, key, target);
+        return (run: (tx: SqlClient) => Promise<unknown>) =>
+          target.begin(async (tx) => {
+            const value = await run(tx as unknown as SqlClient);
+            ready();
+            await hold;
+            signal.throwIfAborted();
+            return value;
+          });
+      },
+    });
+    const first = createAdminRepository({ sql: wrapped }).updateStaff(admin, remove);
+    let joined: Promise<PromiseSettledResult<unknown>[]> = Promise.allSettled([first]);
+    let waited = false;
+    try {
+      await Promise.race([barrier, first]);
+      const second = createIncorporationRepository({ sql: creating }).createCase({
+        proposedCompanyNameEn: RUN,
+        proposedCompanyNameZh: null,
+        proposedRegisteredOffice: "Synthetic",
+        proposedCompanySecretary: "Synthetic",
+        registeredCapital: 10000,
+        businessNature: "Synthetic",
+        ownerId: ids.users[1],
+        teamId: ids.team,
+        targetCompletionDate: "2026-11-01",
+        actorId: ids.users[0],
+      });
+      joined = Promise.allSettled([first, second]);
+      const deadline = Date.now() + 4000;
+      while (Date.now() < deadline) {
+        signal.throwIfAborted();
+        const [r] =
+          await observer`select wait_event_type,pg_blocking_pids(pid) blockers from pg_stat_activity where pid=${pids[2]}`;
+        if (r?.wait_event_type === "Lock" && r.blockers.includes(pids[1])) {
+          waited = true;
+          record("observed-disable-before-create-wait", r);
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 20));
+      }
+    } finally {
+      release();
+      await joined;
+    }
+    const outcomes = await joined;
+    const [state] =
+      await observer`select u.active user_active,sp.active profile_active,sp.access_revision,(select count(*)::int from incorporation_cases where owner_id=u.id) owned_cases from users u join staff_profiles sp on sp.user_id=u.id where u.id=${ids.users[1]}`;
+    record("disable-before-create-result", {
+      waited,
+      outcomes: outcomes.map((r) =>
+        r.status === "fulfilled"
+          ? { status: r.status, value: r.value }
+          : { status: r.status, message: String(r.reason) },
+      ),
+      state,
+    });
+    expect(waited).toBe(true);
+    expect(outcomes[0].status).toBe("fulfilled");
+    expect(outcomes[1].status).toBe("rejected");
+    expect(state).toMatchObject({ user_active: false, profile_active: false, owned_cases: 0 });
+    record("creation-race-refused-after-disable", { state });
+    // The complete lawful-transfer and other writer controls are added after the
+    // original creation race has been reproduced against the unchanged baseline.
+    expect(fetcher).not.toHaveBeenCalled();
+    record("journey-passed", {
+      externalHttpCalls: 0,
+      nativeAuth: false,
+      nativeHttp: false,
+      dbRls: false,
+    });
+    ok = true;
+  } catch (error) {
+    errors.push(error);
+    record("failed-preserved", { message: error instanceof Error ? error.message : String(error) });
+  } finally {
+    const ends = await Promise.allSettled(raw.map((c) => c.end({ timeout: 5 })));
+    for (const e of ends) if (e.status === "rejected") errors.push(e.reason);
+    try {
+      if (gate)
+        await gate.sealForDisposal(ok && errors.length === 0, ids, {
+          allClientsClosed: ends.every((e) => e.status === "fulfilled"),
+          count: raw.length,
+          pids,
+        });
+    } catch (e) {
+      errors.push(e);
+    }
+    vi.unstubAllGlobals();
+    closeSync(fd);
+  }
+  if (errors.length) throw new AggregateError(errors, "UC186 journey failed; retained evidence");
+}

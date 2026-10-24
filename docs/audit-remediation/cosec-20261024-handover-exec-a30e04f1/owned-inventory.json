@@ -1,0 +1,8 @@
+{
+  "checked_utc": "2026-10-24T17:08:52.556Z",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "run": "cosec-20261024-handover-exec-a30e04f1",
+  "matching_containers": [],
+  "remaining_owned_state_or_credential_files": [],
+  "operation": "read-only exact run inventory; no resources stopped or removed"
+}
