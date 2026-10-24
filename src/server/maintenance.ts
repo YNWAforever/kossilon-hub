@@ -383,6 +383,9 @@ async function runScheduledMaintenancePasses(
 export async function runFirmMaintenance(
   input: FirmMaintenanceInput,
 ): Promise<ScheduledMaintenanceResult> {
+  const data = inputSchema.parse(input);
+  const { assertApplicationWriteSchema } = await import("./application-schema");
+  await assertApplicationWriteSchema();
   const [
     workItemsModule,
     annualReturnModule,
@@ -409,7 +412,7 @@ export async function runFirmMaintenance(
   const analysisJobsModule = await import("@/features/documents/analysis-jobs");
   const analysisRepositoryModule = await import("@/features/documents/analysis-repository");
 
-  return runFirmMaintenanceWithDependencies(input, {
+  return runFirmMaintenanceWithDependencies(data, {
     createWorkItemRepository: () => workItemsModule.createWorkItemRepository(),
     createAnnualReturnRepository: () => annualReturnModule.createAnnualReturnRepository(),
     createServiceSubscriptionRepository: () =>

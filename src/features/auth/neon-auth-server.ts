@@ -1,4 +1,4 @@
-import { getSqlClient, type SqlClient } from "@/server/db/client";
+import { getSqlClient } from "@/server/db/client";
 import {
   assertClientCompanyAccess,
   assertStaffAccess,
@@ -6,6 +6,10 @@ import {
 } from "./authorization";
 import { neonAuthCookies } from "./neon-auth-cookies";
 import type { AuthenticatedActor, AuthRole, VerifiedAuthUser } from "./types";
+import {
+  assertApplicationWriteSchema,
+  type ApplicationSchemaSql,
+} from "@/server/application-schema";
 
 type NeonSession = { user: VerifiedAuthUser };
 
@@ -28,7 +32,7 @@ type ClientMembershipRow = {
 
 export type AuthDependencies = {
   auth?: NeonSessionAdapter;
-  sql?: SqlClient;
+  sql?: ApplicationSchemaSql;
 };
 
 export function getNeonAuthUrl(): string {
@@ -110,6 +114,13 @@ export async function requireActor(
     throw new Error("Unauthorized: a verified Neon Auth session is required.");
   }
 
+  async function admit(actor: AuthenticatedActor): Promise<AuthenticatedActor> {
+    if (!["GET", "HEAD", "OPTIONS"].includes(request.method)) {
+      await assertApplicationWriteSchema(sql);
+    }
+    return actor;
+  }
+
   const staffRows = await sql<StaffProfileRow[]>`
     select sp.user_id, sp.role, sp.team_id,
       (sp.active and u.active and sp.role=u.role and sp.team_id is not distinct from u.team_id) active
@@ -122,13 +133,13 @@ export async function requireActor(
   if (staff) {
     if (!staff.active)
       throw new Error("Forbidden: staff account is inactive or access state is inconsistent.");
-    return {
+    return admit({
       authUserId: session.user.id,
       userId: staff.user_id,
       role: normalizeRole(staff.role),
       teamId: staff.team_id,
       active: staff.active,
-    };
+    });
   }
 
   const membershipRows = await sql<ClientMembershipRow[]>`
@@ -144,13 +155,13 @@ export async function requireActor(
     throw new Error("Forbidden: user is not provisioned with an active company membership.");
   }
 
-  return {
+  return admit({
     authUserId: session.user.id,
     userId: null,
     role: "Client",
     teamId: null,
     active: membership.active,
-  };
+  });
 }
 
 export async function requireStaffActor(

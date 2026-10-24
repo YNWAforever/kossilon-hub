@@ -78,6 +78,8 @@ export function providerEventIdFrom(headers: Headers, payload: unknown, rawBody:
 export type WhatsAppWebhookHandlerConfig = {
   webhookSecret: string;
   createRepository: () => WhatsAppRepository;
+  /** Server-supplied seam; never read from a provider payload. */
+  assertSchemaReady?: () => Promise<void>;
 };
 
 export function createWhatsAppWebhookHandler(config: WhatsAppWebhookHandlerConfig) {
@@ -129,8 +131,15 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookHandlerConfi
       payloadIsUnreadable = true;
     }
 
-    const repository = config.createRepository();
+    let repository: WhatsAppRepository | undefined;
     try {
+      if (config.assertSchemaReady) {
+        await config.assertSchemaReady();
+      } else {
+        const { assertApplicationWriteSchema } = await import("@/server/application-schema");
+        await assertApplicationWriteSchema();
+      }
+      repository = config.createRepository();
       const result = await processWhatsAppInboundWebhookWithRepository(
         repository as ProcessWhatsAppInboundWebhookRepository,
         {
@@ -152,10 +161,10 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookHandlerConfi
       return json(result, 200);
     } catch (error) {
       // Never acknowledge what was not stored.
-      console.error("whatsapp webhook failed", error);
+      console.error("whatsapp webhook failed", error instanceof Error ? error.name : "unknown");
       return json({ ok: false, error: "Webhook could not be processed." }, 503);
     } finally {
-      await repository.close();
+      await repository?.close();
     }
   };
 }
