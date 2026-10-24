@@ -48,7 +48,12 @@ export type HandoverPreview = {
   expectedVersion: number;
   openCases: number;
   openWorkItems: number;
-  cases: { id: string; companyName: string; status: string }[];
+  cases: {
+    id: string;
+    companyName: string;
+    status: string;
+    caseType?: "annual_return" | "incorporation" | "corporate_change";
+  }[];
   workItems: { id: string; title: string; version: number }[];
   truncated: boolean;
 };

@@ -13,6 +13,8 @@ import {
   listStaffAudit,
 } from "./server-fns";
 import { annualReturnStatusLabel } from "@/features/annual-return/labels";
+import { INCORPORATION_STATUS_LABELS } from "@/features/incorporation/labels";
+import { CORPORATE_CHANGE_STATUS_LABELS } from "@/features/corporate-changes/labels";
 import {
   STAFF_ROLES,
   STAFF_ROLE_LABELS,
@@ -261,15 +263,33 @@ function StaffRow({
               </p>
               {preview.data.cases.map((c) => (
                 <p key={c.id}>
-                  <Link to="/annual-returns/$id" params={{ id: c.id }}>
-                    {c.companyName} · {annualReturnStatusLabel(c.status)}
-                  </Link>
+                  {c.caseType === "incorporation" ? (
+                    <Link to="/incorporation/$id" params={{ id: c.id }}>
+                      公司註冊 · {c.companyName} ·{" "}
+                      {(INCORPORATION_STATUS_LABELS as Record<string, string>)[c.status] ??
+                        c.status}
+                    </Link>
+                  ) : c.caseType === "corporate_change" ? (
+                    <Link to="/corporate-changes/$id" params={{ id: c.id }}>
+                      公司變更 · {c.companyName} ·{" "}
+                      {(CORPORATE_CHANGE_STATUS_LABELS as Record<string, string>)[c.status] ??
+                        c.status}
+                    </Link>
+                  ) : (
+                    <Link to="/annual-returns/$id" params={{ id: c.id }}>
+                      {c.companyName} · {annualReturnStatusLabel(c.status)}
+                    </Link>
+                  )}
                 </p>
               ))}
               {preview.data.workItems.map((w) => (
                 <p key={w.id}>{w.title}</p>
               ))}
-              {preview.data.truncated ? <p>只顯示首100筆，請在工作隊列核對完整範圍。</p> : null}
+              {preview.data.truncated ? (
+                <p>
+                  只顯示首100筆，仍有未列出的案件。請在相應業務清單核對完整範圍；工作隊列不包含所有案件。
+                </p>
+              ) : null}
               <Link
                 to="/work-queue"
                 search={{
@@ -281,7 +301,7 @@ function StaffRow({
                   status: "all",
                 }}
               >
-                開啟工作隊列轉交
+                開啟工作隊列（只處理已建立的工作項）
               </Link>
             </div>
           ) : null}

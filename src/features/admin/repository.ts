@@ -22,6 +22,20 @@ export function assertAdminActor(actor: AuthenticatedActor) {
   assertStaffAccess(actor);
   if (actor.role !== "Admin" || !actor.userId) throw new Error("Forbidden: Admin access required.");
 }
+// Case ownership is authoritative even when a work-item projection is missing
+// or already closed. Keep roster, preview and the write-time guard in one scope.
+function openCaseResponsibilities(tx: Query) {
+  return tx`
+    select a.id,a.owner_id,a.reviewer_id,c.company_name,a.current_status status,'annual_return'::text case_type
+    from annual_return_cases a join companies c on c.id=a.company_id where a.current_status<>'Completed'
+    union all
+    select i.id,i.owner_id,null::uuid reviewer_id,i.proposed_company_name_en company_name,i.status,'incorporation'::text case_type
+    from incorporation_cases i where i.status<>'Completed'
+    union all
+    select r.id,r.owner_id,null::uuid reviewer_id,c.company_name,r.status,'corporate_change'::text case_type
+    from corporate_change_requests r join companies c on c.id=r.company_id where r.status not in ('Completed','Cancelled')
+  `;
+}
 export function createAdminRepository({ sql = getSqlClient() }: { sql?: Query } = {}) {
   const transact = <T>(run: (tx: postgres.TransactionSql) => Promise<T>): Promise<T> =>
     ("begin" in sql ? sql.begin(run) : run(sql)) as Promise<T>;
@@ -55,7 +69,7 @@ export function createAdminRepository({ sql = getSqlClient() }: { sql?: Query } 
       }[]
     >`select u.id user_id,u.name,u.email,sp.role,sp.team_id,t.name team_name,sp.active and u.active active,sp.access_revision,
       (sp.role<>u.role or sp.active<>u.active or sp.team_id is distinct from u.team_id) state_mismatch,
-      (select count(*)::int from annual_return_cases a where (a.owner_id=u.id or a.reviewer_id=u.id) and a.current_status<>'Completed') open_cases,
+      (select count(*)::int from (${openCaseResponsibilities(sql)}) a where a.owner_id=u.id or a.reviewer_id=u.id) open_cases,
       (select count(*)::int from work_items w where (w.owner_id=u.id or w.reviewer_id=u.id) and w.status not in ('completed','cancelled')) open_work_items
       from staff_profiles sp join users u on u.id=sp.user_id left join teams t on t.id=sp.team_id
       where (${input.q ?? null}::text is null or u.name ilike ${"%" + (input.q ?? "") + "%"} or u.email ilike ${"%" + (input.q ?? "") + "%"} or u.id::text=${input.q ?? null})
@@ -113,22 +127,30 @@ export function createAdminRepository({ sql = getSqlClient() }: { sql?: Query } 
     const row = await target(sql, data.userId);
     if (row.access_revision !== data.expectedVersion) throw new StaffAccessConflictError();
     const cases = await sql<
-      { id: string; company_name: string; status: string }[]
-    >`select a.id,c.company_name,a.current_status status from annual_return_cases a join companies c on c.id=a.company_id where (a.owner_id=${row.id} or a.reviewer_id=${row.id}) and a.current_status<>'Completed' order by a.id limit 101`;
+      {
+        id: string;
+        company_name: string;
+        status: string;
+        case_type: NonNullable<HandoverPreview["cases"][number]["caseType"]>;
+      }[]
+    >`select a.id,a.company_name,a.status,a.case_type from (${openCaseResponsibilities(sql)}) a where a.owner_id=${row.id} or a.reviewer_id=${row.id} order by a.case_type,a.id limit 101`;
     const items = await sql<
       { id: string; title: string; version: number }[]
     >`select id,title,version from work_items where (owner_id=${row.id} or reviewer_id=${row.id}) and status not in ('completed','cancelled') order by id limit 101`;
     const [count] = await sql<
       { cases: number; items: number }[]
-    >`select (select count(*)::int from annual_return_cases where (owner_id=${row.id} or reviewer_id=${row.id}) and current_status<>'Completed') cases,(select count(*)::int from work_items where (owner_id=${row.id} or reviewer_id=${row.id}) and status not in ('completed','cancelled')) items`;
+    >`select (select count(*)::int from (${openCaseResponsibilities(sql)}) a where a.owner_id=${row.id} or a.reviewer_id=${row.id}) cases,(select count(*)::int from work_items where (owner_id=${row.id} or reviewer_id=${row.id}) and status not in ('completed','cancelled')) items`;
     return {
       userId: row.id,
       expectedVersion: row.access_revision,
       openCases: count.cases,
       openWorkItems: count.items,
-      cases: cases
-        .slice(0, 100)
-        .map((c) => ({ id: c.id, companyName: c.company_name, status: c.status })),
+      cases: cases.slice(0, 100).map((c) => ({
+        id: c.id,
+        companyName: c.company_name,
+        status: c.status,
+        caseType: c.case_type,
+      })),
       workItems: items.slice(0, 100),
       truncated: cases.length > 100 || items.length > 100,
     };
@@ -157,7 +179,7 @@ export function createAdminRepository({ sql = getSqlClient() }: { sql?: Query } 
       if (!data.active || data.teamId !== row.team_id || data.role === "Client") {
         const [work] = await tx<
           { n: number }[]
-        >`select (select count(*)::int from annual_return_cases where (owner_id=${row.id} or reviewer_id=${row.id}) and current_status<>'Completed')+(select count(*)::int from work_items where (owner_id=${row.id} or reviewer_id=${row.id}) and status not in ('completed','cancelled')) n`;
+        >`select (select count(*)::int from (${openCaseResponsibilities(tx)}) a where a.owner_id=${row.id} or a.reviewer_id=${row.id})+(select count(*)::int from work_items where (owner_id=${row.id} or reviewer_id=${row.id}) and status not in ('completed','cancelled')) n`;
         if (work.n > 0)
           throw new Error(
             "Outstanding handover: preview and transfer open cases/work items first.",

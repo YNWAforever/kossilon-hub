@@ -1,0 +1,363 @@
+// Opt-in disposable SQL only; injected sessions do not establish native Auth/RLS.
+import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
+import { appendFileSync, closeSync, openSync, realpathSync } from "node:fs";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { getCurrentTest } from "@vitest/runner";
+import { expect, it, onTestFinished, vi } from "vitest";
+import type { SqlClient } from "@/server/db/client";
+const RUN = "cosec-20261024-handover-657a8815",
+  ROOT = "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023";
+type Target = {
+  uri: string;
+  containerId: string;
+  database: string;
+  identity: { systemId: string };
+};
+type Gate = {
+  verifyEmptyTarget(): Promise<Target>;
+  verifyOwnedTarget(): Promise<Target>;
+  publicTarget(t: Target): object;
+  sealForDisposal(
+    ok: boolean,
+    ids: object,
+    cleanup: { allClientsClosed: boolean; count: number; pids: number[] },
+  ): Promise<void>;
+};
+const id = () => `657a8815-0186-4186-8186-${randomBytes(6).toString("hex")}`;
+it.skipIf(process.env.COSEC_UC186_RUN_ID !== RUN)(
+  "UC186 lists all business responsibilities and refuses unsafe staff removal without partial writes",
+  async () => {
+    assert.equal(realpathSync(process.cwd()), ROOT);
+    const signal = getCurrentTest()?.context.signal;
+    assert(signal);
+    const pending = journey(signal);
+    onTestFinished(async () => {
+      await pending.catch(() => undefined);
+    });
+    await pending;
+  },
+  120_000,
+);
+async function journey(signal: AbortSignal) {
+  const attempt = process.env.COSEC_UC186_ATTEMPT!;
+  assert.match(attempt, /^(red|green)(?:-r[2-9])?$/);
+  const folder = resolve(ROOT, "docs/audit-remediation", RUN, "db");
+  assert.equal(folder, process.env.COSEC_UC186_EVENTS_DIR);
+  const fd = openSync(resolve(folder, `UC186-${attempt}.jsonl`), "wx");
+  const record = (phase: string, data: object = {}) =>
+    appendFileSync(
+      fd,
+      JSON.stringify({ run: RUN, attempt, phase, utc: new Date().toISOString(), ...data }) + "\n",
+    );
+  const ids = {
+    teams: [id(), id()],
+    users: [id(), id()],
+    profiles: [id(), id()],
+    incorporation: "",
+    company: id(),
+    annual: id(),
+    change: id(),
+    terminalChange: id(),
+  };
+  const raw: SqlClient[] = [],
+    pids: number[] = [],
+    failures: unknown[] = [];
+  let gate: Gate | undefined,
+    ok = false;
+  const fetcher = vi.fn(() => {
+    throw new Error("External fetch forbidden in UC186");
+  });
+  try {
+    signal.throwIfAborted();
+    record("planned-ids", { ids, nativeAuth: false, nativeHttp: false, dbRls: false });
+    gate = (await import(
+      /* @vite-ignore */ pathToFileURL(resolve(folder, "../isolated-db-runner.mjs")).href
+    )) as Gate;
+    const target = await gate.verifyEmptyTarget();
+    assert.equal(target.containerId, process.env.COSEC_UC186_TARGET_ID);
+    assert.equal(target.identity.systemId, process.env.COSEC_UC186_SYSTEM_ID);
+    assert(process.env.TEST_DATABASE_URL === target.uri);
+    record("before-application-import-or-client", gate.publicTarget(target));
+    vi.stubGlobal("fetch", fetcher);
+    const [
+      { createSqlClient },
+      { guardSqlTestLifetime },
+      { requireActor },
+      { createAdminRepository },
+      { updateStaffForActor },
+      { createIncorporationRepository },
+    ] = await Promise.all([
+      import("@/server/db/client"),
+      import("@/test/sql-test-lifetime"),
+      import("@/features/auth/neon-auth-server"),
+      import("./repository"),
+      import("./server-fns"),
+      import("@/features/incorporation/repository"),
+    ]);
+    async function client() {
+      const t = await gate!.verifyOwnedTarget();
+      assert.equal(t.containerId, target.containerId);
+      assert.equal(t.identity.systemId, target.identity.systemId);
+      const c = createSqlClient(t.uri, { max: 1, ssl: false });
+      raw.push(c);
+      const sql = guardSqlTestLifetime(c, () => signal);
+      const [r] =
+        await sql`select current_database() database,pg_backend_pid() pid,(select system_identifier::text from pg_control_system()) system_id`;
+      assert.equal(r.database, target.database);
+      assert.equal(r.system_id, target.identity.systemId);
+      pids.push(Number(r.pid));
+      await sql`set statement_timeout='10000'`;
+      await sql`set lock_timeout='4000'`;
+      record("client-identity", r);
+      return sql;
+    }
+    const writer = await client(),
+      observer = await client();
+    expect(new Set(pids).size).toBe(2);
+    await writer.begin(async (tx) => {
+      for (const [i, team] of ids.teams.entries())
+        await tx`insert into teams(id,name) values(${team},${RUN + ":" + i})`;
+      for (const [i, user] of ids.users.entries()) {
+        const role = i === 0 ? "Admin" : "Staff";
+        await tx`insert into users(id,name,email,role,team_id) values(${user},${RUN + ":" + role},${user + "@example.test"},${role},${ids.teams[0]})`;
+        await tx`insert into staff_profiles(id,user_id,auth_user_id,role,team_id) values(${ids.profiles[i]},${user},${RUN + ":" + user},${role},${ids.teams[0]})`;
+      }
+    });
+    const actor = await requireActor(new Request("https://example.test/admin"), {
+      sql: observer,
+      auth: {
+        getSession: async () => ({
+          user: { id: RUN + ":" + ids.users[0], email: "synthetic@example.test" },
+        }),
+        signOut: async () => new Response(null, { status: 204 }),
+      },
+    });
+    const repo = createAdminRepository({ sql: writer });
+    const created = await createIncorporationRepository({ sql: writer }).createCase({
+      proposedCompanyNameEn: RUN,
+      proposedCompanyNameZh: null,
+      proposedRegisteredOffice: "Synthetic",
+      proposedCompanySecretary: "Synthetic",
+      registeredCapital: 10000,
+      businessNature: "Synthetic",
+      ownerId: ids.users[1],
+      teamId: ids.teams[0],
+      targetCompletionDate: "2026-11-01",
+      actorId: ids.users[0],
+    });
+    ids.incorporation = created.id;
+    record("actual-incorporation-create", { ids, status: created.status });
+    const input = {
+      userId: ids.users[1],
+      expectedVersion: 1,
+      role: "Staff" as const,
+      teamId: ids.teams[0],
+      active: false,
+    };
+    async function state(sql: SqlClient = observer) {
+      const users =
+        await sql`select to_jsonb(u) data,u.xmin::text version,to_jsonb(p) profile,p.xmin::text profile_version from users u join staff_profiles p on p.user_id=u.id where u.id=any(${ids.users}::uuid[]) order by u.id`;
+      const audits =
+        await sql`select to_jsonb(e) data,e.xmin::text version from staff_access_events e where target_user_id=any(${ids.users}::uuid[]) order by e.id`;
+      const cases =
+        await sql`select to_jsonb(i) data,i.xmin::text version from incorporation_cases i where owner_id=${ids.users[1]} order by id`;
+      return { users: [...users], audits: [...audits], cases: [...cases] };
+    }
+    const baseline = await state();
+    const preview = await repo.previewReassignment(actor, {
+      userId: ids.users[1],
+      expectedVersion: 1,
+    });
+    const roster = (await repo.listStaff(actor, { q: ids.users[1] })).staff[0];
+    expect(preview.openCases).toBe(1);
+    expect(preview.cases).toContainEqual(
+      expect.objectContaining({ id: ids.incorporation, caseType: "incorporation" }),
+    );
+    expect(roster.openCases).toBe(1);
+    const effect = await updateStaffForActor(actor, input, repo).then(
+      (value) => ({ value, error: undefined }),
+      (error) => ({ value: undefined, error }),
+    );
+    const after = await state();
+    record("sole-open-incorporation-offboarding-result", {
+      preview,
+      roster,
+      returned: effect.value,
+      refused: !!effect.error,
+      error: effect.error?.message,
+      before: baseline,
+      after,
+    });
+    expect(effect.error?.message).toMatch(/handover/i);
+    expect(after).toEqual(baseline);
+    if (!effect.error || preview.openCases !== 1) {
+      record("unsafe-offboarding-reproduced", { staffMutationCommitted: !!effect.value });
+      return;
+    }
+    for (const change of [
+      input,
+      { ...input, active: true, teamId: ids.teams[1] },
+      { ...input, active: true, role: "Client" as const },
+    ])
+      for (let n = 0; n < 2; n++) {
+        await expect(updateStaffForActor(actor, change, repo)).rejects.toThrow(/handover/i);
+        expect(await state()).toEqual(baseline);
+      }
+    record("all-three-unsafe-changes-and-retries-refused-no-write", baseline);
+    await writer.begin(async (tx) => {
+      await tx`insert into companies(id,company_name,cr_number,br_number,incorporation_date,annual_return_basis_date,registered_office,company_secretary,status,assigned_owner_id,assigned_team_id) values(${ids.company},${RUN},${ids.company},${ids.company},'2020-01-01','2026-10-01','Synthetic','Synthetic','active',${ids.users[0]},${ids.teams[0]})`;
+      await tx`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,current_status,risk_level,owner_id,reviewer_id) values(${ids.annual},${ids.company},2026,'2026-10-01','2026-11-12','Upcoming','green',${ids.users[0]},${ids.users[1]})`;
+      await tx`insert into corporate_change_requests(id,company_id,change_type,status,owner_id,quoted_fee,new_name_en) values(${ids.change},${ids.company},'name_change','Requested',${ids.users[1]},100,${RUN + ":open"}),(${ids.terminalChange},${ids.company},'name_change','Cancelled',${ids.users[1]},100,${RUN + ":cancelled"})`;
+    });
+    const combined = await repo.previewReassignment(actor, {
+      userId: ids.users[1],
+      expectedVersion: 1,
+    });
+    expect(combined).toMatchObject({ openCases: 3, openWorkItems: 0, truncated: false });
+    expect(combined.cases.map((c) => c.id).sort()).toEqual(
+      [ids.incorporation, ids.annual, ids.change].sort(),
+    );
+    expect(combined.cases).toContainEqual(
+      expect.objectContaining({ id: ids.annual, caseType: "annual_return" }),
+    );
+    expect(combined.cases).toContainEqual(
+      expect.objectContaining({ id: ids.change, caseType: "corporate_change" }),
+    );
+    expect((await repo.listStaff(actor, { q: ids.users[1] })).staff[0].openCases).toBe(3);
+    record("cross-business-owner-reviewer-scope-and-cancelled-exclusion", {
+      ids,
+      combined,
+      syntheticLegacyCorporateRequestWithoutWorkProjection: true,
+    });
+    const rollback = new Error("UC186 terminal control rollback");
+    await expect(
+      writer.begin(async (tx) => {
+        await tx`update incorporation_cases set status='Completed',company_id=${ids.company},completed_at=now() where id=${ids.incorporation}`;
+        await tx`update annual_return_cases set current_status='Completed' where id=${ids.annual}`;
+        const local = createAdminRepository({ sql: tx });
+        const onlyCorporate = await local.previewReassignment(actor, {
+          userId: ids.users[1],
+          expectedVersion: 1,
+        });
+        expect(onlyCorporate).toMatchObject({ openCases: 1, openWorkItems: 0 });
+        expect(onlyCorporate.cases.map((c) => c.id)).toEqual([ids.change]);
+        const beforeCorporate = await state(tx as unknown as SqlClient);
+        for (const change of [
+          input,
+          { ...input, active: true, teamId: ids.teams[1] },
+          { ...input, active: true, role: "Client" as const },
+        ])
+          for (let n = 0; n < 2; n++) {
+            await expect(local.updateStaff(actor, change)).rejects.toThrow(/handover/i);
+            expect(await state(tx as unknown as SqlClient)).toEqual(beforeCorporate);
+          }
+        record("corporate-only-zero-work-refusals-no-write", {
+          onlyCorporate,
+          before: beforeCorporate,
+          after: await state(tx as unknown as SqlClient),
+          control: "other cases terminal only inside rollback transaction",
+        });
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+    await expect(
+      writer.begin(async (tx) => {
+        await tx`update incorporation_cases set status='Completed',company_id=${ids.company},completed_at=now() where id=${ids.incorporation}`;
+        await tx`update annual_return_cases set current_status='Completed' where id=${ids.annual}`;
+        await tx`update corporate_change_requests set status='Completed',completed_at=now() where id=${ids.change}`;
+        const local = createAdminRepository({ sql: tx });
+        expect(
+          await local.previewReassignment(actor, { userId: ids.users[1], expectedVersion: 1 }),
+        ).toMatchObject({ openCases: 0, openWorkItems: 0, cases: [] });
+        expect(await local.updateStaff(actor, input)).toEqual({
+          userId: ids.users[1],
+          expectedVersion: 2,
+        });
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+    record("synthetic-terminal-positive-control-rolled-back", {
+      scope: "test transaction only; not actual case completion/handover acceptance",
+    });
+    expect(
+      (await repo.previewReassignment(actor, { userId: ids.users[1], expectedVersion: 1 }))
+        .openCases,
+    ).toBe(3);
+    expect(await state()).toEqual(baseline);
+    for (const role of ["Manager", "Staff", "Client"] as const)
+      await expect(
+        repo.previewReassignment({ ...actor, role }, { userId: ids.users[1], expectedVersion: 1 }),
+      ).rejects.toThrow(/Admin|Forbidden/);
+    await expect(
+      repo.previewReassignment(actor, { userId: ids.users[1], expectedVersion: 2 }),
+    ).rejects.toMatchObject({ statusCode: 409 });
+    await expect(repo.updateStaff(actor, { ...input, userId: ids.users[0] })).rejects.toThrow(
+      /last active Admin/,
+    );
+    const overflow =
+      await writer`insert into incorporation_cases(proposed_company_name_en,proposed_registered_office,proposed_company_secretary,registered_capital,business_nature,owner_id,team_id,target_completion_date)
+      select ${RUN + ":boundary:"}||n,'Synthetic','Synthetic',1000,'Synthetic',${ids.users[1]},${ids.teams[0]},'2026-11-01'::date from generate_series(1,101) n returning id`;
+    const boundary = await repo.previewReassignment(actor, {
+      userId: ids.users[1],
+      expectedVersion: 1,
+    });
+    expect(boundary.openCases).toBe(104);
+    expect(boundary.cases).toHaveLength(100);
+    expect(boundary.truncated).toBe(true);
+    expect((await repo.listStaff(actor, { q: ids.users[1] })).staff[0].openCases).toBe(104);
+    const ownedCases = new Set([
+      ids.incorporation,
+      ids.annual,
+      ids.change,
+      ...overflow.map((r) => r.id),
+    ]);
+    for (const entry of boundary.cases) expect(ownedCases.has(entry.id)).toBe(true);
+    expect(
+      (await repo.previewReassignment(actor, { userId: ids.users[1], expectedVersion: 1 })).cases,
+    ).toEqual(boundary.cases);
+    record("bounded-100-preview-with-104-total", {
+      overflowIds: overflow.map((r) => r.id),
+      boundary,
+      fixtureOnly: true,
+    });
+    signal.throwIfAborted();
+    record("independent-final-readback", {
+      state: await state(),
+      preview: await createAdminRepository({ sql: observer }).previewReassignment(actor, {
+        userId: ids.users[1],
+        expectedVersion: 1,
+      }),
+    });
+    expect(fetcher).not.toHaveBeenCalled();
+    record("journey-passed", {
+      ids,
+      externalHttpCalls: 0,
+      nativeAuth: false,
+      nativeHttp: false,
+      dbRls: false,
+    });
+    ok = true;
+  } catch (error) {
+    failures.push(error);
+    record("failed-preserved", { message: error instanceof Error ? error.message : String(error) });
+  } finally {
+    const ends = await Promise.allSettled(raw.map((c) => c.end({ timeout: 5 })));
+    for (const e of ends) if (e.status === "rejected") failures.push(e.reason);
+    try {
+      if (gate)
+        await gate.sealForDisposal(ok && failures.length === 0, ids, {
+          allClientsClosed: ends.every((e) => e.status === "fulfilled"),
+          count: raw.length,
+          pids,
+        });
+    } catch (e) {
+      failures.push(e);
+    }
+    vi.unstubAllGlobals();
+    closeSync(fd);
+  }
+  if (failures.length)
+    throw new AggregateError(failures, "UC186 journey failed; evidence preserved");
+}
