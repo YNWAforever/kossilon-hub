@@ -1,0 +1,546 @@
+{
+  "schema": 1,
+  "kind": "ACTUAL_BOUNDED_METADATA_EXECUTION",
+  "base_head": "19f03e55a7a7d86b860ea3028ac3205ed95f71ed",
+  "candidate_source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "authorized_by": "Current chat user explicit narrow metadata authorization; not a claim of resource ownership",
+  "authorized_name": "kossilon-hub-demo",
+  "started_utc": "2026-10-24T19:17:50.889Z",
+  "started_hkt": "2026-10-25 03:17:50 +08:00",
+  "deadline_utc": "2026-10-24T19:47:50.889Z",
+  "deadline_hkt": "2026-10-25 03:47:50 +08:00",
+  "started_ms": 1792869470889,
+  "deadline_ms": 1792871270889,
+  "limits": {
+    "requests": 20,
+    "response_bytes": 10485760,
+    "minutes": 30
+  },
+  "request_count": 6,
+  "response_bytes": 8806,
+  "entries": [
+    {
+      "number": 1,
+      "tool": "mcp__codex_apps__vercel_list_teams",
+      "args": {
+        "limit": 20
+      },
+      "started_hkt": "2026-10-25 03:19:10 +08:00",
+      "status": "READ_RETURNED",
+      "response_bytes": 925,
+      "finished_hkt": "2026-10-25 03:19:12 +08:00",
+      "response_shape": [
+        "teams",
+        "pagination"
+      ],
+      "projection": {
+        "teams": [
+          {
+            "id": "team_qvzlsFmfCsLkgItSypqHjw3z",
+            "name": "ynwaforever's projects",
+            "slug": "ynwaforevers-projects",
+            "membership": {}
+          }
+        ],
+        "pagination": {
+          "count": 1,
+          "prev": 1774926205222
+        }
+      },
+      "initial_runtime_meter_bytes": 399,
+      "metadata_text_bytes": 280,
+      "local_event_id": "exec-06231beb-1629-4ebf-a7f7-7eca8f1106e9",
+      "local_event_sha256": "7d986ef8485f77dfb23ea1e560bb34fbfb29c74dbf93c2e3f19e26a2e68a2991",
+      "projection_sha256": "8ccedfb570ef126bc1dd8cba1b00e0442904e3abb063854eee6cf1f38ffb4eec",
+      "readOnlyHint": true,
+      "connector_error": false,
+      "remote_completed_utc": "2026-10-24T19:19:12.736Z"
+    },
+    {
+      "number": 2,
+      "tool": "mcp__codex_apps__vercel_list_projects",
+      "args": {
+        "teamId": "team_qvzlsFmfCsLkgItSypqHjw3z",
+        "search": "kossilon-hub-demo",
+        "limit": "20"
+      },
+      "started_hkt": "2026-10-25 03:19:37 +08:00",
+      "status": "READ_RETURNED",
+      "response_bytes": 994,
+      "finished_hkt": "2026-10-25 03:19:40 +08:00",
+      "response_shape": [
+        "projects",
+        "pagination"
+      ],
+      "projection": {
+        "projects": [
+          {
+            "id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+            "name": "kossilon-hub-demo",
+            "accountId": "team_qvzlsFmfCsLkgItSypqHjw3z",
+            "createdAt": 1784321856003,
+            "updatedAt": 1788960511900,
+            "link": {}
+          }
+        ],
+        "pagination": {
+          "count": 1,
+          "prev": 1788960511900
+        }
+      },
+      "initial_runtime_meter_bytes": 468,
+      "metadata_text_bytes": 346,
+      "local_event_id": "exec-bf25e9a9-3876-4c91-acf9-72ab341285bd",
+      "local_event_sha256": "43aa8a60898c3158c11a63086ed141d8364c452d6ab0d76cd89267525ea1341a",
+      "projection_sha256": "1e41a8fb126b358601acdea7de5b5e8d56c416ca98ac02b40e5fb35a0be7b6dc",
+      "readOnlyHint": true,
+      "connector_error": false,
+      "remote_completed_utc": "2026-10-24T19:19:40.371Z"
+    },
+    {
+      "number": 3,
+      "tool": "mcp__codex_apps__vercel_list_deployments",
+      "args": {
+        "teamId": "team_qvzlsFmfCsLkgItSypqHjw3z",
+        "projectId": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+        "limit": 5
+      },
+      "started_hkt": "2026-10-25 03:20:04 +08:00",
+      "status": "READ_RETURNED_RECOVERED_LOCAL_CAPTURE",
+      "error_class": "Local parser expected deployments array; returned nested object",
+      "response_bytes": 3702,
+      "error_recorded_hkt": "2026-10-25 03:21:42 +08:00",
+      "projection": {
+        "deployments": [
+          {
+            "id": "dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY",
+            "name": "kossilon-hub-demo",
+            "url": "kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+            "target": "production",
+            "state": "READY",
+            "created": 1784457476940,
+            "gitSource": {},
+            "meta": {}
+          },
+          {
+            "id": "dpl_FYDredFi6puKN8JiBSJVXcgRMH9R",
+            "name": "kossilon-hub-demo",
+            "url": "kossilon-hub-demo-mecihrcuy-ynwaforevers-projects.vercel.app",
+            "target": "production",
+            "state": "READY",
+            "created": 1784450824772,
+            "gitSource": {},
+            "meta": {}
+          },
+          {
+            "id": "dpl_9Mfg1gB3iJman9aH4tRiY212FxoZ",
+            "name": "kossilon-hub-demo",
+            "url": "kossilon-hub-demo-jt6cgko6j-ynwaforevers-projects.vercel.app",
+            "target": "production",
+            "state": "READY",
+            "created": 1784449453513,
+            "gitSource": {},
+            "meta": {}
+          },
+          {
+            "id": "dpl_8HRm51T3geyo6UYXeTQopHKgLYhP",
+            "name": "kossilon-hub-demo",
+            "url": "kossilon-hub-demo-bnxk6tdb7-ynwaforevers-projects.vercel.app",
+            "target": "production",
+            "state": "READY",
+            "created": 1784383185135,
+            "gitSource": {},
+            "meta": {
+              "githubCommitSha": "e2ac85e5da61f221aca8b788f86818f4c96d75fa",
+              "githubCommitRef": "codex-neon-auth-demo-live-activation",
+              "githubRepo": "kossilon-hub",
+              "githubOrg": "YNWAforever"
+            }
+          }
+        ],
+        "pagination": {
+          "count": 4,
+          "prev": 1784457476940
+        }
+      },
+      "finished_hkt": "2026-10-25 03:20:07 +08:00",
+      "local_capture_failure_retained": true,
+      "recovery": "Recovered original MCP result from this same task local event exec-8f9711ea; no API retry",
+      "response_shape": [
+        {
+          "depth": 0,
+          "array": false,
+          "keys": [
+            "result"
+          ]
+        },
+        {
+          "depth": 1,
+          "array": false,
+          "keys": [
+            "deployments"
+          ]
+        },
+        {
+          "depth": 2,
+          "array": false,
+          "keys": [
+            "pagination",
+            "deployments"
+          ]
+        },
+        {
+          "depth": 3,
+          "array": true,
+          "keys": [
+            "0",
+            "1",
+            "2",
+            "3"
+          ]
+        }
+      ],
+      "initial_runtime_meter_bytes": null,
+      "metadata_text_bytes": 2827,
+      "local_event_id": "exec-8f9711ea-b412-4c31-a3fe-23bdfc6c7528",
+      "local_event_sha256": "e958607d77b22fffdc88c85a5957567aea8148ae971c7bf0d0808d64f15d67db",
+      "original_runtime_capture_lost": true,
+      "projection_sha256": "71de039d57c48868923855d6d6d4ab23d372188dfab2eeaafd68c288321524a2",
+      "readOnlyHint": true,
+      "connector_error": false,
+      "remote_completed_utc": "2026-10-24T19:20:07.132Z"
+    },
+    {
+      "number": 4,
+      "tool": "mcp__codex_apps__vercel_get_deployment",
+      "args": {
+        "teamId": "team_qvzlsFmfCsLkgItSypqHjw3z",
+        "idOrUrl": "dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY",
+        "withGitRepoInfo": "true"
+      },
+      "started_hkt": "2026-10-25 03:27:01 +08:00",
+      "status": "READ_RETURNED",
+      "response_bytes": 1691,
+      "finished_hkt": "2026-10-25 03:27:04 +08:00",
+      "response_shape": [
+        "id",
+        "name",
+        "url",
+        "type",
+        "state",
+        "createdAt",
+        "creator",
+        "project",
+        "meta",
+        "alias",
+        "target",
+        "regions",
+        "buildingAt",
+        "ready",
+        "readyState",
+        "source",
+        "aliasError"
+      ],
+      "projection": {
+        "id": "dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY",
+        "name": "kossilon-hub-demo",
+        "url": "kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+        "target": "production",
+        "state": "READY",
+        "readyState": "READY",
+        "createdAt": 1784457476940,
+        "project": {
+          "id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+          "name": "kossilon-hub-demo"
+        },
+        "gitSource": {},
+        "meta": {}
+      },
+      "initial_runtime_meter_bytes": 1165,
+      "metadata_text_bytes": 970,
+      "local_event_id": "exec-828d4f01-3c73-4350-9d1e-e4f63976893d",
+      "local_event_sha256": "f7f3d0ae23ee00b1b198da20b5ba939b6eb7008ec6cd9abca13b1e0ac5b1dac2",
+      "projection_sha256": "b4e78eff190f247c6f232554b2760fae2826639a7017633cc36044ec644710ab",
+      "readOnlyHint": true,
+      "connector_error": false,
+      "remote_completed_utc": "2026-10-24T19:27:04.326Z"
+    },
+    {
+      "number": 5,
+      "tool": "mcp__codex_apps__vercel_list_deployments",
+      "args": {
+        "teamId": "team_qvzlsFmfCsLkgItSypqHjw3z",
+        "projectId": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+        "sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+        "limit": 5
+      },
+      "started_hkt": "2026-10-25 03:27:14 +08:00",
+      "status": "READ_RETURNED",
+      "response_bytes": 747,
+      "finished_hkt": "2026-10-25 03:27:18 +08:00",
+      "response_shape": [
+        "pagination",
+        "deployments"
+      ],
+      "projection": {
+        "deployments": [],
+        "pagination": {
+          "count": 0
+        }
+      },
+      "initial_runtime_meter_bytes": 221,
+      "metadata_text_bytes": 122,
+      "local_event_id": "exec-4bf971f6-6d8b-467a-bbab-b2cf839adbf4",
+      "local_event_sha256": "a576df635c7a07006444fb5db54f1f08d3051fbeae9dd794b6c7a0351b42dc5a",
+      "projection_sha256": "21a668ed22569e734712d9038743402a95f5eaa5bf1f3029b083b676e647c402",
+      "readOnlyHint": true,
+      "connector_error": false,
+      "remote_completed_utc": "2026-10-24T19:27:18.009Z"
+    },
+    {
+      "number": 6,
+      "tool": "mcp__codex_apps__vercel_list_deployments",
+      "args": {
+        "teamId": "team_qvzlsFmfCsLkgItSypqHjw3z",
+        "projectId": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+        "sha": "19f03e55a7a7d86b860ea3028ac3205ed95f71ed",
+        "limit": 5
+      },
+      "started_hkt": "2026-10-25 03:27:57 +08:00",
+      "status": "READ_RETURNED",
+      "response_bytes": 747,
+      "finished_hkt": "2026-10-25 03:27:59 +08:00",
+      "response_shape": [
+        "pagination",
+        "deployments"
+      ],
+      "projection": {
+        "deployments": [],
+        "pagination": {
+          "count": 0
+        }
+      },
+      "initial_runtime_meter_bytes": 221,
+      "metadata_text_bytes": 122,
+      "local_event_id": "exec-ad26ea26-4521-430d-8815-89915de9802e",
+      "local_event_sha256": "3e17148f7cb1615b38494f940c81fce91568f852b420090aa2ce1d1222e4deb5",
+      "projection_sha256": "21a668ed22569e734712d9038743402a95f5eaa5bf1f3029b083b676e647c402",
+      "readOnlyHint": true,
+      "connector_error": false,
+      "remote_completed_utc": "2026-10-24T19:27:59.881Z"
+    }
+  ],
+  "status": "COMPLETED_METADATA_ONLY_NATIVE_NO_GO",
+  "actual_qa_logins": 0,
+  "actual_DB_Auth_connections": 0,
+  "actual_resources_created": 0,
+  "native_pass": 0,
+  "release_gate": "NO_GO",
+  "response_bytes_complete": true,
+  "response_byte_measure": "Budget charged conservatively using UTF8 serialized MCP completion results including connector envelope; metadata-text UTF8 bytes separately measured. Network-wire bytes not observed.",
+  "metadata_text_bytes": 4667,
+  "local_projection_recovery": {
+    "original_request_number": 3,
+    "recovered_from_own_task_event": true,
+    "new_Vercel_requests": 0,
+    "initial_parser_failure_retained": true,
+    "byte_accounting_reconciled_for_all_requests": true
+  },
+  "finished_utc": "2026-10-24T19:28:01.873Z",
+  "finished_hkt": "2026-10-25 03:28:01 +08:00",
+  "no_more_remote_calls": true,
+  "historical_initial_known_bytes": 867,
+  "metadata_result": {
+    "uniqueness": {
+      "scope": "All teams returned by the current existing connection:1 complete page; exact project-name search in that team:1 result, no next page",
+      "team_count": 1,
+      "exact_name_matches": 1,
+      "not_claimed": "No claim about inaccessible or unrelated account scopes"
+    },
+    "owner_team": {
+      "id": "team_qvzlsFmfCsLkgItSypqHjw3z",
+      "name": "ynwaforever's projects",
+      "slug": "ynwaforevers-projects",
+      "source_request_numbers": [
+        1,
+        2
+      ],
+      "human_or_business_owner": null
+    },
+    "project": {
+      "id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+      "name": "kossilon-hub-demo",
+      "owner_account_id": "team_qvzlsFmfCsLkgItSypqHjw3z"
+    },
+    "current_read_access": {
+      "requested_metadata_reads_succeeded": true,
+      "source": "Six existing Vercel MCP GET metadata calls; no login or permission change",
+      "exclusive_readonly_credential_or_RBAC_role_verified": false
+    },
+    "latest_visible_deployment": {
+      "id": "dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY",
+      "fixed_hostname": "kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+      "fixed_url": "https://kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+      "url_visited": false,
+      "target": "production",
+      "state": "READY",
+      "created_at_hkt": "2026-07-19 18:37:56 +08:00",
+      "Git_SHA": null,
+      "Git_SHA_status": "Not provided by latest-deployment metadata even with withGitRepoInfo=true"
+    },
+    "visible_deployments_count": 4,
+    "visible_deployments": [
+      {
+        "id": "dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY",
+        "name": "kossilon-hub-demo",
+        "url": "kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+        "target": "production",
+        "state": "READY",
+        "created": 1784457476940,
+        "gitSource": {},
+        "meta": {},
+        "fixed_url": "https://kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+        "url_visited": false,
+        "Git_SHA": null
+      },
+      {
+        "id": "dpl_FYDredFi6puKN8JiBSJVXcgRMH9R",
+        "name": "kossilon-hub-demo",
+        "url": "kossilon-hub-demo-mecihrcuy-ynwaforevers-projects.vercel.app",
+        "target": "production",
+        "state": "READY",
+        "created": 1784450824772,
+        "gitSource": {},
+        "meta": {},
+        "fixed_url": "https://kossilon-hub-demo-mecihrcuy-ynwaforevers-projects.vercel.app",
+        "url_visited": false,
+        "Git_SHA": null
+      },
+      {
+        "id": "dpl_9Mfg1gB3iJman9aH4tRiY212FxoZ",
+        "name": "kossilon-hub-demo",
+        "url": "kossilon-hub-demo-jt6cgko6j-ynwaforevers-projects.vercel.app",
+        "target": "production",
+        "state": "READY",
+        "created": 1784449453513,
+        "gitSource": {},
+        "meta": {},
+        "fixed_url": "https://kossilon-hub-demo-jt6cgko6j-ynwaforevers-projects.vercel.app",
+        "url_visited": false,
+        "Git_SHA": null
+      },
+      {
+        "id": "dpl_8HRm51T3geyo6UYXeTQopHKgLYhP",
+        "name": "kossilon-hub-demo",
+        "url": "kossilon-hub-demo-bnxk6tdb7-ynwaforevers-projects.vercel.app",
+        "target": "production",
+        "state": "READY",
+        "created": 1784383185135,
+        "gitSource": {},
+        "meta": {
+          "githubCommitSha": "e2ac85e5da61f221aca8b788f86818f4c96d75fa",
+          "githubCommitRef": "codex-neon-auth-demo-live-activation",
+          "githubRepo": "kossilon-hub",
+          "githubOrg": "YNWAforever"
+        },
+        "fixed_url": "https://kossilon-hub-demo-bnxk6tdb7-ynwaforevers-projects.vercel.app",
+        "url_visited": false,
+        "Git_SHA": "e2ac85e5da61f221aca8b788f86818f4c96d75fa"
+      }
+    ],
+    "candidate_sha_metadata_matches": 0,
+    "local_delivery_sha_metadata_matches": 0,
+    "comparison": {
+      "expected_candidate": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+      "local_delivery_at_start": "19f03e55a7a7d86b860ea3028ac3205ed95f71ed",
+      "latest_Git_SHA": null,
+      "latest_source_equivalence": "UNKNOWN; latest metadata did not expose SHA, so cannot assert equality or inequality",
+      "candidate_filter_result": "No deployment metadata returned for expected candidate SHA",
+      "local_delivery_filter_result": "No deployment metadata returned for latest local delivery SHA",
+      "one_older_deployment_with_recorded_sha": [
+        {
+          "deployment_id": "dpl_8HRm51T3geyo6UYXeTQopHKgLYhP",
+          "Git_SHA": "e2ac85e5da61f221aca8b788f86818f4c96d75fa",
+          "matches_candidate": false,
+          "matches_local_delivery": false
+        }
+      ]
+    },
+    "isolation": {
+      "DB": "UNKNOWN_NOT_ACCESSED",
+      "Auth": "UNKNOWN_NOT_ACCESSED",
+      "binding_to_candidate": "UNPROVEN",
+      "preview_or_READY_proves_isolation": false
+    },
+    "unknown": [
+      "Named human/business owner",
+      "Exclusive read-only RBAC/token capability",
+      "Latest deployment Git SHA",
+      "Candidate artifact identity",
+      "DB/Auth/data isolation"
+    ]
+  },
+  "remote_tool_failures": 0,
+  "local_capture_failures": [
+    {
+      "request": 3,
+      "error": "TypeError: deployments wrapper is an object, not an array",
+      "recovered": true,
+      "method": "Recovered original result and timestamps from same-task local completion event; no repeated API call"
+    },
+    {
+      "error": "Initial byte-reconciliation compared different connector-envelope representations",
+      "resolved": true,
+      "method": "All six charged consistently from original local completion results; both content and conservative envelope bytes retained"
+    }
+  ],
+  "window_closed_for_further_requests": true,
+  "elapsed_ms": 610984,
+  "run_id": "AP01-METADATA-20261025T031750-HKT",
+  "forbidden_actions": {
+    "env_value_reads": 0,
+    "token_reads": 0,
+    "application_log_reads": 0,
+    "website_route_requests": 0,
+    "QA_logins": 0,
+    "DB_Auth_connections": 0,
+    "SQL_statements": 0,
+    "resources_created": 0,
+    "deployments_created": 0,
+    "push_merge": 0
+  },
+  "updated_document_hashes": [
+    {
+      "path": "AUTHORIZATION-FORM.md",
+      "sha256": "1efcfeada4c004ed9f6d6e02c0f760f2769ce1591feb34632d4f4efd2809f333"
+    },
+    {
+      "path": "form-status.json",
+      "sha256": "528e44ed3aee1babc334a92865e66cd508a05520cb366aa609cc3fd5989eee2f"
+    },
+    {
+      "path": "release-candidate.json",
+      "sha256": "5ce9d53554569419ec11bb8f238a77270fc7f7a74ec6009db3c64858ab71adf2"
+    },
+    {
+      "path": "DELIVERY.md",
+      "sha256": "ec50dfce39bbb43c467468318c43c1f324fe64ad60c3165a78cb3569401c7a4c"
+    }
+  ],
+  "local_verification": {
+    "kind": "Evidence/document/Git integrity, not product tests",
+    "source_blobs_verified": 674,
+    "original_184_csv_sha256_unchanged": "287bafceb836b4e42b96cfbc006ee83dd9ac65900100d1ba199f93631537e6fb",
+    "original_100UC_map_unchanged": true,
+    "historical_form_manifest_verified_at_Git19858ef0": true,
+    "actual_remote_metadata_reads": 6,
+    "counted_response_bytes": 8806,
+    "metadata_text_bytes": 4667,
+    "window_and_scope_checks": "PASS",
+    "updated_document_hashes_verified": true,
+    "application_tests": "NOT_RUN",
+    "native_pass": 0,
+    "release_gate": "NO_GO"
+  },
+  "request_count_measure": "Six explicit Vercel MCP metadata invocations; failed capture and both SHA queries included; no agent retry or extra pages. Internal network-wire transport is not observable."
+}

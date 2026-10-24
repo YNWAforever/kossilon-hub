@@ -1,8 +1,8 @@
 {
   "run_id": "cosec-20261025-ap01-form-61f03672",
   "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
-  "evidence_base": "caefa0f2f88d4694d83800fbfaa0d8b2468abfa1",
-  "phase": "SINGLE_FILLABLE_AP01_METADATA_AUTHORIZATION_FORM_ONLY",
+  "evidence_base": "19f03e55a7a7d86b860ea3028ac3205ed95f71ed",
+  "phase": "AP01_METADATA_READ_COMPLETED_SOURCE_AND_ISOLATION_UNPROVEN",
   "form": "AUTHORIZATION-FORM.md",
   "form_status": "form-status.json",
   "parent_request": "../cosec-20261025-ap01-meta-a7885f7a/metadata-only-request.json",
@@ -12,11 +12,13 @@
   "original_acceptance_csv_evidence_base": "../cosec-20261025-build-d29cd5ec/",
   "product_changes": 0,
   "execution_enabled": false,
-  "approved_packet_ids": [],
-  "actual_metadata_reads": 0,
+  "approved_packet_ids": [
+    "AP-01/CONTROL_PLANE_METADATA_ONLY_THIS_RECORDED_WINDOW"
+  ],
+  "actual_metadata_reads": 6,
   "native_actions": 0,
   "resources_created": 0,
-  "external_accesses": 0,
+  "external_accesses": 6,
   "deployed": false,
   "native_matrix": {
     "BLOCKED": 70,
@@ -24,5 +26,42 @@
     "PASS": 0
   },
   "release_gate": "NO_GO",
-  "evidence_manifest": "evidence-manifest.json"
+  "execution_receipt": "AP01-METADATA-EXECUTION.json",
+  "authorization_window_closed": true,
+  "native_runtime_actions": 0,
+  "auth_runtime_verified": false,
+  "native_http_db_rls_verified": false,
+  "artifact_runtime_identity_verified": false,
+  "project_metadata": {
+    "id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+    "name": "kossilon-hub-demo",
+    "owner_account_id": "team_qvzlsFmfCsLkgItSypqHjw3z"
+  },
+  "owning_team": {
+    "id": "team_qvzlsFmfCsLkgItSypqHjw3z",
+    "name": "ynwaforever's projects",
+    "slug": "ynwaforevers-projects",
+    "source_request_numbers": [
+      1,
+      2
+    ],
+    "human_or_business_owner": null
+  },
+  "latest_visible_deployment": {
+    "id": "dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY",
+    "fixed_hostname": "kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+    "fixed_url": "https://kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+    "url_visited": false,
+    "target": "production",
+    "state": "READY",
+    "created_at_hkt": "2026-07-19 18:37:56 +08:00",
+    "Git_SHA": null,
+    "Git_SHA_status": "Not provided by latest-deployment metadata even with withGitRepoInfo=true"
+  },
+  "candidate_deployment_binding": "UNPROVEN",
+  "historical_form_evidence_manifest": {
+    "path": "evidence-manifest.json",
+    "git_version": "19858ef0fdd27c70cea4a91010f17a1be0b16f49",
+    "scope": "Original frozen preparation evidence; not a manifest for current edited files"
+  }
 }

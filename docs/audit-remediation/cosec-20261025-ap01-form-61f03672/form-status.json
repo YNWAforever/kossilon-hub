@@ -1,12 +1,12 @@
 {
   "purpose": "Audit snapshot of the blank form, not another editable input form",
   "single_editable_form": "AUTHORIZATION-FORM.md",
-  "form_sha256": "897095957a95893873e5abd906ebc21438986bb54898af3a9fc0a1d6164bcd3e",
-  "status": "CANDIDATE_CHOSEN_PLANNING_ONLY_NOT_AUTHORIZED",
+  "form_sha256": "1efcfeada4c004ed9f6d6e02c0f760f2769ce1591feb34632d4f4efd2809f333",
+  "status": "AUTHORIZED_METADATA_READ_COMPLETED_NATIVE_NO_GO",
   "prefilled": {
     "repo": "https://github.com/YNWAforever/kossilon-hub.git",
     "branch": "codex/cosec-20261023",
-    "evidence_base": "5c0e1c8d1d0cd57affa95d427be3af4ce7cfc80d",
+    "evidence_base": "19f03e55a7a7d86b860ea3028ac3205ed95f71ed",
     "source_sha_expected": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
     "source_files": 674,
     "local_artifact_manifest": "../cosec-20261025-build-d29cd5ec/artifact-manifest.json",
@@ -15,59 +15,39 @@
     "local_artifact_bytes": 14269548
   },
   "owner_inputs_unfilled": {
-    "target_nonproduction_url": null,
-    "owner": null,
-    "dedicated_or_shared_and_isolation_basis": null,
-    "project_deployment_metadata_ids_or_links": null,
-    "additional_resource_scope": null,
-    "existing_platform_readonly_access_reference": null,
-    "readonly_permission_scope": null,
-    "request_manifest_reference": null,
-    "approver": null,
-    "valid_hkt_from": null,
-    "valid_hkt_until": null,
-    "accepted_or_lower_limits": null,
-    "approved_form_or_manifest_version": null
-  },
-  "proposed_limits": {
-    "existing_targets": 1,
-    "metadata_read_attempts": 20,
-    "response_bytes_total": 10485760,
-    "response_bytes_per_request": 1048576,
-    "bounded_list_items_per_page": 20,
-    "wall_time_minutes": 30,
-    "business_or_identity_or_observer_reads": 0,
-    "app_requests": 0,
-    "auth_session_requests": 0,
-    "DB_queries": 0,
-    "DB_clients": 0,
-    "browser_contexts": 0,
-    "artifact_or_object_downloads": 0,
-    "uploads": 0,
-    "new_resources_or_compute_resume": 0,
-    "account_profile_role_changes": 0,
-    "provider_processing_or_send_calls": 0,
-    "new_paid_service_spend": 0,
-    "remote_deletes_or_disposals": 0,
-    "push_merge_deploy": 0
-  },
-  "proposed_read_allocations": {
-    "deployment_target": 6,
-    "DB_control_plane_resource_metadata": 4,
-    "Auth_control_plane_binding_metadata": 2,
-    "CI_artifact_security_provenance_metadata": 4,
-    "explicit_safe_retry_or_page_reserve": 4
+    "named_human_or_business_owner": null,
+    "exclusive_readonly_RBAC_or_credential_capabilities": null,
+    "latest_deployment_Git_SHA": null,
+    "candidate_artifact_identity_and_equivalence": null,
+    "DB_Auth_resource_and_data_isolation": null
   },
   "QA_admin_required": false,
   "DB_credentials_required": false,
-  "observed_native": null,
-  "approved": false,
+  "observed_native": {
+    "metadata_only": true,
+    "application_runtime_verified": false,
+    "project_id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+    "owner_team_id": "team_qvzlsFmfCsLkgItSypqHjw3z",
+    "latest_deployment": {
+      "id": "dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY",
+      "fixed_hostname": "kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+      "fixed_url": "https://kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+      "url_visited": false,
+      "target": "production",
+      "state": "READY",
+      "created_at_hkt": "2026-07-19 18:37:56 +08:00",
+      "Git_SHA": null,
+      "Git_SHA_status": "Not provided by latest-deployment metadata even with withGitRepoInfo=true"
+    },
+    "DB_Auth_isolation": "UNKNOWN"
+  },
+  "approved": true,
   "execution_enabled": false,
-  "actual_external_reads": 0,
+  "actual_external_reads": 6,
   "native_pass": 0,
   "release_gate": "NO_GO",
   "initial_form_evidence_base": "caefa0f2f88d4694d83800fbfaa0d8b2468abfa1",
-  "decision": "NOT_AUTHORIZED",
+  "decision": "AUTHORIZED_FOR_THIS_BOUNDED_METADATA_RUN_COMPLETED",
   "local_lookup": {
     "checked_hkt": "2026-10-25 02:55:07 +08:00",
     "head_at_lookup": "19858ef0fdd27c70cea4a91010f17a1be0b16f49",
@@ -169,7 +149,8 @@
         "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.vercel\\project.json",
         "exists": false
       }
-    ]
+    ],
+    "superseded_where_verified_by": "AP01-METADATA-EXECUTION.json"
   },
   "historical_evidence_note": "Original evidence-manifest.json and verification-report.json remain frozen for Git19858ef0, not for the three edited current files; original form bytes remain in that commit.",
   "planning_selection": {
@@ -178,7 +159,7 @@
     "project_name": "kossilon-hub-demo",
     "project_id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
     "metadata_source": "docs/audit-remediation/evidence/2026-10-03-r03-target-vercel.json",
-    "selection_kind": "UNVERIFIED_CANDIDATE_ONLY",
+    "selection_kind": "PROJECT_METADATA_RESOLVED_ISOLATION_AND_SOURCE_UNPROVEN",
     "first_proposed_scope": "Only this Vercel project and its deployment control-plane metadata",
     "excluded_first_scope": [
       "DB metadata or SQL",
@@ -194,6 +175,196 @@
     "owner": null,
     "current_readonly_access": null,
     "current_candidate_deployment_verified": false,
-    "execution_enabled": false
-  }
+    "execution_enabled": false,
+    "superseded_by_execution_receipt": "AP01-METADATA-EXECUTION.json"
+  },
+  "actual_Vercel_metadata_requests": 6,
+  "execution_receipt": "AP01-METADATA-EXECUTION.json",
+  "authorized_window": {
+    "authorized_by": "Current chat user explicit narrow metadata authorization; not a claim of resource ownership",
+    "scope": "Only unique kossilon-hub-demo Vercel project/deployment metadata via existing connection",
+    "started_hkt": "2026-10-25 03:17:50 +08:00",
+    "deadline_hkt": "2026-10-25 03:47:50 +08:00",
+    "finished_hkt": "2026-10-25 03:28:01 +08:00",
+    "started_utc": "2026-10-24T19:17:50.889Z",
+    "deadline_utc": "2026-10-24T19:47:50.889Z",
+    "finished_utc": "2026-10-24T19:28:01.873Z",
+    "limits": {
+      "requests": 20,
+      "response_bytes": 10485760,
+      "minutes": 30
+    },
+    "request_count": 6,
+    "response_bytes_counted": 8806,
+    "metadata_text_bytes": 4667,
+    "elapsed_ms": 610984,
+    "closed_for_further_requests": true,
+    "new_round_authorized": false
+  },
+  "verified_metadata": {
+    "uniqueness": {
+      "scope": "All teams returned by the current existing connection:1 complete page; exact project-name search in that team:1 result, no next page",
+      "team_count": 1,
+      "exact_name_matches": 1,
+      "not_claimed": "No claim about inaccessible or unrelated account scopes"
+    },
+    "owner_team": {
+      "id": "team_qvzlsFmfCsLkgItSypqHjw3z",
+      "name": "ynwaforever's projects",
+      "slug": "ynwaforevers-projects",
+      "source_request_numbers": [
+        1,
+        2
+      ],
+      "human_or_business_owner": null
+    },
+    "project": {
+      "id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+      "name": "kossilon-hub-demo",
+      "owner_account_id": "team_qvzlsFmfCsLkgItSypqHjw3z"
+    },
+    "current_read_access": {
+      "requested_metadata_reads_succeeded": true,
+      "source": "Six existing Vercel MCP GET metadata calls; no login or permission change",
+      "exclusive_readonly_credential_or_RBAC_role_verified": false
+    },
+    "latest_visible_deployment": {
+      "id": "dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY",
+      "fixed_hostname": "kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+      "fixed_url": "https://kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+      "url_visited": false,
+      "target": "production",
+      "state": "READY",
+      "created_at_hkt": "2026-07-19 18:37:56 +08:00",
+      "Git_SHA": null,
+      "Git_SHA_status": "Not provided by latest-deployment metadata even with withGitRepoInfo=true"
+    },
+    "visible_deployments_count": 4,
+    "visible_deployments": [
+      {
+        "id": "dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY",
+        "name": "kossilon-hub-demo",
+        "url": "kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+        "target": "production",
+        "state": "READY",
+        "created": 1784457476940,
+        "gitSource": {},
+        "meta": {},
+        "fixed_url": "https://kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+        "url_visited": false,
+        "Git_SHA": null
+      },
+      {
+        "id": "dpl_FYDredFi6puKN8JiBSJVXcgRMH9R",
+        "name": "kossilon-hub-demo",
+        "url": "kossilon-hub-demo-mecihrcuy-ynwaforevers-projects.vercel.app",
+        "target": "production",
+        "state": "READY",
+        "created": 1784450824772,
+        "gitSource": {},
+        "meta": {},
+        "fixed_url": "https://kossilon-hub-demo-mecihrcuy-ynwaforevers-projects.vercel.app",
+        "url_visited": false,
+        "Git_SHA": null
+      },
+      {
+        "id": "dpl_9Mfg1gB3iJman9aH4tRiY212FxoZ",
+        "name": "kossilon-hub-demo",
+        "url": "kossilon-hub-demo-jt6cgko6j-ynwaforevers-projects.vercel.app",
+        "target": "production",
+        "state": "READY",
+        "created": 1784449453513,
+        "gitSource": {},
+        "meta": {},
+        "fixed_url": "https://kossilon-hub-demo-jt6cgko6j-ynwaforevers-projects.vercel.app",
+        "url_visited": false,
+        "Git_SHA": null
+      },
+      {
+        "id": "dpl_8HRm51T3geyo6UYXeTQopHKgLYhP",
+        "name": "kossilon-hub-demo",
+        "url": "kossilon-hub-demo-bnxk6tdb7-ynwaforevers-projects.vercel.app",
+        "target": "production",
+        "state": "READY",
+        "created": 1784383185135,
+        "gitSource": {},
+        "meta": {
+          "githubCommitSha": "e2ac85e5da61f221aca8b788f86818f4c96d75fa",
+          "githubCommitRef": "codex-neon-auth-demo-live-activation",
+          "githubRepo": "kossilon-hub",
+          "githubOrg": "YNWAforever"
+        },
+        "fixed_url": "https://kossilon-hub-demo-bnxk6tdb7-ynwaforevers-projects.vercel.app",
+        "url_visited": false,
+        "Git_SHA": "e2ac85e5da61f221aca8b788f86818f4c96d75fa"
+      }
+    ],
+    "candidate_sha_metadata_matches": 0,
+    "local_delivery_sha_metadata_matches": 0,
+    "comparison": {
+      "expected_candidate": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+      "local_delivery_at_start": "19f03e55a7a7d86b860ea3028ac3205ed95f71ed",
+      "latest_Git_SHA": null,
+      "latest_source_equivalence": "UNKNOWN; latest metadata did not expose SHA, so cannot assert equality or inequality",
+      "candidate_filter_result": "No deployment metadata returned for expected candidate SHA",
+      "local_delivery_filter_result": "No deployment metadata returned for latest local delivery SHA",
+      "one_older_deployment_with_recorded_sha": [
+        {
+          "deployment_id": "dpl_8HRm51T3geyo6UYXeTQopHKgLYhP",
+          "Git_SHA": "e2ac85e5da61f221aca8b788f86818f4c96d75fa",
+          "matches_candidate": false,
+          "matches_local_delivery": false
+        }
+      ]
+    },
+    "isolation": {
+      "DB": "UNKNOWN_NOT_ACCESSED",
+      "Auth": "UNKNOWN_NOT_ACCESSED",
+      "binding_to_candidate": "UNPROVEN",
+      "preview_or_READY_proves_isolation": false
+    },
+    "unknown": [
+      "Named human/business owner",
+      "Exclusive read-only RBAC/token capability",
+      "Latest deployment Git SHA",
+      "Candidate artifact identity",
+      "DB/Auth/data isolation"
+    ]
+  },
+  "historical_proposed_limits": {
+    "existing_targets": 1,
+    "metadata_read_attempts": 20,
+    "response_bytes_total": 10485760,
+    "response_bytes_per_request": 1048576,
+    "bounded_list_items_per_page": 20,
+    "wall_time_minutes": 30,
+    "business_or_identity_or_observer_reads": 0,
+    "app_requests": 0,
+    "auth_session_requests": 0,
+    "DB_queries": 0,
+    "DB_clients": 0,
+    "browser_contexts": 0,
+    "artifact_or_object_downloads": 0,
+    "uploads": 0,
+    "new_resources_or_compute_resume": 0,
+    "account_profile_role_changes": 0,
+    "provider_processing_or_send_calls": 0,
+    "new_paid_service_spend": 0,
+    "remote_deletes_or_disposals": 0,
+    "push_merge_deploy": 0
+  },
+  "historical_proposed_read_allocations": {
+    "deployment_target": 6,
+    "DB_control_plane_resource_metadata": 4,
+    "Auth_control_plane_binding_metadata": 2,
+    "CI_artifact_security_provenance_metadata": 4,
+    "explicit_safe_retry_or_page_reserve": 4
+  },
+  "scope_of_approved_flag": "Only the explicitly authorized, now completed and closed Vercel project/deployment metadata window. Historical broader proposals remain unapproved.",
+  "approved_limits": {
+    "requests": 20,
+    "response_bytes": 10485760,
+    "minutes": 30
+  },
+  "requires_new_grant_after_closed_window": true
 }
