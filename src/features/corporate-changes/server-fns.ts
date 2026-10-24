@@ -10,7 +10,9 @@ import {
 import { caseListQuerySchema } from "@/features/incorporation/case-list-query";
 import { incorporationReadScope } from "@/features/incorporation/authorization";
 import type { CorporateChangeRequestRepository } from "./repository";
-import type { CreateCorporateChangeRequestInput } from "./types";
+import { createCorporateChangeRequestSchema } from "./create-input";
+import { createCorporateChangeRequestForActor } from "./create";
+export { createCorporateChangeRequestSchema } from "./create-input";
 
 const loadDefaultCorporateChangeContext = createServerOnlyFn(async () => {
   const [{ getRequest }, { requireStaffActor }, { createCorporateChangeRequestRepository }] =
@@ -55,81 +57,14 @@ async function requireWritableRequestCompany(
   return actor.userId;
 }
 
-const baseCreateSchema = z.object({
-  companyId: z.string().uuid(),
-  quotedFee: z.number().nonnegative(),
-});
-
-const createNameChangeSchema = baseCreateSchema.extend({
-  changeType: z.literal("name_change"),
-  newNameEn: z.string().min(1),
-  newNameZh: z.string().nullable(),
-});
-
-const createShareTransferSchema = baseCreateSchema.extend({
-  changeType: z.literal("share_transfer"),
-  transferorShareholdingId: z.string().uuid(),
-  sharesTransferred: z.number().int().positive(),
-  consideration: z.number().nonnegative(),
-  stampDutyAmount: z.number().nonnegative(),
-  transfereeShareholdingId: z.string().uuid().nullable(),
-  transfereeNewShareholderName: z.string().nullable(),
-  transfereeNewShareholderAddress: z.string().nullable(),
-});
-
-const createOfficerChangeSchema = baseCreateSchema.extend({
-  changeType: z.literal("officer_change"),
-  officerAction: z.enum(["appoint", "resign", "detail_change"]),
-  officerId: z.string().uuid().nullable(),
-  newOfficerType: z.enum(["director", "secretary"]).nullable(),
-  newOfficerName: z.string().nullable(),
-  newOfficerIdentificationType: z.enum(["hkid", "passport", "br_number"]).nullable(),
-  newOfficerIdentificationNumber: z.string().nullable(),
-  newOfficerAddress: z.string().nullable(),
-  effectiveDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-});
-
-const createAddressChangeSchema = baseCreateSchema.extend({
-  changeType: z.literal("address_change"),
-  newRegisteredOffice: z.string().min(1),
-});
-
-// zod v3's discriminatedUnion introspects each member's `.shape`, so members must stay plain
-// ZodObjects — a `.refine()` on `createShareTransferSchema` would return a ZodEffects with no
-// `.shape` and crash discriminatedUnion at schema-construction time. The "exactly one of an
-// existing transferee or a new shareholder name" cross-field check is applied afterwards, via
-// superRefine on the assembled union, and only when the branch is share_transfer.
-export const createCorporateChangeRequestSchema = z
-  .discriminatedUnion("changeType", [
-    createNameChangeSchema,
-    createShareTransferSchema,
-    createOfficerChangeSchema,
-    createAddressChangeSchema,
-  ])
-  .superRefine((input, ctx) => {
-    if (
-      input.changeType === "share_transfer" &&
-      Boolean(input.transfereeShareholdingId) === Boolean(input.transfereeNewShareholderName)
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Provide exactly one of an existing transferee or a new shareholder name.",
-        path: ["transfereeShareholdingId"],
-      });
-    }
-  });
-
 export const createCorporateChangeRequest = createServerFn({ method: "POST" })
   .validator(createCorporateChangeRequestSchema)
-  .handler(async ({ data }) =>
-    withRepository(async (repository) => {
-      const actorId = await requireWritableRequestCompany(repository, data.companyId);
-      return repository.createRequest({
-        ...data,
-        actorId,
-      } as CreateCorporateChangeRequestInput);
-    }),
-  );
+  .handler(async ({ data }) => {
+    const actor = await getCurrentCorporateChangeActor();
+    return withRepository((repository) =>
+      createCorporateChangeRequestForActor(actor, data, { repository }),
+    );
+  });
 
 const updateChecklistItemStatusSchema = z.object({
   requestId: z.string().uuid(),

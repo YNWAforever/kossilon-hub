@@ -9,6 +9,7 @@ import { createClientRepository } from "@/features/clients/repository";
 import { rethrowClientWriteError } from "@/features/clients/errors";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { CorporateChangeRequestNotFoundError } from "./errors";
+import { createCorporateChangeRequestSchema } from "./create-input";
 import type { IncorporationReadScope } from "@/features/incorporation/authorization";
 import {
   caseListSearchPattern,
@@ -303,6 +304,11 @@ export function createCorporateChangeRequestRepository(
   async function createRequest(
     input: CreateCorporateChangeRequestInput,
   ): Promise<CorporateChangeRequestDetail> {
+    // Internal callers also use this repository without the RPC validator.
+    // Reject malformed transfers before a transaction can create any children.
+    if (input.changeType === "share_transfer") {
+      input = { ...createCorporateChangeRequestSchema.parse(input), actorId: input.actorId };
+    }
     try {
       return await withTransaction(sql, async (tx) => {
         const companyRows = await tx<{ id: string; assigned_team_id: string }[]>`

@@ -12,6 +12,10 @@ import {
 import { getClient } from "@/features/clients/server-fns";
 import type { Officer, Shareholding } from "@/features/clients/types";
 import { createCorporateChangeRequest } from "@/features/corporate-changes/server-fns";
+import {
+  createCorporateChangeRequestSchema,
+  shareTransferTransfereeSchema,
+} from "@/features/corporate-changes/create-input";
 import type {
   CorporateChangeType,
   CreateAddressChangeInput,
@@ -95,11 +99,45 @@ export function CreateCorporateChangeRequestDialog({
   const [registerLoading, setRegisterLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const submitInFlight = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const set = <K extends keyof ReturnType<typeof emptyForm>>(
     key: K,
     value: ReturnType<typeof emptyForm>[K],
-  ) => setForm((current) => ({ ...current, [key]: value }));
+  ) => {
+    setForm((current) => ({ ...current, [key]: value }));
+    setFieldErrors({});
+    setSubmitError(null);
+  };
+
+  function transferErrors(): { data: CreateChangePayload | null; errors: Record<string, string> } {
+    const data = buildData();
+    const result = createCorporateChangeRequestSchema.safeParse(data);
+    if (result.success) return { data: result.data, errors: {} };
+    const errors: Record<string, string> = {};
+    for (const issue of result.error.issues) errors[String(issue.path[0])] ??= issue.message;
+    const transferee = shareTransferTransfereeSchema.safeParse(data);
+    if (!transferee.success) {
+      for (const issue of transferee.error.issues) errors[String(issue.path[0])] ??= issue.message;
+    }
+    return { data: null, errors };
+  }
+
+  function errorProps(field: string) {
+    return {
+      "aria-invalid": fieldErrors[field] ? true : undefined,
+      "aria-describedby": fieldErrors[field] ? `corp-change-${field}-error` : undefined,
+    };
+  }
+  function fieldError(field: string) {
+    return fieldErrors[field] ? (
+      <p id={`corp-change-${field}-error`} className="mt-1 text-xs text-destructive">
+        {fieldErrors[field]}
+      </p>
+    ) : null;
+  }
 
   const previousCompanyId = useRef(form.companyId);
 
@@ -147,7 +185,12 @@ export function CreateCorporateChangeRequestDialog({
     form.officerAction === "appoint" || form.officerAction === "detail_change";
 
   function buildData(): CreateChangePayload {
-    const base = { companyId: form.companyId, quotedFee: Number(form.quotedFee) };
+    const numberInput = (value: string) => (value.trim() ? Number(value) : NaN);
+    const base = {
+      companyId: form.companyId,
+      quotedFee:
+        form.changeType === "share_transfer" ? numberInput(form.quotedFee) : Number(form.quotedFee),
+    };
 
     if (form.changeType === "address_change") {
       return {
@@ -169,9 +212,9 @@ export function CreateCorporateChangeRequestDialog({
         ...base,
         changeType: form.changeType,
         transferorShareholdingId: form.transferorShareholdingId,
-        sharesTransferred: Number(form.sharesTransferred),
-        consideration: Number(form.consideration),
-        stampDutyAmount: Number(form.stampDutyAmount),
+        sharesTransferred: numberInput(form.sharesTransferred),
+        consideration: numberInput(form.consideration),
+        stampDutyAmount: numberInput(form.stampDutyAmount),
         transfereeShareholdingId:
           form.transfereeMode === "existing" ? form.transfereeShareholdingId : null,
         transfereeNewShareholderName:
@@ -228,16 +271,34 @@ export function CreateCorporateChangeRequestDialog({
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (submitInFlight.current) return;
+    let data: CreateChangePayload = buildData();
+    if (form.changeType === "share_transfer") {
+      const checked = transferErrors();
+      setFieldErrors(checked.errors);
+      if (!checked.data) {
+        const first = formRef.current?.querySelector<HTMLElement>(
+          `[name="${Object.keys(checked.errors).find((field) =>
+            field === "transfereeShareholdingId" ? form.transfereeMode === "existing" : true,
+          )}"]`,
+        );
+        first?.focus();
+        return;
+      }
+      data = checked.data;
+    }
+    submitInFlight.current = true;
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const created = await createCorporateChangeRequest({ data: buildData() });
+      const created = await createCorporateChangeRequest({ data });
       setForm(emptyForm());
       onOpenChange(false);
       onCreated(created.id);
-    } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "未能建立申請。");
+    } catch {
+      setSubmitError("未能建立申請，請核對資料後再試。輸入已保留。");
     } finally {
+      submitInFlight.current = false;
       setSubmitting(false);
     }
   }
@@ -275,13 +336,30 @@ export function CreateCorporateChangeRequestDialog({
             未能載入公司清單，請關閉後重新開啟此視窗。
           </p>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            ref={formRef}
+            onSubmit={handleSubmit}
+            noValidate={form.changeType === "share_transfer"}
+            onBlur={(event) => {
+              if (form.changeType !== "share_transfer") return;
+              const target = event.target;
+              if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement))
+                return;
+              const field = target.name;
+              const { errors } = transferErrors();
+              if (field && errors[field])
+                setFieldErrors((current) => ({ ...current, [field]: errors[field] }));
+            }}
+            className="space-y-4"
+          >
             <div>
               <label className={labelClass} htmlFor="corp-change-company">
                 公司
               </label>
               <Select
                 id="corp-change-company"
+                name="companyId"
+                {...errorProps("companyId")}
                 size="sm"
                 className="w-full"
                 value={form.companyId}
@@ -296,6 +374,7 @@ export function CreateCorporateChangeRequestDialog({
                   </option>
                 ))}
               </Select>
+              {fieldError("companyId")}
             </div>
 
             <div>
@@ -323,6 +402,8 @@ export function CreateCorporateChangeRequestDialog({
               </label>
               <Input
                 id="corp-change-quoted-fee"
+                name="quotedFee"
+                {...errorProps("quotedFee")}
                 type="number"
                 min="0"
                 step="1"
@@ -332,6 +413,7 @@ export function CreateCorporateChangeRequestDialog({
                 onChange={(event) => set("quotedFee", event.target.value)}
                 required
               />
+              {fieldError("quotedFee")}
             </div>
 
             {form.changeType === "address_change" && (
@@ -391,6 +473,8 @@ export function CreateCorporateChangeRequestDialog({
                   </label>
                   <Select
                     id="corp-change-transferor-shareholding"
+                    name="transferorShareholdingId"
+                    {...errorProps("transferorShareholdingId")}
                     size="sm"
                     className="w-full"
                     value={form.transferorShareholdingId}
@@ -404,6 +488,7 @@ export function CreateCorporateChangeRequestDialog({
                       </option>
                     ))}
                   </Select>
+                  {fieldError("transferorShareholdingId")}
                 </div>
 
                 <fieldset className="space-y-1">
@@ -435,6 +520,8 @@ export function CreateCorporateChangeRequestDialog({
                     </label>
                     <Select
                       id="corp-change-transferee-shareholding"
+                      name="transfereeShareholdingId"
+                      {...errorProps("transfereeShareholdingId")}
                       size="sm"
                       className="w-full"
                       value={form.transfereeShareholdingId}
@@ -450,6 +537,7 @@ export function CreateCorporateChangeRequestDialog({
                           </option>
                         ))}
                     </Select>
+                    {fieldError("transfereeShareholdingId")}
                   </div>
                 ) : (
                   <>
@@ -459,6 +547,8 @@ export function CreateCorporateChangeRequestDialog({
                       </label>
                       <Input
                         id="corp-change-transferee-new-name"
+                        name="transfereeNewShareholderName"
+                        {...errorProps("transfereeNewShareholderName")}
                         size="sm"
                         className="w-full"
                         value={form.transfereeNewShareholderName}
@@ -467,6 +557,7 @@ export function CreateCorporateChangeRequestDialog({
                         }
                         required
                       />
+                      {fieldError("transfereeNewShareholderName")}
                     </div>
                     <div>
                       <label className={labelClass} htmlFor="corp-change-transferee-new-address">
@@ -491,6 +582,8 @@ export function CreateCorporateChangeRequestDialog({
                   </label>
                   <Input
                     id="corp-change-shares-transferred"
+                    name="sharesTransferred"
+                    {...errorProps("sharesTransferred")}
                     type="number"
                     min="1"
                     step="1"
@@ -500,6 +593,7 @@ export function CreateCorporateChangeRequestDialog({
                     onChange={(event) => set("sharesTransferred", event.target.value)}
                     required
                   />
+                  {fieldError("sharesTransferred")}
                 </div>
                 <div>
                   <label className={labelClass} htmlFor="corp-change-consideration">
@@ -507,6 +601,8 @@ export function CreateCorporateChangeRequestDialog({
                   </label>
                   <Input
                     id="corp-change-consideration"
+                    name="consideration"
+                    {...errorProps("consideration")}
                     type="number"
                     min="0"
                     step="1"
@@ -516,6 +612,7 @@ export function CreateCorporateChangeRequestDialog({
                     onChange={(event) => set("consideration", event.target.value)}
                     required
                   />
+                  {fieldError("consideration")}
                 </div>
                 <div>
                   <label className={labelClass} htmlFor="corp-change-stamp-duty">
@@ -523,6 +620,8 @@ export function CreateCorporateChangeRequestDialog({
                   </label>
                   <Input
                     id="corp-change-stamp-duty"
+                    name="stampDutyAmount"
+                    {...errorProps("stampDutyAmount")}
                     type="number"
                     min="0"
                     step="1"
@@ -532,6 +631,7 @@ export function CreateCorporateChangeRequestDialog({
                     onChange={(event) => set("stampDutyAmount", event.target.value)}
                     required
                   />
+                  {fieldError("stampDutyAmount")}
                 </div>
               </>
             )}
