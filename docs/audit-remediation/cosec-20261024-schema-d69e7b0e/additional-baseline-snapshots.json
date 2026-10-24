@@ -1,0 +1,17 @@
+{
+  "base": "1a9f3fef8e419a3cc75d0d62e90795c3d8134d68",
+  "snapshots": [
+    {
+      "path": "src/features/operations/repository.ts",
+      "snapshot": "additional-baseline-0.snapshot",
+      "bytes": 18917,
+      "sha256": "52d691ee3a95b18541f3d8208ede7275094aebaacd194d4e7fb7700c0e41382b"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "snapshot": "additional-baseline-1.snapshot",
+      "bytes": 3340,
+      "sha256": "1a3d8020036e6ee18d55416ce228395b9e386edbb0637302e05bf88472227052"
+    }
+  ]
+}

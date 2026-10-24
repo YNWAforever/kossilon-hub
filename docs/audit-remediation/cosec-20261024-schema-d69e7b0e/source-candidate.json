@@ -1,0 +1,48 @@
+{
+  "source_sha": "57cc413fdd37aca1eb230fe2973757e8526f1209",
+  "parent_sha": "1a9f3fef8e419a3cc75d0d62e90795c3d8134d68",
+  "tested_head": "1a9f3fef8e419a3cc75d0d62e90795c3d8134d68",
+  "paths": [
+    "src/features/operations/repository.ts",
+    "src/server/maintenance-schema.integration.test.ts",
+    "src/server/maintenance-schema.ts",
+    "src/server/maintenance-trigger-runtime.test.ts",
+    "src/server/maintenance-trigger-runtime.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "files": [
+    {
+      "path": "src/features/operations/repository.ts",
+      "bytes": 19085,
+      "sha256": "ed89f7bdb7089d953aa317adcf989bd11c90f252c3237df3164adf27baaf6dd0"
+    },
+    {
+      "path": "src/server/maintenance-schema.integration.test.ts",
+      "bytes": 12800,
+      "sha256": "458e8637c608d239a441975b559654573f1ec531e178c1407d65a1bbdbc2ef03"
+    },
+    {
+      "path": "src/server/maintenance-schema.ts",
+      "bytes": 1186,
+      "sha256": "b68b8c14defa7b8732385263be048748490e82da85bb706be2b56f0902dc9765"
+    },
+    {
+      "path": "src/server/maintenance-trigger-runtime.test.ts",
+      "bytes": 12849,
+      "sha256": "8399817aabf12ffaa46c901d7144480da86156fa404e2b5ec56dcf7ba4dda86d"
+    },
+    {
+      "path": "src/server/maintenance-trigger-runtime.ts",
+      "bytes": 5294,
+      "sha256": "8cff4353d3388dd6a3903b8cc6af5766f9c57adadc11213708cfa4bfd9619bea"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "bytes": 3395,
+      "sha256": "09d7d34b90a522d019e71efbfa4c43e4c223554ae0ee4e5bbd83ec4320aa9b09"
+    }
+  ],
+  "source_freeze": "source-post-build.json",
+  "source_files_verified": 657,
+  "all_final_checked_source_bytes_equal_committed": true
+}

@@ -1,0 +1,85 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/routes/-operations.interaction.test.tsx (9 tests) 679ms
+     ✓ labels and converts UTC run, queue and verification timestamps across HK midnight  423ms
+stdout | src/server/cron-wiring.test.ts > runScheduledMaintenanceForWorker > does not run if Vercel owns the slot or the owner is missing
+scheduled maintenance skipped { owner: 'vercel', source: 'cloudflare' }
+
+stdout | src/server/cron-wiring.test.ts > runScheduledMaintenanceForWorker > does not run if Vercel owns the slot or the owner is missing
+scheduled maintenance skipped { owner: 'paused', source: 'cloudflare' }
+
+stdout | src/server/cron-wiring.test.ts > runScheduledMaintenanceForWorker > converts the scheduled time into the maintenance clock
+scheduled maintenance { runId: '3eb539fb-f5c4-4c9e-9b74-55ec26973549', recorded: true }
+
+ ✓ |unit| src/server/cron-wiring.test.ts (11 tests) 69ms
+ ✓ |unit| src/server/maintenance-trigger.test.ts (7 tests) 33ms
+ ✓ |unit| src/server/maintenance-trigger-runtime.test.ts (21 tests) 43ms
+ ✓ |unit| src/server/maintenance-http.test.ts (6 tests) 31ms
+ ✓ |unit| src/features/operations/server-fns.test.ts (21 tests) 27ms
+ ✓ |unit| src/features/operations/schema-health.test.ts (13 tests) 12ms
+ ✓ |unit| src/features/operations/release-compatibility.test.ts (20 tests) 9ms
+ ✓ |unit| src/features/operations/schema-readiness.test.ts (7 tests) 7ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 5ms
+
+ Test Files  10 passed (10)
+      Tests  117 passed (117)
+   Start at  15:02:06
+   Duration  4.84s (transform 706ms, setup 0ms, import 1.29s, tests 914ms, environment 813ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+stderr | src/server/cron-wiring.test.ts > runScheduledMaintenanceForWorker > rethrows so a failed run is visible to the platform
+scheduled maintenance failed {
+  runId: '509ee8bb-1db1-447d-bf8f-69c5454d5617',
+  phase: 'start_or_record'
+}
+
+stderr | src/features/operations/server-fns.test.ts > buildOperationsHealth > keeps a failed metrics query unknown without losing successful independent reads
+operations read unavailable {
+  correlationId: '2571bd5e-7db2-4e0b-9365-bcbe9cb7dbce',
+  read: 'queueDepths'
+}
+
+stderr | src/features/operations/server-fns.test.ts > buildOperationsHealth > reports schema query failure as unavailable and retains other runtime evidence
+operations read unavailable {
+  correlationId: '66503956-baa3-4cc2-b3c1-304a62af4341',
+  read: 'schemaLedger'
+}
+
+stderr | src/features/operations/server-fns.test.ts > buildOperationsHealth > still reports when the schema is behind and every other read fails
+operations read unavailable {
+  correlationId: 'eedecfd7-7fd1-4a5f-b60e-f9d20c6abaed',
+  read: 'listRecentRuns'
+}
+operations read unavailable {
+  correlationId: 'eedecfd7-7fd1-4a5f-b60e-f9d20c6abaed',
+  read: 'listRecentScheduledRuns'
+}
+operations read unavailable {
+  correlationId: 'eedecfd7-7fd1-4a5f-b60e-f9d20c6abaed',
+  read: 'queueDepths'
+}
+
+stderr | src/features/operations/server-fns.test.ts > buildOperationsHealth > names how far behind it is when the ledger exists but is short
+operations read unavailable {
+  correlationId: '1316f367-013d-4683-91d7-06645bd8acf7',
+  read: 'queueDepths'
+}
+
+stderr | src/features/operations/server-fns.test.ts > buildOperationsHealth > keeps an unexplained read failure unknown without pretending the schema caused it
+operations read unavailable {
+  correlationId: 'e9685d2f-b14b-4263-8471-3a9d1dd89352',
+  read: 'queueDepths'
+}
+
+stderr | src/features/operations/server-fns.test.ts > buildOperationsHealth > flags nothing when the maintenance state could not be read at all
+operations read unavailable {
+  correlationId: '5beca2b0-f3dc-4ee9-bb37-f61f8f3baacd',
+  read: 'listRecentScheduledRuns'
+}
+operations read unavailable {
+  correlationId: '5beca2b0-f3dc-4ee9-bb37-f61f8f3baacd',
+  read: 'queueDepths'
+}
+

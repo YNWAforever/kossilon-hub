@@ -1,0 +1,19 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |db| src/server/maintenance-schema.integration.test.ts (7 tests) 17316ms
+     ✓ missing: actual catalog, refusal/retry and independent rollback readback  2773ms
+     ✓ unknown: actual catalog, refusal/retry and independent rollback readback  2105ms
+     ✓ same-count-diverged: actual catalog, refusal/retry and independent rollback readback  2668ms
+     ✓ no-ledger: actual catalog, refusal/retry and independent rollback readback  2684ms
+     ✓ missing-marker: actual catalog, refusal/retry and independent rollback readback  2535ms
+     ✓ missing-index: actual catalog, refusal/retry and independent rollback readback  2267ms
+     ✓ recovery-replay: actual catalog, refusal/retry and independent rollback readback  2282ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  14:58:06
+   Duration  17.61s (transform 1.03s, setup 0ms, import 116ms, tests 17.32s, environment 0ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

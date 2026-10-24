@@ -1,0 +1,3 @@
+src/features/operations/repository.ts(432,11): error TS2339: Property 'begin' does not exist on type 'SqlClient | TransactionSql<{}>'.
+  Property 'begin' does not exist on type 'TransactionSql<{}>'.
+src/features/operations/repository.ts(432,63): error TS7006: Parameter 'tx' implicitly has an 'any' type.

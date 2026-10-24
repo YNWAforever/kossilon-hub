@@ -1,0 +1,7 @@
+{
+  "phase": "first evidence-path validation before candidate generation",
+  "result": "FAILED",
+  "error": "Missing evidence UC189 release-candidate.json",
+  "cause": "Packaging dependency order; CSV already prepared, candidate not generated yet",
+  "recovery": "Generate concrete source/release candidates, then validate same CSV; no expectation or historical row changed"
+}
