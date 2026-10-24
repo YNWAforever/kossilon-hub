@@ -1,0 +1,21 @@
+{
+  "check": "Local original-CSV and preparation-only scope integrity",
+  "original_rows": 184,
+  "parsed_original_json": 184,
+  "counts": [
+    "F:35",
+    "LA:34",
+    "R:15",
+    "UC:100"
+  ],
+  "native": [
+    "BLOCKED:70",
+    "NOT_RUN:114"
+  ],
+  "native_pass": 0,
+  "original_bytes_unchanged": true,
+  "original_uc_map": 100,
+  "future_permission_approved": false,
+  "new_application_tests": 0,
+  "native_actions": 0
+}

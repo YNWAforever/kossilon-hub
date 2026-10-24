@@ -1,0 +1,283 @@
+{
+  "plan_id": "cosec-20261025-ap00-07447c43",
+  "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "evidence_base": "2edfc24d37bc5325c23fa8ea29a76876fd034176",
+  "status": "AP00_LOCAL_PREFILL_COMPLETE_NATIVE_BINDINGS_PENDING_NOT_APPROVED",
+  "release_gate": "NO_GO",
+  "execution_enabled": false,
+  "approved_by": null,
+  "approved_at_hkt": null,
+  "expires_at_hkt": null,
+  "approved_packet_ids": [],
+  "bindings": {
+    "environment_owner": null,
+    "existing_isolated_url": null,
+    "runtime_project_id": null,
+    "deployment_id": null,
+    "observed_source_sha": null,
+    "observed_artifact_checksum": null,
+    "required_ci_run_ids_and_results": null,
+    "artifact_sbom_and_dependency_disposition": null,
+    "db_provider_project_id": null,
+    "db_branch_id": null,
+    "database_name": null,
+    "app_role": null,
+    "readonly_observer_role": null,
+    "server_identity_binding": null,
+    "auth_tenant_id": null,
+    "role_identity_manifest": null,
+    "storage_account_and_bucket_id": null,
+    "approved_object_prefix": null,
+    "scanner_sandbox_id": null,
+    "network_allowlist": null,
+    "approved_calendar_version_hash_and_expected_dates": null,
+    "fixture_driver_diff_and_physical_row_budget": null,
+    "actual_fixture_ids_and_versions": null,
+    "cleanup_manifest_and_disposition": null,
+    "fault_clone_id": null,
+    "fault_runtime_url_and_artifact_binding": null,
+    "backup_id_and_restore_target": null,
+    "restore_runtime_url_and_artifact_binding": null,
+    "scheduler_owner_runtime_and_allowed_job_ids": null,
+    "provider_destinations_models_cost_and_receipt_contracts": null,
+    "physical_device_browser_and_network_profile": null
+  },
+  "common_limits": {
+    "core_environments": 1,
+    "simultaneous_browser_contexts": 2,
+    "core_business_read_requests_total": 200,
+    "core_business_command_attempts_total": 50,
+    "core_auth_session_requests_total": 120,
+    "control_plane_metadata_read_requests_total": 20,
+    "core_asset_requests_total": 1000,
+    "core_download_bytes_total": 104857600,
+    "core_upload_put_attempts_total": 4,
+    "core_file_count": 4,
+    "max_file_bytes": 5242880,
+    "core_wall_time_minutes": 120,
+    "new_auth_accounts": 0,
+    "new_role_or_team_grants": 0,
+    "production_mutations": 0,
+    "push_merge_deploy": 0,
+    "main_auto_deploy_changes": 0,
+    "real_payment_transfers": 0,
+    "production_messages_and_filings": 0,
+    "provider_calls_without_separate_AP09_approval": 0,
+    "new_paid_service_spend_without_exact_approval": 0
+  },
+  "core_command_reservations": {
+    "normal_create_assign_complete_and_duplicate_replay": 8,
+    "invalid_role_duplicate_BR_or_stale_denials": 6,
+    "document_review_rejection_upload_retry_cancel": 8,
+    "internal_payment_review_and_conflict_attempts": 6,
+    "handover_preview_commit_retry_cancel_disable_attempts": 10,
+    "six_create_owner_reviewer_disable_race_orders_two_commands_each": 12
+  },
+  "packets": [
+    {
+      "id": "AP-00",
+      "operation": "Owner supplies and approves exact bindings, role map, fixture/cleanup manifests, budgets and expiry",
+      "depends_on": [],
+      "status": "MISSING_BINDINGS_NOT_APPROVED",
+      "actual_actions": 0
+    },
+    {
+      "id": "AP-01",
+      "operation": "Read-only metadata/CI/catalog/security preflight; establish existing QA sessions; roles and read denial",
+      "depends_on": [
+        "AP-00"
+      ],
+      "budget": "Common core limits; no magic-link or invitation dispatch; no account creation",
+      "status": "NOT_APPROVED",
+      "actual_actions": 0
+    },
+    {
+      "id": "AP-02",
+      "operation": "Approved 合成 core fixture setup on the bound disposable target; no production copy or fake scan results",
+      "depends_on": [
+        "AP-01"
+      ],
+      "proposed_additional_limit": {
+        "logical_setup_entities": 100,
+        "physical_rows_including_generated_children_audit": 2500,
+        "setup_requests": 100
+      },
+      "status": "DRIVER_AND_EXACT_IDS_PENDING_NOT_APPROVED",
+      "actual_actions": 0
+    },
+    {
+      "id": "AP-03",
+      "operation": "Today to correct company/case, normal domain writes, denied/empty/error/back/reload and independent readback",
+      "depends_on": [
+        "AP-01",
+        "AP-02"
+      ],
+      "budget": "Shared common200reads/50command attempts, not an extra allowance",
+      "status": "NOT_APPROVED",
+      "actual_actions": 0
+    },
+    {
+      "id": "AP-04",
+      "operation": "Correct document/version/safety and internal payment ledger; unknown-result retry and opposite decisions",
+      "depends_on": [
+        "AP-03"
+      ],
+      "budget": "Shared core allowance;4 PUT attempts total, including retry; genuine safety receipts required; provider processing waits for AP-09",
+      "status": "NOT_APPROVED",
+      "actual_actions": 0
+    },
+    {
+      "id": "AP-05",
+      "operation": "Lawful owner/reviewer handover, receipt/cancel recovery and six race orders versus QA source disable",
+      "depends_on": [
+        "AP-03"
+      ],
+      "budget": "Shared core allowance; only7 specifically bound QA source profiles may be disabled; no Auth-provider account deletion or role/team change",
+      "status": "NOT_APPROVED",
+      "actual_actions": 0
+    },
+    {
+      "id": "AP-06",
+      "operation": "104-obligation full preview paging and handover on a separately manifested fixture batch",
+      "depends_on": [
+        "AP-01",
+        "AP-05"
+      ],
+      "proposed_additional_limit": {
+        "logical_setup_entities": 125,
+        "physical_setup_rows": 5000,
+        "setup_requests": 125,
+        "business_reads": 100,
+        "business_command_attempts": 20,
+        "additional_QA_source_profiles_disabled": 1
+      },
+      "fixture": "Separate active PAGING_SOURCE;101source cases:97annual+2incorporation+2corporate;3source active works;3terminal case+2unrelated work controls; parent/company/people IDs must be bound before use",
+      "status": "ADDITIONAL_SETUP_NOT_APPROVED",
+      "actual_actions": 0
+    },
+    {
+      "id": "AP-07",
+      "operation": "Approved calendar boundaries, own-browser transport failures, dedicated clone schema denial and last-Admin safeguards",
+      "depends_on": [
+        "AP-01"
+      ],
+      "proposed_additional_limit": {
+        "business_reads": 100,
+        "business_command_attempts": 20,
+        "fault_clones": 1,
+        "separately_bound_fault_environments": 1
+      },
+      "constraints": "Calendar expectations, exact clone-only QA Admin targets and fault/rollback diff required; no shared/global clock, Auth outage or production DDL changes; missing clone/runtime provisioning needs separate candidate approval, no implicit deploy",
+      "status": "FAULT_TARGET_AND_DIFF_PENDING_NOT_APPROVED",
+      "actual_actions": 0
+    },
+    {
+      "id": "AP-08",
+      "operation": "Native scale/paging/import/history fixture setup and bounded batch recovery",
+      "depends_on": [
+        "AP-01"
+      ],
+      "proposed_additional_limit": {
+        "logical_setup_entities": 15000,
+        "physical_setup_rows": 75000,
+        "setup_requests": 1000,
+        "business_reads": 200,
+        "business_command_attempts": 50,
+        "xlsx_rows": 500,
+        "xlsx_upload_attempts": 2,
+        "max_xlsx_bytes": 5242880
+      },
+      "fixture": "1000companies/10000work/1000documents;300mixed domain cases;101conversations and201messages on one conversation; mixed500-row XLSX; exact non-overlapping manifests/expected counts and no-dispatch policy required",
+      "status": "LARGE_SETUP_DELTA_NOT_APPROVED",
+      "actual_actions": 0
+    },
+    {
+      "id": "AP-09",
+      "operation": "Separately approved genuine scanner/OCR/AI/Auth-mail/WhatsApp/filing sandbox integration receipts",
+      "depends_on": [
+        "AP-01"
+      ],
+      "proposed_request_ceilings_including_retries": {
+        "scanner": 4,
+        "ocr": 4,
+        "ai": 4,
+        "auth_mail_to_controlled_sink": 1,
+        "sandbox_message_send_attempts": 4,
+        "sandbox_message_operation_ids": 2,
+        "sandbox_filing_attempts": 2,
+        "sandbox_filing_operation_ids": 1
+      },
+      "approved_provider_calls": 0,
+      "approved_spend": 0,
+      "proposed_cost_ceiling_currency": null,
+      "proposed_cost_ceiling_amount": null,
+      "status": "DESTINATION_CORPUS_MODEL_COST_PERMISSION_PENDING_NOT_APPROVED",
+      "actual_actions": 0
+    },
+    {
+      "id": "AP-10",
+      "operation": "Native keyboard/screen-reader/mobile/Safari and representative cold/warm performance",
+      "depends_on": [
+        "AP-01",
+        "AP-08"
+      ],
+      "proposed_additional_limit": {
+        "views": 6,
+        "cold_navigations_per_view": 30,
+        "warm_navigations_per_view": 30,
+        "total_navigations": 360,
+        "business_api_reads": 2000,
+        "download_bytes": 1073741824,
+        "wall_time_minutes": 120,
+        "simultaneous_browser_contexts": 2
+      },
+      "constraints": "Device/network and six exact routes fixed before measurement; p95/list/search and LCP/INP/CLS separately reported; viewport emulation is not a physical device",
+      "status": "DEVICE_NETWORK_FIXTURE_PERMISSION_PENDING_NOT_APPROVED",
+      "actual_actions": 0
+    },
+    {
+      "id": "AP-11",
+      "operation": "Observe3 native5-minute ticks on an isolated owner and restore1synthetic backup to1new disposable target",
+      "depends_on": [
+        "AP-01"
+      ],
+      "proposed_additional_limit": {
+        "observed_ticks": 3,
+        "observation_minutes": 20,
+        "allowed_job_ids": 6,
+        "backup_count": 1,
+        "new_restore_databases": 1,
+        "separately_bound_restore_environments": 1,
+        "restores": 1,
+        "business_read_requests": 100,
+        "rehearsal_minutes": 60
+      },
+      "constraints": "Scheduler side-effect inventory and exact jobs; no dispatch without AP-09; provider backup/object snapshot/checksum and restore identity required; RTO/RPO criteria signed first; unavailable same-source restore runtime needs separate provisioning/deploy candidate approval",
+      "status": "SCHEDULER_BACKUP_TARGET_COST_PENDING_NOT_APPROVED",
+      "actual_actions": 0
+    },
+    {
+      "id": "AP-12",
+      "operation": "Readback/close own clients and sessions; retain immutable evidence; separately approved exact owned cleanup/disposal",
+      "depends_on": [
+        "AP-00"
+      ],
+      "proposed_limit": {
+        "deleted_object_keys": 4,
+        "fully_owned_disposable_db_resources": 2,
+        "auth_accounts_deleted": 0
+      },
+      "constraints": "Default retain for owner review; shared targets cannot be disposed; exact resource IDs/keys, closure, inventory and projection seal required before any deletion; never delete immutable audit rows directly",
+      "status": "EXACT_CLEANUP_MODE_AND_IDS_PENDING_NOT_APPROVED",
+      "actual_actions": 0
+    }
+  ],
+  "original_plan_id": "cosec-20261025-native-plan-fccb7c22",
+  "original_plan_path": "../cosec-20261025-native-plan-fccb7c22/approval-request.json",
+  "original_plan_sha256": "20ad7c792f6a23b37b478005ea14ba4c065f69a29cd1f806ac64a730f5f5db96",
+  "original_plan_evidence_base": "531887acce5468f7321a3a2919a7afaa20dedac1",
+  "local_prefill": "ap00-prefilled.json",
+  "role_template": "role-bindings-template.json",
+  "minimum_input_checklist": "MINIMUM-INPUT.md",
+  "ap00_stage_note": "Only metadata/identity preflight is proposed first. Remaining role/data/provider/restore requirements are deferred, never waived or marked ready. No partial sub-scope is approved by this preparation."
+}
