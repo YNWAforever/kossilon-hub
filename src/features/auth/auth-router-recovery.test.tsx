@@ -302,8 +302,14 @@ describe("REVIEW-3 actual router auth recovery", () => {
   );
 
   it("waits for the actual auth provider before automatic denied sign-out on a direct login entry", async () => {
+    let rejectSignOut!: (reason: Error) => void;
     rpc.configuration.mockRejectedValueOnce(new Error("Synthetic configuration failure"));
-    rpc.client.signOut.mockRejectedValueOnce(new Error("Synthetic logout failure"));
+    rpc.client.signOut.mockImplementationOnce(
+      () =>
+        new Promise((_, reject) => {
+          rejectSignOut = reject;
+        }),
+    );
     await mountRouter("/login?denied=1&redirect=%2Fdocuments");
     await act(async () => undefined);
     expect(screen.queryByText("Private account staff-A")).toBeNull();
@@ -314,7 +320,18 @@ describe("REVIEW-3 actual router auth recovery", () => {
     expect(screen.queryByText("Private account staff-A")).toBeNull();
     expect(new URLSearchParams(window.location.search).get("denied")).toBe("1");
     expect(rpc.client.signOut).toHaveBeenCalledOnce();
-    expect(screen.getByRole("button", { name: "重試登入狀態" })).toBeTruthy();
+    try {
+      // A provider call starting does not mean its rejection has rendered.
+      expect(screen.queryByRole("button", { name: "重試登入狀態" })).toBeNull();
+    } finally {
+      await act(async () => {
+        rejectSignOut(new Error("Synthetic logout failure"));
+      });
+    }
+    expect(await screen.findByRole("button", { name: "重試登入狀態" })).toBeTruthy();
+    expect(screen.queryByText("Private account staff-A")).toBeNull();
+    expect(new URLSearchParams(window.location.search).get("denied")).toBe("1");
+    expect(rpc.client.signOut).toHaveBeenCalledOnce();
   });
 
   it("does not share one router client's failed sign-out intent with a separate router client", async () => {

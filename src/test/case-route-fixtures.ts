@@ -1,0 +1,64 @@
+import type { IncorporationCase } from "@/features/incorporation/types";
+import type { CorporateChangeRequestDetail } from "@/features/corporate-changes/types";
+
+// UC160 memory-only records; never seeded into a database.
+export const routeCaseIds = [
+  "e4b761c9-0160-4160-8160-000000000001",
+  "e4b761c9-0160-4160-8160-000000000002",
+] as const;
+export function incorporationRouteFixture(id: string): IncorporationCase {
+  return {
+    id,
+    proposedCompanyNameEn: `QA UC160 ${id.slice(-1)}`,
+    proposedCompanyNameZh: null,
+    proposedRegisteredOffice: `QA Office ${id.slice(-1)}`,
+    proposedCompanySecretary: "QA Secretary",
+    registeredCapital: 10000,
+    businessNature: "QA only",
+    status: "Intake",
+    ownerId: "e4b761c9-0160-4160-8160-000000000010",
+    ownerName: "Staff A",
+    teamId: "e4b761c9-0160-4160-8160-000000000020",
+    teamName: "QA Team A",
+    targetCompletionDate: "2026-12-01",
+    companyId: null,
+    completedAt: null,
+    createdAt: "2026-10-24T00:00:00Z",
+    checklist: [],
+  };
+}
+export function changeRouteFixture(id: string): CorporateChangeRequestDetail {
+  return {
+    id,
+    companyId: "e4b761c9-0160-4160-8160-000000000030",
+    changeType: "address_change",
+    status: "Requested",
+    ownerId: "e4b761c9-0160-4160-8160-000000000010",
+    quotedFee: 1600 + Number(id.slice(-1)),
+    currentNameEn: null,
+    currentNameZh: null,
+    newNameEn: null,
+    newNameZh: null,
+    transferorShareholdingId: null,
+    transfereeShareholdingId: null,
+    transfereeNewShareholderName: null,
+    transfereeNewShareholderAddress: null,
+    sharesTransferred: null,
+    consideration: null,
+    stampDutyAmount: null,
+    officerId: null,
+    officerAction: null,
+    newOfficerType: null,
+    newOfficerName: null,
+    newOfficerIdentificationType: null,
+    newOfficerIdentificationNumber: null,
+    newOfficerAddress: null,
+    effectiveDate: null,
+    currentRegisteredOffice: null,
+    newRegisteredOffice: `QA Office ${id.slice(-1)}`,
+    completedAt: null,
+    createdAt: "2026-10-24T00:00:00Z",
+    updatedAt: "2026-10-24T00:00:00Z",
+    checklistItems: [],
+  };
+}
