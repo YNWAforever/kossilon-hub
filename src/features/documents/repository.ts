@@ -130,6 +130,8 @@ export type DocumentSummary = Omit<
   /** Listing metadata does not check storage or prove that an object exists. */
   objectAvailability?: "not_checked";
   uploadSource?: "staff" | "client" | "system";
+  /** Client-facing instruction for the rejected current version only. */
+  rejectionReason?: string | null;
 };
 
 export type DocumentUploadRequest = {
@@ -226,6 +228,7 @@ type IntentRow = {
   quarantine_retention_until: string | Date | null;
 };
 type DocumentRow = {
+  rejection_reason?: string | null;
   cursor_uploaded_at: string;
   scan_document_version_id?: string | null;
   reviewed_document_version_id?: string | null;
@@ -344,6 +347,12 @@ function availabilityOf(row: DocumentRow): DocumentAvailability {
 
 function mapDocumentSummary(row: DocumentRow): DocumentSummary {
   return {
+    rejectionReason:
+      row.current_version_id &&
+      row.reviewed_document_version_id === row.current_version_id &&
+      row.verification_status === "rejected"
+        ? row.rejection_reason?.trim() || null
+        : null,
     scannedVersionId: row.scan_document_version_id ?? null,
     reviewedVersionId: row.reviewed_document_version_id ?? null,
     verifiedChecksum: row.verified_checksum_sha256 ?? null,
@@ -507,12 +516,23 @@ export function createDocumentRepository(
       order by d.uploaded_at desc, d.id limit ${limit + (extra ? 1 : 0)})
       select d.*, d.uploaded_at::text as cursor_uploaded_at, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,
         i.scan_verdict_source,i.scan_document_version_id,v.id current_version_id,i.id intent_id,v.verified_checksum_sha256,
+        review.rejection_reason,
         md5(jsonb_build_object('document',to_jsonb(d),'version',to_jsonb(v),'intent',to_jsonb(i))::text) version_token
       from page d left join lateral (
         select * from document_versions where document_id=d.id and superseded_by_version_id is null order by version_number desc limit 1
       ) v on true
       left join document_upload_intents i on i.id=v.intent_id and i.document_id=d.id
         and i.company_id=d.company_id and i.case_id is not distinct from d.case_id and i.object_key=v.storage_url and v.storage_url=d.storage_url
+      left join lateral (
+        select e.metadata->>'reason' as rejection_reason from timeline_events e
+        where d.verification_status='rejected' and d.reviewed_document_version_id=v.id
+          and e.company_id=d.company_id and e.case_id is not distinct from d.case_id
+          and e.event_type='document_reviewed'
+          and e.metadata->>'documentId'=d.id::text
+          and e.metadata->>'documentVersionId'=v.id::text
+          and e.metadata->>'decision'='rejected'
+        order by e.created_at desc,e.id desc limit 1
+      ) review on true
       order by d.uploaded_at desc,d.id`;
     return client<DocumentRow[]>(query.strings, ...(query.values as never[]));
   }

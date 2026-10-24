@@ -36,6 +36,7 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/features/clients/create-recovery.integration.test.ts",
   "src/features/corporate-changes/repository.test.ts",
   "src/features/documents/repository.integration.test.ts",
+  "src/features/documents/rejection-readback.integration.test.ts",
   "src/features/documents/company-document-register.integration.test.ts",
   "src/features/documents/document-volume.integration.test.ts",
   "src/features/incorporation/repository.test.ts",

@@ -8,7 +8,7 @@ import {
 } from "../features/annual-return/server-fns";
 import { parseEntityId } from "@/lib/entity-id";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Download, ReceiptText } from "lucide-react";
@@ -771,6 +771,8 @@ function ScopedDocumentPanel({
   // last of them. Keyed by name+size+lastModified so re-picking the same file
   // reuses its row instead of accumulating duplicates.
   const [outcomes, setOutcomes] = useState<Record<string, UploadOutcome>>({});
+  const pendingFiles = useRef(new Set<string>());
+  const batchPending = useRef(false);
   const [uploading, setUploading] = useState(false);
   const productionReady = isUuid(companyId) && isUuid(caseId);
   const documentsQuery = useInfiniteQuery({
@@ -788,6 +790,8 @@ function ScopedDocumentPanel({
       : (documentsQuery.data?.pages.flatMap((page) => page.documents) ?? []);
   async function uploadOne(candidate: File): Promise<void> {
     const key = fileKey(candidate);
+    if (pendingFiles.current.has(key)) return;
+    pendingFiles.current.add(key);
     setOutcomes((current) => ({ ...current, [key]: { state: "uploading" } }));
     try {
       const bytes = new Uint8Array(await candidate.arrayBuffer());
@@ -811,6 +815,14 @@ function ScopedDocumentPanel({
       // yet readable evidence, and saying so plainly is the difference between an
       // honest state and the one this phase exists to remove.
       setOutcomes((current) => ({ ...current, [key]: { state: "received" } }));
+      // Both the batch and per-file retry must reread the saved document and
+      // the client requirement projection; a toast cannot establish receipt.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.documents(caseId) }),
+        queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.detail(caseId) }),
+        queryClient.invalidateQueries({ queryKey: ["client-portal", "case", caseId, actorScope] }),
+        queryClient.invalidateQueries({ queryKey: ["client-portal", "cases", actorScope] }),
+      ]);
     } catch (error) {
       setOutcomes((current) => ({
         ...current,
@@ -819,10 +831,14 @@ function ScopedDocumentPanel({
           message: error instanceof Error ? error.message : "上載失敗。",
         },
       }));
+    } finally {
+      pendingFiles.current.delete(key);
     }
   }
 
   async function uploadAll(candidates: File[]): Promise<void> {
+    if (batchPending.current) return;
+    batchPending.current = true;
     setUploading(true);
     try {
       // Sequential on purpose: each upload sends the whole body through a single
@@ -832,6 +848,7 @@ function ScopedDocumentPanel({
         await uploadOne(candidate);
       }
     } finally {
+      batchPending.current = false;
       setUploading(false);
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.documents(caseId) });
     }
@@ -966,6 +983,13 @@ function ScopedDocumentPanel({
                       : "只有文件登記，欠上載來源"}{" "}
                     / {labelValue(document.reviewStatus)}
                   </p>
+                  {document.reviewStatus === "rejected" ? (
+                    <p className="mt-1 whitespace-pre-wrap break-words text-sm text-status-orange-text">
+                      {document.rejectionReason
+                        ? `退回原因：${document.rejectionReason}`
+                        : "退回原因未有記錄，請聯絡負責同事確認需補正的內容。"}
+                    </p>
+                  ) : null}
                 </div>
                 {document.uploadStatus === "available" && document.reviewStatus === "verified" ? (
                   <Button onClick={() => handleDownload(document.id)} type="button">
