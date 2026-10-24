@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {readFileSync,readdirSync,statSync} from 'node:fs';
+import {join,relative,resolve} from 'node:path';
+import {verifyBlobs} from './git-blob-verify.mjs';
+const folder=import.meta.dirname,root=resolve(folder,'../../..');assert.equal(process.cwd(),root);
+const git=(...args)=>execFileSync('git',args,{cwd:root,windowsHide:true}).toString().trim();
+const head=git('rev-parse','HEAD'),source=JSON.parse(readFileSync(join(folder,'source-candidate.json'),'utf8'));
+assert.equal(git('rev-parse','HEAD^'),source.source_sha);
+const walk=dir=>readdirSync(dir).flatMap(name=>{const p=join(dir,name);return statSync(p).isDirectory()?walk(p):[{path:relative(root,p).replaceAll('\\','/')}]});
+const files=walk(folder);verifyBlobs(root,head,files);
+const freeze=JSON.parse(readFileSync(join(folder,source.source_freeze),'utf8'));verifyBlobs(root,source.source_sha,freeze.files);verifyBlobs(root,head,freeze.files);
+assert.equal(git('status','--porcelain=v1'),'');
+console.log(JSON.stringify({delivery_sha:head,source_sha:source.source_sha,evidence_git_blobs_verified:files.length,source_files_verified:freeze.files.length,status:'clean',push_merge_deploy:false}));

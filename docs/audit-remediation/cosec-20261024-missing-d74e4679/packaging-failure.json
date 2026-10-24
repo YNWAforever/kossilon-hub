@@ -1,0 +1,128 @@
+{
+  "failure": "Local evidence stage whitespace gate rejected six authored helpers with blank line at EOF; no evidence commit created",
+  "source_sha": "80a8fc31e797fe0a897bdd6a8b9f82221246a1d2",
+  "staged_paths": [
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/DELIVERY.md",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/PLAN.md",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/acceptance-results.csv",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/acceptance-verification.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/baseline.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/blockers.md",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/browser-checkpoints-green1.jsonl",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/browser-checkpoints-historical1.jsonl",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/browser-entry.tsx.snapshot",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/browser-green1.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/browser-green1.txt",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/browser-historical1.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/browser-historical1.txt",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/browser-missing.mjs",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/browser-results-green1.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/browser-results-historical1.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/browser-target-green1.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/browser-target-historical1.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/build-artifacts.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/build-final.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/build-final.txt",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/capture-evidence.mjs",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/capture-remote-final.ps1",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/check-local-cleanup.ps1",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/commit-evidence.ps1",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/commit-source.ps1",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/detail-before.tsx.snapshot",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/evidence-manifest.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/finalize-candidate.mjs",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/freeze-source.mjs",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/git-blob-verify.mjs",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/independent-review.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/lint-final.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/lint-final.txt",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/lint-verified.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/lint-verified.txt",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/local-process-inspection-after-checks.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/make-manifest.mjs",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/prepare-acceptance.ps1",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/prior-evidence-integrity.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/release-candidate.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/remote-after-checks.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/resource-checks.jsonl",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/resource-gate.mjs",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/run-checks.mjs",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/source-candidate.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/source-commit-receipt.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/source-final-before.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/source-final-formatted.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/source-post-checks.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/targeted-final.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/targeted-final.txt",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/targeted-green1.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/targeted-green1.txt",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/targeted-red1.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/targeted-red1.txt",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/test-red1.tsx.snapshot",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/typecheck-final.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/typecheck-final.txt",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/typecheck-verified.json",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/typecheck-verified.txt",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/verification-report.txt",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/verify-acceptance.ps1",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/verify-delivery.mjs",
+    "docs/audit-remediation/cosec-20261024-missing-d74e4679/verify-git-evidence.mjs"
+  ],
+  "snapshots": [
+    {
+      "path": "capture-remote-final.ps1",
+      "snapshot": "packaging-attempt1/capture-remote-final.ps1.snapshot",
+      "bytes": 1005,
+      "sha256": "0af9fa1292a6f7fc6e44102e4d37f6053a2f605006c1852afa47a9185e6af87a"
+    },
+    {
+      "path": "check-local-cleanup.ps1",
+      "snapshot": "packaging-attempt1/check-local-cleanup.ps1.snapshot",
+      "bytes": 1182,
+      "sha256": "e1d4be601a6e795db6cd95f88f157edc9331b48001d7a8cea40e9d25bffbf954"
+    },
+    {
+      "path": "commit-evidence.ps1",
+      "snapshot": "packaging-attempt1/commit-evidence.ps1.snapshot",
+      "bytes": 1311,
+      "sha256": "e7df8b9db38ff37b33b66737adc7e526d8b65cf48df07df291a88b364a34eb48"
+    },
+    {
+      "path": "git-blob-verify.mjs",
+      "snapshot": "packaging-attempt1/git-blob-verify.mjs.snapshot",
+      "bytes": 1388,
+      "sha256": "cf96bafb0473623ec51f7879bfb01650d499e0d4d85eb215031a4595ba8c8ac4"
+    },
+    {
+      "path": "make-manifest.mjs",
+      "snapshot": "packaging-attempt1/make-manifest.mjs.snapshot",
+      "bytes": 922,
+      "sha256": "894d7e84343aa66ebd0403343f288f0cb22ba345f854694b56a765e02a0c7434"
+    },
+    {
+      "path": "run-checks.mjs",
+      "snapshot": "packaging-attempt1/run-checks.mjs.snapshot",
+      "bytes": 3271,
+      "sha256": "2920fa94429021103a5e13aa5dc957e4496746d62ab66a7e7a9091e0c40d325f"
+    },
+    {
+      "path": "verify-delivery.mjs",
+      "snapshot": "packaging-attempt1/verify-delivery.mjs.snapshot",
+      "bytes": 2707,
+      "sha256": "c4ea9db9beac573bb6aaf6ff7982ca80231854f5f3d14e96552fa331e7d45e43"
+    },
+    {
+      "path": "release-candidate.json",
+      "snapshot": "packaging-attempt1/release-candidate.json.snapshot",
+      "bytes": 2608,
+      "sha256": "aa723ee17789ea2741054dc12a82212c56847426537e634d6fce3b0900244406"
+    },
+    {
+      "path": "DELIVERY.md",
+      "snapshot": "packaging-attempt1/DELIVERY.md.snapshot",
+      "bytes": 5423,
+      "sha256": "e1acd61fd56f1989b3efa95617bd0b18b3140557c581643795dd9ecf3e46ef55"
+    }
+  ],
+  "raw_logs_changed": false
+}

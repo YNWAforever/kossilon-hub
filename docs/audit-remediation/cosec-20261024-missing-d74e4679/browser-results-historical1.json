@@ -1,0 +1,456 @@
+{
+  "run_id": "cosec-20261024-missing-d74e4679",
+  "attempt": "historical1",
+  "instance": "8adc9f83-cd0a-48b3-a55b-bbaca051cbf1",
+  "started": "2026-10-24T05:12:36.550Z",
+  "finished": "2026-10-24T05:12:49.419Z",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "origin": "http://127.0.0.1:5173",
+  "head": "c9d783478572b1e11331018d46e09e20f427b832",
+  "base": "c9d783478572b1e11331018d46e09e20f427b832",
+  "sourceHashes": {
+    "src/routes/corporate-changes.tsx": "4423afd278142ca42564aa2b0e6149a0c951f39f9ffd20b80207633d5a410c38",
+    "src/routes/corporate-changes.$id.tsx": "8a18469afd7d1b4f4b74ed913b027bb1f3392638492836851100fc0c12c7e3f1",
+    "src/features/corporate-changes/components/production-corporate-change-detail.tsx": "3e743523787aff0c55f157b4a5c59a3fe2cbd01c9cea44a80512e4afc480ce8e",
+    "src/features/corporate-changes/components/production-corporate-change-list.tsx": "f337f1abb2fa23be9c7cda111938b1007576ee908e54526d90d9c6579474d6a3",
+    "src/features/incorporation/components/case-list-controls.tsx": "5befc3b19d8f9e9ec5d327cdc1d18d81b0122e07bc30f0e5c50d1bacb7e5a220",
+    "src/features/incorporation/case-list-query.ts": "3fff400d7bec324e3767b49f6c095a7d2e515919a1af9082ad11a8def7ee650e",
+    "src/features/annual-return/daily-view-state.ts": "7e9ab06bdb0833a360e4b5761128f46ab627a5a5f6ae33ac51e21941e842e6af",
+    "src/features/auth/route-guard.ts": "b4e7020162c089b4e8145666147ead762498b3a544a763d126b99f1156d41838",
+    "src/lib/entity-id.ts": "de5b11e4caae0f554dacc4eb03220e22e878f7ae2ef15de10046f357d58aebb8",
+    "src/components/record-unavailable.tsx": "0ed9d431c1d9aede02bc5769e87a540a2da0cd8a80296a40fd332cd248d2cc9f",
+    "package.json": "a59dd2177080ce3e77cb9414948f0d030c58bfeac96150a217cfd20784275b49"
+  },
+  "effectiveHashes": {
+    "src/routes/corporate-changes.tsx": "4423afd278142ca42564aa2b0e6149a0c951f39f9ffd20b80207633d5a410c38",
+    "src/routes/corporate-changes.$id.tsx": "8a18469afd7d1b4f4b74ed913b027bb1f3392638492836851100fc0c12c7e3f1",
+    "src/features/corporate-changes/components/production-corporate-change-detail.tsx": "8102208bae797c18dc0458aa1dad65ef45650e2c381d364d31660647cfc07282",
+    "src/features/corporate-changes/components/production-corporate-change-list.tsx": "f337f1abb2fa23be9c7cda111938b1007576ee908e54526d90d9c6579474d6a3",
+    "src/features/incorporation/components/case-list-controls.tsx": "5befc3b19d8f9e9ec5d327cdc1d18d81b0122e07bc30f0e5c50d1bacb7e5a220",
+    "src/features/incorporation/case-list-query.ts": "3fff400d7bec324e3767b49f6c095a7d2e515919a1af9082ad11a8def7ee650e",
+    "src/features/annual-return/daily-view-state.ts": "7e9ab06bdb0833a360e4b5761128f46ab627a5a5f6ae33ac51e21941e842e6af",
+    "src/features/auth/route-guard.ts": "b4e7020162c089b4e8145666147ead762498b3a544a763d126b99f1156d41838",
+    "src/lib/entity-id.ts": "de5b11e4caae0f554dacc4eb03220e22e878f7ae2ef15de10046f357d58aebb8",
+    "src/components/record-unavailable.tsx": "0ed9d431c1d9aede02bc5769e87a540a2da0cd8a80296a40fd332cd248d2cc9f",
+    "package.json": "a59dd2177080ce3e77cb9414948f0d030c58bfeac96150a217cfd20784275b49"
+  },
+  "harnessHashes": {
+    "browser-missing.mjs": "cbcf8fcfd04ad2a4a64900c2685dc2a80962482c766906017a64973f6864d867",
+    "browser-entry.tsx.snapshot": "4dce26610e5c81a4016be36d79021f93e2642b91fd278cecbcd6e391da3bdade",
+    "detail-before.tsx.snapshot": "8102208bae797c18dc0458aa1dad65ef45650e2c381d364d31660647cfc07282"
+  },
+  "historical_overlay": true,
+  "browser_version": "155.0.4283.62",
+  "results": [
+    {
+      "name": "UC164 malformed zero-RPC retains caller context",
+      "status": "failed",
+      "error": "expect(locator).toHaveAttribute(expected) failed\n\nLocator: getByRole('link', { name: '返回工作列表', exact: true })\nExpected: \"/corporate-changes?q=QA&sort=company&cursor=UC164-d74e4679-page3\"\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toHaveAttribute\" getByRole('link', { name: '返回工作列表', exact: true }) with timeout 5000ms\n  - waiting for getByRole('link', { name: '返回工作列表', exact: true })\n",
+      "url": "http://127.0.0.1:5173/corporate-changes/not-a-uuid?returnTo=%2Fcorporate-changes%3Fq%3DQA%26sort%3Dcompany%26cursor%3DUC164-d74e4679-page3",
+      "dom": "案件與客戶\n\n找不到公司變更申請\n返回公司變更",
+      "state": {
+        "reads": [],
+        "listReads": [
+          {
+            "q": "QA",
+            "sort": "company",
+            "cursor": "UC164-d74e4679-page3"
+          }
+        ],
+        "pending": [],
+        "settled": 0,
+        "documentId": "8d2c4692-5a18-443b-9495-6475fd6434a9",
+        "queryClientId": "01fc835c-c747-470f-9b12-3a17a3d0a704",
+        "boot": 1
+      }
+    },
+    {
+      "name": "UC164 valid absent UUID returns null without retry",
+      "status": "passed",
+      "evidence": {
+        "rpc_reads": 1,
+        "null_is_not_error": true,
+        "no_retry": true
+      },
+      "state": {
+        "reads": [
+          {
+            "sequence": 1,
+            "id": "d74e4679-0164-4164-8164-000000000099",
+            "mode": "normal",
+            "documentId": "4ce7ad7d-64c8-4ea2-8f3f-74e9f84a85b6",
+            "queryClientId": "0d6a0f43-6071-4405-ba3f-a3083d7f0fb6",
+            "boot": 1,
+            "outcome": "null"
+          }
+        ],
+        "listReads": [],
+        "pending": [],
+        "settled": 1,
+        "documentId": "4ce7ad7d-64c8-4ea2-8f3f-74e9f84a85b6",
+        "queryClientId": "0d6a0f43-6071-4405-ba3f-a3083d7f0fb6",
+        "boot": 1
+      }
+    },
+    {
+      "name": "UC164 explicit null keeps filtered return and browser Back",
+      "status": "passed",
+      "evidence": {
+        "null_is_not_error": true,
+        "back_forward": true,
+        "exact_return": "/corporate-changes?q=QA&sort=company&cursor=UC164-d74e4679-page3"
+      },
+      "state": {
+        "reads": [
+          {
+            "sequence": 1,
+            "id": "d74e4679-0164-4164-8164-000000000001",
+            "mode": "missing",
+            "documentId": "a3ebed7e-8502-45bd-9b97-d97c3d059c95",
+            "queryClientId": "aec50e9c-e943-47ac-bf63-840d4f0dadd4",
+            "boot": 1,
+            "outcome": "null"
+          },
+          {
+            "sequence": 2,
+            "id": "d74e4679-0164-4164-8164-000000000001",
+            "mode": "missing",
+            "documentId": "a3ebed7e-8502-45bd-9b97-d97c3d059c95",
+            "queryClientId": "aec50e9c-e943-47ac-bf63-840d4f0dadd4",
+            "boot": 1,
+            "outcome": "null"
+          }
+        ],
+        "listReads": [
+          {
+            "q": "QA",
+            "sort": "company",
+            "cursor": "UC164-d74e4679-page3"
+          }
+        ],
+        "pending": [],
+        "settled": 0,
+        "documentId": "bfe19366-7f42-4f24-b6fd-8fece6ae4d68",
+        "queryClientId": "28559a05-ecfd-4e3c-b4b8-4fc34b5ba70d",
+        "boot": 2
+      }
+    },
+    {
+      "name": "UC164 503 redacted explicit retry and pending deduplication",
+      "status": "passed",
+      "evidence": {
+        "initial_failure_reads": 1,
+        "automatic_retries": 0,
+        "explicit_retry_reads": 1,
+        "pending_duplicate_reads": 0,
+        "recovered": true
+      },
+      "state": {
+        "reads": [
+          {
+            "sequence": 1,
+            "id": "d74e4679-0164-4164-8164-000000000001",
+            "mode": "error",
+            "documentId": "911d2aa2-6f21-49ab-85e3-06aee79e45b3",
+            "queryClientId": "c75c4bbc-c91d-4227-9d36-7f233e6b2bde",
+            "boot": 1,
+            "outcome": "synthetic-503"
+          },
+          {
+            "sequence": 2,
+            "id": "d74e4679-0164-4164-8164-000000000001",
+            "mode": "normal",
+            "documentId": "911d2aa2-6f21-49ab-85e3-06aee79e45b3",
+            "queryClientId": "c75c4bbc-c91d-4227-9d36-7f233e6b2bde",
+            "boot": 1,
+            "outcome": "record"
+          }
+        ],
+        "listReads": [
+          {
+            "q": "QA",
+            "sort": "company",
+            "cursor": "UC164-d74e4679-page3"
+          }
+        ],
+        "pending": [],
+        "settled": 2,
+        "documentId": "911d2aa2-6f21-49ab-85e3-06aee79e45b3",
+        "queryClientId": "c75c4bbc-c91d-4227-9d36-7f233e6b2bde",
+        "boot": 1
+      }
+    },
+    {
+      "name": "UC164 403 generic error hides sensitive content and permits existing retry",
+      "status": "passed",
+      "evidence": {
+        "generic_redacted_message": true,
+        "sensitive_dom_absent": true,
+        "explicit_retry_reads": 1,
+        "policy_limit": "Synthetic denial response only; no actual Auth/authorization/RLS verification"
+      },
+      "state": {
+        "reads": [
+          {
+            "sequence": 1,
+            "id": "d74e4679-0164-4164-8164-000000000001",
+            "mode": "denied",
+            "documentId": "ffe8524f-cdd6-4dbe-b3aa-ea66a513473b",
+            "queryClientId": "07733e40-2b46-4847-b3e4-31ad0379c487",
+            "boot": 1,
+            "outcome": "synthetic-403"
+          },
+          {
+            "sequence": 2,
+            "id": "d74e4679-0164-4164-8164-000000000001",
+            "mode": "normal",
+            "documentId": "ffe8524f-cdd6-4dbe-b3aa-ea66a513473b",
+            "queryClientId": "07733e40-2b46-4847-b3e4-31ad0379c487",
+            "boot": 1,
+            "outcome": "record"
+          }
+        ],
+        "listReads": [
+          {
+            "q": "QA",
+            "sort": "company",
+            "cursor": "UC164-d74e4679-page3"
+          }
+        ],
+        "pending": [],
+        "settled": 2,
+        "documentId": "ffe8524f-cdd6-4dbe-b3aa-ea66a513473b",
+        "queryClientId": "07733e40-2b46-4847-b3e4-31ad0379c487",
+        "boot": 1
+      }
+    },
+    {
+      "name": "UC164 outage return restores exact filtered list",
+      "status": "passed",
+      "evidence": {
+        "error_return": "/corporate-changes?q=QA&sort=company&cursor=UC164-d74e4679-page3"
+      },
+      "state": {
+        "reads": [
+          {
+            "sequence": 1,
+            "id": "d74e4679-0164-4164-8164-000000000001",
+            "mode": "error",
+            "documentId": "3a153563-9e77-4aeb-80d0-b53dc200d707",
+            "queryClientId": "bc2b7838-2903-407b-a264-6f7f42a04153",
+            "boot": 1,
+            "outcome": "synthetic-503"
+          }
+        ],
+        "listReads": [
+          {
+            "q": "QA",
+            "sort": "company",
+            "cursor": "UC164-d74e4679-page3"
+          }
+        ],
+        "pending": [],
+        "settled": 0,
+        "documentId": "d4da0c73-547b-4e84-8886-8c52da18ed5d",
+        "queryClientId": "9a4502f6-2d92-47ea-91b1-abb366800f32",
+        "boot": 2
+      }
+    },
+    {
+      "name": "UC164 valid missing rejects unsafe caller return",
+      "status": "passed",
+      "evidence": {
+        "rejected_return_inputs": 3,
+        "safe_fallback": "/annual-returns",
+        "external_navigation": false
+      },
+      "state": {
+        "reads": [
+          {
+            "sequence": 1,
+            "id": "d74e4679-0164-4164-8164-000000000099",
+            "mode": "normal",
+            "documentId": "62bf4e11-21aa-4cd5-9d4a-7b7b415eda17",
+            "queryClientId": "c29f44e5-bc4c-4b81-917e-514e7d765c54",
+            "boot": 1,
+            "outcome": "null"
+          }
+        ],
+        "listReads": [
+          {
+            "q": "QA",
+            "sort": "company",
+            "cursor": "UC164-d74e4679-page3"
+          }
+        ],
+        "pending": [],
+        "settled": 1,
+        "documentId": "62bf4e11-21aa-4cd5-9d4a-7b7b415eda17",
+        "queryClientId": "c29f44e5-bc4c-4b81-917e-514e7d765c54",
+        "boot": 1
+      }
+    },
+    {
+      "name": "UC164 departure ignores a late successful detail response",
+      "status": "passed",
+      "evidence": {
+        "response_resolved_after_departure": true,
+        "late_detail_did_not_replace_list": true
+      },
+      "state": {
+        "reads": [
+          {
+            "sequence": 1,
+            "id": "d74e4679-0164-4164-8164-000000000001",
+            "mode": "normal",
+            "documentId": "8421521a-e059-487f-818e-9f2981c8388f",
+            "queryClientId": "a412a33f-3a5f-4ed4-a023-fa7fea9254ad",
+            "boot": 1,
+            "outcome": "record"
+          }
+        ],
+        "listReads": [
+          {
+            "q": "QA",
+            "sort": "company",
+            "cursor": "UC164-d74e4679-page3"
+          },
+          {
+            "q": "QA",
+            "sort": "company",
+            "cursor": "UC164-d74e4679-page3"
+          }
+        ],
+        "pending": [],
+        "settled": 1,
+        "documentId": "8421521a-e059-487f-818e-9f2981c8388f",
+        "queryClientId": "a412a33f-3a5f-4ed4-a023-fa7fea9254ad",
+        "boot": 1
+      }
+    },
+    {
+      "name": "UC164 real reload creates fresh QueryClient and reads updated local transport",
+      "status": "passed",
+      "evidence": {
+        "actual_browser_reload": true,
+        "new_query_client": true,
+        "reads_before": 1,
+        "reads_after_reload": 2,
+        "copied_url_reads": 3,
+        "fresh_transport_value": "HKD 9,164",
+        "persistence": "own sessionStorage stub only"
+      },
+      "state": {
+        "reads": [
+          {
+            "sequence": 1,
+            "id": "d74e4679-0164-4164-8164-000000000001",
+            "mode": "normal",
+            "documentId": "e48459b5-362f-49e1-95cc-bff36e6ff5ad",
+            "queryClientId": "0da2031e-b76e-46dd-a579-59e3590238d4",
+            "boot": 1,
+            "outcome": "record"
+          },
+          {
+            "sequence": 2,
+            "id": "d74e4679-0164-4164-8164-000000000001",
+            "mode": "normal",
+            "documentId": "018ac2a1-685a-4202-9d1c-c233c53f7ebb",
+            "queryClientId": "579cc03d-22bc-4c12-a6f7-8d17282a41f7",
+            "boot": 2,
+            "outcome": "record"
+          },
+          {
+            "sequence": 3,
+            "id": "d74e4679-0164-4164-8164-000000000001",
+            "mode": "normal",
+            "documentId": "f6bea691-c6f5-4fbd-877f-0fccbab88ff8",
+            "queryClientId": "b725af20-02a9-43bd-bd76-608c151e4e3c",
+            "boot": 3,
+            "outcome": "record"
+          }
+        ],
+        "listReads": [],
+        "pending": [],
+        "settled": 1,
+        "documentId": "f6bea691-c6f5-4fbd-877f-0fccbab88ff8",
+        "queryClientId": "b725af20-02a9-43bd-bd76-608c151e4e3c",
+        "boot": 3
+      }
+    }
+  ],
+  "blocked_external_requests": [],
+  "unstubbed_boundary_violations": [],
+  "page_errors": [],
+  "console_errors": [],
+  "http_errors": [],
+  "resolutions": [
+    {
+      "id": "../server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/corporate-changes/components/production-corporate-change-detail.tsx",
+      "stub": "changes"
+    },
+    {
+      "id": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src/components/corporate-changes/create-corporate-change-request-dialog",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/corporate-changes/components/production-corporate-change-list.tsx",
+      "stub": "dialog"
+    },
+    {
+      "id": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src/features/corporate-changes/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/corporate-changes/components/production-corporate-change-list.tsx",
+      "stub": "changes"
+    },
+    {
+      "id": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src/features/clients/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/corporate-changes/components/production-corporate-change-list.tsx",
+      "stub": "clients"
+    }
+  ],
+  "served_production_modules": [
+    "/src/components/checklist-item-label.tsx",
+    "/src/components/demo-unavailable.tsx",
+    "/src/components/page-header.tsx",
+    "/src/components/record-unavailable.tsx",
+    "/src/components/ui/button.tsx",
+    "/src/components/ui/field.tsx",
+    "/src/components/ui/skeleton.tsx",
+    "/src/features/annual-return/daily-view-state.ts",
+    "/src/features/annual-return/outstanding.ts",
+    "/src/features/annual-return/package-manifest.ts",
+    "/src/features/annual-return/readiness.ts",
+    "/src/features/annual-return/requirements.ts",
+    "/src/features/annual-return/work-views.ts",
+    "/src/features/auth/route-guard.ts",
+    "/src/features/corporate-changes/components/demo-corporate-change-notice.tsx",
+    "/src/features/corporate-changes/components/production-corporate-change-detail.tsx",
+    "/src/features/corporate-changes/components/production-corporate-change-list.tsx",
+    "/src/features/corporate-changes/labels.ts",
+    "/src/features/documents/findings.ts",
+    "/src/features/documents/safety.ts",
+    "/src/features/documents/versions.ts",
+    "/src/features/incorporation/case-list-query.ts",
+    "/src/features/incorporation/components/case-list-controls.tsx",
+    "/src/features/runtime/data-mode.ts",
+    "/src/lib/checklist-item-label.ts",
+    "/src/lib/date-math.ts",
+    "/src/lib/entity-id.ts",
+    "/src/lib/page-title.ts",
+    "/src/lib/utils.ts",
+    "/src/routes/corporate-changes.$id.tsx",
+    "/src/routes/corporate-changes.tsx"
+  ],
+  "outer_error": null,
+  "native_application_http": false,
+  "native_auth": false,
+  "native_db": false,
+  "native_rls": false,
+  "limitations": [
+    "Synthetic Staff root context bypasses real authentication and role resolution",
+    "503/403 are thrown RPC stub errors, not native HTTP statuses",
+    "Local list adapter does not prove server filtering, pagination or authorization",
+    "Reload reads own sessionStorage only; no backend persistence or RLS proof",
+    "Create dialog is stubbed; no mutations or other domains exercised",
+    "Headless local Edge only; no physical device or Safari/WebKit acceptance"
+  ],
+  "cleanup": "Own contexts/browser/loopback server closed; immutable receipts/cache retained; no DB or shared-resource cleanup"
+}

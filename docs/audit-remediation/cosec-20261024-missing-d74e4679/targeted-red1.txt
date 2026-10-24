@@ -1,0 +1,225 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/routes/-missing-record.interaction.test.tsx (13 tests | 4 failed) 1173ms
+     × keeps the filtered return path for malformed invalid-id without any read 676ms
+     × keeps the filtered return path for malformed 123 without any read 29ms
+     × keeps the filtered return path for malformed 00000000-0000-0000-0000-00000000000g without any read 30ms
+     ✓ typed repository absence yields missing, not outage, and a fresh read after reopening 73ms
+     ✓ redacts transient repository details, finishes loading and explicitly retries only once 55ms
+     ✓ closes 'other team' through real domain authorization and reveals no request 39ms
+     ✓ closes 'no team' through real domain authorization and reveals no request 32ms
+     ✓ closes 'Client' through real domain authorization and reveals no request 31ms
+     ✓ closes 'inactive' through real domain authorization and reveals no request 31ms
+     ✓ Admin positive control reads another team without changing the URL 18ms
+     × keeps unsafe returnTo local even for a malformed ID 22ms
+     ✓ Back restores the filtered list and leaving a pending retry ignores its late response 104ms
+     ✓ a late missing response cannot replace another request's successful read 32ms
+ ✓ |unit| src/routes/-case-subroutes.interaction.test.tsx (22 tests) 1797ms
+     ✓ opens the linked detail, changes DOM and URL, and restores page3 on Back/Forward  674ms
+ ✓ |unit| src/components/record-unavailable.test.tsx (2 tests) 291ms
+ ✓ |unit| src/features/corporate-changes/read.test.ts (8 tests) 10ms
+ ✓ |unit| src/lib/entity-id.test.ts (15 tests) 7ms
+ ✓ |unit| src/features/corporate-changes/authorization.test.ts (9 tests) 8ms
+ ✓ |unit| src/features/corporate-changes/server-fns.test.ts (6 tests) 6ms
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  4 failed | 71 passed (75)
+   Start at  13:05:42
+   Duration  38.77s (transform 1.41s, setup 0ms, import 9.90s, tests 3.29s, environment 23.03s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-missing-record.interaction.test.tsx > UC164 corporate change missing/error recovery > keeps the filtered return path for malformed invalid-id without any read
+ FAIL  |unit| src/routes/-missing-record.interaction.test.tsx > UC164 corporate change missing/error recovery > keeps the filtered return path for malformed 123 without any read
+ FAIL  |unit| src/routes/-missing-record.interaction.test.tsx > UC164 corporate change missing/error recovery > keeps the filtered return path for malformed 00000000-0000-0000-0000-00000000000g without any read
+TestingLibraryElementError: Unable to find an accessible element with the role "link" and name "返回工作列表"
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  [36m<main[39m
+    [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "找不到公司變更申請":
+  [36m<h1[39m
+    [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  link:
+
+  Name "返回公司變更":
+  [36m<a[39m
+    [33maria-current[39m=[32m"page"[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+    [33mdata-status[39m=[32m"active"[39m
+    [33mhref[39m=[32m"/corporate-changes"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m找不到公司變更申請[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+          [33mdata-status[39m=[32m"active"[39m
+          [33mhref[39m=[32m"/corporate-changes"[39m
+        [36m>[39m
+          [0m返回公司變更[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/routes/-missing-record.interaction.test.tsx:118:21
+    116|       expect(repository.getRequest).not.toHaveBeenCalled();
+    117|       expect(screen.queryByRole("button", { name: "重試" })).toBeNull();
+    118|       expect(screen.getByRole("link", { name: "返回工作列表" }).getAttribute…
+       |                     ^
+    119|     },
+    120|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |unit| src/routes/-missing-record.interaction.test.tsx > UC164 corporate change missing/error recovery > keeps unsafe returnTo local even for a malformed ID
+TestingLibraryElementError: Unable to find an accessible element with the role "link" and name "返回工作列表"
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  [36m<main[39m
+    [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "找不到公司變更申請":
+  [36m<h1[39m
+    [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  link:
+
+  Name "返回公司變更":
+  [36m<a[39m
+    [33maria-current[39m=[32m"page"[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+    [33mdata-status[39m=[32m"active"[39m
+    [33mhref[39m=[32m"/corporate-changes"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m案件與客戶[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m找不到公司變更申請[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm active"[39m
+          [33mdata-status[39m=[32m"active"[39m
+          [33mhref[39m=[32m"/corporate-changes"[39m
+        [36m>[39m
+          [0m返回公司變更[0m
+        [36m</a>[39m
+      [36m</div>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/routes/-missing-record.interaction.test.tsx:189:19
+    187|     await view("/corporate-changes/invalid?returnTo=https%3A%2F%2Fexte…
+    188|     await screen.findByRole("heading", { name: "找不到公司變更申請" });
+    189|     expect(screen.getByRole("link", { name: "返回工作列表" }).getAttribute("…
+       |                   ^
+    190|       "/annual-returns",
+    191|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+

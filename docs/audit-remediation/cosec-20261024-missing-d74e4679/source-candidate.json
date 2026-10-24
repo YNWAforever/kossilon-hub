@@ -1,0 +1,27 @@
+{
+  "source_sha": "80a8fc31e797fe0a897bdd6a8b9f82221246a1d2",
+  "parent_sha": "c9d783478572b1e11331018d46e09e20f427b832",
+  "tested_head": "c9d783478572b1e11331018d46e09e20f427b832",
+  "paths": [
+    "src/features/corporate-changes/components/production-corporate-change-detail.tsx",
+    "src/routes/-missing-record.interaction.test.tsx"
+  ],
+  "files": [
+    {
+      "path": "src/features/corporate-changes/components/production-corporate-change-detail.tsx",
+      "bytes": 7313,
+      "sha256": "3e743523787aff0c55f157b4a5c59a3fe2cbd01c9cea44a80512e4afc480ce8e"
+    },
+    {
+      "path": "src/routes/-missing-record.interaction.test.tsx",
+      "bytes": 10727,
+      "sha256": "d69f7c275028cc36d3d2e91a2de324a61b5c21c1e928465af5f7f688361e9ec0"
+    }
+  ],
+  "source_freeze": "source-post-checks.json",
+  "source_files_verified": 649,
+  "all_final_checked_source_bytes_equal_committed": true,
+  "production_changes": [
+    "src/features/corporate-changes/components/production-corporate-change-detail.tsx"
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "run_id": "cosec-20261024-missing-d74e4679",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "80a8fc31e797fe0a897bdd6a8b9f82221246a1d2",
+  "parent_sha": "c9d783478572b1e11331018d46e09e20f427b832",
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "production_sha_user_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "phase": "LOCAL_UC164_PARTIAL_SCOPED_NATIVE_BLOCKED",
+  "release_gate": "NO_GO",
+  "deployed": false,
+  "auth_runtime_verified": false,
+  "native_http_db_verified": false,
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "source_manifest": "source-candidate.json",
+  "evidence_manifest": "evidence-manifest.json",
+  "checks": {
+    "targeted": {
+      "receipt": "targeted-final.json",
+      "log": "targeted-final.txt",
+      "exit_code": 0,
+      "summary": {
+        "tests": 75,
+        "files": 7,
+        "new_UC164_tests": 13
+      }
+    },
+    "typecheck": {
+      "receipt": "typecheck-verified.json",
+      "log": "typecheck-verified.txt",
+      "exit_code": 0
+    },
+    "lint": {
+      "receipt": "lint-verified.json",
+      "log": "lint-verified.txt",
+      "exit_code": 0
+    },
+    "build": {
+      "receipt": "build-final.json",
+      "log": "build-final.txt",
+      "exit_code": 0
+    },
+    "browser": {
+      "receipt": "browser-green1.json",
+      "log": "browser-green1.txt",
+      "exit_code": 0,
+      "report": "browser-results-green1.json",
+      "passed": 9,
+      "baseline_countercontrol": {
+        "passed": 8,
+        "failed": 1,
+        "exit_code": 1,
+        "exact_base_overlay": "c9d783478572b1e11331018d46e09e20f427b832"
+      }
+    }
+  },
+  "full_unit": "NOT_RUN_THIS_BATCH; prior 2685 result is historical only",
+  "local_browser": {
+    "version": "155.0.4283.62",
+    "passed": 9,
+    "transport": "memory/sessionStorage RPC stub; production route/components with synthetic Staff root context"
+  },
+  "database": {
+    "client_created": false,
+    "migrations": false,
+    "fixtures": false,
+    "cleanup": false
+  },
+  "remaining": [
+    "native same-version Auth and application HTTP status",
+    "DB/RLS and persisted browser reload",
+    "never-settling native transport/outage recovery",
+    "physical-device, Safari/WebKit and assistive-technology validation"
+  ],
+  "rollback": {
+    "action": "ordinary new commit reverting 80a8fc31e797fe0a897bdd6a8b9f82221246a1d2; preserve original evidence/history",
+    "production_action": false
+  }
+}

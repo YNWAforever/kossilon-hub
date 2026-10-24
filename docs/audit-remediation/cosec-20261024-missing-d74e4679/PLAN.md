@@ -1,0 +1,13 @@
+# UC164 本機驗收計劃
+
+Run: cosec-20261024-missing-d74e4679. Base: c9d783478572b1e11331018d46e09e20f427b832. Branch: codex/cosec-20261023. Root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023. Origin: https://github.com/YNWAforever/kossilon-hub.git. Intake clean. Remote main freshly read unchanged 1c57a67213af72bff8d776694e6ed8c986b921db. Historical production aa5d3cbddd895bca953b6eef7266ae1cc0b46215 not accessed.
+
+UC164 original: Staff A opens malformed / valid absent /corporate-changes/:id, retry and return. Missing and transient failure distinct, bounded loading after resolved error, no information leak. F19 / R15;R22;R26 mappings retained. Full native HTTP status/Auth/RLS remains blocked. No new mapping inferred.
+
+Coverage audit: prior UC160 has malformed no-RPC, absent/no-retry, 403/503 explicit retry, navigation/late results. Pure read tests distinguish typed not-found from repository failure. UC164 itself still NOT_RUN; need same-version focused proof with actual pure authorization and safe-error redaction, reload readback, filtered return. Suspected uncovered bug: malformed early return bypasses returnTo, dropping caller's work-list context. Reproduce before changing product source. Do not rewrite already-correct null/error distinction.
+
+Allowed read: specified local repo, supplied audit/plan, readonly remote ref; edit: scoped code/tests/evidence and owned memory-only test fixtures. No DB client, migration, persistent business fixture or cleanup needed. Native environment/provider/real writes are blocked; no push/merge/deploy. Graph metadata timed out at 8s, indexing not retried after earlier rejection. Use known-path fallback.
+
+Checks: scoped failing regression, smallest repair only if reproduced; affected read/auth/component/router tests, typecheck/lint/build. New local browser harness uses actual routes/components, bounded Vite loopback listener with exact run identity before fixture interaction, RPC/sessionStorage in-memory adapter, all external requests denied. Explicitly no native API/Auth/DB proof. Unique IDs start d74e4679-0164. Test retry/concurrent reads, departure/cancel, malformed/missing/error/denied, Back, safe return, actual browser reload/new query read. No fake success labels.
+
+Resource budget retained: focused1.5GiB, browser/typecheck/lint2GiB, full unit/build3GiB. Intake free RAM6526971904bytes, C disk18076762112bytes. Preserve gates/failures; do not stop unrelated workloads. Preserve 12 prior evidence runs and 1953 manifested files byte-for-byte. Ordinary local source + evidence commits; rollback via new revert commit, no history rewrite. Deliver DELIVERY, acceptance CSV184 rows (35F/15R/100UC/34LA), candidate version, manifest and blockers. Native70BLOCKED/114NOT_RUN/0PASS unchanged.
