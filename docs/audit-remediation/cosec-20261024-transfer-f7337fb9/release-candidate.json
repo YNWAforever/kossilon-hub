@@ -1,0 +1,149 @@
+{
+  "run_id": "cosec-20261024-transfer-f7337fb9",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "b367ee3eac2c09ee468c010bcfffab69b022adb9",
+  "parent_sha": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "production_sha_user_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "phase": "LOCAL_UC166_PARTIAL_SCOPED_NATIVE_BLOCKED",
+  "release_gate": "NO_GO",
+  "deployed": false,
+  "auth_runtime_verified": false,
+  "native_http_db_rls_verified": false,
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "source_manifest": "source-candidate.json",
+  "evidence_manifest": "evidence-manifest.json",
+  "checks": {
+    "targeted": {
+      "receipt": "targeted-final.json",
+      "log": "targeted-final.txt",
+      "exit_code": 0,
+      "summary": {
+        "tests": 116,
+        "files": 11
+      }
+    },
+    "typecheck": {
+      "receipt": "typecheck-final.json",
+      "log": "typecheck-final.txt",
+      "exit_code": 0
+    },
+    "lint": {
+      "receipt": "lint-final.json",
+      "log": "lint-final.txt",
+      "exit_code": 0
+    },
+    "build": {
+      "receipt": "build-final.json",
+      "log": "build-final.txt",
+      "exit_code": 0
+    },
+    "browser": {
+      "receipt": "browser-green1.json",
+      "log": "browser-green1.txt",
+      "exit_code": 0,
+      "report": "browser-results-green1.json",
+      "passed": 9,
+      "baseline_countercontrol": {
+        "report": "browser-results-historical4.json",
+        "failed": 6,
+        "passed": 3,
+        "scope": "exact base UI only, current shared schema/service"
+      }
+    },
+    "sql": {
+      "log": "db/test-green2.txt",
+      "journal": "db/test-green2.jsonl",
+      "exit_code": 0,
+      "tests": 9,
+      "files": 1,
+      "scenarios": [
+        {
+          "name": "service-rejections",
+          "artifact": "db/UC166-service-rejections-green2.jsonl",
+          "rejection_readbacks": 14,
+          "zero_owned_rows_after_cleanup": true
+        },
+        {
+          "name": "repository-rejections",
+          "artifact": "db/UC166-repository-rejections-green2.jsonl",
+          "rejection_readbacks": 14,
+          "zero_owned_rows_after_cleanup": true
+        },
+        {
+          "name": "sql-constraints",
+          "artifact": "db/UC166-sql-constraints-green2.jsonl",
+          "rejection_readbacks": 8,
+          "zero_owned_rows_after_cleanup": true
+        },
+        {
+          "name": "service-role-denials",
+          "artifact": "db/UC166-service-role-denials-green2.jsonl",
+          "rejection_readbacks": 6,
+          "zero_owned_rows_after_cleanup": true
+        },
+        {
+          "name": "control-new-holder",
+          "artifact": "db/UC166-control-new-holder-green2.jsonl",
+          "rejection_readbacks": 0,
+          "zero_owned_rows_after_cleanup": true
+        },
+        {
+          "name": "control-existing-holder",
+          "artifact": "db/UC166-control-existing-holder-green2.jsonl",
+          "rejection_readbacks": 0,
+          "zero_owned_rows_after_cleanup": true
+        },
+        {
+          "name": "control-db-int-boundary",
+          "artifact": "db/UC166-control-db-int-boundary-green2.jsonl",
+          "rejection_readbacks": 0,
+          "zero_owned_rows_after_cleanup": true
+        },
+        {
+          "name": "rollback-third-checklist-child",
+          "artifact": "db/UC166-rollback-third-checklist-child-green2.jsonl",
+          "rejection_readbacks": 0,
+          "zero_owned_rows_after_cleanup": true
+        },
+        {
+          "name": "rollback-work-item-child",
+          "artifact": "db/UC166-rollback-work-item-child-green2.jsonl",
+          "rejection_readbacks": 0,
+          "zero_owned_rows_after_cleanup": true
+        }
+      ]
+    }
+  },
+  "full_unit": "NOT_RUN_THIS_BATCH; historical results not reused",
+  "local_browser": {
+    "version": "155.0.4283.62",
+    "passed": 9,
+    "transport": "virtual RPC into actual domain services with memory/sessionStorage repository"
+  },
+  "isolated_sql": {
+    "container_id": "a5edf66bebc0004fb008f934c2f5b8e47490ff82dc19b64d162425c22ce97c90",
+    "system_id": "7700116422122385447",
+    "removed": true,
+    "auth": "injected actor; real SQL team read and pure domain policy",
+    "rls": false,
+    "external_http_calls": 0,
+    "prior_failed_target_removed": true
+  },
+  "remaining": [
+    "native same-version Auth/server-function HTTP/DB-RLS/persisted browser reload",
+    "physical device/Safari/WebKit/assistive technology",
+    "only pending UI dedupe and retry after refusal verified; lost committed-create response/independent new requests not deduped by this change",
+    "approved real holiday calendar and stock availability at completion remain separate scope"
+  ],
+  "rollback": {
+    "action": "ordinary new commit reverting b367ee3eac2c09ee468c010bcfffab69b022adb9; preserve evidence and published history",
+    "production_action": false
+  }
+}

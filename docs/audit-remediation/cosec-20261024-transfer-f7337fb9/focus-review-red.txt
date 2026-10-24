@@ -1,0 +1,190 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/components/corporate-changes/share-transfer-validation.test.tsx (11 tests | 1 failed) 2740ms
+     × explains a blank new holder on blur while numeric fields are still empty 1194ms
+     ✓ missing new holder "" is linked to field and never sent 138ms
+     ✓ missing new holder "   " is linked to field and never sent 140ms
+     ✓ quantity 0 has a field error and no RPC 123ms
+     ✓ quantity -1 has a field error and no RPC 111ms
+     ✓ quantity 1.5 has a field error and no RPC 131ms
+     ✓ quantity 2147483648 has a field error and no RPC 97ms
+     ✓ blur gives a missing existing-holder field explanation despite disabled submit 116ms
+     ✓ switching modes sends only the active transferee and correction allows retry 177ms
+     ✓ hides raw server details, retains inputs, then retries once 209ms
+     ✓ deduplicates two pending submits and cancel never submits  303ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  14:14:04
+   Duration  4.72s (transform 171ms, setup 0ms, import 587ms, tests 2.74s, environment 1.19s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/components/corporate-changes/share-transfer-validation.test.tsx > UC166 share transfer dialog rejection > explains a blank new holder on blur while numeric fields are still empty
+AssertionError: expected null to be 'true' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_2_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_1_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_0_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_1_"[39m
+        [36m>[39m
+          [0m新增公司變更申請[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_2_"[39m
+        [36m>[39m
+          [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-company"[39m
+          [36m>[39m
+            [0m公司[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-company"[39m
+            [33mname[39m=[32m"companyId"[39m
+            [33mrequired[39m=[32m""[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0m選擇公司[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+            [36m>[39m
+              [0mQA UC166[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [0m變更類別[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"name_change"[39m
+            [36m>[39m
+              [0m更改公司名稱[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"share_transfer"[39m
+            [36m>[39m
+              [0m股份轉讓[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"officer_change"[39m
+            [36m>[39m
+              [0m高級人員委任／辭任／資料變更[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"address_change"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+          [36m>[39m
+            [0m報價（HKD）[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-quoted-fee"[39m
+            [33mmin[39m=[32m"0"[39m
+            [33mname[39m=[32m"quotedFee"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mstep[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-transferor-shareholding"[39m
+          [36m>[39m
+            [0m轉讓人股權[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visib...
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ expectFieldError src/components/corporate-changes/share-transfer-validation.test.tsx:43:46
+     41| function expectFieldError(label: string) {
+     42|   const field = input(label);
+     43|   expect(field.getAttribute("aria-invalid")).toBe("true");
+       |                                              ^
+     44|   const described = field.getAttribute("aria-describedby");
+     45|   expect(described).toBeTruthy();
+ ❯ src/components/corporate-changes/share-transfer-validation.test.tsx:70:23
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

@@ -1,0 +1,5 @@
+UC166 SQL attempt green1: 4 failed /5 passed. Negative service/repository/SQL/role checks and checklist-child rollback passed. Three positive controls and work-item rollback were obstructed by synthetic SLA calendar short weekday keys. Existing BusinessCalendar.Weekday requires full names monday..sunday, confirmed against types.ts and business-calendar.test.ts. No product expectations or source modified for this fixture defect.
+
+All exact fixture rows were independently read back as absent, whole-business counts restored, then exact first container was identity-checked and removed by teardown1. Old immutable foundation was not updated/deleted through SQL. Original helper retained db-runner-calendar-before.mjs.snapshot.
+
+Retry uses a fresh target/container/system ID and separate ignored cache suffix -db-r2, same unique delivery run and fresh random fixture IDs per scenario/attempt. Old teardown/identity/logs remain immutable and cannot certify the new target. Correct weekday keys applied only while constructing the NEW synthetic foundation; no app seed or approved real calendar claim.

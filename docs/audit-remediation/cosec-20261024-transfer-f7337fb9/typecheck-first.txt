@@ -1,0 +1,6 @@
+src/components/corporate-changes/create-corporate-change-request-dialog.tsx(337,30): error TS2352: Conversion of type 'EventTarget & HTMLFormElement' to type 'HTMLInputElement' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'EventTarget & HTMLFormElement' is missing the following properties from type 'HTMLInputElement': accept, align, alt, capture, and 51 more.
+src/components/corporate-changes/create-corporate-change-request-dialog.tsx(339,28): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Record<string, string> | {}'.
+  No index signature with a parameter of type 'string' was found on type 'Record<string, string> | {}'.
+src/components/corporate-changes/create-corporate-change-request-dialog.tsx(340,69): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Record<string, string> | {}'.
+  No index signature with a parameter of type 'string' was found on type 'Record<string, string> | {}'.

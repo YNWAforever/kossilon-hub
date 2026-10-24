@@ -1,0 +1,20 @@
+{
+  "reviewer": "Aristotle / 01a16c86-f003-7e32-8dfd-9605d7be278b",
+  "base_sha": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+  "scope": "UC166 schema, create service/RPC/repository, dialog and related tests",
+  "findings": [{
+    "priority": "P2",
+    "title": "Validate the transferee independently on blur",
+    "detail": "Empty numeric fields become NaN and abort full schema parsing before superRefine can add the blank new-holder issue. Disabled submit leaves the incomplete draft without blur feedback. Current tests prefilled numeric fields.",
+    "file": "src/components/corporate-changes/create-corporate-change-request-dialog.tsx",
+    "initial_line": 340
+  }],
+  "reviewer_limits": "Static review plus an in-memory schema check. No DB/native Auth/HTTP, network, writes or Git mutations. Parent-reported115/11 not rerun by reviewer.",
+  "resolution": {
+    "reproduced": "focus-review-red.txt: 1 failed /10 passed; snapshot dialog-review-red.tsx.snapshot",
+    "repair": "Shared independent shareTransferTransfereeSchema reused by full schema and dialog field feedback, so unfinished numeric draft cannot hide the transferee explanation.",
+    "verified": "targeted-final.txt:116 passed /11files, including the new incomplete-draft regression",
+    "independent_rereview": false,
+    "remaining_findings": 0
+  }
+}

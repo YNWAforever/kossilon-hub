@@ -1,0 +1,18 @@
+{
+  "source_sha": "b367ee3eac2c09ee468c010bcfffab69b022adb9",
+  "parent_sha": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+  "paths": [
+    "src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx",
+    "src/components/corporate-changes/create-corporate-change-request-dialog.tsx",
+    "src/components/corporate-changes/share-transfer-validation.test.tsx",
+    "src/features/corporate-changes/create-input.test.ts",
+    "src/features/corporate-changes/create-input.ts",
+    "src/features/corporate-changes/create.test.ts",
+    "src/features/corporate-changes/create.ts",
+    "src/features/corporate-changes/repository.ts",
+    "src/features/corporate-changes/server-fns.ts",
+    "src/features/corporate-changes/share-transfer-validation.integration.test.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "operation": "ordinary local commit only; no push/merge/deploy"
+}

@@ -1,0 +1,160 @@
+// UC166 local browser adapter. Real dialog, shared schema and ForActor services;
+// Synthetic Staff root context, virtual RPC and injected sessionStorage repository.
+// Native authentication, application HTTP, DB and RLS are NOT exercised.
+import React, { useEffect, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createRootRouteWithContext, createRoute, createRouter, createBrowserHistory, Outlet, RouterProvider } from '@tanstack/react-router';
+import { CreateCorporateChangeRequestDialog } from '/src/components/corporate-changes/create-corporate-change-request-dialog.tsx';
+import { createCorporateChangeRequestForActor } from '/src/features/corporate-changes/create.ts';
+import { getCorporateChangeRequestForActor } from '/src/features/corporate-changes/read.ts';
+// Production styles are loaded with a direct stylesheet link to avoid dev-only HMR transport.
+
+const run = 'cosec-20261024-transfer-f7337fb9';
+const rootPath = 'C:/Users/laich/Documents/kossilon-hub/cosec-20261023';
+const expected = window.__UC166_EXPECTED_TARGET;
+const params = new URLSearchParams(location.search);
+const response = await fetch('/__uc166_identity', { cache: 'no-store', redirect: 'error' });
+if (!response.ok) throw Error('UC166 identity unavailable; fixtures not initialized');
+const identity = await response.json();
+if (!expected || JSON.stringify(identity) !== JSON.stringify(expected) ||
+    identity.run_id !== run || identity.root !== rootPath || identity.origin !== location.origin ||
+    identity.host !== '127.0.0.1' || location.hostname !== '127.0.0.1' ||
+    String(identity.port) !== location.port || identity.branch !== 'codex/cosec-20261023' ||
+    identity.base !== 'c6c8a74be1377c57b73dd9870056441cd8e34e33' ||
+    identity.transport !== 'local-memory-sessionStorage-stub' ||
+    params.get('run') !== run || params.get('instance') !== identity.instance ||
+    params.get('attempt') !== identity.attempt || !/^[a-z0-9-]+$/.test(params.get('case') || '')) {
+  throw Error('Wrong UC166 run/instance/root/loopback target; fixtures not initialized');
+}
+
+// Fixture construction and storage access occur ONLY after the full identity gate.
+const prefix = `${run}:${identity.instance}:${params.get('case')}:`;
+const companyId = 'f7337fb9-0166-4166-8166-000000000001';
+const fromId = 'f7337fb9-0166-4166-8166-000000000002';
+const toId = 'f7337fb9-0166-4166-8166-000000000003';
+const actor = { authUserId: 'UC166-f7337fb9-local-stub-Staff-A',
+  userId: 'f7337fb9-0166-4166-8166-000000000010', role: 'Staff',
+  teamId: 'f7337fb9-0166-4166-8166-000000000020', active: true };
+const documentId = crypto.randomUUID(), queryClientId = crypto.randomUUID();
+const boot = Number(sessionStorage.getItem(prefix + 'boot') || '0') + 1;
+sessionStorage.setItem(prefix + 'boot', String(boot));
+const ledger = JSON.parse(sessionStorage.getItem(prefix + 'ledger') || 'null') || {
+  records: {}, writes: [], reads: [], rpcCalls: [], repositoryAttempts: [], teamReads: [],
+  callbacks: [], lastCreated: null,
+};
+const persist = () => sessionStorage.setItem(prefix + 'ledger', JSON.stringify(ledger));
+const w = window.__uc166 = {
+  identity, actor, companyId, fromId, toId, documentId, queryClientId, boot, ledger,
+  rawMarker: 'UC166_RAW_ERROR_f7337fb9', privateMarker: 'UC166_PRIVATE_TABLE_f7337fb9',
+  ready: false, failNext: 0, hold: false, pending: [], settled: 0, violations: [],
+  nativeAuth: false, nativeApplicationHttp: false, nativeDb: false, nativeRls: false,
+  forbid(boundary) { w.violations.push(boundary); throw Error(`UC166 forbidden boundary: ${boundary}`); },
+  release() { w.hold = false; w.pending.splice(0).forEach(resolve => resolve()); },
+};
+// Module/asset fetching is handled by the browser, not these application APIs.
+// Identity has already been read; no application transport may use native HTTP.
+window.fetch = () => w.forbid('native application fetch');
+for (const api of ['XMLHttpRequest', 'WebSocket', 'EventSource', 'Worker', 'SharedWorker']) {
+  window[api] = class { constructor() { w.forbid(`native ${api}`); } };
+}
+navigator.sendBeacon = () => w.forbid('native sendBeacon');
+
+const repository = {
+  async getCompanyTeamId(id) {
+    if (id !== companyId) return w.forbid('team read outside own company');
+    ledger.teamReads.push({ id, documentId, queryClientId, boot }); persist();
+    return actor.teamId;
+  },
+  async createRequest(input) {
+    if (input.companyId !== companyId || input.actorId !== actor.userId ||
+        input.changeType !== 'share_transfer' || input.transferorShareholdingId !== fromId ||
+        (input.transfereeShareholdingId !== null && input.transfereeShareholdingId !== toId)) {
+      return w.forbid('repository write outside own synthetic fixture scope');
+    }
+    ledger.repositoryAttempts.push({ input: structuredClone(input), documentId, queryClientId, boot }); persist();
+    if (w.failNext > 0) {
+      w.failNext--;
+      throw Error(`${w.rawMarker} ${w.privateMarker} db.internal SQL token=UC166_FAKE_ONLY`);
+    }
+    const id = `f7337fb9-0166-4166-8166-${String(100 + ledger.writes.length).padStart(12, '0')}`;
+    const { actorId, ...data } = structuredClone(input);
+    const row = { id, status: 'Requested', ownerId: actorId,
+      currentNameEn: null, currentNameZh: null, newNameEn: null, newNameZh: null,
+      officerId: null, officerAction: null, newOfficerType: null, newOfficerName: null,
+      newOfficerIdentificationType: null, newOfficerIdentificationNumber: null, newOfficerAddress: null,
+      effectiveDate: null, currentRegisteredOffice: null, newRegisteredOffice: null, completedAt: null,
+      createdAt: '2026-10-24T00:00:00Z', updatedAt: '2026-10-24T00:00:00Z', checklistItems: [], ...data };
+    ledger.records[id] = row;
+    ledger.writes.push({ id, input: structuredClone(input), documentId, queryClientId, boot });
+    persist(); return structuredClone(row);
+  },
+  async getRequest(id) {
+    if (!Object.hasOwn(ledger.records, id)) return w.forbid('read outside own created ledger IDs');
+    ledger.reads.push({ id, documentId, queryClientId, boot, sequence: ledger.reads.length + 1 }); persist();
+    return structuredClone(ledger.records[id]);
+  },
+};
+w.getClient = async id => {
+  if (id !== companyId) return w.forbid('register read outside own company');
+  return { officers: [], shareholdings: [
+    { id: fromId, shareholderName: 'QA UC166 Transferor', numberOfShares: 2147483647, cessationDate: null },
+    { id: toId, shareholderName: 'QA UC166 Existing', numberOfShares: 10, cessationDate: null },
+  ] };
+};
+w.create = async input => {
+  ledger.rpcCalls.push({ input: structuredClone(input), documentId, queryClientId, boot }); persist();
+  try {
+    if (w.hold) await new Promise(resolve => w.pending.push(resolve));
+    return await createCorporateChangeRequestForActor(actor, input, { repository });
+  } finally { w.settled++; persist(); }
+};
+w.probeDual = async () => {
+  // Direct domain service probe: deliberately bypasses the exclusive UI and RPC.
+  try {
+    await createCorporateChangeRequestForActor(actor, {
+      companyId, changeType: 'share_transfer', quotedFee: 2500, transferorShareholdingId: fromId,
+      sharesTransferred: 10, consideration: 0, stampDutyAmount: 0,
+      transfereeShareholdingId: toId, transfereeNewShareholderName: 'QA UC166 ambiguous holder',
+      transfereeNewShareholderAddress: null,
+    }, { repository });
+    return { rejected: false, issues: [] };
+  } catch (error) {
+    return { rejected: true, name: error.name,
+      issues: (error.issues || []).map(issue => ({ path: issue.path, message: issue.message })) };
+  }
+};
+
+function App() {
+  const [open, setOpen] = useState(!ledger.lastCreated);
+  const [readback, setReadback] = useState(null);
+  const [readError, setReadError] = useState(null);
+  const read = async id => {
+    try { setReadback(await getCorporateChangeRequestForActor(actor, id, { repository })); }
+    catch (error) { setReadError(error.message); w.violations.push('own ledger readback failed'); }
+  };
+  useEffect(() => {
+    if (ledger.lastCreated) void read(ledger.lastCreated);
+    w.ready = true;
+  }, []);
+  return React.createElement('main', null,
+    React.createElement('p', null, 'UC166 local adapter: Staff actor fixture; native Auth/HTTP/DB/RLS unproven.'),
+    React.createElement(CreateCorporateChangeRequestDialog, {open, onOpenChange:setOpen,
+      companies:[{ id: companyId, companyName: 'QA UC166 Company' }],
+      isLoading:false, hasError:false, onCreated:id => {
+        ledger.callbacks.push({ id, documentId, queryClientId, boot });
+        ledger.lastCreated = id; persist(); void read(id);
+      }}),
+    React.createElement('pre', {'data-testid':'readback'}, readback ? JSON.stringify(readback) : ''),
+    readError ? React.createElement('p', {role:'alert'}, readError) : null);
+}
+const client = new QueryClient({ defaultOptions: { queries: {
+  retry: false, gcTime: 0, refetchOnWindowFocus: false, refetchOnReconnect: false,
+} } });
+// The real application __root and its authentication setup are intentionally absent.
+const root = createRootRouteWithContext()({ component: () =>
+  React.createElement(QueryClientProvider, {client}, React.createElement(Outlet)) });
+const pageRoute = createRoute({ getParentRoute: () => root, path: '/corporate-changes', component: App });
+w.router = createRouter({ routeTree: root.addChildren([pageRoute]), history: createBrowserHistory(),
+  context: { actor, queryClient: client, dataMode: 'production' }, defaultPreload: false });
+createRoot(document.getElementById('app')).render(React.createElement(RouterProvider, {router:w.router}));
