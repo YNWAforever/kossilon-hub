@@ -29,3 +29,9 @@ Unit/component/SQL/typecheck/lint/build本輪均NOT_RUN；先前同來源通過�
 查找前已核對674個來源Git blobs、2909個prior manifested files及原19858ef0表單bundle的hash、原184列CSV。舊evidence-manifest.json／verification-report.json維持原樣，仍證明19858ef0 Git版本；它們不是更新後三個工作檔的manifest。初表bytes保留於Git19858ef0，舊失敗／CSV／100UC map均未改。補填後只做本機diff、JSON/hash與Git歷史完整性核對；不重跑舊package verifier來把新表冒充原frozen bundle。
 
 本輪只補表，應用測試與metadata執行均NOT_RUN；不連外、不登入QA、不連DB、不建資源、不push/merge/deploy。Native仍70BLOCKED／114NOT_RUN／0PASS、BLOCKED／NO_GO。
+
+## 委託選擇（you decide；基線5c0e1c8d）
+
+在原表選歷史Vercel `kossilon-hub-demo`／`prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm`為唯一待核實候選；首步只擬查該project/deployment metadata，保留20次／10MiB／30分鐘總上限，不納DB/Auth/CI或舊staging DB。Owner、唯讀權限、同版部署及實際HKT起迄仍UNKNOWN，時窗不在準備階段啟動，NOT_AUTHORIZED／NO_GO不變。
+
+只更新同三個既有檔案，沒有新包／目錄、重問資料清單或外部操作；原184列及失敗／歷史manifest不改。只做本機JSON/hash/diff核對，沒有應用測試或native驗收。首次patch因一處檔案路徑不完整整批拒絕，已核對沒有寫入再更正，並非產品或原生測試失敗。

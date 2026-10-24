@@ -1,6 +1,6 @@
 # AP-01 metadata-only：最小 target／唯讀存取／HKT 授權表
 
-**決定：NOT_AUTHORIZED。只補原表、未執行；原生 BLOCKED／NO_GO。** 本機非秘密紀錄查找結果：**未找到可核實適用本輪／候選4d63818的既有隔離目標**。缺證保留UNKNOWN；歷史線索不是已選定target或授權。不要填密碼、token、cookie或秘密連線字串。
+**決定：NOT_AUTHORIZED。只補原表、未執行；原生 BLOCKED／NO_GO。** 尚未找到可核實適用本輪／候選4d63818的既有隔離目標。依「you decide」，我選歷史`kossilon-hub-demo`／`prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm`為唯一**待核實候選**；首步只擬查該Vercel project/deployment metadata，DB/Auth/CI及歷史staging branch不納首步。保留20次／10MiB／30分鐘總上限，不挪用其他步驟預留增加scope。Owner、現行唯讀存取及同版部署仍UNKNOWN；準備階段不啟動HKT時窗，實際起止待前置條件與明示執行批准齊備後固定。沿用原先不連外限制，不新增準備包或重問同一清單；不要填秘密。
 
 ## 已核實／預填（本機證據）
 
@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 專案 | Kossilon CoSec OS | 本輪使用者指定 |
 | Repo／branch | `https://github.com/YNWAforever/kossilon-hub.git` ／ `codex/cosec-20261023` | 本輪本機`git remote get-url origin`／`git branch --show-current`；沒有連GitHub |
-| 本輪查核交付基線 | `19858ef0fdd27c70cea4a91010f17a1be0b16f49`；沒有後續交付，clean起點 | 本輪`git rev-parse HEAD`／`git log`／`git status`；原表19858ef0版保留於Git歷史 |
+| 本輪查核交付基線 | `5c0e1c8d1d0cd57affa95d427be3af4ce7cfc80d`；沒有後續交付，clean起點 | 本輪`git rev-parse HEAD`／`git log`／`git status`；原表19858ef0版保留於Git歷史 |
 | 預期產品source | `4d63818fe2562146f85e9a7b9917d8f0eb58f4c1`；674個來源/config檔吻合，非部署observed SHA | [source候選](../cosec-20261024-handover-exec-a30e04f1/source-candidate.json)及本機Git blobs核對 |
 | 本機artifact參照 | 433檔／14,269,548bytes；manifest SHA256：`189606711dca25c7dbc522903f6657b002efab2edca33ee9bf4a7c22f74ca1b4`；**不是provider deployed-bundle checksum** | [file-set manifest](../cosec-20261025-build-d29cd5ec/artifact-manifest.json) |
 | 待批子範圍 | **AP-01／CONTROL_PLANE_METADATA_ONLY**；平台deployment／DB資源描述／Auth配置／CI-artifact-security metadata；非整包AP-01 | [原metadata-only request](../cosec-20261025-ap01-meta-a7885f7a/metadata-only-request.json)，維持未批准 |
@@ -21,7 +21,7 @@
 | 既有非正式target URL（不開啟） | **UNKNOWN／未找到本輪可核實目標** | [舊provider紀錄](../evidence/2026-10-03-r03-target-vercel.json)只有歷史project描述；[runbook](../../runbooks/neon-auth-demo.md)屬操作規格，不能把其中production或demo示例當本輪UAT部署 |
 | 資源owner | **UNKNOWN**；不推定使用者、GitHub帳戶或平台team就是資源owner | [DB owner紀錄](../runtime-parity-and-db-owners.md)的`neondb_owner`是SQL技術角色，不是本輪人類／組織owner證據 |
 | 專用或共享／隔離依據 | **UNKNOWN** | [R03 review](../oct3-runtime-target-review.md)明示preview DB/R2 isolation未核實；名稱含demo/staging不足 |
-| 可信本機metadata位置／歷史資源ID | 歷史Vercel project `kossilon-hub-demo`／`prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm`，team `team_qvzlsFmfCsLkgItSypqHjw3z`；**本輪target仍未選定／未確認** | [2026-10-03 provider metadata](../evidence/2026-10-03-r03-target-vercel.json)，當時source `60a7b9745ce4e66fe3c4e34848a6aba498a6fc26`；非本候選的部署／owner／存取證據 |
+| 可信本機metadata位置／歷史資源ID | **唯一待核實候選**：歷史Vercel project `kossilon-hub-demo`／`prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm`，team `team_qvzlsFmfCsLkgItSypqHjw3z`；未確認為本輪可用隔離target | 本輪「you decide」委託規劃；ID來源[2026-10-03 provider metadata](../evidence/2026-10-03-r03-target-vercel.json)，當時source `60a7b9745ce4e66fe3c4e34848a6aba498a6fc26`；非同版部署／owner／存取證據 |
 | 關聯DB／Auth／CI metadata範圍 | **UNKNOWN／未獲授權**。另有歷史Neon project `red-morning-00331124`、staging branch `br-fragrant-sunset-aosoylhr`；只作歷史線索，不納入本輪查詢 | [2026-10-04 Phase A](../releases/r01-staging-2026-10-04/phase-a-result.md)記錄no-compute child、Auth未啟用，候選為舊R01 `257fb9d0be17525a305f38bd26001ad8fa45deb8`；[B1結果](../releases/r01-staging-2026-10-04/phase-b1-result.md)仍無可用endpoint。當前存在／可用性未重查 |
 
 上述demo project與staging DB是**不同歷史線索**，沒有證據可把它們合併為本輪test stack。未發現本候選的非正式URL／deployment binding；既有production網址不填作UAT。五個已登記worktree均未找到`.vercel/project.json`；目前`.wrangler/deploy/config.json`只指向生成輸出，`.output/server/wrangler.json`沒有account ID，兩者不證明已部署target。
@@ -40,12 +40,12 @@
 
 | 欄位 | 填寫 |
 | --- | --- |
-| 決定 | **NOT_AUTHORIZED**；來源：本輪使用者明示維持未授權，只補原表 |
+| 決定 | **NOT_AUTHORIZED**；沿用前輪只補表／不連外邊界，本輪「you decide」用於候選與步驟規劃，不推定owner或存取權限 |
 | 批准者／對上述target的授權身份 | **UNKNOWN／待使用者確認**；本機資料未能證實，不推定使用者是owner |
 | 有效開始 HKT（含日期與+08:00） | **UNKNOWN／待使用者確認：YYYY-MM-DD HH:mm:ss +08:00**；查找時間不作授權開始 |
 | 有效截止 HKT（含日期與+08:00） | **UNKNOWN／待使用者確認：YYYY-MM-DD HH:mm:ss +08:00** |
 | 配額決定 | **PROPOSED_NOT_APPROVED：20次／10MiB／30分鐘**；來源：原AP-01 request及本輪使用者指示，仍待確認 |
-| 批准時綁定的本表／request明細版本或hash | **UNKNOWN／未有批准綁定**；本輪查核基線為上列19858ef0，不是執行批准 |
+| 批准時綁定的本表／request明細版本或hash | **UNKNOWN／未有批准綁定**；本輪查核基線為上列5c0e1c8d，不是執行批准 |
 
 **預填待批上限：** 1個既有target；metadata讀取總共20 attempts（部署6＋DB資源4＋Auth配置2＋CI/artifact/security4＋安全重試/page預留4）；response合計10MiB、單次≤1MiB、有界頁≤20項；總時長≤30分鐘且不得超出上列HKT截止。沒有自動polling／重試，失敗、page、redirect及明示安全重試都扣20次；權限拒絕不換路徑重試。
 

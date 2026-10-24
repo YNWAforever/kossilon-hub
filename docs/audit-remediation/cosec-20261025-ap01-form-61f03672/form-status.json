@@ -1,12 +1,12 @@
 {
   "purpose": "Audit snapshot of the blank form, not another editable input form",
   "single_editable_form": "AUTHORIZATION-FORM.md",
-  "form_sha256": "1d1095da251888555751f44a33e69404943d14e450f75c278fd6b257090ddefb",
-  "status": "LOCAL_NON_SECRET_RECORDS_RECONCILED_NOT_AUTHORIZED",
+  "form_sha256": "897095957a95893873e5abd906ebc21438986bb54898af3a9fc0a1d6164bcd3e",
+  "status": "CANDIDATE_CHOSEN_PLANNING_ONLY_NOT_AUTHORIZED",
   "prefilled": {
     "repo": "https://github.com/YNWAforever/kossilon-hub.git",
     "branch": "codex/cosec-20261023",
-    "evidence_base": "19858ef0fdd27c70cea4a91010f17a1be0b16f49",
+    "evidence_base": "5c0e1c8d1d0cd57affa95d427be3af4ce7cfc80d",
     "source_sha_expected": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
     "source_files": 674,
     "local_artifact_manifest": "../cosec-20261025-build-d29cd5ec/artifact-manifest.json",
@@ -123,8 +123,9 @@
         "recorded_utc": "2026-10-03T09:55:47.2202119Z",
         "recorded_source_main": "60a7b9745ce4e66fe3c4e34848a6aba498a6fc26",
         "source": "docs/audit-remediation/evidence/2026-10-03-r03-target-vercel.json",
-        "selected_for_AP01": false,
-        "current_existence_owner_access_isolation_or_candidate_binding_verified": false
+        "selected_for_AP01": true,
+        "current_existence_owner_access_isolation_or_candidate_binding_verified": false,
+        "selection_kind": "UNVERIFIED_PLANNING_CANDIDATE_ONLY"
       },
       {
         "type": "Historical no-compute staging branch",
@@ -170,5 +171,29 @@
       }
     ]
   },
-  "historical_evidence_note": "Original evidence-manifest.json and verification-report.json remain frozen for Git19858ef0, not for the three edited current files; original form bytes remain in that commit."
+  "historical_evidence_note": "Original evidence-manifest.json and verification-report.json remain frozen for Git19858ef0, not for the three edited current files; original form bytes remain in that commit.",
+  "planning_selection": {
+    "user_instruction": "you decide",
+    "interpretation": "Planning discretion within existing preparation-only/no-network boundary",
+    "project_name": "kossilon-hub-demo",
+    "project_id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+    "metadata_source": "docs/audit-remediation/evidence/2026-10-03-r03-target-vercel.json",
+    "selection_kind": "UNVERIFIED_CANDIDATE_ONLY",
+    "first_proposed_scope": "Only this Vercel project and its deployment control-plane metadata",
+    "excluded_first_scope": [
+      "DB metadata or SQL",
+      "Auth metadata or sessions",
+      "CI/security queries",
+      "Historical staging branch",
+      "Production"
+    ],
+    "maximum_reads": 20,
+    "maximum_response_bytes": 10485760,
+    "maximum_minutes": 30,
+    "activate_HKT_window": "After exact prerequisites and explicit execution approval; not during preparation",
+    "owner": null,
+    "current_readonly_access": null,
+    "current_candidate_deployment_verified": false,
+    "execution_enabled": false
+  }
 }
