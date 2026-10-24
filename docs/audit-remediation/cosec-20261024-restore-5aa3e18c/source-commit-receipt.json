@@ -1,0 +1,12 @@
+{
+  "source_sha": "eafa493cf2b1e50a672e927a3b8b86346f91a199",
+  "parent_sha": "b5bcdaef300999ff30f8372456827c7651cd4080",
+  "paths": [
+    "src/features/annual-return/repository.ts",
+    "src/features/annual-return/read-seed-schema.test.ts",
+    "src/server/restore-rehearsal.integration.test.ts",
+    "src/test/db-integration-files.ts",
+    "docs/runbooks/backup-restore.md"
+  ],
+  "operation": "ordinary local commit only; no push/merge/deploy"
+}

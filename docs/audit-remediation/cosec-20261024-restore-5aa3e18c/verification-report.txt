@@ -1,0 +1,20 @@
+{
+  "source_sha": "eafa493cf2b1e50a672e927a3b8b86346f91a199",
+  "verified_source_git_blobs": 667,
+  "verified_prior_runs": 16,
+  "verified_prior_files": 2351,
+  "verified_current_manifest_files": 84,
+  "related_unit_tests": 78,
+  "test_files": 8,
+  "full_unit": {
+    "tests": 2768,
+    "files": 287,
+    "skipped_tests": 0,
+    "skipped_files": 0
+  },
+  "sql_rehearsals": 1,
+  "browser_tests": 0,
+  "native_pass": 0,
+  "release_gate": "NO_GO",
+  "push_merge_deploy": false
+}

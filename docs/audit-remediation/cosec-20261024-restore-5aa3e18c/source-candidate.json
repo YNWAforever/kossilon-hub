@@ -1,0 +1,42 @@
+{
+  "source_sha": "eafa493cf2b1e50a672e927a3b8b86346f91a199",
+  "parent_sha": "b5bcdaef300999ff30f8372456827c7651cd4080",
+  "tested_head": "b5bcdaef300999ff30f8372456827c7651cd4080",
+  "paths": [
+    "docs/runbooks/backup-restore.md",
+    "src/features/annual-return/read-seed-schema.test.ts",
+    "src/features/annual-return/repository.ts",
+    "src/server/restore-rehearsal.integration.test.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "files": [
+    {
+      "path": "docs/runbooks/backup-restore.md",
+      "bytes": 4059,
+      "sha256": "71426d74851fc642717fd6b7e3a2bc9b853a91c36124cc4c4982c647d6620872"
+    },
+    {
+      "path": "src/features/annual-return/read-seed-schema.test.ts",
+      "bytes": 1271,
+      "sha256": "349066cd0d63b3ca1c448300a9b008393863610b3d857117a2a10d662a33ffcd"
+    },
+    {
+      "path": "src/features/annual-return/repository.ts",
+      "bytes": 110201,
+      "sha256": "05bc8e040f1a563ea0420c96627533c95cdf3fd5cf30736bb3564f9cc2128487"
+    },
+    {
+      "path": "src/server/restore-rehearsal.integration.test.ts",
+      "bytes": 16292,
+      "sha256": "e10c4b8f442f1dc2b48ffe1d2ec57c53795616d5bad288cb21920c7a2692ddbd"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "bytes": 3501,
+      "sha256": "c17846c62ff74519a3dc07834c9096fc56536b683714a67cfb5ebbfd6215e0d8"
+    }
+  ],
+  "source_freeze": "source-post-checks.json",
+  "source_files_verified": 667,
+  "all_final_checked_source_bytes_equal_committed": true
+}

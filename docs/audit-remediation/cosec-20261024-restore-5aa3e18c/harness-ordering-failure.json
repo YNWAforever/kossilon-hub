@@ -1,0 +1,11 @@
+{
+  "attempt": "first",
+  "result": "FAILED",
+  "scope": "Actual archive/data/catalog comparisons passed; case sourceVersion comparison failed",
+  "root_cause": "Expected case snapshot taken before lazy party synchronization, while backup snapshot was after it; readiness-repository MD5 payload includes case_parties",
+  "repair": "Move expected case read after party synchronization and before dump; retain complete case deep equality, including sourceVersion",
+  "product_readiness_logic_changed": false,
+  "raw_log": "db/test-first.txt",
+  "original_test": "restore-test-first.snapshot",
+  "old_target_disposed_with_succeeded_false_seal": true
+}

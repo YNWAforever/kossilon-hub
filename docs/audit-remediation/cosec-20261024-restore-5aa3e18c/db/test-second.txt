@@ -1,0 +1,13 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |db| src/server/restore-rehearsal.integration.test.ts (1 test) 29838ms
+   ✓ UC193 current-version backup, atomic restore, case readback and refusal countercontrols  29837ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:48:28
+   Duration  30.09s (transform 5.97s, setup 0ms, import 87ms, tests 29.84s, environment 0ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

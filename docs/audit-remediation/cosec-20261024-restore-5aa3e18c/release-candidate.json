@@ -1,0 +1,123 @@
+{
+  "run_id": "cosec-20261024-restore-5aa3e18c",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "eafa493cf2b1e50a672e927a3b8b86346f91a199",
+  "parent_sha": "b5bcdaef300999ff30f8372456827c7651cd4080",
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "production_sha_user_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "phase": "LOCAL_UC193_RESTORE_UC189_GET_SEED_PARTIAL_SCOPED_NATIVE_BLOCKED",
+  "release_gate": "NO_GO",
+  "deployed": false,
+  "auth_runtime_verified": false,
+  "native_http_db_rls_verified": false,
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "source_manifest": "source-candidate.json",
+  "evidence_manifest": "evidence-manifest.json",
+  "checks": {
+    "targeted": {
+      "receipt": "targeted-final.json",
+      "log": "targeted-final.txt",
+      "exit_code": 0,
+      "summary": {
+        "tests": 78,
+        "files": 8,
+        "skipped_tests": 0,
+        "skipped_files": 0
+      }
+    },
+    "typecheck": {
+      "receipt": "typecheck-final.json",
+      "log": "typecheck-final.txt",
+      "exit_code": 0
+    },
+    "lint": {
+      "receipt": "lint-final.json",
+      "log": "lint-final.txt",
+      "exit_code": 0
+    },
+    "unit": {
+      "receipt": "unit-final.json",
+      "log": "unit-final.txt",
+      "exit_code": 0,
+      "summary": {
+        "tests": 2768,
+        "files": 287,
+        "skipped_tests": 0,
+        "skipped_files": 0
+      }
+    },
+    "build": {
+      "receipt": "build-final.json",
+      "log": "build-final.txt",
+      "exit_code": 0
+    },
+    "sql": {
+      "log": "db/test-second.txt",
+      "journal": "db/test-second.jsonl",
+      "tests": 1,
+      "files": 1,
+      "exit_code": 0,
+      "scope": "one complete SQL dump/restore journey with six recorded acceptance/control stages",
+      "stages": [
+        "corrupt-archive-refused-atomic-no-partial-schema",
+        "complete-restored-data-catalog-and-case-readback",
+        "same-count-data-corruption-refused",
+        "UC189-restored-GET-seed-refused-no-partial-party",
+        "disposal-inventory-countercontrol",
+        "rehearsal-passed"
+      ],
+      "first_failed_attempt_preserved": "db/test-first.txt"
+    }
+  },
+  "isolated_sql": {
+    "container_id": "358cd27f6dec1079e15082d3d0dc2b6989f627bdb0939ef69e56635e3939e25f",
+    "system_id": "7700153473904025639",
+    "databases": [
+      "cosec_restore_5aa3e18c",
+      "cosec_restore_5aa3e18c_broken",
+      "cosec_restore_5aa3e18c_restored"
+    ],
+    "removed": true,
+    "failed_prior_target_removed": true,
+    "external_http_calls": 0,
+    "auth": "injected session adapter + real SQL mapping/domain/repository reads; disposable PostgreSQL superuser, no native Auth/HTTP/RLS"
+  },
+  "local_recovery_metrics": {
+    "scope": "Local synthetic logical backup and DB/application readback; not production RTO/RPO or SLA",
+    "local_restore_and_readback_ms": 5394.7183,
+    "pg_restore_ms": 382.3208000000013,
+    "archive_sha256": "abc60d6c12281c53364d3453feb10ab45ab61f327dc8bdd2fc05162d7384dccd",
+    "archive_bytes": 279723,
+    "recovery_point_dump_interval": {
+      "from": "2026-10-24T08:48:37.339Z",
+      "to": "2026-10-24T08:48:38.082Z"
+    },
+    "post_dump_write_committed": "2026-10-24T08:48:38.086Z",
+    "post_dump_write_absent_after_restore": true,
+    "lost_marker_age_bounds_ms": {
+      "minimum": 4,
+      "maximum": 747
+    },
+    "backup_age_at_verified_readback_ms": 16947,
+    "native": false
+  },
+  "browser": "NOT_RUN_THIS_BATCH",
+  "limitations": [
+    "synthetic logical DB restore only; no approved Neon staging/production/provider/object-storage backup",
+    "archive bytes lived only in owned tmpfs and were disposed; checksum/projections/commands retained, no backup retention proof",
+    "local restore/readback timing and checkpoint interval are not production RTO/RPO or SLA",
+    "GET guard covers identified party-sync write point; not an audit of every read-side effect",
+    "native Auth/HTTP/RLS/browser reload/platform ticks and production compatibility remain BLOCKED"
+  ],
+  "rollback": {
+    "action": "ordinary new commit reverting eafa493cf2b1e50a672e927a3b8b86346f91a199; preserve evidence and published history",
+    "migration_added": false,
+    "production_action": false
+  }
+}
