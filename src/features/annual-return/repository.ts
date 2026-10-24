@@ -28,6 +28,7 @@ import { verifiedPaymentCredit } from "./payment-evidence-state";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { enqueueNotification } from "@/features/notifications/outbox";
 import type postgres from "postgres";
+import { assertApplicationWriteSchema } from "@/server/application-schema";
 import {
   buildReminderDraft,
   calculateFilingDueDate,
@@ -2863,6 +2864,9 @@ export function createAnnualReturnRepository(
   }
 
   async function syncCasePartiesFromOfficers(caseId: string): Promise<{ created: number }> {
+    // This write is also reached from a GET. Admission must follow the actual
+    // effect, rather than relying on the request method to identify mutations.
+    await assertApplicationWriteSchema(sql);
     const rows = await sql<{ id: string }[]>`
       insert into case_parties (case_id, officer_id, party_type, display_name)
       select c.id, o.id, o.officer_type, o.name
