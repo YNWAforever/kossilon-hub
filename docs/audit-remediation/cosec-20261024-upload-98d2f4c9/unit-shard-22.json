@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-22",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/routes/-settings-sections.test.ts",
+    "src/routes/-settings-templates.test.tsx",
+    "src/routes/-settings.interaction.test.tsx",
+    "src/routes/-today.interaction.test.tsx",
+    "src/routes/-upload-resume.interaction.test.tsx",
+    "src/routes/-whatsapp-data-mode.test.tsx",
+    "src/routes/-work-queue-case-links.test.tsx",
+    "src/routes/-work-queue.interaction.test.tsx",
+    "src/server/cron-wiring.test.ts",
+    "src/server/cron.test.ts",
+    "src/server/db/client.test.ts",
+    "src/server/db/production-schema.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/routes/-settings-sections.test.ts",
+    "src/routes/-settings-templates.test.tsx",
+    "src/routes/-settings.interaction.test.tsx",
+    "src/routes/-today.interaction.test.tsx",
+    "src/routes/-upload-resume.interaction.test.tsx",
+    "src/routes/-whatsapp-data-mode.test.tsx",
+    "src/routes/-work-queue-case-links.test.tsx",
+    "src/routes/-work-queue.interaction.test.tsx",
+    "src/server/cron-wiring.test.ts",
+    "src/server/cron.test.ts",
+    "src/server/db/client.test.ts",
+    "src/server/db/production-schema.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/routes/-work-queue.interaction.test.tsx",
+      "tests": 30
+    },
+    {
+      "path": "src/routes/-upload-resume.interaction.test.tsx",
+      "tests": 12
+    },
+    {
+      "path": "src/routes/-whatsapp-data-mode.test.tsx",
+      "tests": 7
+    },
+    {
+      "path": "src/routes/-today.interaction.test.tsx",
+      "tests": 4
+    },
+    {
+      "path": "src/routes/-settings-templates.test.tsx",
+      "tests": 2
+    },
+    {
+      "path": "src/routes/-settings.interaction.test.tsx",
+      "tests": 5
+    },
+    {
+      "path": "src/server/cron-wiring.test.ts",
+      "tests": 11
+    },
+    {
+      "path": "src/server/db/client.test.ts",
+      "tests": 1
+    },
+    {
+      "path": "src/server/db/production-schema.test.ts",
+      "tests": 8
+    },
+    {
+      "path": "src/server/cron.test.ts",
+      "tests": 4
+    },
+    {
+      "path": "src/routes/-work-queue-case-links.test.tsx",
+      "tests": 4
+    },
+    {
+      "path": "src/routes/-settings-sections.test.ts",
+      "tests": 3
+    }
+  ]
+}

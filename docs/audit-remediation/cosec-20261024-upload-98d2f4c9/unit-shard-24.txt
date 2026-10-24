@@ -1,0 +1,14 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| vite.config.test.ts (5 tests) 1668ms
+     ✓ injects source locations before TanStack recompiles route files  1658ms
+ ✓ |unit| src/test/fixture-sequence-coverage.convention.test.ts (2 tests) 3ms
+
+ Test Files  2 passed (2)
+      Tests  7 passed (7)
+   Start at  12:21:57
+   Duration  2.48s (transform 143ms, setup 0ms, import 441ms, tests 1.67s, environment 0ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

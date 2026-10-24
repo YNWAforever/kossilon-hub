@@ -1,0 +1,42 @@
+{
+  "run_id": "cosec-20261024-upload-98d2f4c9",
+  "original_id": "UC150",
+  "base_sha": "71dd6d003ffbcefc98e32eb8845e58c2c6eb217d",
+  "status": "BACKEND_LOCAL_UNIT_PASS_PENDING_PARENT_SQL_UI_FULL_CHECKS",
+  "owned_source": [
+    "src/features/documents/repository.ts",
+    "src/features/documents/server-fns.ts",
+    "src/features/documents/upload-retry.test.ts"
+  ],
+  "source_fingerprints_receipt": "backend-final-fingerprinted.json",
+  "tests": [
+    { "receipt": "backend-red.json", "failed": 33, "passed": 28, "note": "Baseline rejection paths also fail expected diagnostic-order assertions; not 33 independent unsafe product defects." },
+    { "receipt": "backend-green-first.json", "failed": 1, "passed": 60, "note": "Inert SQL fake routed the page query to an overly broad intent matcher." },
+    { "receipt": "backend-green-corrected.json", "failed": 1, "passed": 60, "note": "A second overly broad fake matcher for the annual-return case join required an exact query prefix; no product assertions weakened." },
+    { "receipt": "backend-green.json", "failed": 0, "passed": 61 },
+    { "receipt": "backend-final.json", "failed": 0, "passed": 63 },
+    { "receipt": "backend-final-fingerprinted.json", "failed": 0, "passed": 63 }
+  ],
+  "contract": {
+    "request_id": "Optional UUID, ordinary uploads only; recovery plus request ID rejected by the RPC validator and actor function.",
+    "identity": "Object key is documents/request- plus SHA256(JSON [server actor.authUserId, normalized request UUID]); no client-supplied actor identity. Legacy requests retain random keys and additive behavior.",
+    "intent_retry": "Existing unique object_key with ON CONFLICT DO NOTHING then separate matching read. Exact actor/company/case/checklist/category/filename/contentType/size/checksum required; recovery collisions refused. No expiry extension, lifecycle reset, or global checksum deduplication.",
+    "finalize_replay": "Reauthorize, require original authenticated requester for all roles, verify complete body size/hash, read actual getDocument metadata, validate current intent/document/version/scope/metadata chain, reauthorize after readback, return current document unchanged. No storage put, scanner, job or receipt operation in the committed branch.",
+    "repository_replay": "Existing case then intent lock order retained. Replay validates documentRows on the same transaction and returns without writes or enqueue. First finalize remains transactional with one document/version/scan/analysis/checklist receipt path.",
+    "lineage": "Private read projection additionally matches document category/filename and version filename/contentType/declared checksum/byte size to the intent. Missing/corrupt lineage remains refused.",
+    "server_boundary": "Shared chain assertion is lazily imported behind createServerOnlyFn; no new eager runtime SQL import into the server-fns module.",
+    "public_return": "Existing actual PrivateDocument shape, with currentVersionId. Quarantine/rejected/failed or business review states are returned as stored; replay does not establish scan safety or approval. Test getDocument fakes must include currentVersionId matching the intent."
+  },
+  "parent_follow_up": [
+    "Run actual gated SQL concurrency for same request key and concurrent first finalizes; observe exactly one intent/document/version/scan job/analysis job/checklist receipt and immutable review/audit metadata.",
+    "Exercise response lost after create and after finalize, then same-attempt retry and reload/readback through the Portal journal.",
+    "Run typecheck/lint/build/full unit on the complete candidate. This delegated slice ran only the three focused unit files.",
+    "Preserve 184 original identifiers and native blocked/NO_GO acceptance. No multipart or byte-offset resume claim."
+  ],
+  "limitations": [
+    "Only inert SQL and storage fakes were used here; no DB clients, real locks, real unique-index race, API transport, native Auth/RLS/storage/scanner or provider acceptance.",
+    "Two simultaneous initial actor finalizations can each reach storage.put before either receipt commits. The repository serializes receipt/jobs, and later committed retries never put. SQL proof remains a parent task; do not claim globally exactly one storage write during the initial race.",
+    "Expired status or inconsistent created-with-document states are rejected. A matching expired-created/no-document intent is returned without mutation so the UI can offer an explicit new attempt.",
+    "No migrations, schema, Portal, journal, DB fixture, Git mutation, push, merge or deployment performed by this delegated backend slice."
+  ]
+}

@@ -1,0 +1,29 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/test/dev-worktree-watch.test.ts (3 tests) 5735ms
+   ✓ watches active source and excludes children from a plain root  3290ms
+   ✓ watches active source and excludes children from a nested root  1227ms
+   ✓ watches active source and excludes children from a glob characters root  1216ms
+ ✓ |unit| src/server/dependency-security-f25.test.ts (10 tests) 357ms
+ ✓ |unit| src/server/r2-s3-bucket.test.ts (10 tests) 38ms
+ ✓ |unit| src/server/maintenance-trigger-runtime.test.ts (11 tests) 37ms
+ ✓ |unit| src/server/maintenance-http.test.ts (6 tests) 27ms
+ ✓ |unit| src/server/maintenance.test.ts (18 tests) 64ms
+ ✓ |unit| src/server/tanstack-transport-security.test.ts (6 tests) 29ms
+ ✓ |unit| src/server/handoff-export-http.test.ts (3 tests) 25ms
+ ✓ |unit| src/server/maintenance-trigger.test.ts (7 tests) 26ms
+ ✓ |unit| src/server/runtime-env.test.ts (20 tests) 10ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 5ms
+ ✓ |unit| src/server/provider-mode.test.ts (7 tests) 4ms
+
+ Test Files  12 passed (12)
+      Tests  103 passed (103)
+   Start at  12:21:43
+   Duration  10.57s (transform 761ms, setup 0ms, import 1.73s, tests 6.36s, environment 1ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+stderr | src/server/maintenance.test.ts > maintenance run record > does not let a failed record write fail the run
+scheduled maintenance record failed Error
+

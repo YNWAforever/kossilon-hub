@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-17",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/whatsapp/session-window.test.ts",
+    "src/features/whatsapp/webhook-route.test.ts",
+    "src/features/whatsapp/webhook.test.ts",
+    "src/features/whatsapp/woztell.test.ts",
+    "src/features/work-items/assignment-labels.test.ts",
+    "src/features/work-items/assignment.test.ts",
+    "src/features/work-items/business-calendar.test.ts",
+    "src/features/work-items/queue-page.test.ts",
+    "src/features/work-items/queue-view-state.test.ts",
+    "src/features/work-items/server-fns.test.ts",
+    "src/features/work-items/server-orchestration.test.ts",
+    "src/features/work-items/sla-performance.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/features/whatsapp/session-window.test.ts",
+    "src/features/whatsapp/webhook-route.test.ts",
+    "src/features/whatsapp/webhook.test.ts",
+    "src/features/whatsapp/woztell.test.ts",
+    "src/features/work-items/assignment-labels.test.ts",
+    "src/features/work-items/assignment.test.ts",
+    "src/features/work-items/business-calendar.test.ts",
+    "src/features/work-items/queue-page.test.ts",
+    "src/features/work-items/queue-view-state.test.ts",
+    "src/features/work-items/server-fns.test.ts",
+    "src/features/work-items/server-orchestration.test.ts",
+    "src/features/work-items/sla-performance.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/features/work-items/sla-performance.test.ts",
+      "tests": 1
+    },
+    {
+      "path": "src/features/work-items/business-calendar.test.ts",
+      "tests": 10
+    },
+    {
+      "path": "src/features/whatsapp/webhook.test.ts",
+      "tests": 27
+    },
+    {
+      "path": "src/features/whatsapp/woztell.test.ts",
+      "tests": 29
+    },
+    {
+      "path": "src/features/work-items/server-orchestration.test.ts",
+      "tests": 6
+    },
+    {
+      "path": "src/features/work-items/queue-view-state.test.ts",
+      "tests": 11
+    },
+    {
+      "path": "src/features/work-items/server-fns.test.ts",
+      "tests": 5
+    },
+    {
+      "path": "src/features/work-items/queue-page.test.ts",
+      "tests": 4
+    },
+    {
+      "path": "src/features/whatsapp/session-window.test.ts",
+      "tests": 9
+    },
+    {
+      "path": "src/features/work-items/assignment.test.ts",
+      "tests": 7
+    },
+    {
+      "path": "src/features/work-items/assignment-labels.test.ts",
+      "tests": 5
+    },
+    {
+      "path": "src/features/whatsapp/webhook-route.test.ts",
+      "tests": 3
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-01",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "scripts/audit-data-origin.test.ts",
+    "scripts/audit-document-lineage.test.ts",
+    "scripts/audit-performance-report.test.ts",
+    "scripts/audit-performance-samples.test.ts",
+    "scripts/audit-staging-config.test.ts",
+    "scripts/audit-uat-ledger.test.ts",
+    "scripts/cosec-delivery.test.ts",
+    "scripts/db-reset-neon-auth-demo.test.ts",
+    "scripts/db-seed-annual-return.test.ts",
+    "scripts/db-seed-neon-auth-demo.test.ts",
+    "scripts/dependency-locks.test.ts",
+    "scripts/dependency-parser-security.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "scripts/audit-data-origin.test.ts",
+    "scripts/audit-document-lineage.test.ts",
+    "scripts/audit-performance-report.test.ts",
+    "scripts/audit-performance-samples.test.ts",
+    "scripts/audit-staging-config.test.ts",
+    "scripts/audit-uat-ledger.test.ts",
+    "scripts/cosec-delivery.test.ts",
+    "scripts/db-reset-neon-auth-demo.test.ts",
+    "scripts/db-seed-annual-return.test.ts",
+    "scripts/db-seed-neon-auth-demo.test.ts",
+    "scripts/dependency-locks.test.ts",
+    "scripts/dependency-parser-security.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "scripts/audit-performance-samples.test.ts",
+      "tests": 15
+    },
+    {
+      "path": "scripts/audit-performance-report.test.ts",
+      "tests": 26
+    },
+    {
+      "path": "scripts/cosec-delivery.test.ts",
+      "tests": 7
+    },
+    {
+      "path": "scripts/db-seed-annual-return.test.ts",
+      "tests": 8
+    },
+    {
+      "path": "scripts/db-seed-neon-auth-demo.test.ts",
+      "tests": 31
+    },
+    {
+      "path": "scripts/audit-uat-ledger.test.ts",
+      "tests": 4
+    },
+    {
+      "path": "scripts/db-reset-neon-auth-demo.test.ts",
+      "tests": 6
+    },
+    {
+      "path": "scripts/dependency-parser-security.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "scripts/audit-staging-config.test.ts",
+      "tests": 7
+    },
+    {
+      "path": "scripts/dependency-locks.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "scripts/audit-document-lineage.test.ts",
+      "tests": 3
+    },
+    {
+      "path": "scripts/audit-data-origin.test.ts",
+      "tests": 1
+    }
+  ]
+}

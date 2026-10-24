@@ -1,0 +1,30 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/annual-return/components/production-command-center.interaction.test.tsx (23 tests) 5220ms
+     ✓ says nothing about more pages when the server returns no cursor  561ms
+     ✓ terminates 201 records at the actual final cursor  755ms
+     ✓ terminates 400 records at the actual final cursor  1033ms
+     ✓ terminates 401 records at the actual final cursor  1462ms
+ ✓ |unit| src/features/annual-return/components/payment-pagination.test.tsx (20 tests) 2902ms
+   ✓ F15 / UC109: a page1 proof for case201 is actionable without paging unrelated cases  430ms
+   ✓ proof101 remains reachable without loading case pages  1374ms
+ ✓ |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx (9 tests) 1003ms
+ ✓ |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx (4 tests) 738ms
+ ✓ |unit| src/features/annual-return/components/production-case-detail.return-context.test.tsx (5 tests) 621ms
+     ✓ returns from 'request error' to the same client and filtered register  340ms
+ ✓ |unit| src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx (3 tests) 313ms
+ ✓ |unit| src/features/annual-return/components/scoped-pickers.interaction.test.tsx (4 tests) 236ms
+ ✓ |unit| src/features/annual-return/components/risk-pill.test.tsx (1 test) 34ms
+ ✓ |unit| src/features/annual-return/evidence-server-fns.test.ts (5 tests) 33ms
+ ✓ |unit| src/features/annual-return/evidence-file-types.test.ts (8 tests) 8ms
+ ✓ |unit| src/features/annual-return/components/production-case-detail.test.ts (1 test) 5ms
+ ✓ |unit| src/features/annual-return/daily-view-state.test.ts (4 tests) 6ms
+
+ Test Files  12 passed (12)
+      Tests  87 passed (87)
+   Start at  12:16:59
+   Duration  33.83s (transform 2.17s, setup 0ms, import 8.32s, tests 11.12s, environment 11.23s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

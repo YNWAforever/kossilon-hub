@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-05",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/annual-return/components/payment-pagination.test.tsx",
+    "src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+    "src/features/annual-return/components/production-case-detail.return-context.test.tsx",
+    "src/features/annual-return/components/production-case-detail.test.ts",
+    "src/features/annual-return/components/production-command-center.interaction.test.tsx",
+    "src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx",
+    "src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx",
+    "src/features/annual-return/components/risk-pill.test.tsx",
+    "src/features/annual-return/components/scoped-pickers.interaction.test.tsx",
+    "src/features/annual-return/daily-view-state.test.ts",
+    "src/features/annual-return/evidence-file-types.test.ts",
+    "src/features/annual-return/evidence-server-fns.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/features/annual-return/components/payment-pagination.test.tsx",
+    "src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+    "src/features/annual-return/components/production-case-detail.return-context.test.tsx",
+    "src/features/annual-return/components/production-case-detail.test.ts",
+    "src/features/annual-return/components/production-command-center.interaction.test.tsx",
+    "src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx",
+    "src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx",
+    "src/features/annual-return/components/risk-pill.test.tsx",
+    "src/features/annual-return/components/scoped-pickers.interaction.test.tsx",
+    "src/features/annual-return/daily-view-state.test.ts",
+    "src/features/annual-return/evidence-file-types.test.ts",
+    "src/features/annual-return/evidence-server-fns.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/features/annual-return/components/production-command-center.interaction.test.tsx",
+      "tests": 23
+    },
+    {
+      "path": "src/features/annual-return/components/payment-pagination.test.tsx",
+      "tests": 20
+    },
+    {
+      "path": "src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "tests": 9
+    },
+    {
+      "path": "src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx",
+      "tests": 4
+    },
+    {
+      "path": "src/features/annual-return/components/production-case-detail.return-context.test.tsx",
+      "tests": 5
+    },
+    {
+      "path": "src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx",
+      "tests": 3
+    },
+    {
+      "path": "src/features/annual-return/components/scoped-pickers.interaction.test.tsx",
+      "tests": 4
+    },
+    {
+      "path": "src/features/annual-return/components/risk-pill.test.tsx",
+      "tests": 1
+    },
+    {
+      "path": "src/features/annual-return/evidence-server-fns.test.ts",
+      "tests": 5
+    },
+    {
+      "path": "src/features/annual-return/evidence-file-types.test.ts",
+      "tests": 8
+    },
+    {
+      "path": "src/features/annual-return/components/production-case-detail.test.ts",
+      "tests": 1
+    },
+    {
+      "path": "src/features/annual-return/daily-view-state.test.ts",
+      "tests": 4
+    }
+  ]
+}

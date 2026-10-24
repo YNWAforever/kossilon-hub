@@ -1,0 +1,23 @@
+{
+  "run_id": "cosec-20261024-upload-98d2f4c9",
+  "checked_utc": "2026-10-24T03:59:17.064Z",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "declared_cases": 9,
+  "checks": [
+    {
+      "file": "browser-upload.mjs",
+      "sha256": "8e5ead3a8fafb24d026018826613d58e022daf9fd9eae50206e87991d4d49fe6",
+      "syntax_exit": 0
+    },
+    {
+      "file": "browser-entry.tsx.snapshot",
+      "sha256": "17cd6367558f60ef80d5ad97c2a81343bc6a398cdcbc2d029b098160ac7afbe1",
+      "syntax_exit": 0
+    }
+  ],
+  "identity_gate_order_static_check": true,
+  "browser_executed": false,
+  "runtime_results": "NOT_RUN awaiting parent GO",
+  "native_gaps": "BLOCKED",
+  "scope": "Only syntax and static boundary checks; no fixture, server, browser, DB or provider started"
+}

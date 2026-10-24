@@ -1,0 +1,25 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/lib/demo-store-boundary.test.ts (9 tests) 1198ms
+     ✓ mounts demo-only files only from something that branches on dataMode  479ms
+ ✓ |unit| src/lib/-mock-data-importers.test.ts (3 tests) 313ms
+     ✓ is imported only by the known exceptions  304ms
+ ✓ |unit| src/features/work-items/sla.test.ts (6 tests) 46ms
+ ✓ |unit| src/lib/daily-digest.test.ts (6 tests) 36ms
+ ✓ |unit| src/lib/ai-agent.test.ts (12 tests) 10ms
+ ✓ |unit| src/lib/annual-return-store.test.ts (13 tests) 11ms
+ ✓ |unit| src/lib/date-math.test.ts (11 tests) 6ms
+ ✓ |unit| src/lib/client-portal-store.test.ts (4 tests) 5ms
+ ✓ |unit| src/lib/error-details.test.ts (4 tests) 4ms
+ ✓ |unit| src/lib/checklist-item-label.test.ts (5 tests) 6ms
+ ✓ |unit| src/lib/entity-id.test.ts (15 tests) 6ms
+ ✓ |unit| src/features/work-items/title.test.ts (11 tests) 4ms
+
+ Test Files  12 passed (12)
+      Tests  99 passed (99)
+   Start at  12:19:54
+   Duration  4.89s (transform 412ms, setup 0ms, import 727ms, tests 1.64s, environment 1ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

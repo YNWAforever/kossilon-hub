@@ -1,0 +1,29 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| scripts/audit-performance-samples.test.ts (15 tests) 976ms
+     ✓ runs the real CSV flag with complete/incomplete exits while preserving the default JSON mode  400ms
+     ✓ refuses malformed/oversized input and unknown flags before any CSV stdout  562ms
+ ✓ |unit| scripts/audit-performance-report.test.ts (26 tests) 766ms
+     ✓ reports actual CLI exits for complete/incomplete/invalid input without exposing values  607ms
+ ✓ |unit| scripts/cosec-delivery.test.ts (7 tests) 45ms
+stdout | scripts/db-seed-annual-return.test.ts > annual return seed fixtures > excludes password-like keys from every generated insert row
+Seeded 3 companies and annual return cases.
+
+ ✓ |unit| scripts/db-seed-annual-return.test.ts (8 tests) 19ms
+ ✓ |unit| scripts/db-seed-neon-auth-demo.test.ts (31 tests) 16ms
+ ✓ |unit| scripts/audit-uat-ledger.test.ts (4 tests) 14ms
+ ✓ |unit| scripts/db-reset-neon-auth-demo.test.ts (6 tests) 18ms
+ ✓ |unit| scripts/dependency-parser-security.test.ts (2 tests) 12ms
+ ✓ |unit| scripts/audit-staging-config.test.ts (7 tests) 6ms
+ ✓ |unit| scripts/dependency-locks.test.ts (2 tests) 5ms
+ ✓ |unit| scripts/audit-document-lineage.test.ts (3 tests) 5ms
+ ✓ |unit| scripts/audit-data-origin.test.ts (1 test) 4ms
+
+ Test Files  12 passed (12)
+      Tests  112 passed (112)
+   Start at  12:15:38
+   Duration  5.61s (transform 324ms, setup 0ms, import 866ms, tests 1.89s, environment 2ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

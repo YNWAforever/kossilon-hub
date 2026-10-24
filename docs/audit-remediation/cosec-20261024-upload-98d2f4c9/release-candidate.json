@@ -1,0 +1,99 @@
+{
+  "run_id": "cosec-20261024-upload-98d2f4c9",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "12305610d661418f60fdcaf17a24ef7371280822",
+  "parent_sha": "71dd6d003ffbcefc98e32eb8845e58c2c6eb217d",
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "production_sha_user_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "phase": "LOCAL_UC150_PARTIAL_SCOPED_NATIVE_BLOCKED",
+  "release_gate": "NO_GO",
+  "deployed": false,
+  "auth_runtime_verified": false,
+  "native_http_db_verified": false,
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "source_manifest": "source-candidate.json",
+  "evidence_manifest": "evidence-manifest.json",
+  "checks": {
+    "targeted": {
+      "receipt": "targeted-review-green.json",
+      "log": "targeted-review-green.txt",
+      "exit_code": 0,
+      "summary": {
+        "tests": 138,
+        "files": 12
+      }
+    },
+    "unit": {
+      "receipt": "unit-verified.json",
+      "log": "unit-verified.txt",
+      "exit_code": 0,
+      "summary": {
+        "tests": 2685,
+        "files": 278
+      },
+      "execution": "serial bounded subsets, complete unchanged unit inventory; not a single-process run",
+      "shards": 24
+    },
+    "typecheck": {
+      "receipt": "typecheck-review.json",
+      "log": "typecheck-review.txt",
+      "exit_code": 0
+    },
+    "lint": {
+      "receipt": "lint-final.json",
+      "log": "lint-final.txt",
+      "exit_code": 0
+    },
+    "build": {
+      "receipt": "build-final.json",
+      "log": "build-final.txt",
+      "exit_code": 0
+    },
+    "browser": {
+      "receipt": "browser-green3.json",
+      "log": "browser-green3.txt",
+      "exit_code": 0,
+      "report": "browser-results-green3.json",
+      "passed": 9
+    },
+    "db": {
+      "receipt": "db/db-upload-green2.json",
+      "log": "db/db-upload-green2.txt",
+      "exit_code": 0,
+      "summary": {
+        "tests": 1,
+        "files": 1
+      }
+    }
+  },
+  "local_browser": {
+    "version": "155.0.4283.62",
+    "passed": 9,
+    "transport": "sessionStorage/memory RPC stub"
+  },
+  "isolated_sql": {
+    "container_id": "8c4c91bd00f5bbeb65415b85ba8dda4f23a4ff88b0d7b7a6e5f87fc15d27f6d8",
+    "system_id": "7700077617266991143",
+    "removed": true,
+    "storage": "byte-holding memory stub",
+    "auth": "injected adapter + real SQL membership",
+    "scanner_calls": 0
+  },
+  "remaining": [
+    "native Auth/HTTP/DB-RLS/R2/scanner/persisted reload",
+    "byte-offset/multipart resume",
+    "cross-device or journal-lost automatic recovery",
+    "independent new-request/global hash dedupe not provided",
+    "simultaneous first PUT may repeat identical bytes"
+  ],
+  "rollback": {
+    "action": "ordinary new commit reverting 12305610d661418f60fdcaf17a24ef7371280822; preserve original evidence/history",
+    "production_action": false
+  }
+}

@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+const root=resolve(import.meta.dirname,'../../..');
+assert.equal(process.cwd(),root);
+assert.equal(root,'C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023');
+assert.deepEqual(readdirSync(root).filter(f=>f.startsWith('.env')&&f!=='.env.example'),[]);
+const attempt=process.argv[2];assert.match(attempt??'',/^[a-z0-9-]+$/);
+const folder=import.meta.dirname,stem=`backend-${attempt}`;
+assert(!existsSync(join(folder,stem+'.txt'))&&!existsSync(join(folder,stem+'.json')));
+const gate=spawnSync(process.execPath,[join(folder,'resource-gate.mjs'),stem,'1.5'],{cwd:root,encoding:'utf8'});
+if(gate.status!==0){process.stdout.write(gate.stdout??'');process.exit(gate.status??1);}
+const keep=/^(PATH|PATHEXT|SystemRoot|WINDIR|COMSPEC|TEMP|TMP|USERPROFILE|LOCALAPPDATA|APPDATA|PROGRAMFILES|PROGRAMFILES\(X86\)|PROGRAMW6432|HOMEDRIVE|HOMEPATH|NUMBER_OF_PROCESSORS|PROCESSOR_ARCHITECTURE)$/i;
+const env=Object.fromEntries(Object.entries(process.env).filter(([k])=>keep.test(k)));
+env.CI='true';env.NO_COLOR='1';env.TEMP=join(root,'.worktrees/upload-98d2f4c9-backend');env.TMP=env.TEMP;mkdirSync(env.TEMP,{recursive:true});
+const command=['node_modules/vitest/vitest.mjs','run','--project','unit','src/features/documents/upload-retry.test.ts','src/features/documents/server-fns.test.ts','src/features/documents/repository.test.ts','--maxWorkers','1'];
+const owned=['src/features/documents/repository.ts','src/features/documents/server-fns.ts','src/features/documents/upload-retry.test.ts'];
+const fingerprint=()=>Object.fromEntries(owned.map(p=>[p,createHash('sha256').update(readFileSync(join(root,p))).digest('hex')]));
+const source_before=fingerprint();
+const started=new Date().toISOString(),result=spawnSync(process.execPath,command,{cwd:root,env,encoding:'utf8',timeout:180000,maxBuffer:20*1024*1024,windowsHide:true});
+writeFileSync(join(folder,stem+'.txt'),(result.stdout??'')+(result.stderr??''),{flag:'wx'});
+writeFileSync(join(folder,stem+'.json'),JSON.stringify({attempt,started,finished:new Date().toISOString(),command,exit_code:result.status,signal:result.signal,error:result.error?.message??null,env_keys:Object.keys(env),source_before,source_after:fingerprint()},null,2),{flag:'wx'});
+console.log(JSON.stringify({attempt,exit_code:result.status}));process.exitCode=result.status??1;

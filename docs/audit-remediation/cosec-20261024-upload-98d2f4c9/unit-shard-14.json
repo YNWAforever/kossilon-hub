@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-14",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/incorporation/repository-read.test.ts",
+    "src/features/incorporation/workflow.test.ts",
+    "src/features/nar-import/apply-panel.test.tsx",
+    "src/features/nar-import/apply-server.test.ts",
+    "src/features/nar-import/mapping.test.ts",
+    "src/features/nar-import/mixed-xlsx-fixture.test.ts",
+    "src/features/nar-import/normalize.test.ts",
+    "src/features/nar-import/server-fns.test.ts",
+    "src/features/nar-import/xlsx/workbook.test.ts",
+    "src/features/nar-import/xlsx/zip.test.ts",
+    "src/features/notifications/dispatcher.test.ts",
+    "src/features/notifications/local-transport.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/features/incorporation/repository-read.test.ts",
+    "src/features/incorporation/workflow.test.ts",
+    "src/features/nar-import/apply-panel.test.tsx",
+    "src/features/nar-import/apply-server.test.ts",
+    "src/features/nar-import/mapping.test.ts",
+    "src/features/nar-import/mixed-xlsx-fixture.test.ts",
+    "src/features/nar-import/normalize.test.ts",
+    "src/features/nar-import/server-fns.test.ts",
+    "src/features/nar-import/xlsx/workbook.test.ts",
+    "src/features/nar-import/xlsx/zip.test.ts",
+    "src/features/notifications/dispatcher.test.ts",
+    "src/features/notifications/local-transport.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/features/nar-import/xlsx/zip.test.ts",
+      "tests": 3
+    },
+    {
+      "path": "src/features/nar-import/apply-panel.test.tsx",
+      "tests": 5
+    },
+    {
+      "path": "src/features/nar-import/mixed-xlsx-fixture.test.ts",
+      "tests": 6
+    },
+    {
+      "path": "src/features/nar-import/xlsx/workbook.test.ts",
+      "tests": 22
+    },
+    {
+      "path": "src/features/notifications/dispatcher.test.ts",
+      "tests": 36
+    },
+    {
+      "path": "src/features/nar-import/apply-server.test.ts",
+      "tests": 5
+    },
+    {
+      "path": "src/features/nar-import/normalize.test.ts",
+      "tests": 30
+    },
+    {
+      "path": "src/features/nar-import/mapping.test.ts",
+      "tests": 25
+    },
+    {
+      "path": "src/features/incorporation/repository-read.test.ts",
+      "tests": 10
+    },
+    {
+      "path": "src/features/notifications/local-transport.test.ts",
+      "tests": 1
+    },
+    {
+      "path": "src/features/nar-import/server-fns.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "src/features/incorporation/workflow.test.ts",
+      "tests": 7
+    }
+  ]
+}

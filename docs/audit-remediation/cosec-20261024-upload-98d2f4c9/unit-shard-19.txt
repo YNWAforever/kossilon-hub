@@ -1,0 +1,26 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/routes/-annual-returns-workflow.test.ts (9 tests) 1781ms
+     ✓ keeps blockers, packet and follow-ups on every command-center row  335ms
+     ✓ renders the annual-return detail route instead of swallowing it in the parent list route  342ms
+     ✓ marks only WhatsApp Automation active on its nested route  846ms
+ ✓ |unit| src/lib/knowledge-base.test.ts (2 tests) 300ms
+ ✓ |unit| src/routes/-annual-returns-data-mode.test.tsx (8 tests) 217ms
+ ✓ |unit| src/routes/-admin-guard.test.tsx (3 tests) 295ms
+ ✓ |unit| src/lib/use-retained-page.test.tsx (1 test) 140ms
+ ✓ |unit| src/lib/hong-kong-time.test.ts (7 tests) 19ms
+ ✓ |unit| src/lib/format-date.test.ts (6 tests) 5ms
+ ✓ |unit| src/lib/text-tokens.test.ts (9 tests) 5ms
+ ✓ |unit| src/lib/serialization-adapters.test.ts (4 tests) 4ms
+ ✓ |unit| src/routes/-annual-returns-table-layout.test.ts (4 tests) 5ms
+ ✓ |unit| src/lib/format-label.test.ts (6 tests) 3ms
+ ✓ |unit| src/lib/reminder-cadence.test.ts (9 tests) 4ms
+
+ Test Files  12 passed (12)
+      Tests  68 passed (68)
+   Start at  12:20:03
+   Duration  12.18s (transform 3.87s, setup 0ms, import 5.63s, tests 2.78s, environment 1.11s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

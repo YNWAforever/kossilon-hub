@@ -1,0 +1,32 @@
+{
+  "run_id": "cosec-20261024-upload-98d2f4c9",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "origin": "http://127.0.0.1:5173",
+  "host": "127.0.0.1",
+  "port": 5173,
+  "configFile": false,
+  "envFile": false,
+  "envDir": false,
+  "hmr": false,
+  "sourceHashes": {
+    "src/routes/portal.tsx": "0f6195bce4d1952fd9d85a22d66927cba226eb1a8072c9567d8040417102beb3",
+    "src/features/documents/upload-resume.ts": "6c91192f2a22e907446f7986d162339d706120aa5e268ad733bcb2e5990b3764",
+    "src/features/documents/server-fns.ts": "14c3f83a1e092b96ea88b51ab7e36af1b0fdeb2a6e83459774b8a7e156d68e91",
+    "src/features/documents/repository.ts": "3bbbca6dd552fb4ee247b8aa28120c89bd76db414aae4a68756c5a527d61bc2b",
+    "src/features/annual-return/outstanding.ts": "cfe826f1afc0712fd4a5dfb8fc2473681e811e29b8f60cbb291635d4e521988f"
+  },
+  "harnessHashes": {
+    "browser-upload.mjs": "dadb53736e90ab0c742f39aee03d51ecd689265b2c7b682659d86ef2df926512",
+    "browser-entry.tsx.snapshot": "17cd6367558f60ef80d5ad97c2a81343bc6a398cdcbc2d029b098160ac7afbe1"
+  },
+  "historical_overlay": null,
+  "fixture_ids": {
+    "case": "98d2f4c9-0150-4150-8150-000000000004",
+    "item": "98d2f4c9-0150-4150-8150-000000000007"
+  },
+  "transport": "Owned sessionStorage RPC stub; no native Auth/HTTP RPC/DB/storage/scanner",
+  "near_limit_pdf_bytes": 10484736,
+  "near_limit_pdf_sha256": "6d4d0e29598bd3e8a8e568baa749497cd91f705148c7d08d689f1b6f36914b10",
+  "resume_semantics": "Full-file resend and same logical request replay; no chunk/byte-offset resume",
+  "fixture_gate": "Both process and browser GET exact run/root identity before synthetic fixture initialization"
+}

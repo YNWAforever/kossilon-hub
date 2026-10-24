@@ -1,0 +1,64 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/documents/upload-retry.test.ts (33 tests | 1 failed) 29ms
+     ✓ binds a stable opaque request key to the server actor, and keeps legacy requests additive 6ms
+     ✓ rejects malformed request IDs and combining recovery with a retry ID before writing 2ms
+     ✓ reads the committed quarantined receipt after intent expiry without any side effects 2ms
+     ✓ reads the committed available receipt after intent expiry without any side effects 1ms
+     ✓ reads the committed rejected receipt after intent expiry without any side effects 0ms
+     ✓ reads the committed failed receipt after intent expiry without any side effects 0ms
+     ✓ reads the committed uploaded receipt after intent expiry without any side effects 0ms
+     ✓ revalidates bytes, current membership, inactive and other actor even on an already committed receipt 2ms
+     ✓ refuses a conflicting committed document chain {"id":"98d2f4c9-0150-4150-8150-000000000004"} 1ms
+     ✓ refuses a conflicting committed document chain {"companyId":"98d2f4c9-0150-4150-8150-000000000004"} 1ms
+     ✓ refuses a conflicting committed document chain {"caseId":null} 1ms
+     ✓ refuses a conflicting committed document chain {"category":"other"} 0ms
+     ✓ refuses a conflicting committed document chain {"fileName":"other.pdf"} 0ms
+     ✓ refuses a conflicting committed document chain {"contentType":"image/png"} 0ms
+     ✓ refuses a conflicting committed document chain {"sizeBytes":5} 0ms
+     ✓ refuses a conflicting committed document chain {"checksum":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 0ms
+     ✓ refuses a conflicting committed document chain {"objectKey":"another"} 0ms
+     ✓ refuses a conflicting committed document chain {"currentVersionId":null} 0ms
+     ✓ refuses a conflicting committed document chain {"currentVersionId":"98d2f4c9-0150-4150-8150-000000000005"} 0ms
+     ✓ refuses a conflicting committed document chain {"uploadStatus":"available"} 0ms
+     ✓ refuses missing receipt metadata and expired uncommitted attempts 1ms
+     ✓ returns the exact original expired-created intent after a duplicate request, without extending expiry 2ms
+     ✓ refuses a request key collision with different payload/recovery {"requested_by_auth_user_id":"another"} 0ms
+     ✓ refuses a request key collision with different payload/recovery {"company_id":"98d2f4c9-0150-4150-8150-000000000004"} 0ms
+     ✓ refuses a request key collision with different payload/recovery {"case_id":null} 0ms
+     ✓ refuses a request key collision with different payload/recovery {"checklist_item_id":null} 0ms
+     ✓ refuses a request key collision with different payload/recovery {"category":"other"} 0ms
+     ✓ refuses a request key collision with different payload/recovery {"file_name":"other.pdf"} 0ms
+     ✓ refuses a request key collision with different payload/recovery {"content_type":"image/png"} 0ms
+     ✓ refuses a request key collision with different payload/recovery {"expected_size_bytes":5} 0ms
+     ✓ refuses a request key collision with different payload/recovery {"checksum_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 0ms
+     ✓ refuses a request key collision with different payload/recovery {"is_recovery":true} 0ms
+     × returns committed metadata inside the case/intent lock without enqueueing or touching the receipt 5ms
+ ✓ |unit| src/features/documents/server-fns.test.ts (26 tests) 22ms
+ ✓ |unit| src/features/documents/repository.test.ts (2 tests) 3ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 60 passed (61)
+   Start at  11:50:44
+   Duration  1.68s (transform 407ms, setup 0ms, import 1.04s, tests 55ms, environment 0ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 repository receipt policy with inert SQL fake > returns committed metadata inside the case/intent lock without enqueueing or touching the receipt
+Error: Committed upload lineage does not match the current document.
+ ❯ assertCommittedUploadMatchesDocument src/features/documents/repository.ts:142:11
+    140|     document.uploadStatus !== intent.status
+    141|   )
+    142|     throw new Error("Committed upload lineage does not match the curre…
+       |           ^
+    143| }
+    144|
+ ❯ src/features/documents/repository.ts:763:11
+ ❯ src/features/documents/upload-retry.test.ts:191:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

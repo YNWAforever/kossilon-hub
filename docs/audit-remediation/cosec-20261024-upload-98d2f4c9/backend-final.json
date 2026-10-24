@@ -1,0 +1,40 @@
+{
+  "attempt": "final",
+  "started": "2026-10-24T03:51:44.959Z",
+  "finished": "2026-10-24T03:51:48.799Z",
+  "command": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/documents/upload-retry.test.ts",
+    "src/features/documents/server-fns.test.ts",
+    "src/features/documents/repository.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "exit_code": 0,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ]
+}

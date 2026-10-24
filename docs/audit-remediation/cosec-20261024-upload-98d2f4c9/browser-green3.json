@@ -1,0 +1,35 @@
+{
+  "kind": "browser",
+  "attempt": "green3",
+  "started": "2026-10-24T04:11:32.490Z",
+  "finished": "2026-10-24T04:11:50.016Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-upload.mjs",
+    "green3"
+  ],
+  "exit_code": 0,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ]
+}

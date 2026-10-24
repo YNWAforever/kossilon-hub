@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-12",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/documents/live-scanner.test.ts",
+    "src/features/documents/local-r2.test.ts",
+    "src/features/documents/ocr-provider.test.ts",
+    "src/features/documents/rejection-projection.test.ts",
+    "src/features/documents/repository.test.ts",
+    "src/features/documents/safety.test.ts",
+    "src/features/documents/scan-jobs.test.ts",
+    "src/features/documents/scan-worker.test.ts",
+    "src/features/documents/scanner-selection.test.ts",
+    "src/features/documents/scanner.test.ts",
+    "src/features/documents/server-fns.test.ts",
+    "src/features/documents/storage.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/features/documents/live-scanner.test.ts",
+    "src/features/documents/local-r2.test.ts",
+    "src/features/documents/ocr-provider.test.ts",
+    "src/features/documents/rejection-projection.test.ts",
+    "src/features/documents/repository.test.ts",
+    "src/features/documents/safety.test.ts",
+    "src/features/documents/scan-jobs.test.ts",
+    "src/features/documents/scan-worker.test.ts",
+    "src/features/documents/scanner-selection.test.ts",
+    "src/features/documents/scanner.test.ts",
+    "src/features/documents/server-fns.test.ts",
+    "src/features/documents/storage.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/features/documents/live-scanner.test.ts",
+      "tests": 19
+    },
+    {
+      "path": "src/features/documents/server-fns.test.ts",
+      "tests": 26
+    },
+    {
+      "path": "src/features/documents/ocr-provider.test.ts",
+      "tests": 3
+    },
+    {
+      "path": "src/features/documents/scan-worker.test.ts",
+      "tests": 20
+    },
+    {
+      "path": "src/features/documents/storage.test.ts",
+      "tests": 4
+    },
+    {
+      "path": "src/features/documents/rejection-projection.test.ts",
+      "tests": 7
+    },
+    {
+      "path": "src/features/documents/scanner-selection.test.ts",
+      "tests": 7
+    },
+    {
+      "path": "src/features/documents/scan-jobs.test.ts",
+      "tests": 8
+    },
+    {
+      "path": "src/features/documents/safety.test.ts",
+      "tests": 16
+    },
+    {
+      "path": "src/features/documents/scanner.test.ts",
+      "tests": 7
+    },
+    {
+      "path": "src/features/documents/repository.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "src/features/documents/local-r2.test.ts",
+      "tests": 2
+    }
+  ]
+}

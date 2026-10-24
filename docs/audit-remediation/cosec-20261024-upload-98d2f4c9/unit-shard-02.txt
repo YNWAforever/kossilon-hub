@@ -1,0 +1,24 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx (25 tests) 3521ms
+ ✓ |unit| src/components/bulk-selection-toolbar.test.tsx (20 tests) 1264ms
+ ✓ |unit| src/components/bulk-export.interaction.test.tsx (5 tests) 1017ms
+     ✓ downloads the mocked saved-job CSV bytes with the results filename and releases its URL  318ms
+ ✓ |unit| scripts/validate-firm-runtime.test.ts (5 tests) 569ms
+ ✓ |unit| src/components/clients/controller-form-dialog.test.tsx (6 tests) 491ms
+ ✓ |unit| src/components/clients/officer-form-dialog.test.tsx (3 tests) 282ms
+ ✓ |unit| src/components/clients/inspection-request-form-dialog.test.tsx (2 tests) 258ms
+ ✓ |unit| scripts/validate-neon-auth-demo.test.ts (22 tests) 304ms
+ ✓ |unit| src/components/clients/resolve-inspection-request-dialog.test.tsx (2 tests) 233ms
+ ✓ |unit| scripts/local-browser-evidence.test.ts (6 tests) 171ms
+ ✓ |unit| scripts/verify-firm-deployment.test.ts (16 tests) 11ms
+ ✓ |unit| scripts/verify-dev-server-imports.test.ts (2 tests) 3ms
+
+ Test Files  12 passed (12)
+      Tests  114 passed (114)
+   Start at  12:15:47
+   Duration  23.17s (transform 549ms, setup 0ms, import 3.50s, tests 8.12s, environment 8.84s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

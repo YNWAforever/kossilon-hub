@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-15",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/notifications/outbox.test.ts",
+    "src/features/notifications/resend-transport.test.ts",
+    "src/features/notifications/runtime-dispatch.test.ts",
+    "src/features/notifications/simulated-transport.test.ts",
+    "src/features/operations/capabilities.test.ts",
+    "src/features/operations/health.test.ts",
+    "src/features/operations/release-compatibility.test.ts",
+    "src/features/operations/schema-health.test.ts",
+    "src/features/operations/schema-readiness.test.ts",
+    "src/features/operations/server-fns.test.ts",
+    "src/features/runtime/data-mode.test.ts",
+    "src/features/service-subscriptions/reminder-draft.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/features/notifications/outbox.test.ts",
+    "src/features/notifications/resend-transport.test.ts",
+    "src/features/notifications/runtime-dispatch.test.ts",
+    "src/features/notifications/simulated-transport.test.ts",
+    "src/features/operations/capabilities.test.ts",
+    "src/features/operations/health.test.ts",
+    "src/features/operations/release-compatibility.test.ts",
+    "src/features/operations/schema-health.test.ts",
+    "src/features/operations/schema-readiness.test.ts",
+    "src/features/operations/server-fns.test.ts",
+    "src/features/runtime/data-mode.test.ts",
+    "src/features/service-subscriptions/reminder-draft.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/features/notifications/runtime-dispatch.test.ts",
+      "tests": 13
+    },
+    {
+      "path": "src/features/operations/health.test.ts",
+      "tests": 19
+    },
+    {
+      "path": "src/features/notifications/resend-transport.test.ts",
+      "tests": 8
+    },
+    {
+      "path": "src/features/notifications/outbox.test.ts",
+      "tests": 32
+    },
+    {
+      "path": "src/features/operations/server-fns.test.ts",
+      "tests": 21
+    },
+    {
+      "path": "src/features/service-subscriptions/reminder-draft.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "src/features/operations/capabilities.test.ts",
+      "tests": 23
+    },
+    {
+      "path": "src/features/operations/schema-readiness.test.ts",
+      "tests": 7
+    },
+    {
+      "path": "src/features/operations/release-compatibility.test.ts",
+      "tests": 20
+    },
+    {
+      "path": "src/features/operations/schema-health.test.ts",
+      "tests": 13
+    },
+    {
+      "path": "src/features/notifications/simulated-transport.test.ts",
+      "tests": 1
+    },
+    {
+      "path": "src/features/runtime/data-mode.test.ts",
+      "tests": 2
+    }
+  ]
+}

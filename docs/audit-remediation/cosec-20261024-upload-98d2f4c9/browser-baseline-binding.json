@@ -1,0 +1,10 @@
+{
+  "run_id": "cosec-20261024-upload-98d2f4c9",
+  "base": "71dd6d003ffbcefc98e32eb8845e58c2c6eb217d",
+  "git_blob_sha256": "36efebf7a5f0e748ce2a75b3b84626570e6b0c6cecd361385a7e90d3d49bc924",
+  "overlay_sha256": "36efebf7a5f0e748ce2a75b3b84626570e6b0c6cecd361385a7e90d3d49bc924",
+  "exact_bytes_equal": true,
+  "equal_after_crlf_normalization": true,
+  "scope": "Baseline Portal overlay only; RPC transport unchanged, expected one duplicate-commit failure",
+  "browser_attempt": "historical1"
+}

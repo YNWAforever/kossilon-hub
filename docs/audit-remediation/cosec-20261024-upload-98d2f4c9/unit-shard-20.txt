@@ -1,0 +1,904 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/routes/-case-subroutes.interaction.test.tsx (22 tests) 1984ms
+     ✓ opens the linked detail, changes DOM and URL, and restores page3 on Back/Forward  848ms
+ ✓ |unit| src/routes/-clients-url-context.test.tsx (21 tests) 1017ms
+   ✓ restores q/status/team/includeFixtures/cursor from a copied page3 URL  391ms
+ ✓ |unit| src/routes/-document-rejection.interaction.test.tsx (6 tests) 929ms
+   ✓ shows the actionable returned reason to the client, including after fresh-cache reopen  590ms
+ ✓ |unit| src/routes/-login.interaction.test.tsx (23 tests) 561ms
+ ✓ |unit| src/routes/-documents-production-data.test.tsx (18 tests) 494ms
+ ✓ |unit| src/routes/-imports-access.test.tsx (6 tests) 555ms
+   ✓ blocks Manager import deep links without any read  320ms
+ ✓ |unit| src/routes/-documents-search.interaction.test.tsx (1 test) 598ms
+   ✓ sends global filters to the RPC and restarts at page one after paging  597ms
+ ✓ |unit| src/routes/-clients-data-mode.test.tsx (4 tests) 373ms
+ ✓ |unit| src/routes/-dashboard-modes.test.tsx (4 tests) 170ms
+ ✓ |unit| src/routes/-nested-route-outlet.convention.test.ts (2 tests) 6ms
+ ✓ |unit| src/routes/-final-review-restorations.test.ts (6 tests) 5ms
+ ✓ |unit| src/routes/-operations-dispatch-labels.test.ts (2 tests) 3ms
+
+ Test Files  12 passed (12)
+      Tests  115 passed (115)
+   Start at  12:20:19
+   Duration  26.71s (transform 5.72s, setup 0ms, import 9.83s, tests 6.69s, environment 7.78s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL q=a&q=b
+SearchParamError: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "array",
+    "path": [
+      "q"
+    ],
+    "message": "Expected string, received array"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "code": "invalid_type",\n' +
+    '    "expected": "string",\n' +
+    '    "received": "array",\n' +
+    '    "path": [\n' +
+    '      "q"\n' +
+    '    ],\n' +
+    '    "message": "Expected string, received array"\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "code": "invalid_type",
+      "expected": "string",
+      "received": "array",
+      "path": [
+        "q"
+      ],
+      "message": "Expected string, received array"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        code: 'invalid_type',
+        expected: 'string',
+        received: 'array',
+        path: [ 'q', [length]: 1 ],
+        message: 'Expected string, received array'
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL status=active&status=inactive
+SearchParamError: [
+  {
+    "expected": "'all' | 'active' | 'inactive'",
+    "received": "array",
+    "code": "invalid_type",
+    "path": [
+      "status"
+    ],
+    "message": "Expected 'all' | 'active' | 'inactive', received array"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    `    "expected": "'all' | 'active' | 'inactive'",\n` +
+    '    "received": "array",\n' +
+    '    "code": "invalid_type",\n' +
+    '    "path": [\n' +
+    '      "status"\n' +
+    '    ],\n' +
+    `    "message": "Expected 'all' | 'active' | 'inactive', received array"\n` +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "expected": "'all' | 'active' | 'inactive'",
+      "received": "array",
+      "code": "invalid_type",
+      "path": [
+        "status"
+      ],
+      "message": "Expected 'all' | 'active' | 'inactive', received array"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        expected: "'all' | 'active' | 'inactive'",
+        received: 'array',
+        code: 'invalid_type',
+        path: [ 'status', [length]: 1 ],
+        message: "Expected 'all' | 'active' | 'inactive', received array"
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL team=all&team=other
+SearchParamError: [
+  {
+    "code": "invalid_union",
+    "unionErrors": [
+      {
+        "issues": [
+          {
+            "received": [
+              "all",
+              "other"
+            ],
+            "code": "invalid_literal",
+            "expected": "all",
+            "path": [
+              "team"
+            ],
+            "message": "Invalid literal value, expected \"all\""
+          }
+        ],
+        "name": "ZodError"
+      },
+      {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "received": "array",
+            "path": [
+              "team"
+            ],
+            "message": "Expected string, received array"
+          }
+        ],
+        "name": "ZodError"
+      }
+    ],
+    "path": [
+      "team"
+    ],
+    "message": "Invalid input"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "code": "invalid_union",\n' +
+    '    "unionErrors": [\n' +
+    '      {\n' +
+    '        "issues": [\n' +
+    '          {\n' +
+    '            "received": [\n' +
+    '              "all",\n' +
+    '              "other"\n' +
+    '            ],\n' +
+    '            "code": "invalid_literal",\n' +
+    '            "expected": "all",\n' +
+    '            "path": [\n' +
+    '              "team"\n' +
+    '            ],\n' +
+    '            "message": "Invalid literal value, expected \\"all\\""\n' +
+    '          }\n' +
+    '        ],\n' +
+    '        "name": "ZodError"\n' +
+    '      },\n' +
+    '      {\n' +
+    '        "issues": [\n' +
+    '          {\n' +
+    '            "code": "invalid_type",\n' +
+    '            "expected": "string",\n' +
+    '            "received": "array",\n' +
+    '            "path": [\n' +
+    '              "team"\n' +
+    '            ],\n' +
+    '            "message": "Expected string, received array"\n' +
+    '          }\n' +
+    '        ],\n' +
+    '        "name": "ZodError"\n' +
+    '      }\n' +
+    '    ],\n' +
+    '    "path": [\n' +
+    '      "team"\n' +
+    '    ],\n' +
+    '    "message": "Invalid input"\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "code": "invalid_union",
+      "unionErrors": [
+        {
+          "issues": [
+            {
+              "received": [
+                "all",
+                "other"
+              ],
+              "code": "invalid_literal",
+              "expected": "all",
+              "path": [
+                "team"
+              ],
+              "message": "Invalid literal value, expected \"all\""
+            }
+          ],
+          "name": "ZodError"
+        },
+        {
+          "issues": [
+            {
+              "code": "invalid_type",
+              "expected": "string",
+              "received": "array",
+              "path": [
+                "team"
+              ],
+              "message": "Expected string, received array"
+            }
+          ],
+          "name": "ZodError"
+        }
+      ],
+      "path": [
+        "team"
+      ],
+      "message": "Invalid input"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        code: 'invalid_union',
+        unionErrors: [ [ZodError], [ZodError], [length]: 2 ],
+        path: [ 'team', [length]: 1 ],
+        message: 'Invalid input'
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL includeFixtures=true&includeFixtures=false
+SearchParamError: [
+  {
+    "code": "invalid_type",
+    "expected": "boolean",
+    "received": "array",
+    "path": [
+      "includeFixtures"
+    ],
+    "message": "Expected boolean, received array"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "code": "invalid_type",\n' +
+    '    "expected": "boolean",\n' +
+    '    "received": "array",\n' +
+    '    "path": [\n' +
+    '      "includeFixtures"\n' +
+    '    ],\n' +
+    '    "message": "Expected boolean, received array"\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "code": "invalid_type",
+      "expected": "boolean",
+      "received": "array",
+      "path": [
+        "includeFixtures"
+      ],
+      "message": "Expected boolean, received array"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        code: 'invalid_type',
+        expected: 'boolean',
+        received: 'array',
+        path: [ 'includeFixtures', [length]: 1 ],
+        message: 'Expected boolean, received array'
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL cursor=a&cursor=b
+SearchParamError: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "array",
+    "path": [
+      "cursor"
+    ],
+    "message": "Expected string, received array"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "code": "invalid_type",\n' +
+    '    "expected": "string",\n' +
+    '    "received": "array",\n' +
+    '    "path": [\n' +
+    '      "cursor"\n' +
+    '    ],\n' +
+    '    "message": "Expected string, received array"\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "code": "invalid_type",
+      "expected": "string",
+      "received": "array",
+      "path": [
+        "cursor"
+      ],
+      "message": "Expected string, received array"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        code: 'invalid_type',
+        expected: 'string',
+        received: 'array',
+        path: [ 'cursor', [length]: 1 ],
+        message: 'Expected string, received array'
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL status=unknown
+SearchParamError: [
+  {
+    "received": "unknown",
+    "code": "invalid_enum_value",
+    "options": [
+      "all",
+      "active",
+      "inactive"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid enum value. Expected 'all' | 'active' | 'inactive', received 'unknown'"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "received": "unknown",\n' +
+    '    "code": "invalid_enum_value",\n' +
+    '    "options": [\n' +
+    '      "all",\n' +
+    '      "active",\n' +
+    '      "inactive"\n' +
+    '    ],\n' +
+    '    "path": [\n' +
+    '      "status"\n' +
+    '    ],\n' +
+    `    "message": "Invalid enum value. Expected 'all' | 'active' | 'inactive', received 'unknown'"\n` +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "received": "unknown",
+      "code": "invalid_enum_value",
+      "options": [
+        "all",
+        "active",
+        "inactive"
+      ],
+      "path": [
+        "status"
+      ],
+      "message": "Invalid enum value. Expected 'all' | 'active' | 'inactive', received 'unknown'"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        received: 'unknown',
+        code: 'invalid_enum_value',
+        options: [ 'all', 'active', 'inactive', [length]: 3 ],
+        path: [ 'status', [length]: 1 ],
+        message: "Invalid enum value. Expected 'all' | 'active' | 'inactive', received 'unknown'"
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL team=wrong
+SearchParamError: [
+  {
+    "validation": "uuid",
+    "code": "invalid_string",
+    "message": "Invalid uuid",
+    "path": [
+      "team"
+    ]
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "validation": "uuid",\n' +
+    '    "code": "invalid_string",\n' +
+    '    "message": "Invalid uuid",\n' +
+    '    "path": [\n' +
+    '      "team"\n' +
+    '    ]\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "validation": "uuid",
+      "code": "invalid_string",
+      "message": "Invalid uuid",
+      "path": [
+        "team"
+      ]
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        validation: 'uuid',
+        code: 'invalid_string',
+        message: 'Invalid uuid',
+        path: [ 'team', [length]: 1 ]
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL includeFixtures=maybe
+SearchParamError: [
+  {
+    "code": "invalid_type",
+    "expected": "boolean",
+    "received": "string",
+    "path": [
+      "includeFixtures"
+    ],
+    "message": "Expected boolean, received string"
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "code": "invalid_type",\n' +
+    '    "expected": "boolean",\n' +
+    '    "received": "string",\n' +
+    '    "path": [\n' +
+    '      "includeFixtures"\n' +
+    '    ],\n' +
+    '    "message": "Expected boolean, received string"\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "code": "invalid_type",
+      "expected": "boolean",
+      "received": "string",
+      "path": [
+        "includeFixtures"
+      ],
+      "message": "Expected boolean, received string"
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        code: 'invalid_type',
+        expected: 'boolean',
+        received: 'string',
+        path: [ 'includeFixtures', [length]: 1 ],
+        message: 'Expected boolean, received string'
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+stderr | src/routes/-clients-url-context.test.tsx > fails closed without a directory read for invalid URL q=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+SearchParamError: [
+  {
+    "code": "too_big",
+    "maximum": 200,
+    "type": "string",
+    "inclusive": true,
+    "exact": false,
+    "message": "String must contain at most 200 character(s)",
+    "path": [
+      "q"
+    ]
+  }
+]
+    at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:694:65)
+    at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+    ... 2 lines matching cause stack trace ...
+    at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:204:9
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20 {
+  [stack]: [Getter/Setter],
+  [message]: '[\n' +
+    '  {\n' +
+    '    "code": "too_big",\n' +
+    '    "maximum": 200,\n' +
+    '    "type": "string",\n' +
+    '    "inclusive": true,\n' +
+    '    "exact": false,\n' +
+    '    "message": "String must contain at most 200 character(s)",\n' +
+    '    "path": [\n' +
+    '      "q"\n' +
+    '    ]\n' +
+    '  }\n' +
+    ']',
+  [cause]: ZodError: [
+    {
+      "code": "too_big",
+      "maximum": 200,
+      "type": "string",
+      "inclusive": true,
+      "exact": false,
+      "message": "String must contain at most 200 character(s)",
+      "path": [
+        "q"
+      ]
+    }
+  ]
+      at Object.get error [as error] (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:39:31)
+      at ZodObject.parse (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/zod/v3/types.js:114:22)
+      at clientRegisterSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/clients/register-view-state.ts:32:23)
+      at validateSearch (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/clients.tsx:15:5)
+      at validateSearch (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:878:51)
+      at Router.matchRoutesInternal (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:683:27)
+      at RouterCore.matchRoutes (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:233:16)
+      at loadClientRoute (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/load-client.js:997:14)
+      at RouterCore.load (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@tanstack/router-core/dist/esm/router.js:488:10)
+      at view (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/-clients-url-context.test.tsx:101:16) {
+    [stack]: [Getter/Setter],
+    issues: [
+      {
+        code: 'too_big',
+        maximum: 200,
+        type: 'string',
+        inclusive: true,
+        exact: false,
+        message: 'String must contain at most 200 character(s)',
+        path: [ 'q', [length]: 1 ]
+      },
+      [length]: 1
+    ],
+    addIssue: [Function (anonymous)] { [length]: 1, [name]: '' },
+    addIssues: [Function (anonymous)] { [length]: 0, [name]: '' },
+    name: 'ZodError',
+    [errors]: [Getter],
+    [message]: [Getter],
+    [isEmpty]: [Getter],
+    [formErrors]: [Getter]
+  }
+}
+
+The above error occurred in the <MatchInnerImpl> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundary.
+
+Warning: Error in route match: /clients/clients
+
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/routes/-login.interaction.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+stderr | src/routes/-documents-production-data.test.tsx > /documents against data the types say is impossible > rejects present invalid parsed caseId 123 without reading cached all scope
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["annual-returns","detail","123"]
+
+stderr | src/routes/-documents-production-data.test.tsx > /documents against data the types say is impossible > rejects present invalid parsed caseId true without reading cached all scope
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["annual-returns","detail","true"]
+
+stderr | src/routes/-documents-production-data.test.tsx > /documents against data the types say is impossible > rejects present invalid parsed caseId null without reading cached all scope
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["annual-returns","detail","null"]
+
+stderr | src/routes/-documents-production-data.test.tsx > /documents against data the types say is impossible > rejects present invalid parsed caseId  without reading cached all scope
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["annual-returns","detail",""]
+
+stderr | src/routes/-documents-production-data.test.tsx > /documents against data the types say is impossible > rejects present invalid parsed caseId 123&caseId=456 without reading cached all scope
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["annual-returns","detail","123&caseId=456"]
+
+stderr | src/routes/-documents-production-data.test.tsx > /documents against data the types say is impossible > does not expose a cached all-document list for an invalid filter
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["annual-returns","detail","invalid"]
+
+stderr | src/routes/-clients-data-mode.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/routes/-clients-data-mode.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+

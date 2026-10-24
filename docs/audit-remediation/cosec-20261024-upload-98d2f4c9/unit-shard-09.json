@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-09",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/auth/staff-state.test.ts",
+    "src/features/bulk-operations/membership.test.ts",
+    "src/features/bulk-operations/result-export.test.ts",
+    "src/features/bulk-operations/server-fns.test.ts",
+    "src/features/bulk-operations/snapshot-scope.unit.test.ts",
+    "src/features/checklist-templates/server-fns.test.ts",
+    "src/features/clients/authorization.test.ts",
+    "src/features/clients/client-return-context.test.ts",
+    "src/features/clients/company-work.unit.test.ts",
+    "src/features/clients/components/client-case-return-context.test.tsx",
+    "src/features/clients/components/demo-client-notice.test.tsx",
+    "src/features/clients/components/production-client-detail.interaction.test.tsx",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/features/auth/staff-state.test.ts",
+    "src/features/bulk-operations/membership.test.ts",
+    "src/features/bulk-operations/result-export.test.ts",
+    "src/features/bulk-operations/server-fns.test.ts",
+    "src/features/bulk-operations/snapshot-scope.unit.test.ts",
+    "src/features/checklist-templates/server-fns.test.ts",
+    "src/features/clients/authorization.test.ts",
+    "src/features/clients/client-return-context.test.ts",
+    "src/features/clients/company-work.unit.test.ts",
+    "src/features/clients/components/client-case-return-context.test.tsx",
+    "src/features/clients/components/demo-client-notice.test.tsx",
+    "src/features/clients/components/production-client-detail.interaction.test.tsx"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/features/clients/components/production-client-detail.interaction.test.tsx",
+      "tests": 17
+    },
+    {
+      "path": "src/features/clients/components/client-case-return-context.test.tsx",
+      "tests": 7
+    },
+    {
+      "path": "src/features/clients/components/demo-client-notice.test.tsx",
+      "tests": 2
+    },
+    {
+      "path": "src/features/bulk-operations/snapshot-scope.unit.test.ts",
+      "tests": 4
+    },
+    {
+      "path": "src/features/clients/company-work.unit.test.ts",
+      "tests": 5
+    },
+    {
+      "path": "src/features/checklist-templates/server-fns.test.ts",
+      "tests": 19
+    },
+    {
+      "path": "src/features/bulk-operations/result-export.test.ts",
+      "tests": 16
+    },
+    {
+      "path": "src/features/bulk-operations/server-fns.test.ts",
+      "tests": 5
+    },
+    {
+      "path": "src/features/clients/authorization.test.ts",
+      "tests": 10
+    },
+    {
+      "path": "src/features/clients/client-return-context.test.ts",
+      "tests": 30
+    },
+    {
+      "path": "src/features/bulk-operations/membership.test.ts",
+      "tests": 1
+    },
+    {
+      "path": "src/features/auth/staff-state.test.ts",
+      "tests": 4
+    }
+  ]
+}

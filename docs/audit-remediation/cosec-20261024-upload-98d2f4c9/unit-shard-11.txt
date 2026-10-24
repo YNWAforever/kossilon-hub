@@ -1,0 +1,91 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/documents/document-recovery-panel.test.tsx (4 tests) 206ms
+ ✓ |unit| src/features/documents/analysis-golden.test.ts (10 tests) 87ms
+ ✓ |unit| src/features/documents/ai-provider.test.ts (25 tests) 81ms
+ ✓ |unit| src/features/dashboard/demo-dashboard-data.test.ts (10 tests) 34ms
+ ✓ |unit| src/features/dashboard/dashboard-data.test.ts (6 tests) 24ms
+ ✓ |unit| src/features/documents/analysis-worker.test.ts (26 tests) 22ms
+ ✓ |unit| src/features/documents/document-list.unit.test.ts (11 tests) 15ms
+ ✓ |unit| src/features/documents/findings-review.test.ts (18 tests) 6ms
+ ✓ |unit| src/features/documents/analysis-checks.test.ts (19 tests) 8ms
+ ✓ |unit| src/features/documents/authorization.test.ts (19 tests) 5ms
+ ✓ |unit| src/features/documents/lazy-storage.test.ts (3 tests) 6ms
+ ✓ |unit| src/features/documents/findings.test.ts (16 tests) 9ms
+
+ Test Files  12 passed (12)
+      Tests  167 passed (167)
+   Start at  12:18:38
+   Duration  6.73s (transform 1.33s, setup 0ms, import 2.55s, tests 503ms, environment 1.17s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > keeps an invalid date-age policy unknown: -1
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > keeps an invalid date-age policy unknown: NaN
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > keeps an invalid date-age policy unknown: Infinity
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > A: cites real parsed text, page, offsets and SHA for a complete labelled form
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > C: preserves three different confirmed/waived/unknown applicability decisions
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > D: reports a wrong name/year while treating instructions inside the document as inert evidence
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/documents/analysis-golden.test.ts > synthetic human-labelled golden corpus A-E (not live OCR/AI accuracy) > keeps page boundaries instead of attributing every word to the first page
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+
+stderr | src/features/dashboard/dashboard-data.test.ts > dashboard data loader > carries the real cause through instead of a fixed string
+Dashboard annual-return load failed Error: connection terminated unexpectedly
+    at Object.getAnnualReturnDashboardMetrics (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:63:15)
+    at loadDashboardData (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.ts:73:20)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:61:24
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+
+stderr | src/features/dashboard/dashboard-data.test.ts > dashboard data loader > distinguishes an authorization failure from an outage
+Dashboard annual-return load failed Error: Forbidden: staff access required
+    at Object.getAnnualReturnDashboardMetrics (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:76:15)
+    at loadDashboardData (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.ts:73:20)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:74:24
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+
+stderr | src/features/dashboard/dashboard-data.test.ts > dashboard data loader > distinguishes an authorization failure from an outage
+Dashboard annual-return load failed Error: connection terminated unexpectedly
+    at Object.getAnnualReturnDashboardMetrics (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:86:19)
+    at loadDashboardData (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.ts:73:20)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:84:15
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | src/features/dashboard/dashboard-data.test.ts > dashboard data loader > still degrades rather than throwing, and reports no cases
+Dashboard annual-return load failed Error: boom
+    at Object.getAnnualReturnDashboardMetrics (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:115:15)
+    at loadDashboardData (C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.ts:73:20)
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/dashboard/dashboard-data.test.ts:113:24
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+

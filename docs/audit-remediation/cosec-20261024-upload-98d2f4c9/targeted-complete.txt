@@ -1,0 +1,26 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/routes/-upload-resume.interaction.test.tsx (10 tests) 2597ms
+   ✓ reuses one logical upload after a near-limit PDF commits but its response is lost  1838ms
+ ✓ |unit| src/routes/-document-rejection.interaction.test.tsx (6 tests) 1265ms
+   ✓ shows the actionable returned reason to the client, including after fresh-cache reopen  775ms
+ ✓ |unit| src/routes/-portal-identity.interaction.test.tsx (1 test) 403ms
+   ✓ does not render accountA's cached case or filenames for accountB's Forbidden result  402ms
+ ✓ |unit| src/features/annual-return/evidence-server-fns.test.ts (5 tests) 30ms
+ ✓ |unit| src/features/documents/upload-retry.test.ts (36 tests) 38ms
+ ✓ |unit| src/features/documents/server-fns.test.ts (26 tests) 42ms
+ ✓ |unit| src/features/annual-return/evidence-service.test.ts (24 tests) 34ms
+ ✓ |unit| src/features/documents/upload-resume.test.ts (7 tests) 30ms
+ ✓ |unit| src/features/annual-return/client-portal-server-fns.test.ts (10 tests) 12ms
+ ✓ |unit| src/features/documents/rejection-projection.test.ts (7 tests) 10ms
+ ✓ |unit| src/features/documents/repository.test.ts (2 tests) 4ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 4ms
+
+ Test Files  12 passed (12)
+      Tests  136 passed (136)
+   Start at  12:01:49
+   Duration  20.28s (transform 2.10s, setup 0ms, import 6.65s, tests 4.47s, environment 5.50s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

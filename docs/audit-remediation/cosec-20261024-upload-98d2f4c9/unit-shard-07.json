@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-07",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/annual-return/reminder-sweep.test.ts",
+    "src/features/annual-return/requirement-template.test.ts",
+    "src/features/annual-return/requirements.test.ts",
+    "src/features/annual-return/server-fns.authorization.test.ts",
+    "src/features/annual-return/server-fns.test.ts",
+    "src/features/annual-return/session.test.ts",
+    "src/features/annual-return/whatsapp-reminders.test.ts",
+    "src/features/annual-return/work-views-other-page.test.ts",
+    "src/features/annual-return/work-views-other.test.ts",
+    "src/features/annual-return/work-views-today.test.tsx",
+    "src/features/annual-return/work-views.test.ts",
+    "src/features/annual-return/workflow.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/features/annual-return/reminder-sweep.test.ts",
+    "src/features/annual-return/requirement-template.test.ts",
+    "src/features/annual-return/requirements.test.ts",
+    "src/features/annual-return/server-fns.authorization.test.ts",
+    "src/features/annual-return/server-fns.test.ts",
+    "src/features/annual-return/session.test.ts",
+    "src/features/annual-return/whatsapp-reminders.test.ts",
+    "src/features/annual-return/work-views-other-page.test.ts",
+    "src/features/annual-return/work-views-other.test.ts",
+    "src/features/annual-return/work-views-today.test.tsx",
+    "src/features/annual-return/work-views.test.ts",
+    "src/features/annual-return/workflow.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/features/annual-return/work-views-today.test.tsx",
+      "tests": 5
+    },
+    {
+      "path": "src/features/annual-return/server-fns.authorization.test.ts",
+      "tests": 31
+    },
+    {
+      "path": "src/features/annual-return/server-fns.test.ts",
+      "tests": 17
+    },
+    {
+      "path": "src/features/annual-return/workflow.test.ts",
+      "tests": 34
+    },
+    {
+      "path": "src/features/annual-return/session.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "src/features/annual-return/work-views.test.ts",
+      "tests": 14
+    },
+    {
+      "path": "src/features/annual-return/work-views-other-page.test.ts",
+      "tests": 8
+    },
+    {
+      "path": "src/features/annual-return/requirement-template.test.ts",
+      "tests": 24
+    },
+    {
+      "path": "src/features/annual-return/requirements.test.ts",
+      "tests": 15
+    },
+    {
+      "path": "src/features/annual-return/whatsapp-reminders.test.ts",
+      "tests": 8
+    },
+    {
+      "path": "src/features/annual-return/reminder-sweep.test.ts",
+      "tests": 15
+    },
+    {
+      "path": "src/features/annual-return/work-views-other.test.ts",
+      "tests": 11
+    }
+  ]
+}

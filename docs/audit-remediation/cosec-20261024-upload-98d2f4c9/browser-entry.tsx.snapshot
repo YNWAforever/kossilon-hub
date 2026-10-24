@@ -1,0 +1,123 @@
+// UC150 local browser transport. Real Portal/Router; no native Auth, RPC, DB or provider.
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
+import {createRootRouteWithContext,createRouter,createBrowserHistory,Outlet,RouterProvider} from '@tanstack/react-router';
+import {Route as PortalRoute} from '/src/routes/portal.tsx';
+
+const run='cosec-20261024-upload-98d2f4c9';
+const response=await fetch('/__uc150_identity');
+if(!response.ok)throw Error('Owned browser target identity unavailable');
+const identity=await response.json();
+if(identity.run_id!==run||identity.root!=='C:/Users/laich/Documents/kossilon-hub/cosec-20261023')throw Error('Wrong UC150 local target');
+// No synthetic state, storage writes or transport object exists before this gate.
+const uuid=n=>'98d2f4c9-0150-4150-8150-'+String(n).padStart(12,'0');
+const ids={company:uuid(3),case:uuid(4),item:uuid(7)};
+const stateKey=run+':browser-records',logKey=run+':browser-reads';
+const clone=value=>structuredClone(value);
+const saved=JSON.parse(sessionStorage.getItem(stateKey)||'null')||{
+  run_id:run,documents:[],intents:[],versions:[],linkedDocumentId:null,checklistStatus:'Missing',
+  nextIntent:100,nextDocument:200,nextVersion:300,commitCount:0,scanCalls:0,
+  loseCreateResponses:0,loseFinalizeResponses:0,mode:'normal',
+};
+if(saved.run_id!==run)throw Error('Wrong synthetic state owner');
+const role=new URL(location.href).searchParams.get('qaRole')||'Client';
+if(!['Client','ClientB','Denied'].includes(role))throw Error('Unsupported local actor');
+const actor={authUserId:'QA-UC150-'+role,role:'Client',userId:null,teamId:null,active:true};
+const persist=()=>sessionStorage.setItem(stateKey,JSON.stringify(saved));
+persist();
+let w;
+function record(name,data={}){
+  const row={name,data:clone(data),actor:actor.authUserId,at:new Date().toISOString()};
+  w.reads.push(row);sessionStorage.setItem(logKey,JSON.stringify(w.reads));return row;
+}
+function access(){if(role==='Denied')throw Error('403 local transport actor refused')}
+function mutable(){access();if(role!=='Client')throw Error('403 local upload owner refused')}
+function scope(data){if(data.companyId!==ids.company||data.caseId!==ids.case)throw Error('Out of owned UC150 scope')}
+function clientCase(){return {
+  id:ids.case,companyId:ids.company,companyName:'QA UC150 Company',returnYear:2026,
+  filingDueDate:'2026-12-01',currentStatus:'Documents pending',payment:null,filingReference:null,
+  checklist:[{id:ids.item,caseId:ids.case,itemLabel:'NAR1 form',required:true,status:saved.checklistStatus,
+    dueDate:'2026-12-01',receivedAt:saved.linkedDocumentId?'2026-10-24T00:01:00Z':null,
+    verifiedAt:null,documentId:saved.linkedDocumentId}],
+}}
+const metadata=data=>({companyId:data.companyId,caseId:data.caseId,checklistItemId:data.checklistItemId??null,
+  category:data.category,fileName:data.fileName,contentType:data.contentType,sizeBytes:data.sizeBytes,checksum:data.checksum});
+const hash=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),n=>n.toString(16).padStart(2,'0')).join('');
+w=window.__uc150={
+  ids,actor,saved,reads:JSON.parse(sessionStorage.getItem(logKey)||'[]'),
+  bootId:crypto.randomUUID(),holdIntent:false,pendingIntents:[],persist,
+  setMode(mode){saved.mode=mode;persist()},
+  loseCreate(){saved.loseCreateResponses++;persist()},
+  loseFinalize(){saved.loseFinalizeResponses++;persist()},
+  releaseIntents(){w.holdIntent=false;w.pendingIntents.splice(0).forEach(release=>release())},
+  journals(){return Object.fromEntries(Object.keys(sessionStorage).filter(key=>key.startsWith('kossilon:upload-resume:v1:')).map(key=>[key,JSON.parse(sessionStorage.getItem(key))]))},
+  async listDocuments(data){
+    record('listDocumentPage',data);access();scope(data);
+    if(saved.mode==='document-error')throw Error('503 local document read failure');
+    return {documents:saved.mode==='empty'?[]:clone(saved.documents),nextCursor:null};
+  },
+  async clientCase(data){
+    record('getClientPortalCase',data);access();
+    if(saved.mode==='case-error')throw Error('503 local case read failure');
+    return data.caseId===ids.case?clientCase():null;
+  },
+  async clientCases(data){
+    record('listClientPortalCases',data);access();
+    if(saved.mode==='list-error')throw Error('503 local list read failure');
+    return saved.mode==='empty'?[]:[{...clientCase(),outstandingRequiredItems:saved.checklistStatus==='Received'?0:1}];
+  },
+  async intent(data){
+    record('createDocumentUploadIntent',data);mutable();scope(data);
+    const allowed=['companyId','caseId','checklistItemId','uploadRequestId','category','fileName','contentType','sizeBytes','checksum'];
+    if(Object.keys(data).some(key=>!allowed.includes(key)))throw Error('Unexpected intent field');
+    if(data.checklistItemId!==undefined&&data.checklistItemId!==ids.item)throw Error('Wrong checklist item');
+    if(data.contentType!=='application/pdf'||!Number.isInteger(data.sizeBytes)||data.sizeBytes<=0||data.sizeBytes>10*1024*1024||!/^[a-f0-9]{64}$/.test(data.checksum))throw Error('Invalid local upload metadata');
+    if(!['identity','registry','signature','payment','packet','submission','receipt','other'].includes(data.category)||typeof data.fileName!=='string')throw Error('Invalid local file metadata');
+    if(data.uploadRequestId!==undefined&&!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(data.uploadRequestId))throw Error('Invalid logical request ID');
+    let row=data.uploadRequestId?saved.intents.find(item=>item.uploadRequestId===data.uploadRequestId&&item.requestedByAuthUserId===actor.authUserId):undefined;
+    if(row){
+      if(JSON.stringify(metadata(row))!==JSON.stringify(metadata(data)))throw Error('409 logical upload metadata changed');
+      record('local.intent_replayed',{intentId:row.id,uploadRequestId:row.uploadRequestId});
+    }else{
+      row={...clone(data),id:uuid(saved.nextIntent++),requestedByAuthUserId:actor.authUserId,
+        status:'created',documentId:null,currentVersionId:null,expiresAt:'2099-01-01T00:00:00.000Z'};
+      saved.intents.push(row);persist();record('local.intent_committed',{intentId:row.id,uploadRequestId:row.uploadRequestId??null});
+    }
+    if(w.holdIntent){record('local.intent_response_held',{intentId:row.id});await new Promise(release=>w.pendingIntents.push(release))}
+    if(saved.loseCreateResponses>0){
+      saved.loseCreateResponses--;persist();record('local.intent_response_lost',{intentId:row.id});throw Error('Response lost after intent commit');
+    }
+    return clone(row);
+  },
+  async finalize(data){
+    mutable();
+    const row=saved.intents.find(item=>item.id===data.intentId&&item.requestedByAuthUserId===actor.authUserId);
+    if(!row||typeof data.bodyBase64!=='string')throw Error('Unknown local intent or missing body');
+    // Decode the actual production Portal payload. Never persist the body in sessionStorage or logs.
+    const binary=atob(data.bodyBase64),bytes=Uint8Array.from(binary,char=>char.charCodeAt(0));
+    const checksum=await hash(bytes);
+    record('finalizeDocumentUpload',{intentId:data.intentId,body_encoding:'base64',body_base64_length:data.bodyBase64.length,
+      decoded_size_bytes:bytes.byteLength,checksum,pdf_magic:new TextDecoder().decode(bytes.slice(0,8))});
+    if(bytes.byteLength!==row.sizeBytes||checksum!==row.checksum)throw Error('Upload body does not match committed metadata');
+    if(!row.documentId){
+      const document={id:uuid(saved.nextDocument++),companyId:ids.company,companyName:'QA UC150 Company',caseId:ids.case,
+        category:row.category,fileName:row.fileName,uploadStatus:'quarantined',reviewStatus:'pending',rejectionReason:null,
+        currentVersionId:uuid(saved.nextVersion++),reviewedVersionId:null,scanVerdictSource:null,availability:'unscanned',
+        objectAvailability:'not_checked',uploadSource:'client',uploadedAt:'2026-10-24T00:01:00.000Z'};
+      saved.documents.push(document);saved.versions.push({id:document.currentVersionId,documentId:document.id,checksum,sizeBytes:bytes.byteLength});
+      row.status='quarantined';row.documentId=document.id;row.currentVersionId=document.currentVersionId;
+      saved.linkedDocumentId=document.id;saved.checklistStatus='Received';saved.commitCount++;persist();
+      record('local.document_committed',{intentId:row.id,documentId:document.id,versionId:document.currentVersionId});
+    }else record('local.document_replayed',{intentId:row.id,documentId:row.documentId,versionId:row.currentVersionId});
+    if(saved.loseFinalizeResponses>0){
+      saved.loseFinalizeResponses--;persist();record('local.finalize_response_lost',{intentId:row.id,documentId:row.documentId});throw Error('Response lost after document commit');
+    }
+    return clone(saved.documents.find(document=>document.id===row.documentId));
+  },
+};
+const client=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0,refetchOnWindowFocus:false}}});
+const root=createRootRouteWithContext()({component:()=>React.createElement(QueryClientProvider,{client},React.createElement(Outlet))});
+const portal=PortalRoute.update({getParentRoute:()=>root,id:'/portal',path:'/portal'});
+w.router=createRouter({routeTree:root.addChildren([portal]),history:createBrowserHistory(),context:{queryClient:client,actor,dataMode:'production'},defaultPreload:false});
+createRoot(document.getElementById('app')).render(React.createElement(RouterProvider,{router:w.router}));

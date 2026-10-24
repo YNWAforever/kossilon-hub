@@ -1,0 +1,246 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/documents/server-fns.test.ts (26 tests) 21ms
+ ❯ |unit| src/features/documents/upload-retry.test.ts (33 tests | 33 failed) 31ms
+     × binds a stable opaque request key to the server actor, and keeps legacy requests additive 9ms
+     × rejects malformed request IDs and combining recovery with a retry ID before writing 4ms
+     × reads the committed quarantined receipt after intent expiry without any side effects 1ms
+     × reads the committed available receipt after intent expiry without any side effects 0ms
+     × reads the committed rejected receipt after intent expiry without any side effects 0ms
+     × reads the committed failed receipt after intent expiry without any side effects 0ms
+     × reads the committed uploaded receipt after intent expiry without any side effects 0ms
+     × revalidates bytes, current membership, inactive and other actor even on an already committed receipt 1ms
+     × refuses a conflicting committed document chain {"id":"98d2f4c9-0150-4150-8150-000000000004"} 1ms
+     × refuses a conflicting committed document chain {"companyId":"98d2f4c9-0150-4150-8150-000000000004"} 1ms
+     × refuses a conflicting committed document chain {"caseId":null} 0ms
+     × refuses a conflicting committed document chain {"category":"other"} 0ms
+     × refuses a conflicting committed document chain {"fileName":"other.pdf"} 0ms
+     × refuses a conflicting committed document chain {"contentType":"image/png"} 1ms
+     × refuses a conflicting committed document chain {"sizeBytes":5} 1ms
+     × refuses a conflicting committed document chain {"checksum":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 1ms
+     × refuses a conflicting committed document chain {"objectKey":"another"} 0ms
+     × refuses a conflicting committed document chain {"currentVersionId":null} 0ms
+     × refuses a conflicting committed document chain {"currentVersionId":"98d2f4c9-0150-4150-8150-000000000005"} 0ms
+     × refuses a conflicting committed document chain {"uploadStatus":"available"} 0ms
+     × refuses missing receipt metadata and expired uncommitted attempts 1ms
+     × returns the exact original expired-created intent after a duplicate request, without extending expiry 2ms
+     × refuses a request key collision with different payload/recovery {"requested_by_auth_user_id":"another"} 0ms
+     × refuses a request key collision with different payload/recovery {"company_id":"98d2f4c9-0150-4150-8150-000000000004"} 0ms
+     × refuses a request key collision with different payload/recovery {"case_id":null} 0ms
+     × refuses a request key collision with different payload/recovery {"checklist_item_id":null} 0ms
+     × refuses a request key collision with different payload/recovery {"category":"other"} 0ms
+     × refuses a request key collision with different payload/recovery {"file_name":"other.pdf"} 0ms
+     × refuses a request key collision with different payload/recovery {"content_type":"image/png"} 0ms
+     × refuses a request key collision with different payload/recovery {"expected_size_bytes":5} 0ms
+     × refuses a request key collision with different payload/recovery {"checksum_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 0ms
+     × refuses a request key collision with different payload/recovery {"is_recovery":true} 0ms
+     × returns committed metadata inside the case/intent lock without enqueueing or touching the receipt 1ms
+ ✓ |unit| src/features/documents/repository.test.ts (2 tests) 5ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  33 failed | 28 passed (61)
+   Start at  11:49:06
+   Duration  1.73s (transform 389ms, setup 0ms, import 983ms, tests 57ms, environment 0ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 33 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > binds a stable opaque request key to the server actor, and keeps legacy requests additive
+AssertionError: expected 'documents/a6edd2d6-5444-42d6-ad31-784…' to be 'documents/70cdebbe-b241-4450-9f80-f7e…' // Object.is equality
+
+Expected: "documents/70cdebbe-b241-4450-9f80-f7ec308c2407"
+Received: "documents/a6edd2d6-5444-42d6-ad31-78473afc030d"
+
+ ❯ src/features/documents/upload-retry.test.ts:66:35
+     64|     await createDocumentUploadIntentForActor({ ...actor, authUserId: "…
+     65|     const calls = vi.mocked(d.repository.createUploadIntent).mock.call…
+     66|     expect(calls[0][0].objectKey).toBe(calls[1][0].objectKey);
+       |                                   ^
+     67|     expect(calls[0][0].objectKey).not.toBe(calls[2][0].objectKey);
+     68|     expect(calls[0][0].objectKey).not.toContain(actor.authUserId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/33]⎯
+
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > rejects malformed request IDs and combining recovery with a retry ID before writing
+AssertionError: promise resolved "{ …(19) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "caseId": "98d2f4c9-0150-4150-8150-000000000002",
++   "category": "identity",
++   "checklistItemId": "98d2f4c9-0150-4150-8150-000000000003",
++   "checksum": "9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a",
++   "companyId": "98d2f4c9-0150-4150-8150-000000000001",
++   "contentType": "application/pdf",
++   "currentVersionId": "98d2f4c9-0150-4150-8150-000000000004",
++   "documentId": "98d2f4c9-0150-4150-8150-000000000007",
++   "expectedSizeBytes": 4,
++   "expiresAt": "2000-01-01T00:00:00Z",
++   "fileName": "UC150.pdf",
++   "id": "98d2f4c9-0150-4150-8150-000000000006",
++   "objectKey": "documents/UC150-opaque",
++   "quarantineRetentionUntil": "2099-01-01T00:00:00Z",
++   "requestedByAuthUserId": "UC150-client-A",
++   "scanErrorCode": null,
++   "scanProviderReference": null,
++   "scanVerdictSource": null,
++   "status": "quarantined",
+  }
+
+ ❯ src/features/documents/upload-retry.test.ts:77:102
+     75|   it("rejects malformed request IDs and combining recovery with a retr…
+     76|     const d = dependencies();
+     77|     await expect(createDocumentUploadIntentForActor(actor, { ...reques…
+       |                                                                                                      ^
+     78|     await expect(createDocumentUploadIntentForActor({ ...actor, role: …
+     79|       ...request, recovery: { documentId: document.id, expectedToken: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/33]⎯
+
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > reads the committed quarantined receipt after intent expiry without any side effects
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > reads the committed available receipt after intent expiry without any side effects
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > reads the committed rejected receipt after intent expiry without any side effects
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > reads the committed failed receipt after intent expiry without any side effects
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > reads the committed uploaded receipt after intent expiry without any side effects
+Error: Upload intent cannot be finalized.
+ ❯ finalizeDocumentUploadForActor src/features/documents/server-fns.ts:329:42
+    327|   const intent = await dependencies.repository.getUploadIntent(intentI…
+    328|   if (!intent) throw new Error("Upload intent not found.");
+    329|   if (intent.status !== "created") throw new Error("Upload intent cann…
+       |                                          ^
+    330|   if (Date.parse(intent.expiresAt) <= Date.now()) throw new Error("Upl…
+    331|   await authorizeIntentById(actor, intentId, dependencies);
+ ❯ src/features/documents/upload-retry.test.ts:87:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/33]⎯
+
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > revalidates bytes, current membership, inactive and other actor even on an already committed receipt
+AssertionError: expected [Function] to throw error matching /size|checksum/i but got 'Upload intent cannot be finalized.'
+
+- Expected:
+/size|checksum/i
+
++ Received:
+"Upload intent cannot be finalized."
+
+ ❯ src/features/documents/upload-retry.test.ts:99:77
+     97|     for (const body of [new Uint8Array([1]), new Uint8Array([4, 3, 2, …
+     98|       const d = dependencies();
+     99|       await expect(finalizeDocumentUploadForActor(actor, intent.id, bo…
+       |                                                                             ^
+    100|       expect(d.storage.put).not.toHaveBeenCalled();
+    101|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/33]⎯
+
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > refuses a conflicting committed document chain {"id":"98d2f4c9-0150-4150-8150-000000000004"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > refuses a conflicting committed document chain {"companyId":"98d2f4c9-0150-4150-8150-000000000004"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > refuses a conflicting committed document chain {"caseId":null}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > refuses a conflicting committed document chain {"category":"other"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > refuses a conflicting committed document chain {"fileName":"other.pdf"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > refuses a conflicting committed document chain {"contentType":"image/png"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > refuses a conflicting committed document chain {"sizeBytes":5}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > refuses a conflicting committed document chain {"checksum":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > refuses a conflicting committed document chain {"objectKey":"another"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > refuses a conflicting committed document chain {"currentVersionId":null}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > refuses a conflicting committed document chain {"currentVersionId":"98d2f4c9-0150-4150-8150-000000000005"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > refuses a conflicting committed document chain {"uploadStatus":"available"}
+AssertionError: expected [Function] to throw error matching /lineage|match|chain/i but got 'Upload intent cannot be finalized.'
+
+- Expected:
+/lineage|match|chain/i
+
++ Received:
+"Upload intent cannot be finalized."
+
+ ❯ src/features/documents/upload-retry.test.ts:119:76
+    117|     const d = dependencies();
+    118|     vi.mocked(d.repository.getDocument).mockResolvedValue({ ...documen…
+    119|     await expect(finalizeDocumentUploadForActor(actor, intent.id, byte…
+       |                                                                            ^
+    120|     expect(d.storage.put).not.toHaveBeenCalled();
+    121|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/33]⎯
+
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 upload retry orchestration (pure unit, no native providers) > refuses missing receipt metadata and expired uncommitted attempts
+AssertionError: expected [Function] to throw error matching /lineage|missing|chain/i but got 'Upload intent cannot be finalized.'
+
+- Expected:
+/lineage|missing|chain/i
+
++ Received:
+"Upload intent cannot be finalized."
+
+ ❯ src/features/documents/upload-retry.test.ts:125:76
+    123|     const d = dependencies();
+    124|     vi.mocked(d.repository.getDocument).mockResolvedValue(null);
+    125|     await expect(finalizeDocumentUploadForActor(actor, intent.id, byte…
+       |                                                                            ^
+    126|     for (const current of [{ ...intent, documentId: null }, { ...inten…
+    127|       const absent = dependencies(current);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/33]⎯
+
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 repository receipt policy with inert SQL fake > returns the exact original expired-created intent after a duplicate request, without extending expiry
+Error: duplicate key value violates unique constraint document_upload_intents_object_key_key
+ ❯ src/features/documents/upload-retry.test.ts:153:15
+    151|       if (saved) {
+    152|         if (q.includes("on conflict")) return [];
+    153|         throw Error("duplicate key value violates unique constraint do…
+       |               ^
+    154|       }
+    155|       saved = { ...row, expires_at: String(values[10]) }; return [save…
+ ❯ src/features/documents/repository.ts:663:43
+ ❯ src/features/documents/upload-retry.test.ts:168:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/33]⎯
+
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 repository receipt policy with inert SQL fake > refuses a request key collision with different payload/recovery {"requested_by_auth_user_id":"another"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 repository receipt policy with inert SQL fake > refuses a request key collision with different payload/recovery {"company_id":"98d2f4c9-0150-4150-8150-000000000004"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 repository receipt policy with inert SQL fake > refuses a request key collision with different payload/recovery {"case_id":null}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 repository receipt policy with inert SQL fake > refuses a request key collision with different payload/recovery {"checklist_item_id":null}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 repository receipt policy with inert SQL fake > refuses a request key collision with different payload/recovery {"category":"other"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 repository receipt policy with inert SQL fake > refuses a request key collision with different payload/recovery {"file_name":"other.pdf"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 repository receipt policy with inert SQL fake > refuses a request key collision with different payload/recovery {"content_type":"image/png"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 repository receipt policy with inert SQL fake > refuses a request key collision with different payload/recovery {"expected_size_bytes":5}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 repository receipt policy with inert SQL fake > refuses a request key collision with different payload/recovery {"checksum_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 repository receipt policy with inert SQL fake > refuses a request key collision with different payload/recovery {"is_recovery":true}
+AssertionError: expected [Function] to throw error matching /match|recovery|request/i but got 'duplicate key value violates unique c…'
+
+- Expected:
+/match|recovery|request/i
+
++ Received:
+"duplicate key value violates unique constraint document_upload_intents_object_key_key"
+
+ ❯ src/features/documents/upload-retry.test.ts:179:58
+    177|   ])("refuses a request key collision with different payload/recovery …
+    178|     const { repository } = memorySql(override);
+    179|     await expect(repository.createUploadIntent(repoInput)).rejects.toT…
+       |                                                          ^
+    180|   });
+    181|   it("returns committed metadata inside the case/intent lock without e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/33]⎯
+
+ FAIL  |unit| src/features/documents/upload-retry.test.ts > UC150 repository receipt policy with inert SQL fake > returns committed metadata inside the case/intent lock without enqueueing or touching the receipt
+Error: Upload intent cannot be finalized.
+ ❯ src/features/documents/repository.ts:703:48
+    701|         const intent = intents[0] ? mapIntent(intents[0]) : null;
+    702|         if (!intent) throw new Error("Upload intent not found.");
+    703|         if (intent.status !== "created") throw new Error("Upload inten…
+       |                                                ^
+    704|         if (Date.parse(intent.expiresAt) <= Date.now()) throw new Erro…
+    705|         const [recovery] = await tx<
+ ❯ src/features/documents/upload-retry.test.ts:191:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/33]⎯
+

@@ -1,0 +1,161 @@
+{
+  "kind": "unit",
+  "attempt": "verified",
+  "execution": "serial bounded subsets, complete unchanged unit inventory; not a single-process run",
+  "started": "2026-10-24T04:15:35.019Z",
+  "finished": "2026-10-24T04:22:00.312Z",
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ],
+  "summary": {
+    "tests": 2685,
+    "files": 278,
+    "shards": 24
+  },
+  "inventory": "unit-shard-inventory.json",
+  "source_freeze": "source-final-verified.json",
+  "all_source_hashes_verified": true,
+  "shards": [
+    {
+      "name": "unit-shard-01",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-02",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-03",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-04",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-05",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-06",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-07",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-08",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-09",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-10",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-11",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-12",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-13",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-14",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-15",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-16",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-17",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-18",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-19",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-20",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-21",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-22",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-23",
+      "exit_code": 0,
+      "error": null
+    },
+    {
+      "name": "unit-shard-24",
+      "exit_code": 0,
+      "error": null
+    }
+  ]
+}

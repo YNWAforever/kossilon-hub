@@ -1,0 +1,46 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/work-items/sla-performance.test.ts (1 test) 2706ms
+   ✓ calculates 100 independent weekend SLA snapshots within the ordinary test lifetime  2705ms
+ ✓ |unit| src/features/work-items/business-calendar.test.ts (10 tests) 107ms
+ ✓ |unit| src/features/whatsapp/webhook.test.ts (27 tests) 78ms
+ ✓ |unit| src/features/whatsapp/woztell.test.ts (29 tests) 36ms
+ ✓ |unit| src/features/work-items/server-orchestration.test.ts (6 tests) 23ms
+ ✓ |unit| src/features/work-items/queue-view-state.test.ts (11 tests) 6ms
+ ✓ |unit| src/features/work-items/server-fns.test.ts (5 tests) 9ms
+ ✓ |unit| src/features/work-items/queue-page.test.ts (4 tests) 8ms
+ ✓ |unit| src/features/whatsapp/session-window.test.ts (9 tests) 5ms
+ ✓ |unit| src/features/work-items/assignment.test.ts (7 tests) 6ms
+ ✓ |unit| src/features/work-items/assignment-labels.test.ts (5 tests) 5ms
+ ✓ |unit| src/features/whatsapp/webhook-route.test.ts (3 tests) 3ms
+
+ Test Files  12 passed (12)
+      Tests  117 passed (117)
+   Start at  12:19:43
+   Duration  8.01s (transform 797ms, setup 0ms, import 2.57s, tests 2.99s, environment 1ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+stderr | src/features/whatsapp/webhook.test.ts > createWhatsAppWebhookHandler > refuses a forged body and never touches the database
+whatsapp webhook rejected: signature did not verify { hadSignatureHeader: true, bodyBytes: 194 }
+
+stderr | src/features/whatsapp/webhook.test.ts > createWhatsAppWebhookHandler > refuses a delivery with no signature at all
+whatsapp webhook rejected: signature did not verify { hadSignatureHeader: false, bodyBytes: 172 }
+
+stderr | src/features/whatsapp/webhook.test.ts > createWhatsAppWebhookHandler > refuses to acknowledge a delivery the database could not store
+whatsapp webhook could not be persisted null
+
+stderr | src/features/whatsapp/webhook.test.ts > createWhatsAppWebhookHandler > closes the repository and reports 503 when the whole write path throws
+whatsapp webhook failed Error: connection lost
+    at C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/whatsapp/webhook.test.ts:280:57
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+

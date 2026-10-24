@@ -1,0 +1,16 @@
+{
+  "source_sha": "12305610d661418f60fdcaf17a24ef7371280822",
+  "parent_sha": "71dd6d003ffbcefc98e32eb8845e58c2c6eb217d",
+  "paths": [
+    "src/features/documents/repository.ts",
+    "src/features/documents/server-fns.ts",
+    "src/features/documents/upload-resume.ts",
+    "src/features/documents/upload-retry.test.ts",
+    "src/features/documents/upload-resume.test.ts",
+    "src/features/documents/upload-resume.integration.test.ts",
+    "src/routes/portal.tsx",
+    "src/routes/-upload-resume.interaction.test.tsx",
+    "src/test/db-integration-files.ts"
+  ],
+  "operation": "ordinary local commit only; no push/merge/deploy"
+}
