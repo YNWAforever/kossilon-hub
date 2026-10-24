@@ -6,12 +6,23 @@ import type {
   PersistedJobState,
 } from "./maintenance-trigger";
 import type { MaintenanceRunDraft } from "@/features/operations/repository";
+import { EXPECTED_MIGRATIONS, type SchemaLedger } from "@/features/operations/schema-health";
 
 const fixture = vi.hoisted(() => ({
   store: undefined as unknown as MaintenanceJobStore,
   drafts: [] as MaintenanceRunDraft[],
   effects: [] as string[],
   loseSummary: false,
+  ledger: undefined as unknown as SchemaLedger,
+  facts: [] as {
+    key: string;
+    present: boolean | null;
+    expected: string;
+    observed: string | null;
+  }[],
+  readFailure: false,
+  jobRepositories: 0,
+  readCloses: 0,
 }));
 vi.mock("@/server/db/client", () => ({
   getSqlClient: () => {
@@ -22,10 +33,21 @@ vi.mock("@/server/db/client", () => ({
   },
 }));
 vi.mock("@/features/operations/maintenance-job-repository", () => ({
-  createMaintenanceJobRepository: () => fixture.store,
+  createMaintenanceJobRepository: () => {
+    fixture.jobRepositories++;
+    return fixture.store;
+  },
 }));
 vi.mock("@/features/operations/repository", () => ({
   createMaintenanceRunRepository: () => ({
+    async schemaLedger() {
+      if (fixture.readFailure) throw new Error("private database identity must not escape");
+      return fixture.ledger;
+    },
+    async schemaCatalog() {
+      if (fixture.readFailure) throw new Error("private database identity must not escape");
+      return { ledger: fixture.ledger, facts: fixture.facts, applicationPresent: true };
+    },
     async recordRun(draft: MaintenanceRunDraft) {
       if (fixture.loseSummary) {
         fixture.loseSummary = false;
@@ -34,7 +56,9 @@ vi.mock("@/features/operations/repository", () => ({
       fixture.drafts.push(structuredClone(draft));
       return { id: `receipt-${fixture.drafts.length}` };
     },
-    async close() {},
+    async close() {
+      fixture.readCloses++;
+    },
   }),
 }));
 vi.mock("@/features/work-items/repository", () => ({
@@ -101,6 +125,24 @@ beforeEach(() => {
   fixture.drafts = [];
   fixture.effects = [];
   fixture.loseSummary = false;
+  fixture.ledger = { present: true, applied: [...EXPECTED_MIGRATIONS] };
+  fixture.facts = [
+    {
+      key: "notification_outbox.dispatch_started_attempt",
+      present: true,
+      expected: "integer",
+      observed: "integer",
+    },
+    {
+      key: "notification_outbox_dispatch_marker_idx",
+      present: true,
+      expected: "index",
+      observed: "index",
+    },
+  ];
+  fixture.readFailure = false;
+  fixture.jobRepositories = 0;
+  fixture.readCloses = 0;
   const states = new Map<string, PersistedJobState>();
   fixture.store = {
     async claim(data) {
@@ -122,6 +164,76 @@ beforeEach(() => {
     },
     async close() {},
   };
+});
+
+describe("UC189 scheduler refuses incompatible schema before any durable write", () => {
+  const marker = "0034_notification_outbox_dispatch_marker.sql";
+  const unknown = "9999_uc189_unknown_d69e7b0e.sql";
+  it.each([
+    ["no-ledger", { present: false, applied: [] }],
+    ["empty", { present: true, applied: [] }],
+    ["missing", { present: true, applied: EXPECTED_MIGRATIONS.filter((id) => id !== marker) }],
+    ["unknown", { present: true, applied: [...EXPECTED_MIGRATIONS, unknown] }],
+    [
+      "same-count-diverged",
+      { present: true, applied: [...EXPECTED_MIGRATIONS.filter((id) => id !== marker), unknown] },
+    ],
+  ] satisfies [string, SchemaLedger][])(
+    "blocks %s and repeated attempts without a success receipt",
+    async (_name, ledger) => {
+      fixture.ledger = ledger;
+      for (const runId of ["refused", "retry"]) {
+        await expect(runRuntimeMaintenanceTick(input(runId))).rejects.toThrow(/schema/i);
+      }
+      expect(fixture.jobRepositories).toBe(0);
+      expect(fixture.effects).toEqual([]);
+      expect(fixture.drafts).toEqual([]);
+      expect(fixture.readCloses).toBe(2);
+    },
+  );
+
+  it.each([false, null])(
+    "blocks a %s physical contract even with all ledger IDs",
+    async (present) => {
+      fixture.facts[0].present = present;
+      await expect(runRuntimeMaintenanceTick(input("physical"))).rejects.toThrow(/schema/i);
+      expect(fixture.jobRepositories).toBe(0);
+      expect(fixture.effects).toEqual([]);
+      expect(fixture.drafts).toEqual([]);
+    },
+  );
+
+  it("does not treat an empty catalog as verified", async () => {
+    fixture.facts = [];
+    await expect(runRuntimeMaintenanceTick(input("empty-catalog"))).rejects.toThrow(/schema/i);
+    expect(fixture.jobRepositories).toBe(0);
+    expect(fixture.drafts).toEqual([]);
+  });
+
+  it("sanitizes failed schema reads and closes the reader without writing failure ticks", async () => {
+    fixture.readFailure = true;
+    const error: unknown = await runRuntimeMaintenanceTick(input("unavailable")).catch(
+      (error) => error,
+    );
+    expect(error).toBeInstanceOf(Error);
+    expect(String(error)).toMatch(/schema/i);
+    expect(String(error)).not.toContain("private database identity");
+    expect(fixture.jobRepositories).toBe(0);
+    expect(fixture.drafts).toEqual([]);
+    expect(fixture.readCloses).toBe(1);
+  });
+
+  it("recovers on a fresh read after refusal and keeps the scheduled-slot replay guard", async () => {
+    fixture.ledger = { present: true, applied: [] };
+    await expect(runRuntimeMaintenanceTick(input("before-repair"))).rejects.toThrow(/schema/i);
+    fixture.ledger = { present: true, applied: [...EXPECTED_MIGRATIONS] };
+    const first = await runRuntimeMaintenanceTick(input("after-repair"));
+    const replay = await runRuntimeMaintenanceTick(input("after-repair-retry"));
+    expect(first.counts.completed).toBe(5);
+    expect(replay.outcome).toBe("skipped");
+    expect(fixture.effects).toEqual(safeJobs);
+    expect(fixture.drafts).toHaveLength(2);
+  });
 });
 afterEach(() => vi.unstubAllEnvs());
 

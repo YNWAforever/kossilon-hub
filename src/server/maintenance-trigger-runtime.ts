@@ -4,7 +4,11 @@ import {
   type MaintenanceTickInput,
 } from "./maintenance-trigger";
 import { createMaintenanceJobRepository } from "@/features/operations/maintenance-job-repository";
-import { createMaintenanceRunRepository } from "@/features/operations/repository";
+import {
+  createMaintenanceRunRepository,
+  type MaintenanceRunRepository,
+} from "@/features/operations/repository";
+import { assertMaintenanceSchema, MaintenanceSchemaError } from "./maintenance-schema";
 export const SAFE_SCHEDULED_JOBS: readonly MaintenanceJobKind[] = [
   "evaluateEscalations",
   "settleNotificationAttempts",
@@ -55,16 +59,37 @@ async function runSafeJob(job: MaintenanceJobKind, now: string): Promise<Record<
   throw new Error("Job is outside the approved safe scheduler scope");
 }
 
-export async function runRuntimeMaintenanceTick(data: MaintenanceTickInput) {
+export type RuntimeMaintenanceDependencies = {
+  createRunRepository(): Pick<MaintenanceRunRepository, "schemaCatalog" | "recordRun" | "close">;
+  createJobRepository: typeof createMaintenanceJobRepository;
+  runJob: typeof runSafeJob;
+};
+
+export async function runRuntimeMaintenanceTick(
+  data: MaintenanceTickInput,
+  dependencies: RuntimeMaintenanceDependencies = {
+    createRunRepository: createMaintenanceRunRepository,
+    createJobRepository: createMaintenanceJobRepository,
+    runJob: runSafeJob,
+  },
+) {
   if (data.allowedJobs.some((job) => !SAFE_SCHEDULED_JOBS.includes(job)))
     throw new Error("Unapproved scheduled job");
-  const store = createMaintenanceJobRepository(),
-    runs = createMaintenanceRunRepository();
+  const runs = dependencies.createRunRepository();
+  let store: ReturnType<typeof createMaintenanceJobRepository> | undefined;
   const startedAt = new Date();
   try {
+    // A failed precondition must not write even a failed heartbeat into a
+    // schema this build cannot trust. Do not cache: a later retry reads anew.
+    try {
+      assertMaintenanceSchema(await runs.schemaCatalog());
+    } catch {
+      throw new MaintenanceSchemaError();
+    }
+    store = dependencies.createJobRepository();
     const trigger = createMaintenanceTrigger({
       store,
-      runJob: runSafeJob,
+      runJob: dependencies.runJob,
       recordRun: async (result) => {
         const finishedAt = new Date();
         const failedPasses = result.jobs
@@ -105,6 +130,6 @@ export async function runRuntimeMaintenanceTick(data: MaintenanceTickInput) {
     });
     return await trigger.runMaintenanceTick(data);
   } finally {
-    await Promise.all([store.close(), runs.close()]);
+    await Promise.all([store?.close(), runs.close()]);
   }
 }

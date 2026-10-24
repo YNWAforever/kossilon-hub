@@ -1,3 +1,4 @@
+import type { TransactionSql } from "postgres";
 import {
   createSqlClient,
   getSqlClient,
@@ -230,12 +231,12 @@ function mapDepth(row: DepthRow | undefined): JobQueueDepth {
 
 export function createMaintenanceRunRepository(
   databaseUrl?: string,
-  options: CreateSqlClientOptions = {},
+  options: CreateSqlClientOptions & { sql?: SqlClient | TransactionSql } = {},
 ): MaintenanceRunRepository {
-  const sql: SqlClient = databaseUrl ? createSqlClient(databaseUrl, options) : getSqlClient();
+  const sql = options.sql ?? (databaseUrl ? createSqlClient(databaseUrl, options) : getSqlClient());
   // Only a client this factory opened is a client this factory may close. The
   // shared singleton is used by every other repository in the request.
-  const ownsClient = Boolean(databaseUrl);
+  const ownsClient = Boolean(databaseUrl) && !options.sql;
 
   // Shared by listRecentRuns and listRecentScheduledRuns below: both read the
   // same table for the same shape, and a hand-copied second list is exactly
@@ -428,7 +429,9 @@ export function createMaintenanceRunRepository(
 
     schemaCatalog: () => readSchemaCatalog(sql),
     releaseCatalog: () =>
-      sql.begin("isolation level repeatable read read only", (tx) => readReleaseCatalog(tx)),
+      "begin" in sql
+        ? sql.begin("isolation level repeatable read read only", (tx) => readReleaseCatalog(tx))
+        : readReleaseCatalog(sql),
     async maintenanceLeaseHealth() {
       const [row] = await sql<
         { started_unknown: number; claimed_expired: number; last_started_at: string | null }[]
