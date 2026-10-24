@@ -1,0 +1,13 @@
+current_manifest_verified_files: 116
+prior_bytes_preserved: {"runs":10,"files":1642}
+source_identity: {"sha":"c8b905a33b20dc933b98fd3e5ec593b78f64c3eb","files":643,"changed":["src/features/documents/rejection-projection.test.ts","src/features/documents/rejection-readback.integration.test.ts","src/features/documents/repository.ts","src/routes/-document-rejection.interaction.test.tsx","src/routes/portal.tsx","src/test/db-integration-files.ts"]}
+original_snapshots_verified: 2
+acceptance: {"rows":184,"original_types":{"R":15,"F":35,"LA":34,"UC":100},"immutable_fields":["record_type","id","title","historical_result","related_finding_ids","related_task_ids","related_uc_ids","related_la_ids","native_result","source_file","original_row_json"],"all_immutable_fields_equal":true,"scoped_rows":["UC149"],"native":{"BLOCKED":70,"NOT_RUN":114},"native_pass":0,"evidence_links_resolved":1179,"release_gate":"NO_GO"}
+checks: {"targeted":{"receipt":"targeted-verified.json","log":"targeted-verified.txt","exit_code":0,"summary":{"tests":83,"files":9}},"unit":{"receipt":"unit-verified.json","log":"unit-verified.txt","exit_code":0,"summary":{"tests":2630,"files":275}},"typecheck":{"receipt":"typecheck-final.json","log":"typecheck-final.txt","exit_code":0},"lint":{"receipt":"lint-final.json","log":"lint-final.txt","exit_code":0},"build":{"receipt":"build-final.json","log":"build-final.txt","exit_code":0},"browser":{"receipt":"browser-green3.json","log":"browser-green3.txt","report":"browser-results-green3.json","exit_code":0,"passed":9},"db":{"receipt":"db/db-rejection-green.json","log":"db/db-rejection-green.txt","exit_code":0,"summary":{"tests":1,"files":1},"scope":"isolated TCP PostgreSQL repository/membership with controlled Auth/scan fixtures"}}
+browser: {"passed":9,"version":"155.0.4283.62","native":false}
+baseline_browser_negative_control: {"failed":1,"reason":"baseline Portal omits rejection instruction"}
+isolated_sql: {"passed":1,"cleanup_all_zero":true,"container_removed":"01bc15a78ae66c8867b6356db2bc0cbc9217538058fd1553a4130e70a92194c6","native_auth_storage_scanner":false}
+retained_product_red: {"contract_failed":10,"duplicate_failed":1,"first_setup_error_retained_separately":true}
+owned_runtime_processes_remaining: 0
+native_matrix: {"BLOCKED":70,"NOT_RUN":114,"PASS":0}
+release_gate: "NO_GO"

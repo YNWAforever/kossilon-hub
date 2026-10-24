@@ -1,0 +1,12 @@
+$ErrorActionPreference='Stop'
+if((Get-Location).Path -ne 'C:\Users\laich\Documents\kossilon-hub\cosec-20261023'){throw 'Wrong root'}
+$origin=& git remote get-url origin
+if($LASTEXITCODE -ne 0 -or $origin -ne 'https://github.com/YNWAforever/kossilon-hub.git'){throw 'Remote mismatch'}
+$line=& git ls-remote --heads origin refs/heads/main
+if($LASTEXITCODE -ne 0){throw 'Read-only remote lookup failed'}
+$sha=($line -split '\s+')[0]
+if($sha -ne '1c57a67213af72bff8d776694e6ed8c986b921db'){throw ('Remote changed; review before closing: '+$sha)}
+$out=Join-Path $PSScriptRoot 'remote-final.json'
+if(Test-Path -LiteralPath $out){throw 'Prior receipt exists'}
+[ordered]@{checked_utc=[DateTime]::UtcNow.ToString('o');main_sha=$sha;origin=$origin;operation='read-only ls-remote; no fetch, push, merge, deploy or production access'}|ConvertTo-Json|Set-Content -LiteralPath $out -Encoding utf8
+Write-Output ('Remote main unchanged: '+$sha)

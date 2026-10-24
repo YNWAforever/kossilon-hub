@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+import ts from 'typescript';
+import {digest} from './git-blob-verify.mjs';
+const folder=import.meta.dirname,root=resolve(folder,'../../..'),path='src/features/documents/rejection-readback.integration.test.ts';
+const before=readFileSync(join(folder,'sql-test-before-marker.ts.snapshot'),'utf8'),after=readFileSync(join(root,path),'utf8');
+const comment='// Parent supplies TEST_DATABASE_URL and DATABASE_URL for this owned target;\n// the former is also the repository convention marker for DB-only test files.\n';
+assert.equal(after.replace(comment,''),before);
+const emit=code=>ts.transpileModule(code,{fileName:path,compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,removeComments:true}}).outputText;
+assert.equal(emit(before),emit(after));
+writeFileSync(join(folder,'marker-equivalence.json'),JSON.stringify({path,before_sha256:digest(Buffer.from(before)),after_sha256:digest(Buffer.from(after)),only_change:'DB classification comment marker; no executable statements changed',emitted_javascript_equal:true,sql_green_runtime_input:'sql-test-before-marker.ts.snapshot',sql_rerun:false,reason:'Exact executable equivalence; no new SQL fixture or client required'},null,2)+'\n',{flag:'wx'});
+console.log('Marker-only edit; emitted JavaScript exactly equal to SQL-tested source.');

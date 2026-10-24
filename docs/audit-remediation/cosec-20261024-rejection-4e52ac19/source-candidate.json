@@ -1,0 +1,53 @@
+{
+  "source_sha": "c8b905a33b20dc933b98fd3e5ec593b78f64c3eb",
+  "parent_sha": "6f29c4068fcbbaa2197efdf0b8969777b78f47c5",
+  "tested_head": "6f29c4068fcbbaa2197efdf0b8969777b78f47c5",
+  "paths": [
+    "src/features/documents/rejection-projection.test.ts",
+    "src/features/documents/rejection-readback.integration.test.ts",
+    "src/features/documents/repository.ts",
+    "src/routes/-document-rejection.interaction.test.tsx",
+    "src/routes/portal.tsx",
+    "src/test/db-integration-files.ts"
+  ],
+  "files": [
+    {
+      "path": "src/features/documents/rejection-projection.test.ts",
+      "bytes": 2110,
+      "sha256": "087f1da2eb06c7abd612003acd96e039b1c9430e8222926acb2752cbf6a5b825"
+    },
+    {
+      "path": "src/features/documents/rejection-readback.integration.test.ts",
+      "bytes": 28741,
+      "sha256": "114517979d1745fd4734795f75ef9a17b52e8607addb43eac34d30d633371ca5"
+    },
+    {
+      "path": "src/features/documents/repository.ts",
+      "bytes": 51956,
+      "sha256": "be7a0bad596146e806a11ddf66c9a416e51be2e7472e81b2ee819d3e94a7e151"
+    },
+    {
+      "path": "src/routes/-document-rejection.interaction.test.tsx",
+      "bytes": 7272,
+      "sha256": "1c6bbccab0c247fb59ac6a8f861e68d534b2e40608bcc7a617ec53cb7d83d51f"
+    },
+    {
+      "path": "src/routes/portal.tsx",
+      "bytes": 40996,
+      "sha256": "36efebf7a5f0e748ce2a75b3b84626570e6b0c6cecd361385a7e90d3d49bc924"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "bytes": 3196,
+      "sha256": "a88e13ad15297393a8c0a735229318dc9828977a90f04f194ee8d402d1f78aa7"
+    }
+  ],
+  "source_freeze": "source-verified.json",
+  "source_files_verified": 643,
+  "all_final_unit_source_bytes_equal_committed": true,
+  "sql_comment_equivalence": "marker-equivalence.json",
+  "production_changes": [
+    "src/features/documents/repository.ts",
+    "src/routes/portal.tsx"
+  ]
+}

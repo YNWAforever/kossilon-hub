@@ -1,0 +1,124 @@
+// Real Edge + TanStack Router + production Documents/Portal UI. Local stub RPC only.
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {appendFileSync,existsSync,mkdirSync,readFileSync,realpathSync,writeFileSync} from 'node:fs';
+import {join,resolve,dirname,isAbsolute} from 'node:path';
+import {createServer} from 'vite';
+import react from '@vitejs/plugin-react';
+import {chromium,expect} from '@playwright/test';
+const folder=import.meta.dirname,root=resolve(folder,'../../..'),attempt=process.argv[2];
+assert.match(attempt??'',/^(setup|green|historical)[0-9]*$/);
+assert.equal(realpathSync(process.cwd()),root);
+assert.equal(root,'C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023');
+const run='cosec-20261024-rejection-4e52ac19',historical=attempt.startsWith('historical');
+const normalized=path=>path.replaceAll('\\','/'),digest=value=>createHash('sha256').update(value).digest('hex');
+const sourcePaths=['src/routes/documents.tsx','src/routes/portal.tsx','src/features/documents/rejection-reasons.ts','src/features/documents/safety.ts','src/features/annual-return/outstanding.ts'];
+const overlays=historical?{[normalized(join(root,'src/routes/portal.tsx'))]:readFileSync(join(folder,'portal-before.tsx.snapshot'),'utf8')}:{};
+const sourceHashes=Object.fromEntries(sourcePaths.map(path=>[path,digest(overlays[normalized(join(root,path))]??readFileSync(join(root,path)))]));
+const cache=join(root,'.worktrees',`rejection-4e52ac19-browser-${attempt}`);
+assert.equal(realpathSync(join(root,'.worktrees')),join(root,'.worktrees'));
+assert(!existsSync(cache));
+for(const file of [`browser-target-${attempt}.json`,`browser-results-${attempt}.json`,`browser-checkpoints-${attempt}.jsonl`])assert(!existsSync(join(folder,file)),'Attempt already exists');
+mkdirSync(cache);
+const rpc={
+  documents:`export const listDocumentPage=({data})=>window.__uc149.listDocuments(data);export const createDocumentUploadIntent=({data})=>window.__uc149.intent(data);export const finalizeDocumentUpload=({data})=>window.__uc149.finalize(data);export const downloadDocument=()=>{throw Error('Download outside UC149 browser scope')};`,
+  annual:`export const getAnnualReturnCase=({data})=>window.__uc149.staffCase(data);export const listAnnualReturnCases=({data})=>window.__uc149.staffCases(data);export const listAnnualReturnCasePage=async({data})=>({cases:await window.__uc149.staffCases(data),nextCursor:null});`,
+  portal:`export const getClientPortalCase=({data})=>window.__uc149.clientCase(data);export const listClientPortalCases=({data})=>window.__uc149.clientCases(data);`,
+  evidence:`export const reviewAnnualReturnEvidenceAction=({data})=>window.__uc149.review(data);`,
+};
+const resolutions=[];
+const server=await createServer({configFile:false,envFile:false,envDir:false,root,cacheDir:join(cache,'vite'),plugins:[{
+  name:'uc149-local-boundaries',enforce:'pre',
+  resolveId(id,importer){
+    if(id==='virtual:uc149')return '\0uc149-main.tsx';
+    const from=normalized(importer??'');
+    const resolved=normalized(id.startsWith('@/')?join(root,'src',id.slice(2)):id.startsWith('.')&&importer?resolve(dirname(importer),id):isAbsolute(id)?id:id).replace(/\.tsx?$/,'');
+    for(const [suffix,name]of [['/features/documents/server-fns','documents'],['/features/annual-return/server-fns','annual'],['/features/annual-return/client-portal-server-fns','portal'],['/features/annual-return/evidence-server-fns','evidence']])if(resolved.endsWith(suffix)){resolutions.push({id,from,boundary:name});return '\0uc149-rpc-'+name}
+    if(resolved.endsWith('/components/bulk-selection-toolbar'))return '\0uc149-bulk';
+    if(resolved.endsWith('/features/documents/document-recovery-panel'))return '\0uc149-recovery';
+    if(/(?:server-fns|server\/db|neon-auth-server|\.server(?:\.|$))/.test(id))throw Error(`Unstubbed server boundary: ${id}`);
+  },
+  load(id){const path=normalized(id.split('?')[0]);if(path in overlays)return overlays[path];if(id==='\0uc149-main.tsx')return readFileSync(join(folder,'browser-entry.tsx.snapshot'),'utf8');for(const [name,code]of Object.entries(rpc))if(id===`\0uc149-rpc-${name}`)return code;if(id==='\0uc149-bulk')return 'export const BulkSelectionToolbar=()=>null';if(id==='\0uc149-recovery')return 'export const DocumentRecoveryPanel=()=>null';},
+  configureServer(s){s.middlewares.use((req,res,next)=>{
+    if(req.url==='/__uc149_identity'){res.setHeader('content-type','application/json');res.end(JSON.stringify({run_id:run,root:normalized(root)}));return}
+    if(/^\/(documents|portal)(\/|\?|$)/.test(req.url)){res.setHeader('content-type','text/html');res.setHeader('x-uc149-run',run);res.end('<!doctype html><html lang="zh-Hant"><title>UC149 local only</title><body><div id="app"></div><script type="module" src="/@id/__x00__uc149-main.tsx"></script></body></html>');return}next();
+  })},
+},react()],resolve:{alias:{'@':join(root,'src')}},server:{host:'127.0.0.1',port:0,hmr:false,watch:null,fs:{strict:true,allow:[root]}},optimizeDeps:{noDiscovery:true,include:['react','react-dom','react-dom/client','@tanstack/react-query','@tanstack/react-router','@radix-ui/react-slot','lucide-react','class-variance-authority','clsx','tailwind-merge','sonner','zod']},logLevel:'warn'});
+let browser,origin,outerError;const results=[],blocked=[],pageErrors=[],consoleErrors=[],httpErrors=[];
+const id='4e52ac19-0149-4149-8149-000000000004',item='4e52ac19-0149-4149-8149-000000000007';
+const note='第 2 頁未有董事簽署，請補正後重新上載。',reason='missing-signature: 缺少必要簽署 — '+note;
+const body=Buffer.from('%PDF-1.4 QA-UC149 synthetic bytes only');
+const selectFile=async page=>{await page.getByLabel('回應哪一項要求',{exact:true}).selectOption(item);await page.getByLabel('類別',{exact:true}).selectOption('signature');await page.getByLabel('要上載的文件',{exact:true}).setInputFiles({name:'QA-corrected.pdf',mimeType:'application/pdf',buffer:body})};
+const saved=page=>page.evaluate(()=>structuredClone(window.__uc149.saved));
+const readLog=page=>page.evaluate(()=>structuredClone(window.__uc149.reads));
+try{
+  await server.listen();const address=server.httpServer.address();assert.equal(address.address,'127.0.0.1');origin=`http://127.0.0.1:${address.port}`;
+  const preflight=await fetch(origin+'/__uc149_identity');assert.deepEqual(await preflight.json(),{run_id:run,root:normalized(root)});
+  const edge='C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';assert(existsSync(edge));
+  writeFileSync(join(folder,`browser-target-${attempt}.json`),JSON.stringify({run_id:run,root,origin,host:address.address,port:address.port,configFile:false,envFile:false,envDir:false,sourceHashes,historical_overlay:historical?'6f29c40 original Portal bytes':null,fixture_ids:{case:id,item,document:'4e52ac19-0149-4149-8149-000000000002',version:'4e52ac19-0149-4149-8149-000000000005'},transport:'sessionStorage local RPC stub; no native Auth/HTTP RPC/DB/storage/scanner',scan_fixture:'Controlled provider-tagged DTO only exercises UI branch; no scanner proof'},null,2)+'\n',{flag:'wx'});
+  browser=await chromium.launch({executablePath:edge,headless:true});
+  const test=async(name,path,readySelector,fn)=>{
+    const context=await browser.newContext({serviceWorkers:'block'});let page,ready=false;
+    try{
+      await context.route('**/*',route=>{const u=new URL(route.request().url());if(u.origin===origin||['data:','blob:'].includes(u.protocol))return route.continue();blocked.push({name,origin:u.origin});return route.abort()});
+      page=await context.newPage();page.setDefaultTimeout(7000);
+      page.on('pageerror',e=>pageErrors.push({name,error:e.message}));page.on('console',e=>{if(e.type()==='error')consoleErrors.push({name,error:e.text()})});page.on('response',r=>{if(r.status()>=400)httpErrors.push({name,url:r.url(),status:r.status()})});
+      await page.goto(origin+path);await expect(page.getByRole('heading',{name:readySelector,exact:true})).toBeVisible({timeout:30000});ready=true;
+      const evidence=await fn(page);results.push({name,status:'passed',evidence});
+    }catch(e){results.push({name,status:ready?'failed':'setup_failed',error:e.message,url:page?.url(),dom:await page?.locator('body').innerText().catch(()=>null),reads:await page?.evaluate(()=>window.__uc149?.reads).catch(()=>null),saved:await page?.evaluate(()=>window.__uc149?.saved).catch(()=>null)})}
+    finally{await context.close();appendFileSync(join(folder,`browser-checkpoints-${attempt}.jsonl`),JSON.stringify(results.at(-1))+'\n')}
+    if(results.at(-1).status==='setup_failed')throw Error('Harness setup failed; remaining cases not run');
+  };
+  await test('UC149 reviewer reason/text -> client -> known precommit failure/retry -> readback/reload/return',`/documents?caseId=${id}&qaRole=Staff`,'正式文件庫',async page=>{
+    await expect(page.getByText('QA-original.pdf',{exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'退回',exact:true}).click();
+    await page.getByLabel('「QA-original.pdf」的退回原因',{exact:true}).selectOption('other');await expect(page.getByRole('button',{name:'確認退回',exact:true})).toBeDisabled();
+    await page.getByRole('button',{name:'退回',exact:true}).click();await expect(page.getByRole('button',{name:'確認退回',exact:true})).toHaveCount(0);assert.equal((await saved(page)).audit.length,0);
+    await page.getByRole('button',{name:'退回',exact:true}).click();await page.getByLabel('「QA-original.pdf」的退回原因',{exact:true}).selectOption('missing-signature');await page.getByLabel('給客戶的「QA-original.pdf」說明',{exact:true}).fill(note);await page.getByRole('button',{name:'確認退回',exact:true}).click();
+    await expect(page.getByRole('button',{name:'退回',exact:true})).toHaveCount(0);const rejected=await saved(page);assert.equal(rejected.documents[0].rejectionReason,reason);assert.equal(rejected.audit.length,1);assert.equal(rejected.audit[0].documentVersionId,rejected.documents[0].currentVersionId);
+    await page.goto(origin+`/portal?caseId=${id}`);await expect(page.getByText('退回原因：'+reason,{exact:true})).toBeVisible();await expect(page.getByText('我們仍在等待您提供 1 份文件。',{exact:true})).toBeVisible();
+    await page.evaluate(()=>{window.__uc149.saved.finalizeFailures=1;window.__uc149.persist()});await selectFile(page);await page.getByRole('button',{name:'安全上載',exact:true}).click();await expect(page.getByText('失敗：Local known pre-commit finalize failure',{exact:true})).toBeVisible();
+    const failed=await saved(page);assert.equal(failed.documents.length,1);assert.deepEqual(failed.audit,rejected.audit);const before=(await readLog(page)).length;
+    await page.getByRole('button',{name:'重試',exact:true}).click();await expect(page.getByText('我們已收到您提供的 1 份文件，現正覆核，您毋須再提交。',{exact:true})).toBeVisible();await expect(page.getByText('QA-corrected.pdf',{exact:true})).toHaveCount(2);
+    const after=await saved(page),reads=await readLog(page);assert.equal(after.documents.length,2);assert.deepEqual(after.documents[0],rejected.documents[0]);assert.deepEqual(after.audit,rejected.audit);assert.equal(after.documents[1].reviewStatus,'pending');assert.equal(after.documents[1].rejectionReason,null);assert.notEqual(after.documents[1].currentVersionId,after.documents[0].currentVersionId);assert.equal(after.documents[1].reviewedVersionId,null);assert(reads.slice(before).some(row=>row.name==='getClientPortalCase'));assert(reads.slice(before).some(row=>row.name==='listDocumentPage'));
+    await page.reload();await expect(page.getByText('退回原因：'+reason,{exact:true})).toBeVisible();await expect(page.getByText('QA-corrected.pdf',{exact:true})).toHaveCount(1);await expect(page.getByRole('button',{name:'下載',exact:true})).toHaveCount(0);assert.deepEqual(await saved(page),after);
+    await page.getByRole('link',{name:'返回您的周年申報',exact:true}).click();await expect(page.getByRole('heading',{name:'您的周年申報',exact:true})).toBeVisible();await page.getByRole('link',{name:'開啟',exact:true}).click();await expect(page.getByText('退回原因：'+reason,{exact:true})).toBeVisible();
+    return {reason,old_document_unchanged:true,new_pending_document:after.documents[1],review_audit:after.audit,failed_precommit_documents:failed.documents.length,finalize_calls:reads.filter(row=>row.name==='finalizeDocumentUpload').length,reads,actual_reload:true,real_router_return_and_reopen:true};
+  });
+  if(!historical){
+    await test('UC149 repeated same-tick submission shares one held intent',`/portal?caseId=${id}`,'QA UC149 Company',async page=>{
+      await page.evaluate(()=>{window.__uc149.seedRejected();window.__uc149.holdIntent=true});await page.reload();await page.evaluate(()=>window.__uc149.holdIntent=true);await selectFile(page);
+      await page.getByRole('button',{name:'安全上載',exact:true}).evaluate(button=>{button.click();button.click()});await page.waitForFunction(()=>window.__uc149.pendingIntents.length===1);await expect(page.getByRole('button',{name:'上載中…',exact:true})).toBeDisabled();
+      assert.equal((await saved(page)).intents.length,1);await page.evaluate(()=>window.__uc149.releaseIntents());await expect(page.getByText('已收到，等待掃描',{exact:true})).toBeVisible();await expect(page.getByText('我們已收到您提供的 1 份文件，現正覆核，您毋須再提交。',{exact:true})).toBeVisible();
+      const rows=await readLog(page),state=await saved(page);assert.equal(rows.filter(row=>row.name==='createDocumentUploadIntent').length,1);assert.equal(rows.filter(row=>row.name==='finalizeDocumentUpload').length,1);assert.equal(state.documents.length,2);return {intent_calls:1,finalize_calls:1,documents:state.documents,reads:rows};
+    });
+    await test('UC149 missing historical reason is explicit after reload',`/portal?caseId=${id}`,'QA UC149 Company',async page=>{
+      await page.evaluate(()=>window.__uc149.seedRejected(null));await page.reload();await expect(page.getByText('退回原因未有記錄，請聯絡負責同事確認需補正的內容。',{exact:true})).toBeVisible();return {missing_reason_explicit:true,saved:await saved(page)};
+    });
+    await test('UC149 stale reason on pending DTO is never rendered',`/portal?caseId=${id}`,'QA UC149 Company',async page=>{
+      await page.evaluate(()=>{window.__uc149.saved.documents[0].rejectionReason='STALE-PRIVATE-REASON';window.__uc149.persist()});await page.reload();await expect(page.getByText('QA-original.pdf',{exact:true})).toBeVisible();await expect(page.getByText(/STALE-PRIVATE-REASON/)).toHaveCount(0);return {pending_reason_hidden:true};
+    });
+    await test('UC149 other client denied, cannot read document reason',`/portal?caseId=${id}&qaRole=ClientB`,'找不到周年申報',async page=>{
+      await expect(page.getByText('QA-original.pdf',{exact:true})).toHaveCount(0);await expect(page.getByLabel('要上載的文件',{exact:true})).toHaveCount(0);const reads=await readLog(page);assert(!reads.some(row=>row.name==='listDocumentPage'));await page.reload();await expect(page.getByRole('heading',{name:'找不到周年申報',exact:true})).toBeVisible();return {no_document_read:true,reads,limitation:'Local transport role refusal; not native Auth/RLS'};
+    });
+    await test('UC149 document read error hides content, reload recovers',`/portal?caseId=${id}`,'QA UC149 Company',async page=>{
+      await page.evaluate(()=>{window.__uc149.seedRejected();window.__uc149.setMode('document-error')});await page.reload();await expect(page.getByText('無法載入文件。',{exact:true})).toBeVisible();await expect(page.getByText('QA-original.pdf',{exact:true})).toHaveCount(0);await page.evaluate(()=>window.__uc149.setMode('normal'));await page.reload();await expect(page.getByText('退回原因：'+reason,{exact:true})).toBeVisible();return {error_content_hidden:true,actual_reload_recovers:true,reads:await readLog(page)};
+    });
+    await test('UC149 empty documents/list have explicit empty states',`/portal?caseId=${id}`,'QA UC149 Company',async page=>{
+      await page.evaluate(()=>window.__uc149.setMode('empty'));await page.reload();await expect(page.getByText('暫未有文件。',{exact:true})).toBeVisible();await page.getByRole('link',{name:'返回您的周年申報',exact:true}).click();await expect(page.getByText('貴公司暫未有周年申報記錄。申報到期前，您的公司秘書會與您聯絡。',{exact:true})).toBeVisible();return {documents_empty:true,list_empty:true};
+    });
+    await test('UC149 list read error explicit retry refetches',`/portal?caseId=${id}`,'QA UC149 Company',async page=>{
+      await page.evaluate(()=>window.__uc149.setMode('list-error'));await page.goto(origin+'/portal');await expect(page.getByRole('alert')).toBeVisible();const before=(await readLog(page)).filter(row=>row.name==='listClientPortalCases').length;await page.evaluate(()=>window.__uc149.setMode('normal'));await page.getByRole('button',{name:'重試',exact:true}).click();await expect(page.getByRole('link',{name:'開啟',exact:true})).toBeVisible();const reads=await readLog(page);assert.equal(reads.filter(row=>row.name==='listClientPortalCases').length,before+1);return {retry_reads:1,reads};
+    });
+    await test('UC149 cancel file selection and return without writes',`/portal?caseId=${id}`,'QA UC149 Company',async page=>{
+      await page.evaluate(()=>window.__uc149.seedRejected());await page.reload();await selectFile(page);await page.getByLabel('要上載的文件',{exact:true}).setInputFiles([]);await expect(page.getByRole('button',{name:'安全上載',exact:true})).toBeDisabled();await page.getByRole('link',{name:'返回您的周年申報',exact:true}).click();await expect(page.getByRole('heading',{name:'您的周年申報',exact:true})).toBeVisible();await page.goBack();await expect(page.getByText('退回原因：'+reason,{exact:true})).toBeVisible();const state=await saved(page),reads=await readLog(page);assert.equal(state.intents.length,0);assert.equal(state.documents.length,1);assert.equal(state.audit.length,0);assert(!reads.some(row=>['createDocumentUploadIntent','finalizeDocumentUpload'].includes(row.name)));return {picker_cleared:true,back_restores_case:true,no_upload_or_review_writes:true,reads};
+    });
+  }
+  assert(new Set(resolutions.map(row=>row.boundary)).size===4);assert.deepEqual(blocked,[]);assert.deepEqual(pageErrors,[]);assert.deepEqual(httpErrors,[]);assert.deepEqual(consoleErrors,[]);
+}catch(e){outerError=e.message;process.exitCode=1}
+finally{
+  writeFileSync(join(folder,`browser-results-${attempt}.json`),JSON.stringify({run_id:run,attempt,origin,sourceHashes,historical_overlay:historical,browser_version:browser?.version(),results,blocked_external_origins:blocked,page_errors:pageErrors,console_errors:consoleErrors,http_errors:httpErrors,resolutions,outer_error:outerError??null,native_auth_http_db_storage_scanner:false,stubbed_unrelated_components:['BulkSelectionToolbar','DocumentRecoveryPanel'],cleanup:'fresh contexts closed; own server/browser closed; no database or shared resources'},null,2)+'\n',{flag:'wx'});
+  await browser?.close();await server.close();
+}
+console.log(JSON.stringify({attempt,passed:results.filter(row=>row.status==='passed').length,failed:results.filter(row=>row.status==='failed').length,setup_failed:results.filter(row=>row.status==='setup_failed').length,outerError}));
+if(results.some(row=>row.status!=='passed')||outerError)process.exitCode=1;

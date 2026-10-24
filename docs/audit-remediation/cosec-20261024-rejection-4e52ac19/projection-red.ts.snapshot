@@ -1,0 +1,36 @@
+import { describe, expect, it, vi } from "vitest";
+import type { SqlClient } from "@/server/db/client";
+import { createDocumentRepository } from "./repository";
+const current = "4e52ac19-0149-4149-8149-000000000001";
+const reason = "missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。";
+const row = {
+  id: "4e52ac19-0149-4149-8149-000000000002", company_id: "4e52ac19-0149-4149-8149-000000000003",
+  case_id: "4e52ac19-0149-4149-8149-000000000004", file_type: "identity", file_name: "QA-UC149.pdf",
+  storage_url: "QA-UC149/local-only", verification_status: "rejected", uploaded_by: null,
+  uploaded_at: "2026-10-24T00:00:00Z", cursor_uploaded_at: "2026-10-24 00:00:00+00",
+  content_type: "application/pdf", expected_size_bytes: 4, checksum_sha256: "a".repeat(64),
+  upload_status: "available", scan_verdict_source: "provider", current_version_id: current,
+  reviewed_document_version_id: current, scan_document_version_id: current,
+  intent_id: "4e52ac19-0149-4149-8149-000000000005", verified_checksum_sha256: "a".repeat(64),
+  rejection_reason: reason,
+};
+describe("UC149 rejection projection", () => {
+  async function read(overrides: object = {}) {
+    const sql = vi.fn(async () => [{ ...row, ...overrides }]);
+    const repository = createDocumentRepository({ sql: sql as unknown as SqlClient });
+    return (await repository.listDocumentPage({ caseId: row.case_id })).documents[0];
+  }
+  it("returns the explicit client instruction attached to the rejected current version", async () => {
+    expect(await read()).toMatchObject({ reviewStatus: "rejected", rejectionReason: reason });
+  });
+  it.each([
+    { reviewed_document_version_id: "4e52ac19-0149-4149-8149-000000000006" },
+    { current_version_id: null },
+    { verification_status: "verified" },
+    { verification_status: "pending" },
+    { rejection_reason: null },
+    { rejection_reason: "  " },
+  ])("does not disclose old or absent instructions for %j", async overrides => {
+    expect(await read(overrides)).toMatchObject({ rejectionReason: null });
+  });
+});

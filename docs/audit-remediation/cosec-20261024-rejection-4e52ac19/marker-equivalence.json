@@ -1,0 +1,10 @@
+{
+  "path": "src/features/documents/rejection-readback.integration.test.ts",
+  "before_sha256": "2005efe60c42c2f32e90c70f70dafd9c61e28664f6a275175ca4b4bae6727b81",
+  "after_sha256": "114517979d1745fd4734795f75ef9a17b52e8607addb43eac34d30d633371ca5",
+  "only_change": "DB classification comment marker; no executable statements changed",
+  "emitted_javascript_equal": true,
+  "sql_green_runtime_input": "sql-test-before-marker.ts.snapshot",
+  "sql_rerun": false,
+  "reason": "Exact executable equivalence; no new SQL fixture or client required"
+}

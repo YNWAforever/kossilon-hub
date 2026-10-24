@@ -1,0 +1,1 @@
+{"kind":"packaging helper syntax error","exit_code":1,"error":"Unescaped Markdown inline backticks inside a JavaScript template literal. node --check stopped before artifact generation.","original_script":"write-delivery-attempt1.mjs.snapshot","repair":"Escape interior template backticks only; rerun node --check. No source/test/DB changes.","product_test_result":false}

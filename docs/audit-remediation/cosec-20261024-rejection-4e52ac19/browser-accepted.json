@@ -1,0 +1,10 @@
+{
+  "exit_code": 0,
+  "error": null,
+  "receipt": "browser-green3.json",
+  "report": "browser-results-green3.json",
+  "passed": 9,
+  "version": "155.0.4283.62",
+  "source_hashes_verified": true,
+  "native": false
+}
