@@ -335,3 +335,80 @@ it.each(["record", "verified", "rejected"] as const)(
     if (command === "rejected") expect(f.record).not.toHaveBeenCalled();
   },
 );
+
+it("recovers a proof's case read and uses the freshly read source version for a safe action", async () => {
+  let resolveCase!: (value: typeof selectedCase) => void;
+  f.getCase.mockRejectedValueOnce(new Error("temporary case failure")).mockImplementationOnce(
+    () =>
+      new Promise<typeof selectedCase>((resolve) => {
+        resolveCase = resolve;
+      }),
+  );
+  f.record.mockImplementation(() => new Promise(() => {}));
+  view();
+  await screen.findByText(/案件資料不可用或沒有權限/);
+  expect(screen.queryByLabelText("憑證金額")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: `重新載入 ${doc.fileName} 的案件資料` }));
+  expect(await screen.findByRole("status")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "儲存憑證資料" })).toBeNull();
+  expect(f.record).not.toHaveBeenCalled();
+  expect(f.review).not.toHaveBeenCalled();
+  await act(async () => {
+    resolveCase({ ...selectedCase, readiness: { sourceVersion: "b".repeat(32) } });
+  });
+  await screen.findByRole("button", { name: "儲存憑證資料" });
+  fireEvent.change(screen.getByLabelText("憑證金額"), { target: { value: "600" } });
+  fireEvent.change(screen.getByLabelText("憑證收款日期"), { target: { value: "2026-10-26" } });
+  fireEvent.click(screen.getByRole("button", { name: "儲存憑證資料" }));
+  await waitFor(() =>
+    expect(f.record).toHaveBeenCalledWith({
+      data: {
+        caseId,
+        paymentId: "payment-201",
+        documentId: doc.id,
+        proofVersionId: doc.currentVersionId,
+        expectedVersion: "b".repeat(32),
+        amount: "600",
+        receivedOn: "2026-10-26",
+      },
+    }),
+  );
+  expect(f.getCase).toHaveBeenCalledTimes(2);
+  expect(f.getCase).toHaveBeenLastCalledWith({ data: { id: caseId } });
+  expect(f.cases).toHaveBeenCalledTimes(1);
+  expect(f.documents).toHaveBeenCalledTimes(1);
+});
+
+it.each([null, new Error("still denied"), { ...selectedCase, id: "wrong-case" }])(
+  "keeps proof recovery closed when the new case result is unavailable: %s",
+  async (result) => {
+    f.getCase.mockRejectedValueOnce(new Error("temporary failure"));
+    if (result instanceof Error) f.getCase.mockRejectedValueOnce(result);
+    else f.getCase.mockResolvedValueOnce(result);
+    view();
+    await screen.findByText(/案件資料不可用或沒有權限/);
+    fireEvent.click(screen.getByRole("button", { name: `重新載入 ${doc.fileName} 的案件資料` }));
+    await waitFor(() => expect(f.getCase).toHaveBeenCalledTimes(2));
+    await screen.findByText(/案件資料不可用或沒有權限/);
+    expect(screen.queryByLabelText("憑證金額")).toBeNull();
+    expect(screen.queryByRole("link", { name: selectedCase.companyName })).toBeNull();
+    expect(f.record).not.toHaveBeenCalled();
+    expect(f.review).not.toHaveBeenCalled();
+    expect(f.download).not.toHaveBeenCalled();
+  },
+);
+
+it("requires document-list recovery before offering a proof's case retry", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  view("qa-team-a", client);
+  await screen.findByRole("button", { name: "儲存憑證資料" });
+  f.documents.mockRejectedValue(new Error("document read denied"));
+  await act(async () => {
+    await client.invalidateQueries({ queryKey: ["annual-returns", "payment"] });
+  });
+  await screen.findByText(/案件資料不可用或沒有權限/);
+  expect(screen.queryByRole("button", { name: `重新載入 ${doc.fileName} 的案件資料` })).toBeNull();
+  expect(screen.getByRole("button", { name: "重新載入付款資料" })).toBeTruthy();
+  expect(screen.queryByLabelText("憑證金額")).toBeNull();
+  client.clear();
+});

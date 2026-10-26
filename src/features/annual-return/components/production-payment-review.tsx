@@ -219,9 +219,19 @@ function PaymentEvidenceContextRow({
     caseQuery.data.id !== document.caseId
   ) {
     return (
-      <p role="alert" className="p-4">
-        {document.fileName}：案件資料不可用或沒有權限，暫不可審核。
-      </p>
+      <div role="alert" className="space-y-2 p-4">
+        <p>{document.fileName}：案件資料不可用或沒有權限，暫不可審核。</p>
+        {!readBlocked ? (
+          <Button
+            className="min-h-11"
+            aria-label={`重新載入 ${document.fileName} 的案件資料`}
+            disabled={caseQuery.isFetching}
+            onClick={() => void caseQuery.refetch({ cancelRefetch: false })}
+          >
+            重新載入案件資料
+          </Button>
+        ) : null}
+      </div>
     );
   }
   return (
