@@ -247,6 +247,52 @@ describe("production payments route", () => {
     expect(screen.queryByText("沒有待覆核的付款憑證。")).toBeNull();
   });
 
+  it.each(["cases", "documents", "both"])(
+    "recovers failed %s reads in place without replaying payment writes",
+    async (failed) => {
+      serverFns.listAnnualReturnCases.mockResolvedValue([]);
+      serverFns.listDocuments.mockResolvedValue([]);
+      if (failed !== "documents")
+        serverFns.listAnnualReturnCases.mockRejectedValueOnce(new Error("Temporary case failure"));
+      if (failed !== "cases")
+        serverFns.listDocuments.mockRejectedValueOnce(new Error("Temporary document failure"));
+      renderPayments();
+      await screen.findByRole("alert");
+      expect(screen.queryByText("沒有待覆核的付款憑證。")).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "重新載入付款資料" }));
+      expect(await screen.findByText("沒有待覆核的付款憑證。")).toBeTruthy();
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(serverFns.listAnnualReturnCases).toHaveBeenCalledTimes(failed === "documents" ? 1 : 2);
+      expect(serverFns.listDocuments).toHaveBeenCalledTimes(failed === "cases" ? 1 : 2);
+      expect(serverFns.record).not.toHaveBeenCalled();
+      expect(serverFns.review).not.toHaveBeenCalled();
+    },
+  );
+
+  it("shows loading instead of another retry while the failed initial read recovers", async () => {
+    let finish!: (documents: []) => void;
+    serverFns.listAnnualReturnCases.mockResolvedValue([]);
+    serverFns.listDocuments
+      .mockRejectedValueOnce(new Error("Temporary document failure"))
+      .mockImplementationOnce(
+        () =>
+          new Promise<[]>((resolve) => {
+            finish = resolve;
+          }),
+      );
+    renderPayments();
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", { name: "重新載入付款資料" }));
+    expect(await screen.findByRole("status")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "重新載入付款資料" })).toBeNull();
+    expect(serverFns.listDocuments).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText("沒有待覆核的付款憑證。")).toBeNull();
+    finish([]);
+    expect(await screen.findByText("沒有待覆核的付款憑證。")).toBeTruthy();
+    expect(serverFns.record).not.toHaveBeenCalled();
+    expect(serverFns.review).not.toHaveBeenCalled();
+  });
+
   it("still shows the empty state when the queries succeed with nothing to review", async () => {
     serverFns.listAnnualReturnCases.mockResolvedValue([]);
     serverFns.listDocuments.mockResolvedValue([]);

@@ -94,7 +94,20 @@ export function ProductionPaymentReview({
         />
       ) : null}
       {casesQuery.isError || documentsQuery.isError ? (
-        <p role="alert">暫時無法載入付款憑證。</p>
+        <div role="alert" className="space-y-2">
+          <p>暫時無法載入付款憑證。</p>
+          <Button
+            className="min-h-11"
+            disabled={casesQuery.isFetching || documentsQuery.isFetching}
+            onClick={() => {
+              // Retry failed reads only; never replay a payment command.
+              if (casesQuery.isError) void casesQuery.refetch({ cancelRefetch: false });
+              if (documentsQuery.isError) void documentsQuery.refetch({ cancelRefetch: false });
+            }}
+          >
+            重新載入付款資料
+          </Button>
+        </div>
       ) : null}
       {casesQuery.isPending || documentsQuery.isPending ? (
         <LoadingRows label="正在載入付款憑證…" rows={4} />
