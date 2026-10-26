@@ -1,0 +1,318 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/features/annual-return/components/payment-pagination.test.tsx (25 tests | 4 failed) 1394ms
+   × recovers a proof's case read and uses the freshly read source version for a safe action 14ms
+   × keeps proof recovery closed when the new case result is unavailable: null 11ms
+   × keeps proof recovery closed when the new case result is unavailable: Error: still denied 10ms
+   × keeps proof recovery closed when the new case result is unavailable: { id: 'wrong-case', companyName: 'QA Case 201', currentStatus: 'Payment pending', readiness: { sourceVersion: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }, payment: { id: 'payment-201', amount: 1800, receivedAmount: 600, balance: 1200, status: 'Payment pending', paidAt: null, evidenceEntries: [] } } 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > recovers a proof's case read and uses the freshly read source version for a safe action
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "重新載入 qa-proof-201.pdf 的案件資料"
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  [36m<main[39m
+    [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"py-2 text-sm"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "付款":
+  [36m<h1[39m
+    [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+  [36m/>[39m
+
+  Name "付款憑證覆核":
+  [36m<h2[39m
+    [33mclass[39m=[32m"py-3 font-semibold"[39m
+  [36m/>[39m
+
+  Name "待收款案件":
+  [36m<h2[39m
+    [33mclass[39m=[32m"py-3 font-semibold"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "付款憑證覆核":
+  [36m<section[39m
+    [33maria-label[39m=[32m"付款憑證覆核"[39m
+    [33mclass[39m=[32m"divide-y border-y"[39m
+  [36m/>[39m
+
+  Name "待收款案件":
+  [36m<section[39m
+    [33maria-label[39m=[32m"待收款案件"[39m
+    [33mclass[39m=[32m"divide-y border-y"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"p-4"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0m先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"付款憑證覆核"[39m
+        [33mclass[39m=[32m"divide-y border-y"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"py-3 font-semibold"[39m
+        [36m>[39m
+          [0m付款憑證覆核[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"p-4"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [0mqa-proof-201.pdf[0m
+          [0m：案件資料不可用或沒有權限，暫不可審核。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"待收款案件"[39m
+        [33mclass[39m=[32m"divide-y border-y"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"py-3 font-semibold"[39m
+        [36m>[39m
+          [0m待收款案件[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"py-2 text-sm"[39m
+        [36m>[39m
+          [0m未有憑證亦可開啟案件跟進付款及補傳文件。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:351:26
+    349|   await screen.findByText(/案件資料不可用或沒有權限/);
+    350|   expect(screen.queryByLabelText("憑證金額")).toBeNull();
+    351|   fireEvent.click(screen.getByRole("button", { name: `重新載入 ${doc.fileN…
+       |                          ^
+    352|   expect(await screen.findByRole("status")).toBeTruthy();
+    353|   expect(screen.queryByRole("button", { name: "儲存憑證資料" })).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > keeps proof recovery closed when the new case result is unavailable: null
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > keeps proof recovery closed when the new case result is unavailable: Error: still denied
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > keeps proof recovery closed when the new case result is unavailable: { id: 'wrong-case', companyName: 'QA Case 201', currentStatus: 'Payment pending', readiness: { sourceVersion: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }, payment: { id: 'payment-201', amount: 1800, receivedAmount: 600, balance: 1200, status: 'Payment pending', paidAt: null, evidenceEntries: [] } }
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "重新載入 qa-proof-201.pdf 的案件資料"
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  [36m<main[39m
+    [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"py-2 text-sm"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "付款":
+  [36m<h1[39m
+    [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+  [36m/>[39m
+
+  Name "付款憑證覆核":
+  [36m<h2[39m
+    [33mclass[39m=[32m"py-3 font-semibold"[39m
+  [36m/>[39m
+
+  Name "待收款案件":
+  [36m<h2[39m
+    [33mclass[39m=[32m"py-3 font-semibold"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "付款憑證覆核":
+  [36m<section[39m
+    [33maria-label[39m=[32m"付款憑證覆核"[39m
+    [33mclass[39m=[32m"divide-y border-y"[39m
+  [36m/>[39m
+
+  Name "待收款案件":
+  [36m<section[39m
+    [33maria-label[39m=[32m"待收款案件"[39m
+    [33mclass[39m=[32m"divide-y border-y"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"p-4"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0m先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"付款憑證覆核"[39m
+        [33mclass[39m=[32m"divide-y border-y"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"py-3 font-semibold"[39m
+        [36m>[39m
+          [0m付款憑證覆核[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"p-4"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [0mqa-proof-201.pdf[0m
+          [0m：案件資料不可用或沒有權限，暫不可審核。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"待收款案件"[39m
+        [33mclass[39m=[32m"divide-y border-y"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"py-3 font-semibold"[39m
+        [36m>[39m
+          [0m待收款案件[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"py-2 text-sm"[39m
+        [36m>[39m
+          [0m未有憑證亦可開啟案件跟進付款及補傳文件。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:390:28
+    388|     view();
+    389|     await screen.findByText(/案件資料不可用或沒有權限/);
+    390|     fireEvent.click(screen.getByRole("button", { name: `重新載入 ${doc.fil…
+       |                            ^
+    391|     await waitFor(() => expect(f.getCase).toHaveBeenCalledTimes(2));
+    392|     await screen.findByText(/案件資料不可用或沒有權限/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 21 passed (25)
+   Start at  19:51:24
+   Duration  2.25s (transform 143ms, setup 0ms, import 260ms, tests 1.39s, environment 475ms)
+

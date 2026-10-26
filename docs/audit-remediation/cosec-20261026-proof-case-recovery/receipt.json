@@ -1,0 +1,87 @@
+{
+  "date": "2026-10-26",
+  "baseline_head": "9aaf2b8912dc6bb3606abde2e8122e8846ab6e18",
+  "code_commit": "e8e2aec0ec822c4a14a45f1e8f4454651ad16f78",
+  "tested_state": "baseline plus final two-file tracked diff; committed file bytes independently compared and identical to tested files",
+  "sha256": {
+    "src/features/annual-return/components/production-payment-review.tsx": "4619fbd6cca950238e1d363471ffe5973a416d5c972195a582fc2efb5bf6f7f3",
+    "src/features/annual-return/components/payment-pagination.test.tsx": "703db83dd9afc1c85c6fb8f25df382daa6a9d343df379bb94d650015da6418a6"
+  },
+  "checks": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/payment-pagination.test.tsx",
+      "phase": "RED before production change",
+      "exit": 1,
+      "tests": {
+        "passed": 21,
+        "failed": 4
+      },
+      "log": "red.txt"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/payment-pagination.test.tsx src/routes/-payments.interaction.test.tsx",
+      "phase": "final targeted",
+      "exit": 0,
+      "tests": {
+        "passed": 34,
+        "failed": 0
+      },
+      "files": {
+        "passed": 2,
+        "failed": 0
+      },
+      "log": "green.txt"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit --maxWorkers=4",
+      "phase": "final; executor with child-process support for existing CLI unit tests",
+      "exit": 0,
+      "tests": {
+        "passed": 2789,
+        "failed": 0
+      },
+      "files": {
+        "passed": 288,
+        "failed": 0
+      },
+      "log": "unit.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/production-payment-review.tsx src/features/annual-return/components/payment-pagination.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/production-payment-review.tsx src/features/annual-return/components/payment-pagination.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "warnings": [
+    "vite-tsconfig-paths native resolution notice",
+    "TanStack work-queue and login export code-splitting warnings"
+  ],
+  "not_run": [
+    "DB/integration",
+    "build",
+    "hosted CI acceptance",
+    "Native/runtime",
+    "deployment"
+  ],
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "scope": "Local in-repo repair/tests/evidence and push to existing draft branch; no Native/production resource actions. Original acceptance CSVs and approval files unchanged."
+}
