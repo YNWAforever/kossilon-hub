@@ -1,0 +1,72 @@
+{
+  "baseline": "2f2de8659e2b8512ed95c707ba157b98bc877e23",
+  "product_commit": "e5ebb5dfb14fc578b2ab38efc792260de2e9a281",
+  "verification_state": "Final checks ran at baseline HEAD with these three source/test files modified. Final SHA256 values below match the committed files; no source/test changes after final verification. Evidence-only commit follows.",
+  "files": {
+    "src/features/annual-return/components/case-findings.tsx": "bb865c57b501e5769b6045f1f86feea20f6aa014cfba91dad072a6ae7f773a10",
+    "src/features/annual-return/components/case-findings.interaction.test.tsx": "e46c8ffb21edd27d217fddf30666595a845d065bbb2bea94279c4da910bcb009",
+    "src/features/annual-return/components/production-case-detail.interaction.test.tsx": "866fb07fb1de184be5caa53caf08b8c90eeb01a0f68614830ff0f0027fc2828d"
+  },
+  "commands": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "result": "2812 passed / 289 files",
+      "log": "unit-final.txt",
+      "scope": "Local child-process-supported unit/component suite; DB integration project excluded"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/case-findings.interaction.test.tsx src/features/documents/findings-review.test.ts src/features/documents/safe-preview.test.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "result": "43 passed / 4 files, included in full unit total",
+      "new_tests": 5,
+      "log": "targeted-final.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck-final.txt"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/case-findings.tsx src/features/annual-return/components/case-findings.interaction.test.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint-final.txt"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/case-findings.tsx src/features/annual-return/components/case-findings.interaction.test.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "format-final.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "reproduction": {
+    "result": "5 failed / 3 passed before repair",
+    "log": "red.txt"
+  },
+  "first_targeted": {
+    "result": "34 passed / 3 files",
+    "log": "targeted.txt"
+  },
+  "interrupted_first_broad_run": {
+    "exit": 143,
+    "complete": false,
+    "observed_failure": "production-case-detail.interaction.test.tsx > retains note text and renders the error after a failed command",
+    "cause": "Case-detail fixture omitted listAnnualReturnCaseFindings, causing new findings-read alert to be mistaken for note error. Added successful empty findings response to fixture. No production change after targeted repair.",
+    "log": "unit.txt"
+  },
+  "review": "Focused independent reviewer reported no findings; reviewer did not run tests. Two-line case-detail fixture completion followed review; production repair unchanged.",
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "build": "NOT_RUN",
+  "db_integration": "NOT_RUN",
+  "hosted_ci_acceptance": "NOT_CLAIMED",
+  "deployment": "NOT_RUN",
+  "production_changes": "NONE"
+}
