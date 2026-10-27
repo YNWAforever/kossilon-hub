@@ -1,0 +1,71 @@
+{
+  "baseline": "885a5e8b8c21b778e8e29527530cc7da67a919e8",
+  "product_commit": "4cce50fa66ef892c584cef8fc3a14644abb30bdd",
+  "verification_state": "Final verification ran at baseline HEAD with the two files below modified. Final SHA256 values equal the committed files. No source/test changes after final verification. Evidence-only commit follows.",
+  "files": {
+    "src/features/annual-return/components/case-findings.tsx": "ab74a85cfa3732fc68bedbfd279dfdfe4a44416943fa3d8f1848ba5438f28973",
+    "src/features/annual-return/components/case-findings.interaction.test.tsx": "72f9b241461e7b617675e23daf5908d662dcbfdd041d7ca4d89d16d736c13626"
+  },
+  "commands": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "result": "2821 passed / 289 files",
+      "log": "unit-final.txt",
+      "scope": "Local child-process-supported unit/component suite; DB integration project excluded"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/case-findings.interaction.test.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx src/features/documents/findings-review.test.ts",
+      "exit": 0,
+      "result": "44 passed / 3 files, included in full unit count",
+      "new_tests": 9,
+      "log": "targeted-final.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck-final.txt"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/case-findings.tsx src/features/annual-return/components/case-findings.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint-final.txt"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/case-findings.tsx src/features/annual-return/components/case-findings.interaction.test.tsx",
+      "exit": 0,
+      "log": "format-final.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "reproduction": {
+    "initial": {
+      "result": "5 failed / 8 passed",
+      "log": "red.txt"
+    },
+    "cancelled_refetch": {
+      "result": "1 failed / 14 skipped against intermediate refetch implementation",
+      "log": "cancellation-red.txt"
+    },
+    "unavailable_direct_read": {
+      "result": "2 failed / 15 skipped before array guard",
+      "log": "unavailable-red.txt"
+    }
+  },
+  "review": "Focused reviewer required independently published readback to avoid query cancellation/cache-publication race. Final reviewer found no further issues within mounted-panel scope, conditional on array guard; guard is included and verified. Reviewer ran no tests.",
+  "limits": "Local mounted-panel recovery only. Case navigation resets panel state. No durable command receipt, persisted write, Native/Auth/HTTP/RLS acceptance claim.",
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "build": "NOT_RUN",
+  "db_integration": "NOT_RUN",
+  "hosted_ci_acceptance": "NOT_CLAIMED",
+  "deployment": "NOT_RUN",
+  "production_changes": "NONE"
+}
