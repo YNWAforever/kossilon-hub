@@ -79,7 +79,7 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
     <section className="border-b pb-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold">自動檢查</h2>
-        {findingsQuery.isPending ? null : (
+        {!findingsQuery.isSuccess || findingsQuery.isFetching ? null : (
           <div className="flex flex-wrap gap-2 text-xs">
             <span className="rounded-full bg-status-red-soft px-2 py-1 text-status-red-text">
               {summary.blocking} 必須處理
@@ -101,9 +101,20 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
       </div>
 
       {findingsQuery.error ? (
-        <p className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text">
-          無法載入自動檢查結果。這不代表文件沒有問題，請直接查閱文件。
-        </p>
+        <div
+          role="alert"
+          className="mt-3 space-y-2 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
+        >
+          <p>無法載入自動檢查結果。這不代表文件沒有問題，請直接查閱文件。</p>
+          <Button
+            type="button"
+            className="min-h-11"
+            disabled={findingsQuery.isFetching}
+            onClick={() => void findingsQuery.refetch({ cancelRefetch: false })}
+          >
+            重新載入自動檢查結果
+          </Button>
+        </div>
       ) : null}
       {resolveMutation.error ? (
         <p role="alert" className="mt-2 text-sm">
@@ -111,9 +122,11 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
         </p>
       ) : null}
 
-      {findingsQuery.isPending ? (
+      {/* Cached results are not current read evidence. Hide their previews and
+          resolution controls while refreshing or after a failed read. */}
+      {findingsQuery.isPending || findingsQuery.isFetching ? (
         <LoadingRows label="正在載入核對結果…" rows={2} className="mt-3 p-0" />
-      ) : views.length === 0 ? (
+      ) : findingsQuery.isError ? null : views.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">此案件尚未收到文件。</p>
       ) : (
         <div className="mt-3 divide-y border-y">
