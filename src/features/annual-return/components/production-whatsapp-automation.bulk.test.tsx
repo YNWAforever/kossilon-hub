@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const api = vi.hoisted(() => ({ drafts: vi.fn(), send: vi.fn(), snapshot: vi.fn() }));
 vi.mock("../follow-up-server-fns", () => ({
@@ -43,14 +43,15 @@ const draft = {
   reasonLabel: "Missing evidence",
   status: "draft",
 };
-function setup() {
+function setup(
+  client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }),
+) {
   render(
-    <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })}
-    >
+    <QueryClientProvider client={client}>
       <ProductionWhatsAppAutomation actorScope="manager-A" canBulk />
     </QueryClientProvider>,
   );
+  return client;
 }
 beforeEach(() => {
   vi.resetAllMocks();
@@ -93,4 +94,27 @@ it("an empty draft set sends an empty restriction rather than unrestricted filte
       data: { resource: "annual_return_case", filters: { draftCaseIds: [] } },
     }),
   );
+});
+
+it("retains bulk selection through denied draft refresh while blocking new selections", async () => {
+  api.drafts.mockResolvedValue([draft]);
+  const client = setup();
+  const selected = (await screen.findByLabelText("選取 Draft company")) as HTMLInputElement;
+  fireEvent.click(selected);
+  expect(selected.checked).toBe(true);
+  api.drafts.mockRejectedValue(new Error("private list failure"));
+  await act(async () => {
+    await client.refetchQueries({ queryKey: ["annual-returns", "notifications", "automation"] });
+  });
+  const retry = await screen.findByRole("button", { name: "重新載入跟進" });
+  expect(screen.getByLabelText("選取 Draft company")).toBe(selected);
+  expect((selected.closest("fieldset") as HTMLFieldSetElement).disabled).toBe(true);
+  expect(selected.checked).toBe(true);
+  api.drafts.mockResolvedValue([draft]);
+  fireEvent.click(retry);
+  await screen.findByRole("button", { name: "預覽並批准" });
+  expect((selected.closest("fieldset") as HTMLFieldSetElement).disabled).toBe(false);
+  expect(selected.checked).toBe(true);
+  expect(api.snapshot).not.toHaveBeenCalled();
+  expect(api.send).not.toHaveBeenCalled();
 });

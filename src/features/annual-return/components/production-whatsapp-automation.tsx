@@ -46,6 +46,7 @@ export function ProductionWhatsAppAutomation({
   const draftsQuery = useQuery({
     queryKey: [...annualReturnQueryKeys.automationNotifications, actorScope],
     queryFn: () => listProductionFollowUpDrafts(),
+    retry: false,
   });
   const integrationQuery = useQuery({
     queryKey: ["whatsapp-integration-status"],
@@ -86,7 +87,25 @@ export function ProductionWhatsAppAutomation({
         .map((d) => [d.caseId, { id: d.caseId, label: d.companyName }]),
     ).values(),
   ].sort((a, b) => a.id.localeCompare(b.id));
-  const error = draftsQuery.error ?? sendMutation.error ?? integrationQuery.error;
+  const readBlocked = draftsQuery.isError || draftsQuery.isFetching;
+  const currentPreview = preview
+    ? drafts.find(
+        (draft) =>
+          draft.source === preview.source &&
+          draft.caseId === preview.caseId &&
+          draft.entityId === preview.entityId,
+      )
+    : undefined;
+  const verifiedPreview =
+    !readBlocked &&
+    currentPreview?.status === "draft" &&
+    typeof currentPreview.version === "string" &&
+    Boolean(currentPreview.version.trim()) &&
+    currentPreview.version === preview?.version
+      ? currentPreview
+      : null;
+  const error = sendMutation.error ?? integrationQuery.error;
+  const retryDrafts = () => void draftsQuery.refetch({ cancelRefetch: false });
 
   return (
     <main className="flex-1 space-y-6 p-6">
@@ -94,10 +113,11 @@ export function ProductionWhatsAppAutomation({
       <p className="text-sm text-muted-foreground">
         供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。
       </p>
-      {canBulk && draftsQuery.isSuccess ? (
+      {canBulk && draftsQuery.data !== undefined ? (
         <BulkSelectionToolbar
           actorScope={actorScope}
           resource="annual_return_case"
+          selectionDisabled={readBlocked}
           filters={{ draftCaseIds: draftCases.map((d) => d.id) }}
           page={draftCases}
           total={draftCases.length}
@@ -135,12 +155,15 @@ export function ProductionWhatsAppAutomation({
           <span className="text-right">操作</span>
         </div>
         <div className="divide-y">
-          {draftsQuery.isPending ? (
+          {draftsQuery.isPending || draftsQuery.isFetching ? (
             <LoadingRows label="正在載入跟進…" rows={4} />
           ) : draftsQuery.isError ? (
-            <p role="status" className="p-4 text-sm text-muted-foreground">
-              未能讀取跟進範圍，請重新載入。
-            </p>
+            <div role="alert" className="p-4 space-y-2 text-sm text-muted-foreground">
+              <p>未能讀取跟進範圍，請重新載入。這不代表沒有跟進。</p>
+              <Button disabled={draftsQuery.isFetching} onClick={retryDrafts}>
+                重新載入跟進
+              </Button>
+            </div>
           ) : drafts.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">沒有待處理的跟進。</p>
           ) : (
@@ -172,14 +195,27 @@ export function ProductionWhatsAppAutomation({
               請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。
             </DialogDescription>
           </DialogHeader>
-          {preview ? (
+          {verifiedPreview ? (
             <div className="space-y-3 text-sm">
-              <p>{preview.companyName}</p>
+              <p>{verifiedPreview.companyName}</p>
               <p>
-                {preview.recipientName} / {preview.phone}
+                {verifiedPreview.recipientName} / {verifiedPreview.phone}
               </p>
-              <p className="whitespace-pre-wrap break-words">{preview.messagePreview}</p>
-              <p className="text-muted-foreground">{preview.reasonLabel}</p>
+              <p className="whitespace-pre-wrap break-words">{verifiedPreview.messagePreview}</p>
+              <p className="text-muted-foreground">{verifiedPreview.reasonLabel}</p>
+            </div>
+          ) : null}
+          {!verifiedPreview ? (
+            <div role="alert" className="space-y-2 text-sm text-destructive">
+              <p>草稿範圍或版本未能核實。請先重新讀取並核對目前草稿；沒有重送隊列操作。</p>
+              {draftsQuery.isError ? (
+                <Button disabled={draftsQuery.isFetching} onClick={retryDrafts}>
+                  重新載入跟進
+                </Button>
+              ) : null}
+              {!readBlocked && currentPreview?.status === "draft" ? (
+                <Button onClick={() => setPreview(currentPreview)}>重新查看目前草稿</Button>
+              ) : null}
             </div>
           ) : null}
           {error ? (
@@ -193,9 +229,9 @@ export function ProductionWhatsAppAutomation({
             </Button>
             <Button
               variant="primary"
-              disabled={!preview || sendMutation.isPending}
+              disabled={!verifiedPreview || sendMutation.isPending}
               onClick={() => {
-                if (preview) sendMutation.mutate(preview);
+                if (verifiedPreview) sendMutation.mutate(verifiedPreview);
               }}
             >
               批准並加入隊列

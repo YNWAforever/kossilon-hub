@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProductionFollowUpDraft } from "../follow-ups";
 import { ProductionWhatsAppAutomation } from "./production-whatsapp-automation";
@@ -67,10 +67,11 @@ const drafts: ProductionFollowUpDraft[] = [
   },
 ];
 
-function renderAutomation() {
-  const queryClient = new QueryClient({
+function renderAutomation(
+  queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
+  }),
+) {
   const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
   render(
     <QueryClientProvider client={queryClient}>
@@ -204,3 +205,112 @@ describe("ProductionWhatsAppAutomation", () => {
     expect((await screen.findByRole("alert")).textContent).toContain("Unable to queue follow-up.");
   });
 });
+
+it("retries a failed draft read once while pending without invoking queue writes", async () => {
+  serverFns.listProductionFollowUpDrafts.mockRejectedValue(new Error("private SQL failure"));
+  renderAutomation();
+  const retry = await screen.findByRole("button", { name: "重新載入跟進" });
+  expect(screen.queryByText("沒有待處理的跟進。")).toBeNull();
+  expect(screen.queryByText("private SQL failure")).toBeNull();
+  let resolve!: (value: unknown) => void;
+  serverFns.listProductionFollowUpDrafts.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  await waitFor(() => expect(serverFns.listProductionFollowUpDrafts).toHaveBeenCalledTimes(2));
+  expect(
+    (screen.queryByRole("button", { name: "重新載入跟進" }) as HTMLButtonElement | null)
+      ?.disabled ?? true,
+  ).toBe(true);
+  await act(async () => resolve([]));
+  await screen.findByText("沒有待處理的跟進。");
+  expect(serverFns.sendProductionFollowUp).not.toHaveBeenCalled();
+  expect(whatsAppServerFns.getWhatsAppIntegrationStatus).toHaveBeenCalledTimes(1);
+});
+
+it("keeps an old preview blocked after a denied refresh and requires the fresh version to be reviewed", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  serverFns.listProductionFollowUpDrafts.mockResolvedValue([drafts[0]]);
+  renderAutomation(client);
+  fireEvent.click(await screen.findByRole("button", { name: "預覽並批准" }));
+  let rejectRead!: (error: Error) => void;
+  serverFns.listProductionFollowUpDrafts.mockImplementationOnce(
+    () =>
+      new Promise((_done, reject) => {
+        rejectRead = reject;
+      }),
+  );
+  let refreshing!: Promise<void>;
+  act(() => {
+    refreshing = client.refetchQueries({
+      queryKey: ["annual-returns", "notifications", "automation"],
+    });
+  });
+  await waitFor(() =>
+    expect(
+      (screen.getByRole("button", { name: "批准並加入隊列" }) as HTMLButtonElement).disabled,
+    ).toBe(true),
+  );
+  expect(screen.queryByText(drafts[0].messagePreview)).toBeNull();
+  await act(async () => {
+    rejectRead(new Error("private scope denied"));
+    await refreshing;
+  });
+  await waitFor(() =>
+    expect(
+      (screen.getByRole("button", { name: "批准並加入隊列" }) as HTMLButtonElement).disabled,
+    ).toBe(true),
+  );
+  expect(screen.queryByText(drafts[0].messagePreview)).toBeNull();
+  const fresh = { ...drafts[0], version: "fresh-version", messagePreview: "Fresh approved draft" };
+  serverFns.listProductionFollowUpDrafts.mockResolvedValue([fresh]);
+  fireEvent.click(screen.getByRole("button", { name: "重新載入跟進" }));
+  const review = await screen.findByRole("button", { name: "重新查看目前草稿" });
+  await waitFor(() =>
+    expect(
+      (screen.getByRole("button", { name: "批准並加入隊列" }) as HTMLButtonElement).disabled,
+    ).toBe(true),
+  );
+  expect(serverFns.sendProductionFollowUp).not.toHaveBeenCalled();
+  fireEvent.click(review);
+  await screen.findAllByText("Fresh approved draft");
+  fireEvent.click(screen.getByRole("button", { name: "批准並加入隊列" }));
+  await waitFor(() => expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(1));
+  expect(serverFns.sendProductionFollowUp.mock.calls[0][0]).toEqual({
+    data: {
+      source: fresh.source,
+      caseId,
+      entityId: fresh.entityId,
+      expectedVersion: "fresh-version",
+    },
+  });
+});
+
+it.each([{ fresh: [] }, { fresh: [{ ...drafts[0], status: "queued" }] }])(
+  "keeps removed or non-draft refreshed previews closed to approval",
+  async ({ fresh }) => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    serverFns.listProductionFollowUpDrafts.mockResolvedValue([drafts[0]]);
+    renderAutomation(client);
+    fireEvent.click(await screen.findByRole("button", { name: "預覽並批准" }));
+    serverFns.listProductionFollowUpDrafts.mockResolvedValue(fresh);
+    await act(async () => {
+      await client.refetchQueries({ queryKey: ["annual-returns", "notifications", "automation"] });
+    });
+    await waitFor(() =>
+      expect(
+        (screen.getByRole("button", { name: "批准並加入隊列" }) as HTMLButtonElement).disabled,
+      ).toBe(true),
+    );
+    expect(screen.queryByRole("button", { name: "重新查看目前草稿" })).toBeNull();
+    expect(serverFns.sendProductionFollowUp).not.toHaveBeenCalled();
+  },
+);
