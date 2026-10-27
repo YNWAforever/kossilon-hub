@@ -110,6 +110,39 @@ function WorkQueueSession() {
   const [assignmentItem, setAssignmentItem] = useState<PersistedWorkItem | null>(null);
   const assignmentsNeedingRead = useRef(new Set<string>());
   const [acknowledgementItem, setAcknowledgementItem] = useState<PersistedWorkItem | null>(null);
+  const acknowledgementBusy = useRef(false);
+  const acknowledgementEpoch = useRef(0);
+  const acknowledgementNeedsRead = useRef(new Set<string>());
+  const [uncertainAcknowledgements, setUncertainAcknowledgements] = useState(new Set<string>());
+  const acknowledgementReads = useRef(new Set<string>());
+  const acknowledgementReadGeneration = useRef(0);
+  const activeQueue = useRef(true);
+  useEffect(() => {
+    activeQueue.current = true;
+    return () => {
+      activeQueue.current = false;
+    };
+  }, []);
+  const acknowledge = useMutation({
+    retry: false,
+    mutationFn: (input: { workItemId: string; note: string }) =>
+      acknowledgeWorkItemEscalation({ data: input }),
+    onError: (_error, input) => {
+      acknowledgementNeedsRead.current.add(input.workItemId);
+      if (activeQueue.current)
+        setUncertainAcknowledgements(new Set(acknowledgementNeedsRead.current));
+    },
+    onSuccess: (_result, input) => {
+      if (!activeQueue.current) return;
+      acknowledgementNeedsRead.current.delete(input.workItemId);
+      setUncertainAcknowledgements(new Set(acknowledgementNeedsRead.current));
+      setAcknowledgementItem((current) => (current?.id === input.workItemId ? null : current));
+      void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
+    },
+    onSettled: () => {
+      acknowledgementBusy.current = false;
+    },
+  });
   const canManage = session?.role === "Admin" || session?.role === "Manager";
   const filters = {
     view,
@@ -122,13 +155,67 @@ function WorkQueueSession() {
     sort,
   };
   const readScope = JSON.stringify([actorScope, filters]);
+  const queueKey = ["work-queue", readScope, cursor];
+  const recoveryScope = JSON.stringify([readScope, cursor]);
+  const currentRecoveryScope = useRef(recoveryScope);
+  currentRecoveryScope.current = recoveryScope;
   const queueQuery = useQuery({
-    queryKey: ["work-queue", readScope, cursor],
+    queryKey: queueKey,
     queryFn: () => listWorkQueuePage({ data: { ...filters, cursor, limit: 50 } }),
     enabled: dataMode === "production",
     retry: false,
   });
   const queueReadBlocked = queueQuery.isError || queueQuery.isFetching;
+  async function reconcileAcknowledgement(item: PersistedWorkItem) {
+    if (acknowledgementBusy.current || acknowledgementReads.current.has(item.id))
+      throw new Error("Read pending");
+    acknowledgementReads.current.add(item.id);
+    const epoch = acknowledgementEpoch.current;
+    const readGeneration = ++acknowledgementReadGeneration.current;
+    try {
+      await queryClient.cancelQueries({ queryKey: queueKey, exact: true });
+      const fresh = await listWorkQueuePage({ data: { ...filters, cursor, limit: 50 } });
+      if (
+        !fresh ||
+        !Array.isArray(fresh.items) ||
+        (fresh.nextCursor !== null &&
+          (typeof fresh.nextCursor !== "string" || !fresh.nextCursor.trim()))
+      )
+        throw new Error("Queue unavailable");
+      const matches = fresh.items.filter((row) => row?.id === item.id);
+      const row = matches[0];
+      if (
+        matches.length !== 1 ||
+        !row ||
+        !Number.isInteger(row.version) ||
+        row.version < item.version ||
+        !["none", "warning", "breach", "acknowledged"].includes(row.escalationState) ||
+        !["open", "in_progress", "blocked", "completed", "cancelled"].includes(row.status)
+      )
+        throw new Error("Work item unavailable");
+      await queryClient.cancelQueries({ queryKey: queueKey, exact: true });
+      if (
+        !activeQueue.current ||
+        currentRecoveryScope.current !== recoveryScope ||
+        acknowledgementEpoch.current !== epoch ||
+        acknowledgementReadGeneration.current !== readGeneration
+      )
+        throw new Error("Queue scope changed");
+      await queryClient.invalidateQueries({ queryKey: ["work-queue"], refetchType: "none" });
+      if (
+        !activeQueue.current ||
+        currentRecoveryScope.current !== recoveryScope ||
+        acknowledgementEpoch.current !== epoch ||
+        acknowledgementReadGeneration.current !== readGeneration
+      )
+        throw new Error("Queue scope changed");
+      queryClient.setQueryData(queueKey, fresh);
+      acknowledgementNeedsRead.current.delete(item.id);
+      setUncertainAcknowledgements(new Set(acknowledgementNeedsRead.current));
+    } finally {
+      acknowledgementReads.current.delete(item.id);
+    }
+  }
   const response = useMemo(
     () =>
       queueQuery.data ? { page: queueQuery.data, search: queueViewSearch(search) } : undefined,
@@ -572,13 +659,24 @@ function WorkQueueSession() {
       ) : null}
       {acknowledgementItem ? (
         <AcknowledgementDialog
+          key={acknowledgementItem.id}
           item={acknowledgementItem}
           readBlocked={acknowledgementReadBlocked}
-          onClose={() => setAcknowledgementItem(null)}
-          onAcknowledged={() => {
-            setAcknowledgementItem(null);
-            void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
+          pending={acknowledge.isPending}
+          readRequired={uncertainAcknowledgements.has(acknowledgementItem.id)}
+          onReconcile={() => reconcileAcknowledgement(acknowledgementItem)}
+          onSubmit={(note) => {
+            if (
+              acknowledgementReadBlocked ||
+              acknowledgementBusy.current ||
+              acknowledgementNeedsRead.current.has(acknowledgementItem.id)
+            )
+              return;
+            acknowledgementBusy.current = true;
+            acknowledgementEpoch.current += 1;
+            acknowledge.mutate({ workItemId: acknowledgementItem.id, note });
           }}
+          onClose={() => setAcknowledgementItem(null)}
         />
       ) : null}
     </>
@@ -872,21 +970,29 @@ function AcknowledgementDialog({
   item,
   readBlocked,
   onClose,
-  onAcknowledged,
+  pending,
+  readRequired,
+  onReconcile,
+  onSubmit,
 }: {
   item: PersistedWorkItem;
   readBlocked: boolean;
   onClose: () => void;
-  onAcknowledged: () => void;
+  pending: boolean;
+  readRequired: boolean;
+  onReconcile: () => Promise<void>;
+  onSubmit: (note: string) => void;
 }) {
   const [note, setNote] = useState("");
-  const acknowledge = useMutation({
-    mutationFn: () =>
-      acknowledgeWorkItemEscalation({
-        data: { workItemId: item.id, note: note.trim() },
-      }),
-    onSuccess: onAcknowledged,
-  });
+  const recovering = useRef(false);
+  const alive = useRef(true);
+  const [recovery, setRecovery] = useState<"none" | "reading" | "failed" | "checked">("none");
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -910,16 +1016,45 @@ function AcknowledgementDialog({
             隊列讀取或升級狀態未能核實；暫不能確認知悉。
           </p>
         ) : null}
-        {acknowledge.isError ? (
-          <p className="text-sm text-destructive">未能儲存確認知悉記錄。</p>
+        {readRequired ? (
+          <div role="alert" className="space-y-2 text-sm text-destructive">
+            <p>知悉結果未能確認。請先核對目前工作狀態；沒有自動重試寫入。</p>
+            <Button
+              disabled={pending || recovery === "reading"}
+              onClick={async () => {
+                if (recovering.current) return;
+                recovering.current = true;
+                setRecovery("reading");
+                try {
+                  await onReconcile();
+                  if (alive.current) setRecovery("checked");
+                } catch {
+                  if (alive.current) setRecovery("failed");
+                } finally {
+                  recovering.current = false;
+                }
+              }}
+            >
+              重新核對知悉結果
+            </Button>
+          </div>
+        ) : null}
+        {recovery === "failed" ? (
+          <p role="status">未能核實知悉結果，請稍後重新核對；沒有重試寫入。</p>
+        ) : null}
+        {recovery === "checked" ? (
+          <p role="status">已重新核對目前升級狀態。請核對結果及備註，再決定是否提交。</p>
         ) : null}
         <DialogFooter>
           <Button onClick={onClose}>取消</Button>
           <Button
             variant="primary"
-            disabled={readBlocked || !note.trim() || acknowledge.isPending}
+            disabled={readBlocked || readRequired || pending || !note.trim()}
             onClick={() => {
-              if (!readBlocked) acknowledge.mutate();
+              if (!readBlocked && !readRequired && !pending && note.trim()) {
+                setRecovery("none");
+                onSubmit(note.trim());
+              }
             }}
           >
             確認知悉

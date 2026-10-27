@@ -930,3 +930,307 @@ it("blocks an already open acknowledgement during queue refresh and denial while
   );
   expect(mocks.ack).not.toHaveBeenCalled();
 });
+
+async function openUnknownAcknowledgement(
+  client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: 2, retryDelay: 0 } },
+  }),
+) {
+  mocks.ack.mockReset().mockRejectedValue(new Error("private lost response"));
+  mocks.list.mockResolvedValue({
+    items: [{ ...assignmentWork, escalationState: "warning" }],
+    nextCursor: null,
+  });
+  render(
+    <QueryClientProvider client={client}>
+      <WorkQueueRoute />
+    </QueryClientProvider>,
+  );
+  await screen.findAllByText(assignmentWork.title);
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), { target: { value: "Review draft" } });
+  const submit = screen.getByRole("button", { name: "確認知悉" });
+  act(() => {
+    submit.click();
+    submit.click();
+  });
+  await screen.findByRole("button", { name: "重新核對知悉結果" });
+  return client;
+}
+
+it("reconciles an uncertain acknowledgement with independent saved-state readback and no write replay", async () => {
+  await openUnknownAcknowledgement();
+  expect(mocks.ack).toHaveBeenCalledTimes(1);
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  mocks.list.mockResolvedValue({
+    items: [{ ...assignmentWork, escalationState: "acknowledged" }],
+    nextCursor: null,
+  });
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await screen.findByText("已重新核對目前升級狀態。請核對結果及備註，再決定是否提交。");
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expect((screen.getByLabelText("確認知悉備註") as HTMLTextAreaElement).value).toBe("Review draft");
+  expect(mocks.ack).toHaveBeenCalledTimes(1);
+});
+
+it("retains uncertainty across close/reopen and ignores ordinary cached read success", async () => {
+  const client = await openUnknownAcknowledgement();
+  fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  await act(async () => {
+    await client.refetchQueries({ queryKey: ["work-queue"] });
+  });
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expect(screen.getByRole("button", { name: "重新核對知悉結果" })).toBeTruthy();
+  expect(mocks.ack).toHaveBeenCalledTimes(1);
+});
+
+it("deduplicates pending readback and allows a new explicit action only after fresh active-state recovery", async () => {
+  await openUnknownAcknowledgement();
+  let resolve!: (value: unknown) => void;
+  mocks.list.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  const retry = screen.getByRole("button", { name: "重新核對知悉結果" });
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+  expect((retry as HTMLButtonElement).disabled).toBe(true);
+  await act(async () =>
+    resolve({
+      items: [{ ...assignmentWork, version: 2, escalationState: "warning" }],
+      nextCursor: null,
+    }),
+  );
+  await screen.findByText("已重新核對目前升級狀態。請核對結果及備註，再決定是否提交。");
+  mocks.ack.mockResolvedValue({});
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), {
+    target: { value: "New explicit note" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "確認知悉" }));
+  await waitFor(() => expect(mocks.ack).toHaveBeenCalledTimes(2));
+  expect(mocks.ack.mock.calls[1][0]).toEqual({
+    data: { workItemId: assignmentWork.id, note: "New explicit note" },
+  });
+});
+
+it.each([
+  null,
+  { items: [], nextCursor: null },
+  { items: [{ ...assignmentWork, id: "another" }], nextCursor: null },
+])("keeps unavailable or missing acknowledgement readback blocked: %j", async (page) => {
+  await openUnknownAcknowledgement();
+  mocks.list.mockResolvedValue(page);
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await screen.findByText("未能核實知悉結果，請稍後重新核對；沒有重試寫入。");
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expect(mocks.ack).toHaveBeenCalledTimes(1);
+});
+
+it("keeps denied readback retryable and discards manual cache/cancellation as a substitute", async () => {
+  const client = await openUnknownAcknowledgement();
+  mocks.list.mockRejectedValueOnce(new Error("private read failure"));
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await screen.findByText("未能核實知悉結果，請稍後重新核對；沒有重試寫入。");
+  expect(screen.queryByText("private read failure")).toBeNull();
+  let resolve!: (value: unknown) => void;
+  mocks.list.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(3));
+  await act(async () => {
+    await client.cancelQueries({ queryKey: ["work-queue"] });
+    for (const query of client.getQueryCache().findAll({ queryKey: ["work-queue"] }))
+      client.setQueryData(query.queryKey, {
+        items: [{ ...assignmentWork, escalationState: "warning" }],
+        nextCursor: null,
+      });
+  });
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  await act(async () =>
+    resolve({ items: [{ ...assignmentWork, escalationState: "warning" }], nextCursor: null }),
+  );
+  await screen.findByText("已重新核對目前升級狀態。請核對結果及備註，再決定是否提交。");
+  expect(mocks.ack).toHaveBeenCalledTimes(1);
+});
+
+it("blocks a pending acknowledgement across close/reopen and latches a late write failure", async () => {
+  mocks.ack.mockReset();
+  let reject!: (error: Error) => void;
+  mocks.ack.mockImplementation(
+    () =>
+      new Promise((_done, fail) => {
+        reject = fail;
+      }),
+  );
+  mocks.list.mockResolvedValue({
+    items: [{ ...assignmentWork, escalationState: "warning" }],
+    nextCursor: null,
+  });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: 2, retryDelay: 0 } },
+  });
+  render(
+    <QueryClientProvider client={client}>
+      <WorkQueueRoute />
+    </QueryClientProvider>,
+  );
+  await screen.findAllByText(assignmentWork.title);
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), { target: { value: "Pending draft" } });
+  fireEvent.click(screen.getByRole("button", { name: "確認知悉" }));
+  await waitFor(() => expect(mocks.ack).toHaveBeenCalledTimes(1));
+  fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), { target: { value: "New draft" } });
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  await act(async () => reject(new Error("lost response")));
+  await screen.findByRole("button", { name: "重新核對知悉結果" });
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expect(mocks.ack).toHaveBeenCalledTimes(1);
+});
+
+it("does not publish late acknowledgement readback after the queue session ends", async () => {
+  const client = await openUnknownAcknowledgement();
+  let resolve!: (value: unknown) => void;
+  mocks.list.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+  const before = client.getQueriesData({ queryKey: ["work-queue"] });
+  cleanup();
+  await act(async () =>
+    resolve({ items: [{ ...assignmentWork, escalationState: "acknowledged" }], nextCursor: null }),
+  );
+  expect(client.getQueriesData({ queryKey: ["work-queue"] })).toEqual(before);
+});
+
+it("discards old readback when a newer acknowledgement was submitted in another dialog", async () => {
+  const client = await openUnknownAcknowledgement();
+  const second = {
+    ...assignmentWork,
+    id: "second-ack",
+    title: "Second escalation",
+    escalationState: "warning",
+  };
+  const page = {
+    items: [{ ...assignmentWork, escalationState: "warning" }, second],
+    nextCursor: null,
+  };
+  let resolve!: (value: unknown) => void;
+  mocks.list.mockResolvedValue(page).mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+  fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  await act(async () => {
+    await client.refetchQueries({ queryKey: ["work-queue"] });
+  });
+  await openAckByTitle(second.title);
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), {
+    target: { value: "Second explicit acknowledgement" },
+  });
+  mocks.ack.mockResolvedValueOnce({});
+  fireEvent.click(screen.getByRole("button", { name: "確認知悉" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  await act(async () =>
+    resolve({ items: [{ ...assignmentWork, escalationState: "acknowledged" }], nextCursor: null }),
+  );
+  await screen.findAllByText("Second escalation");
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  expect(screen.getByRole("button", { name: "重新核對知悉結果" })).toBeTruthy();
+  expect(mocks.ack).toHaveBeenCalledTimes(2);
+});
+
+it("does not let an older item recovery overwrite a newer acknowledged item on the shared page", async () => {
+  const client = await openUnknownAcknowledgement();
+  const second = {
+    ...assignmentWork,
+    id: "second-recovery",
+    title: "Second uncertain escalation",
+    escalationState: "warning",
+  };
+  const oldPage = {
+    items: [{ ...assignmentWork, escalationState: "warning" }, second],
+    nextCursor: null,
+  };
+  fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  mocks.list.mockResolvedValue(oldPage);
+  await act(async () => {
+    await client.refetchQueries({ queryKey: ["work-queue"] });
+  });
+  await openAckByTitle(second.title);
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), {
+    target: { value: "Second uncertain draft" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "確認知悉" }));
+  await screen.findByRole("button", { name: "重新核對知悉結果" });
+  fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  let resolveOld!: (value: unknown) => void;
+  mocks.list.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolveOld = done;
+      }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(3));
+  fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  await openAckByTitle(second.title);
+  mocks.list.mockResolvedValue({
+    items: [
+      { ...assignmentWork, escalationState: "warning" },
+      { ...second, version: 2, escalationState: "acknowledged" },
+    ],
+    nextCursor: null,
+  });
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await screen.findByText("已重新核對目前升級狀態。請核對結果及備註，再決定是否提交。");
+  await act(async () => resolveOld(oldPage));
+  for (const [, data] of client.getQueriesData<{ items: PersistedWorkItem[] }>({
+    queryKey: ["work-queue"],
+  }))
+    expect(data?.items.find((row) => row.id === second.id)?.escalationState).toBe("acknowledged");
+  expect(mocks.ack).toHaveBeenCalledTimes(2);
+});
+
+async function openAckByTitle(title: string) {
+  const row = (await screen.findAllByText(title))
+    .map((node) => node.closest('[role="row"]'))
+    .find(Boolean) as HTMLElement;
+  const button = within(row).getByTitle("確認知悉升級") as HTMLButtonElement;
+  await waitFor(() => expect(button.disabled).toBe(false));
+  fireEvent.click(button);
+}
