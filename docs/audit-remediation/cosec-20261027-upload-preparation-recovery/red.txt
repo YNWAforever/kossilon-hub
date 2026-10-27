@@ -1,0 +1,67 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/features/documents/document-recovery-panel.test.tsx (7 tests | 2 failed) 1353ms
+     × allows retry after local file preparation fails without issuing writes 1027ms
+     × admits only one same-turn submission 43ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/documents/document-recovery-panel.test.tsx > controlled document recovery > allows retry after local file preparation fails without issuing writes
+TestingLibraryElementError: Unable to find an element with the text: 無法準備檔案，尚未提交上載。請重新選擇檔案後重試。. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-status-orange-text"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0m補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-status-orange-text"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0m補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/documents/document-recovery-panel.test.tsx:134:18
+    132|     });
+    133|     fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    134|     await screen.findByText("無法準備檔案，尚未提交上載。請重新選擇檔案後重試。");
+       |                  ^
+    135|     expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+    136|     expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| src/features/documents/document-recovery-panel.test.tsx > controlled document recovery > admits only one same-turn submission
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+ ❯ src/features/documents/document-recovery-panel.test.tsx:150:44
+    148|     act(() => { submit.click(); submit.click(); });
+    149|     await screen.findByText("已收取補傳檔案，等待掃描及覆核。");
+    150|     expect(rpc.createDocumentUploadIntent).toHaveBeenCalledTimes(1);
+       |                                            ^
+    151|     expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
+    152|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  05:15:02
+   Duration  2.76s (transform 136ms, setup 0ms, import 299ms, tests 1.35s, environment 906ms)
