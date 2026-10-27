@@ -74,8 +74,9 @@ beforeEach(() => {
   rpc.cases.mockResolvedValue([]);
   rpc.page.mockResolvedValue({ documents: [staffDocument], nextCursor: null });
 });
-async function archive() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+async function archive(
+  client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }),
+) {
   const Component = Route.options.component!;
   await Component.preload?.();
   render(
@@ -288,5 +289,286 @@ it("disables manager bulk actions on archive failure without discarding the sele
   expect(selectAll.matches(":disabled")).toBe(false);
   expect((screen.getByLabelText("選取 staff-proof.pdf") as HTMLInputElement).checked).toBe(true);
   expectNoDocumentCommands();
+  client.clear();
+});
+
+async function uncertainReview(decision: "verified" | "rejected" = "verified") {
+  rpc.review.mockRejectedValueOnce(new Error("Review response lost"));
+  const client = await archive();
+  await screen.findByText("staff-proof.pdf");
+  if (decision === "verified") fireEvent.click(screen.getAllByRole("button", { name: "核對" })[0]);
+  else {
+    fireEvent.click(screen.getByRole("button", { name: "退回" }));
+    fireEvent.click(screen.getByRole("button", { name: "確認退回" }));
+  }
+  await screen.findByRole("button", { name: "重新核對文件覆核結果" });
+  return client;
+}
+
+it.each(["verified", "rejected"] as const)(
+  "reads back saved %s review state without replaying its write",
+  async (decision) => {
+    const client = await uncertainReview(decision);
+    expect(screen.queryByRole("button", { name: "核對" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "退回" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "預覽受控補傳" })).toBeNull();
+    expect(screen.queryByText("此範圍內沒有正式文件。")).toBeNull();
+    let finish!: (value: unknown) => void;
+    rpc.page.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const retry = screen.getByRole("button", { name: "重新核對文件覆核結果" });
+    act(() => {
+      retry.click();
+      retry.click();
+    });
+    await waitFor(() => expect(rpc.page).toHaveBeenCalledTimes(2));
+    expect((retry as HTMLButtonElement).disabled).toBe(true);
+    expect(rpc.review).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      finish({ documents: [{ ...staffDocument, reviewStatus: decision }], nextCursor: null });
+    });
+    await screen.findByText("staff-proof.pdf");
+    expect(screen.queryByRole("button", { name: "核對" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "退回" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "重新核對文件覆核結果" })).toBeNull();
+    expect(rpc.review).toHaveBeenCalledTimes(1);
+    for (const call of [rpc.intent, rpc.finalize, rpc.preview, rpc.download])
+      expect(call).not.toHaveBeenCalled();
+    client.clear();
+  },
+);
+
+it("keeps every document blocked after failed review recovery and background success until explicit fresh recovery", async () => {
+  rpc.page.mockResolvedValue({
+    documents: [staffDocument, { ...staffDocument, id: "second", fileName: "second.pdf" }],
+    nextCursor: null,
+  });
+  const client = await uncertainReview();
+  rpc.page.mockRejectedValueOnce(new Error("Read denied"));
+  fireEvent.click(screen.getByRole("button", { name: "重新核對文件覆核結果" }));
+  await waitFor(() => expect(rpc.page).toHaveBeenCalledTimes(2));
+  await waitFor(() =>
+    expect(
+      (screen.getByRole("button", { name: "重新核對文件覆核結果" }) as HTMLButtonElement).disabled,
+    ).toBe(false),
+  );
+  await act(async () => {
+    await client.invalidateQueries({ queryKey: ["documents", "archive"] });
+  });
+  expect(screen.queryByRole("button", { name: "核對" })).toBeNull();
+  expect(screen.queryByText("second.pdf")).toBeNull();
+  rpc.page.mockResolvedValue({
+    documents: [{ ...staffDocument, currentVersionId: "66666666-6666-4666-8666-666666666666" }],
+    nextCursor: null,
+  });
+  fireEvent.click(screen.getByRole("button", { name: "重新核對文件覆核結果" }));
+  const review = await screen.findByRole("button", { name: "核對" });
+  expect(rpc.review).toHaveBeenCalledTimes(1);
+  rpc.review.mockImplementation(() => new Promise(() => {}));
+  fireEvent.click(review);
+  await waitFor(() => expect(rpc.review).toHaveBeenCalledTimes(2));
+  expect(rpc.review.mock.calls[1][0]).toEqual({
+    data: expect.objectContaining({
+      expectedDocumentVersionId: "66666666-6666-4666-8666-666666666666",
+      decision: "verified",
+      documentId: staffDocument.id,
+    }),
+  });
+  client.clear();
+});
+
+it("guards same-turn cross-document reviews and disables configured automatic write retries", async () => {
+  rpc.page.mockResolvedValue({
+    documents: [staffDocument, { ...staffDocument, id: "second", fileName: "second.pdf" }],
+    nextCursor: null,
+  });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: 1, retryDelay: 0 } },
+  });
+  let reject!: (reason: Error) => void;
+  rpc.review.mockImplementation(
+    () =>
+      new Promise((_, fail) => {
+        reject = fail;
+      }),
+  );
+  await archive(client);
+  const buttons = await screen.findAllByRole("button", { name: "核對" });
+  act(() => {
+    buttons[0].click();
+    buttons[0].click();
+    buttons[1].click();
+  });
+  await waitFor(() => expect(rpc.review).toHaveBeenCalledTimes(1));
+  rpc.review.mockRejectedValue(new Error("Unknown result"));
+  await act(async () => {
+    reject(new Error("Response lost"));
+  });
+  await screen.findByRole("button", { name: "重新核對文件覆核結果" });
+  expect(rpc.review).toHaveBeenCalledTimes(1);
+  client.clear();
+});
+
+it("requires successful readback of every previously loaded archive page before unlocking reviews", async () => {
+  const second = { ...staffDocument, id: "second", fileName: "second.pdf" };
+  rpc.page
+    .mockResolvedValueOnce({ documents: [staffDocument], nextCursor: "old-next" })
+    .mockResolvedValueOnce({ documents: [second], nextCursor: null });
+  rpc.review.mockRejectedValueOnce(new Error("Unknown result"));
+  const client = await archive();
+  fireEvent.click(await screen.findByRole("button", { name: "載入更多文件" }));
+  await screen.findByText("second.pdf");
+  fireEvent.click(screen.getAllByRole("button", { name: "核對" })[1]);
+  const retry = await screen.findByRole("button", { name: "重新核對文件覆核結果" });
+  rpc.page
+    .mockResolvedValueOnce({ documents: [staffDocument], nextCursor: "fresh-next" })
+    .mockRejectedValueOnce(new Error("Second page denied"));
+  fireEvent.click(retry);
+  await waitFor(() => expect(rpc.page).toHaveBeenCalledTimes(4));
+  await waitFor(() =>
+    expect(
+      (screen.getByRole("button", { name: "重新核對文件覆核結果" }) as HTMLButtonElement).disabled,
+    ).toBe(false),
+  );
+  expect(screen.queryByRole("button", { name: "核對" })).toBeNull();
+  expect(rpc.page).toHaveBeenLastCalledWith({ data: { limit: 100, cursor: "fresh-next" } });
+  rpc.page
+    .mockResolvedValueOnce({
+      documents: [{ ...staffDocument, reviewStatus: "verified" }],
+      nextCursor: "new-next",
+    })
+    .mockResolvedValueOnce({
+      documents: [{ ...second, reviewStatus: "verified" }],
+      nextCursor: null,
+    });
+  fireEvent.click(screen.getByRole("button", { name: "重新核對文件覆核結果" }));
+  await screen.findByText("second.pdf");
+  expect(rpc.page).toHaveBeenLastCalledWith({ data: { limit: 100, cursor: "new-next" } });
+  expect(rpc.review).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole("button", { name: "核對" })).toBeNull();
+  client.clear();
+});
+
+it("does not unlock from cancelled queries or manual cache updates while independent review readback is pending", async () => {
+  const client = await uncertainReview();
+  const key = ["documents", "archive", "all", { actorScope: { role: "Staff", active: true } }];
+  let finish!: (value: unknown) => void;
+  rpc.page.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "重新核對文件覆核結果" }));
+  await waitFor(() => expect(rpc.page).toHaveBeenCalledTimes(2));
+  await act(async () => {
+    await client.cancelQueries({ queryKey: ["documents", "archive"] });
+  });
+  act(() => {
+    client.setQueryData(key, {
+      pages: [{ documents: [staffDocument], nextCursor: null }],
+      pageParams: [undefined],
+    });
+  });
+  expect(
+    (screen.getByRole("button", { name: "重新核對文件覆核結果" }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+  expect(screen.queryByRole("button", { name: "核對" })).toBeNull();
+  await act(async () => {
+    finish({ documents: [], nextCursor: null });
+  });
+  await screen.findByText("此範圍內沒有正式文件。");
+  expect(rpc.review).toHaveBeenCalledTimes(1);
+  client.clear();
+});
+
+it.each([null, undefined, { documents: [], nextCursor: 42 }])(
+  "keeps reviews blocked on invalid archive readback: %s",
+  async (result) => {
+    const client = await uncertainReview();
+    rpc.page.mockResolvedValueOnce(result);
+    fireEvent.click(screen.getByRole("button", { name: "重新核對文件覆核結果" }));
+    await waitFor(() => expect(rpc.page).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(
+        (screen.getByRole("button", { name: "重新核對文件覆核結果" }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false),
+    );
+    expect(screen.queryByRole("button", { name: "核對" })).toBeNull();
+    expect(screen.queryByText("此範圍內沒有正式文件。")).toBeNull();
+    expect(rpc.review).toHaveBeenCalledTimes(1);
+    client.clear();
+  },
+);
+
+it("keeps uncertainty through filter changes and does not publish a late recovery into another archive scope", async () => {
+  const client = await uncertainReview();
+  let finishOld!: (value: unknown) => void;
+  rpc.page.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finishOld = resolve;
+      }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "重新核對文件覆核結果" }));
+  await waitFor(() => expect(rpc.page).toHaveBeenCalledTimes(2));
+  fireEvent.change(screen.getByRole("textbox", { name: "搜尋正式文件" }), {
+    target: { value: "needle" },
+  });
+  await waitFor(() => expect(rpc.page).toHaveBeenCalledTimes(3));
+  await act(async () => {
+    finishOld({ documents: [{ ...staffDocument, reviewStatus: "verified" }], nextCursor: null });
+  });
+  await waitFor(() =>
+    expect(
+      (screen.getByRole("button", { name: "重新核對文件覆核結果" }) as HTMLButtonElement).disabled,
+    ).toBe(false),
+  );
+  expect(screen.queryByRole("button", { name: "核對" })).toBeNull();
+  rpc.page.mockResolvedValue({
+    documents: [{ ...staffDocument, reviewStatus: "verified" }],
+    nextCursor: null,
+  });
+  fireEvent.click(screen.getByRole("button", { name: "重新核對文件覆核結果" }));
+  await screen.findByText("staff-proof.pdf");
+  expect(rpc.page).toHaveBeenLastCalledWith({
+    data: { limit: 100, cursor: undefined, q: "needle" },
+  });
+  expect(rpc.review).toHaveBeenCalledTimes(1);
+  client.clear();
+});
+
+it("keeps review recovery blocked when the final staged page points back to its own cursor", async () => {
+  const second = {
+    ...staffDocument,
+    id: "77777777-7777-4777-8777-777777777777",
+    fileName: "second.pdf",
+  };
+  rpc.page
+    .mockResolvedValueOnce({ documents: [staffDocument], nextCursor: "old-next" })
+    .mockResolvedValueOnce({ documents: [second], nextCursor: null });
+  rpc.review.mockRejectedValueOnce(new Error("Unknown result"));
+  const client = await archive();
+  fireEvent.click(await screen.findByRole("button", { name: "載入更多文件" }));
+  await screen.findByText("second.pdf");
+  fireEvent.click(screen.getAllByRole("button", { name: "核對" })[1]);
+  const retry = await screen.findByRole("button", { name: "重新核對文件覆核結果" });
+  rpc.page
+    .mockResolvedValueOnce({ documents: [staffDocument], nextCursor: "cycle" })
+    .mockResolvedValueOnce({ documents: [second], nextCursor: "cycle" });
+  fireEvent.click(retry);
+  await waitFor(() => expect(rpc.page).toHaveBeenCalledTimes(4));
+  await waitFor(() =>
+    expect(
+      (screen.getByRole("button", { name: "重新核對文件覆核結果" }) as HTMLButtonElement).disabled,
+    ).toBe(false),
+  );
+  expect(screen.queryByRole("button", { name: "核對" })).toBeNull();
+  expect(rpc.review).toHaveBeenCalledTimes(1);
   client.clear();
 });
