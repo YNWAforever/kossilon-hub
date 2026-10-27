@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/field";
@@ -18,6 +18,9 @@ export function DocumentRecoveryPanel({
   const [file, setFile] = useState<File | null>(null);
   const [reason, setReason] = useState("");
   const [attempted, setAttempted] = useState(false);
+  const admitted = useRef(false);
+  const writeStarted = useRef(false);
+  const [preparationFailed, setPreparationFailed] = useState(false);
   const [intentId, setIntentId] = useState<string | null>(null);
   const preview = useMutation({
     mutationFn: () => previewDocumentRecovery({ data: { documentId } }),
@@ -38,6 +41,8 @@ export function DocumentRecoveryPanel({
       let binary = "";
       for (let offset = 0; offset < bytes.length; offset += 8192)
         binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+      // Once this boundary is crossed, a rejected response may hide a saved write.
+      writeStarted.current = true;
       const intent = await createDocumentUploadIntent({
         data: {
           companyId: source.companyId,
@@ -60,6 +65,13 @@ export function DocumentRecoveryPanel({
       return finalizeDocumentUpload({ data: { intentId: intent.id, bodyBase64: btoa(binary) } });
     },
     onSuccess: onRecovered,
+    onError: () => {
+      if (!writeStarted.current) {
+        admitted.current = false;
+        setAttempted(false);
+        setPreparationFailed(true);
+      }
+    },
   });
   if (upload.isSuccess)
     return (
@@ -67,7 +79,7 @@ export function DocumentRecoveryPanel({
         已收取補傳檔案，等待掃描及覆核。
       </p>
     );
-  if (upload.isError)
+  if (upload.isError && !preparationFailed)
     return (
       <p role="alert" className="text-sm text-status-orange-text">
         補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。
@@ -76,6 +88,9 @@ export function DocumentRecoveryPanel({
     );
   return (
     <div className="space-y-2 text-sm">
+      {preparationFailed ? (
+        <p role="alert">無法準備檔案，尚未提交上載。請重新選擇檔案後重試。</p>
+      ) : null}
       {!preview.data ? (
         <Button type="button" disabled={preview.isPending} onClick={() => preview.mutate()}>
           預覽受控補傳
@@ -115,6 +130,9 @@ export function DocumentRecoveryPanel({
             variant="primary"
             disabled={!file || !reason.trim() || attempted}
             onClick={() => {
+              if (admitted.current) return;
+              admitted.current = true;
+              setPreparationFailed(false);
               setAttempted(true);
               upload.mutate();
             }}

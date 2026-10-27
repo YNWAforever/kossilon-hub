@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DocumentRecoveryPanel } from "./document-recovery-panel";
 const rpc = vi.hoisted(() => ({
@@ -39,6 +39,7 @@ async function chooseFile() {
     type: "application/pdf",
   });
   Object.defineProperty(file, "arrayBuffer", {
+    configurable: true,
     value: async () => new Uint8Array([1, 2, 3, 4]).buffer,
   });
   fireEvent.change(screen.getByLabelText("補傳檔案"), { target: { files: [file] } });
@@ -118,5 +119,50 @@ describe("controlled document recovery", () => {
     expect(screen.queryByRole("button", { name: "批准並補傳" })).toBeNull();
     expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
     expect(screen.queryByText("private SQL error")).toBeNull();
+  });
+  it("allows retry after local file preparation fails without issuing writes", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "預覽受控補傳" }));
+    await screen.findByText("保留舊登記；新檔案須重新掃描及覆核。");
+    await chooseFile();
+    const input = screen.getByLabelText("補傳檔案") as HTMLInputElement;
+    Object.defineProperty(input.files![0], "arrayBuffer", {
+      configurable: true,
+      value: vi.fn().mockRejectedValue(new Error("local read failed")),
+    });
+    fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    await screen.findByText("無法準備檔案，尚未提交上載。請重新選擇檔案後重試。");
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+    expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+    await chooseFile();
+    fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    await screen.findByText("已收取補傳檔案，等待掃描及覆核。");
+    expect(rpc.createDocumentUploadIntent).toHaveBeenCalledTimes(1);
+  });
+  it("admits only one same-turn submission", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "預覽受控補傳" }));
+    await screen.findByText("保留舊登記；新檔案須重新掃描及覆核。");
+    await chooseFile();
+    const submit = screen.getByRole("button", { name: "批准並補傳" });
+    act(() => {
+      submit.click();
+      submit.click();
+    });
+    await screen.findByText("已收取補傳檔案，等待掃描及覆核。");
+    expect(rpc.createDocumentUploadIntent).toHaveBeenCalledTimes(1);
+    expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
+  });
+  it("keeps unknown intent creation blocked without replay", async () => {
+    setup();
+    rpc.createDocumentUploadIntent.mockRejectedValue(new Error("lost response"));
+    fireEvent.click(screen.getByRole("button", { name: "預覽受控補傳" }));
+    await screen.findByText("保留舊登記；新檔案須重新掃描及覆核。");
+    await chooseFile();
+    fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    await screen.findByRole("alert");
+    expect(screen.queryByRole("button", { name: "批准並補傳" })).toBeNull();
+    expect(rpc.createDocumentUploadIntent).toHaveBeenCalledTimes(1);
+    expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
   });
 });
