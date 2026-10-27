@@ -1,0 +1,73 @@
+{
+  "baseline": "bab4dbec483a432cf268a736b4dee33d0a29e847",
+  "product_commit": "52b76e30ec6fdf8c9230aa2cfb59b726231d036d",
+  "verification_state": "Final checks ran at baseline HEAD with these two files modified. Final SHA256 values below match the committed files. No source/test changes after final verification. Evidence-only commit follows.",
+  "files": {
+    "src/routes/documents.tsx": "c5d0d8041665b5b3621ae424d41f314686601385e5315ffd9c421af4db363034",
+    "src/routes/-documents-search.interaction.test.tsx": "dcff54ab572bb87c7d076a738ec90430d6f7e394f67fbc40a5f3fa8f6de180a4"
+  },
+  "commands": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "result": "2870 passed / 290 files",
+      "log": "unit-final.txt",
+      "scope": "Local unit/component suite; DB integration project excluded"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-documents-search.interaction.test.tsx src/routes/-documents-production-data.test.tsx",
+      "exit": 0,
+      "result": "35 passed / 2 files, included in full unit count",
+      "new_tests": 11,
+      "log": "targeted-final.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck-final.txt"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js src/routes/documents.tsx src/routes/-documents-search.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint-final.txt"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/routes/documents.tsx src/routes/-documents-search.interaction.test.tsx",
+      "exit": 0,
+      "log": "format-final.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "reproduction": {
+    "initial": {
+      "result": "10 failed / 6 passed before repair",
+      "log": "red.txt"
+    },
+    "final_page_cycle": {
+      "result": "1 failed / 16 skipped before returned-cursor validation",
+      "log": "cycle-red.txt"
+    }
+  },
+  "interrupted_first_broad_run": {
+    "exit": 143,
+    "complete": false,
+    "reason": "Stopped for review-driven final-page cursor-cycle source correction",
+    "log": "unit.txt"
+  },
+  "review": "Focused reviewer found final-page returned-cursor cycle gap; added validation and regression. Final reviewer confirmed no remaining findings; reviewer ran no tests.",
+  "limits": "Mounted actor-route lifetime only. Independent recovery validates/stages all previously loaded pages in current filter, then atomically publishes client cache; not a server snapshot or exact receipt. Filter/actor changes cannot publish late results into another scope. Other archive caches invalidated and affected case invalidation requested. No review/upload/byte command replay, persistent idempotency, actual saved review/Auth/HTTP/RLS or full journey proof.",
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "build": "NOT_RUN",
+  "db_integration": "NOT_RUN",
+  "hosted_ci_acceptance": "NOT_CLAIMED",
+  "deployment": "NOT_RUN",
+  "production_changes": "NONE"
+}
