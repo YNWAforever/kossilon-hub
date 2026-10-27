@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { LoadingRows } from "@/components/ui/skeleton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, CircleHelp, FileSearch, Sparkles } from "lucide-react";
@@ -49,7 +50,15 @@ function citationLabel(finding: Finding): string | null {
   return pageTo && pageTo !== pageFrom ? `第 ${pageFrom}–${pageTo} 頁` : `第 ${pageFrom} 頁`;
 }
 
-export function CaseFindings({ caseId, locked }: { caseId: string; locked: boolean }) {
+export function CaseFindings(props: { caseId: string; locked: boolean }) {
+  return <CaseFindingsPanel key={props.caseId} {...props} />;
+}
+
+function CaseFindingsPanel({ caseId, locked }: { caseId: string; locked: boolean }) {
+  const submitting = useRef(false);
+  const recovering = useRef(false);
+  const [needsReconciliation, setNeedsReconciliation] = useState(false);
+  const [reconciling, setReconciling] = useState(false);
   const queryClient = useQueryClient();
   const queryKey = ["annual-return", "case-findings", caseId];
 
@@ -69,7 +78,12 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
           expectedDocumentVersionId: input.expectedDocumentVersionId,
         },
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    retry: false,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+      submitting.current = false;
+    },
+    onError: () => setNeedsReconciliation(true),
   });
 
   const views = findingsQuery.data ?? [];
@@ -79,7 +93,7 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
     <section className="border-b pb-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold">自動檢查</h2>
-        {!findingsQuery.isSuccess || findingsQuery.isFetching ? null : (
+        {needsReconciliation || !findingsQuery.isSuccess || findingsQuery.isFetching ? null : (
           <div className="flex flex-wrap gap-2 text-xs">
             <span className="rounded-full bg-status-red-soft px-2 py-1 text-status-red-text">
               {summary.blocking} 必須處理
@@ -100,7 +114,7 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
         )}
       </div>
 
-      {findingsQuery.error ? (
+      {findingsQuery.error && !needsReconciliation ? (
         <div
           role="alert"
           className="mt-3 space-y-2 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
@@ -116,15 +130,45 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
           </Button>
         </div>
       ) : null}
-      {resolveMutation.error ? (
-        <p role="alert" className="mt-2 text-sm">
-          未能標記結果，請重新載入當前文件版本後再核對。
-        </p>
+      {needsReconciliation ? (
+        <div role="alert" className="mt-2 space-y-2 text-sm">
+          <p>標記結果未確認。請先重新核對當前檢查結果；沒有自動重試標記操作。</p>
+          <Button
+            type="button"
+            className="min-h-11"
+            disabled={reconciling}
+            onClick={async () => {
+              if (recovering.current) return;
+              recovering.current = true;
+              setReconciling(true);
+              try {
+                // Read independently: query cancellation can resolve refetch
+                // with reverted cache data instead of a new server response.
+                await queryClient.cancelQueries({ queryKey, exact: true });
+                const findings = await listAnnualReturnCaseFindings({ data: { caseId } });
+                if (!Array.isArray(findings)) throw new Error("Findings unavailable");
+                // Older/background reads must not overwrite this readback.
+                await queryClient.cancelQueries({ queryKey, exact: true });
+                queryClient.setQueryData(queryKey, findings);
+                resolveMutation.reset();
+                submitting.current = false;
+                setNeedsReconciliation(false);
+              } catch {
+                // Keep all case findings closed until explicit readback succeeds.
+              } finally {
+                recovering.current = false;
+                setReconciling(false);
+              }
+            }}
+          >
+            重新核對標記結果
+          </Button>
+        </div>
       ) : null}
 
       {/* Cached results are not current read evidence. Hide their previews and
           resolution controls while refreshing or after a failed read. */}
-      {findingsQuery.isPending || findingsQuery.isFetching ? (
+      {needsReconciliation ? null : findingsQuery.isPending || findingsQuery.isFetching ? (
         <LoadingRows label="正在載入核對結果…" rows={2} className="mt-3 p-0" />
       ) : findingsQuery.isError ? null : views.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">此案件尚未收到文件。</p>
@@ -223,12 +267,15 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
                           <Button
                             size="sm"
                             disabled={locked || resolveMutation.isPending}
-                            onClick={() =>
+                            onClick={() => {
+                              // The pending render cannot guard two same-turn clicks.
+                              if (locked || submitting.current || findingsQuery.isFetching) return;
+                              submitting.current = true;
                               resolveMutation.mutate({
                                 findingId: entry.id,
                                 expectedDocumentVersionId: view.documentVersionId,
-                              })
-                            }
+                              });
+                            }}
                           >
                             {entry.finding.outcome === "uncertain" ? (
                               <CircleHelp aria-hidden className="h-3.5 w-3.5" />
@@ -247,10 +294,6 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
           ))}
         </div>
       )}
-
-      {resolveMutation.error ? (
-        <p className="mt-3 text-sm text-status-red-text">無法標記為已處理，請再試一次。</p>
-      ) : null}
     </section>
   );
 }

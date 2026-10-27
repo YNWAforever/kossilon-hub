@@ -226,3 +226,266 @@ it("shows no documents only after a successful empty recovery", async () => {
   expect(screen.queryByText(/無法載入自動檢查結果/)).toBeNull();
   expect(api.resolve).not.toHaveBeenCalled();
 });
+
+it("reconciles a lost resolution response through fresh readback without replaying the command", async () => {
+  api.resolve.mockRejectedValue(new Error("Response lost"));
+  renderView();
+  fireEvent.click(await screen.findByRole("button", { name: "標記為已處理" }));
+  const retry = await screen.findByRole("button", { name: "重新核對標記結果" });
+  expect(screen.queryByRole("button", { name: "標記為已處理" })).toBeNull();
+  expect(screen.queryByText(/建議查看/)).toBeNull();
+  expect(screen.queryByText("已處理")).toBeNull();
+  let finish!: (value: unknown) => void;
+  api.list.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  await waitFor(() => expect(api.list).toHaveBeenCalledTimes(2));
+  expect((retry as HTMLButtonElement).disabled).toBe(true);
+  expect(api.resolve).toHaveBeenCalledTimes(1);
+  await act(async () => {
+    finish([
+      {
+        ...view,
+        findings: [
+          { ...view.findings[0], resolvedByUserId: "reviewer", resolvedAt: "2026-10-26T12:00:00Z" },
+        ],
+      },
+    ]);
+  });
+  expect(await screen.findByText("已處理")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "標記為已處理" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "重新核對標記結果" })).toBeNull();
+  expect(api.resolve).toHaveBeenCalledTimes(1);
+  expect(api.download).not.toHaveBeenCalled();
+});
+
+it("keeps every finding blocked after failed reconciliation and background refresh until explicit successful reconciliation", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  api.list.mockResolvedValue([
+    { ...view, findings: [view.findings[0], { ...view.findings[0], id: "second" }] },
+  ]);
+  api.resolve.mockRejectedValue(new Error("Conflict"));
+  renderView(false, client);
+  const buttons = await screen.findAllByRole("button", { name: "標記為已處理" });
+  fireEvent.click(buttons[0]);
+  const retry = await screen.findByRole("button", { name: "重新核對標記結果" });
+  expect(screen.queryByRole("button", { name: "標記為已處理" })).toBeNull();
+  api.list.mockRejectedValueOnce(new Error("Read denied"));
+  fireEvent.click(retry);
+  await waitFor(() => expect(api.list).toHaveBeenCalledTimes(2));
+  await waitFor(() =>
+    expect(
+      (screen.getByRole("button", { name: "重新核對標記結果" }) as HTMLButtonElement).disabled,
+    ).toBe(false),
+  );
+  await act(async () => {
+    await client.invalidateQueries({ queryKey: ["annual-return", "case-findings", "case"] });
+  });
+  expect(screen.queryByRole("button", { name: "標記為已處理" })).toBeNull();
+  expect(api.resolve).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole("button", { name: "重新核對標記結果" }));
+  await screen.findAllByRole("button", { name: "標記為已處理" });
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(api.resolve).toHaveBeenCalledTimes(1);
+  client.clear();
+});
+
+it("requires a new explicit resolution using the freshly reconciled finding/version", async () => {
+  api.resolve.mockRejectedValueOnce(new Error("Stale version"));
+  renderView();
+  fireEvent.click(await screen.findByRole("button", { name: "標記為已處理" }));
+  const retry = await screen.findByRole("button", { name: "重新核對標記結果" });
+  api.list.mockResolvedValue([
+    {
+      ...view,
+      documentVersionId: "new-version",
+      document: { ...view.document, currentVersionId: "new-version" },
+      findings: [
+        {
+          ...view.findings[0],
+          id: "new-finding",
+          finding: {
+            ...view.findings[0].finding,
+            citation: { ...view.findings[0].finding.citation, documentVersionId: "new-version" },
+          },
+        },
+      ],
+    },
+  ]);
+  fireEvent.click(retry);
+  const resolve = await screen.findByRole("button", { name: "標記為已處理" });
+  expect(api.resolve).toHaveBeenCalledTimes(1);
+  fireEvent.click(resolve);
+  await waitFor(() => expect(api.resolve).toHaveBeenCalledTimes(2));
+  expect(api.resolve).toHaveBeenLastCalledWith({
+    data: {
+      caseId: "case",
+      findingId: "new-finding",
+      note: null,
+      expectedDocumentVersionId: "new-version",
+    },
+  });
+});
+
+it("admits one resolution across same-turn clicks and opts out of configured mutation retries", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: 1, retryDelay: 0 } },
+  });
+  api.list.mockResolvedValue([
+    { ...view, findings: [view.findings[0], { ...view.findings[0], id: "second" }] },
+  ]);
+  let reject!: (reason: Error) => void;
+  api.resolve.mockImplementation(
+    () =>
+      new Promise((_, fail) => {
+        reject = fail;
+      }),
+  );
+  renderView(false, client);
+  const buttons = await screen.findAllByRole("button", { name: "標記為已處理" });
+  act(() => {
+    buttons[0].click();
+    buttons[0].click();
+    buttons[1].click();
+  });
+  await waitFor(() => expect(api.resolve).toHaveBeenCalledTimes(1));
+  api.resolve.mockRejectedValue(new Error("Unknown result"));
+  await act(async () => {
+    reject(new Error("Response lost"));
+  });
+  await screen.findByRole("button", { name: "重新核對標記結果" });
+  expect(api.resolve).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole("button", { name: "標記為已處理" })).toBeNull();
+  client.clear();
+});
+
+it("starts a fresh reconciliation read instead of joining an older pending background read", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  let rejectCommand!: (reason: Error) => void;
+  api.resolve.mockImplementation(
+    () =>
+      new Promise((_, reject) => {
+        rejectCommand = reject;
+      }),
+  );
+  renderView(false, client);
+  fireEvent.click(await screen.findByRole("button", { name: "標記為已處理" }));
+  await waitFor(() => expect(api.resolve).toHaveBeenCalledTimes(1));
+  let finishOld!: (value: unknown) => void;
+  api.list
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishOld = resolve;
+        }),
+    )
+    .mockRejectedValueOnce(new Error("Fresh read denied"));
+  act(() => {
+    void client.invalidateQueries({ queryKey: ["annual-return", "case-findings", "case"] });
+  });
+  await waitFor(() => expect(api.list).toHaveBeenCalledTimes(2));
+  await act(async () => {
+    rejectCommand(new Error("Unknown result"));
+  });
+  fireEvent.click(await screen.findByRole("button", { name: "重新核對標記結果" }));
+  await waitFor(() => expect(api.list).toHaveBeenCalledTimes(3));
+  await act(async () => {
+    finishOld([view]);
+  });
+  await waitFor(() =>
+    expect(
+      (screen.getByRole("button", { name: "重新核對標記結果" }) as HTMLButtonElement).disabled,
+    ).toBe(false),
+  );
+  expect(screen.queryByRole("button", { name: "標記為已處理" })).toBeNull();
+  expect(api.resolve).toHaveBeenCalledTimes(1);
+  client.clear();
+});
+
+it("does not unlock on query cancellation or cached updates while independent reconciliation is pending", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  api.resolve.mockRejectedValue(new Error("Unknown result"));
+  renderView(false, client);
+  fireEvent.click(await screen.findByRole("button", { name: "標記為已處理" }));
+  const retry = await screen.findByRole("button", { name: "重新核對標記結果" });
+  let finish!: (value: unknown) => void;
+  api.list.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  fireEvent.click(retry);
+  await waitFor(() => expect(api.list).toHaveBeenCalledTimes(2));
+  await act(async () => {
+    await client.cancelQueries({ queryKey: ["annual-return", "case-findings", "case"] });
+  });
+  act(() => {
+    client.setQueryData(["annual-return", "case-findings", "case"], [view]);
+  });
+  expect(
+    (screen.getByRole("button", { name: "重新核對標記結果" }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+  expect(screen.queryByRole("button", { name: "標記為已處理" })).toBeNull();
+  await act(async () => {
+    finish([view]);
+  });
+  await screen.findByRole("button", { name: "標記為已處理" });
+  expect(screen.queryByRole("button", { name: "重新核對標記結果" })).toBeNull();
+  expect(api.resolve).toHaveBeenCalledTimes(1);
+  client.clear();
+});
+
+it("does not carry a previous case's uncertain command state into a new case", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  api.resolve.mockRejectedValueOnce(new Error("Unknown old-case result"));
+  const rendered = renderView(false, client);
+  fireEvent.click(await screen.findByRole("button", { name: "標記為已處理" }));
+  await screen.findByRole("button", { name: "重新核對標記結果" });
+  rendered.rerender(
+    <QueryClientProvider client={client}>
+      <CaseFindings caseId="new-case" locked={false} />
+    </QueryClientProvider>,
+  );
+  const resolve = await screen.findByRole("button", { name: "標記為已處理" });
+  expect(screen.queryByRole("button", { name: "重新核對標記結果" })).toBeNull();
+  fireEvent.click(resolve);
+  await waitFor(() => expect(api.resolve).toHaveBeenCalledTimes(2));
+  expect(api.resolve).toHaveBeenLastCalledWith({
+    data: {
+      caseId: "new-case",
+      findingId: "finding",
+      note: null,
+      expectedDocumentVersionId: versionId,
+    },
+  });
+  client.clear();
+});
+
+it.each([null, undefined])(
+  "does not clear uncertainty on unavailable reconciliation data: %s",
+  async (data) => {
+    api.resolve.mockRejectedValue(new Error("Unknown result"));
+    renderView();
+    fireEvent.click(await screen.findByRole("button", { name: "標記為已處理" }));
+    const retry = await screen.findByRole("button", { name: "重新核對標記結果" });
+    api.list.mockResolvedValueOnce(data);
+    fireEvent.click(retry);
+    await waitFor(() => expect(api.list).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(
+        (screen.getByRole("button", { name: "重新核對標記結果" }) as HTMLButtonElement).disabled,
+      ).toBe(false),
+    );
+    expect(screen.queryByRole("button", { name: "標記為已處理" })).toBeNull();
+    expect(screen.queryByText("此案件尚未收到文件。")).toBeNull();
+    expect(api.resolve).toHaveBeenCalledTimes(1);
+  },
+);
