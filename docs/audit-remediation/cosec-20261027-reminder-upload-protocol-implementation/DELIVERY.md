@@ -4,6 +4,8 @@ Accepted design, 2026-10-27, from draft PR #148 (`cursor/protocol-review-reminde
 
 Starting ref: `fcce28d6b5483bd78bc31c8f32590325f3152d98` on `codex/cosec-20261023` (draft PR #147).
 
+Implementation commit: `740077307c61d664d2209e0eec3cc1c541a0a18f`.
+
 Native remains **70 BLOCKED / 114 NOT_RUN / 0 PASS — BLOCKED / NO_GO**. This implementation does not execute Native, does not bind artifact or CI evidence, and does not turn either leftover into a local PASS. No schema migration, hosted CI green, deploy, promote, provider send, storage write, or production Vercel/Neon change was made.
 
 ## What landed

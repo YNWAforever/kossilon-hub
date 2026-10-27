@@ -4,6 +4,7 @@
   "design_review": "docs/audit-remediation/cosec-20261027-protocol-review-reminder-upload/",
   "design_pr": 148,
   "starting_ref": "fcce28d6b5483bd78bc31c8f32590325f3152d98",
+  "implementation_commit": "740077307c61d664d2209e0eec3cc1c541a0a18f",
   "starting_branch": "codex/cosec-20261023",
   "context_pr": 147,
   "native": "70 BLOCKED / 114 NOT_RUN / 0 PASS — BLOCKED / NO_GO",
