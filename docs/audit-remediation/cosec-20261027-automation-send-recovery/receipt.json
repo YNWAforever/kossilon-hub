@@ -1,0 +1,95 @@
+{
+  "baseline": "ce156641505d66dfe6a93b8331df2d4fd9015bb6",
+  "product_commit": "8add72743b9972fcac40329e547096df6d137894",
+  "files_sha256": {
+    "src/features/annual-return/components/production-whatsapp-automation.tsx": "e22fb2f18387f8520aeebd57e7ac97ee21332820ece7d5307f42f0444a5a2165",
+    "src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx": "2b9e180886bc0732331477a7d84450d4e4ce3d057dbfd46058afed01b602887a",
+    "src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx": "3b8b9a6d5e7030202389e0c86dd8e537543c12943bb80021b71fd38202a6984f"
+  },
+  "reviewed_server_files_sha256": {
+    "src/features/annual-return/follow-up-server-fns.ts": "8f18d9794965c6211993ba937aad570f8d553a34c3ca176d6a8bdb5effa44040",
+    "src/features/annual-return/follow-up-repository.ts": "ecaa8d47c31f31abb665298e2f7024eaaf2c133a123622c3abd4670f75ac05fd",
+    "src/features/annual-return/follow-ups.ts": "4dbb524a94dbe2a97d47647470ea68b88156f79cab942dbcb4cc9c0c5b475da3",
+    "src/features/whatsapp/repository.ts": "d0cc726645e5861587668c228773dd4ca88118e3dc9e056d07fb18be0a169b63"
+  },
+  "checks": {
+    "red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx",
+      "exit": 1,
+      "log": "red.txt",
+      "failed": 8,
+      "passed": 8,
+      "files": 1
+    },
+    "targeted-initial": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx src/features/annual-return/whatsapp-reminders.test.ts",
+      "exit": 1,
+      "log": "targeted-initial.txt",
+      "failed": 1,
+      "passed": 27,
+      "files": 3,
+      "cause": "Older test expected other rows actionable and raw mutation error; revised to page-wide serialization and generic recovery feedback."
+    },
+    "targeted": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx src/features/annual-return/whatsapp-reminders.test.ts",
+      "exit": 0,
+      "log": "targeted.txt",
+      "passed": 31,
+      "files": 3
+    },
+    "unit": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "log": "unit.txt",
+      "passed": 2951,
+      "files": 290
+    },
+    "typecheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    "lint": {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/production-whatsapp-automation.tsx src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    "format": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/production-whatsapp-automation.tsx src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  },
+  "new_test_cases": 11,
+  "review": "Focused read-only review: no important findings.",
+  "server_semantics": "Stable follow-up:source:case:entity key; persisted outbox read derives states; send rechecks actor/readiness/version, rejects unknown/failed, and replay skips duplicate recordReminder. No new identity/read API or server protocol.",
+  "scope": "Unit/JSDOM mocked RPC only; targeted tests included in full total. Real bulk toolbar selection lifecycle with mocked RPCs, not real job cancellation. Final checks matched final product hashes before commit; no source changes afterward; evidence-only commit follows.",
+  "readback_limits": "Current matching follow-up state is not exact command/note receipt or provider delivery proof; requires exactly one matching source/case/entity with nonempty version and known status. Missing/unavailable/invalid required row stays closed. No durable cross-reload latch.",
+  "further_local_review_justified": true,
+  "remaining_local_candidates": [
+    "Automation integration-status failed-read recovery has no explicit in-page retry; verify status/config semantics before separate bounded work.",
+    "Other mutation families need scoped review; no exhaustive local inventory.",
+    "Manual reminder/upload lost-intent/reload require safe identity/read protocol design; no protocol invented.",
+    "Cross-tab behavior has no reproduced defect in this pass."
+  ],
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "not_performed": [
+    "server/schema/config changes",
+    "build",
+    "DB integration",
+    "hosted CI acceptance",
+    "Native execution or Native-only gates",
+    "deploy/promote",
+    "real message/filing",
+    "production Vercel/Neon changes"
+  ]
+}
