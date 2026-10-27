@@ -1,0 +1,98 @@
+{
+  "baseline": "d4d3414b4f28ecafc961f1f71db5b95bd0ba8e47",
+  "product_commit": "b67276cadf5026d5a0f940bd9a54730df257de1c",
+  "files_sha256": {
+    "src/routes/work-queue.tsx": "ba43a17b241ffd87339a78941fbc94c11c0f75a3cf5f93c4f93f3698caa601b9",
+    "src/routes/-work-queue.interaction.test.tsx": "18b1591e95267ae8c1791f2445a336756bfaa6fd0bff5365168841115eb741c3"
+  },
+  "checks": {
+    "red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-work-queue.interaction.test.tsx",
+      "exit": 1,
+      "log": "red.txt",
+      "failed": 3,
+      "passed": 29,
+      "files": 1
+    },
+    "targeted-initial": {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-work-queue.interaction.test.tsx src/routes/-today.interaction.test.tsx src/routes/-work-queue-case-links.test.tsx",
+      "exit": 1,
+      "log": "targeted-initial.txt",
+      "failed": 1,
+      "passed": 42,
+      "files": 3,
+      "cause": "Detached retry button assertion on initially uncached read"
+    },
+    "targeted-fixture": {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-work-queue.interaction.test.tsx src/routes/-today.interaction.test.tsx src/routes/-work-queue-case-links.test.tsx",
+      "exit": 1,
+      "log": "targeted-fixture.txt",
+      "failed": 1,
+      "passed": 42,
+      "files": 3,
+      "cause": "Same detached retry assumption in retained-cursor test; corrected to current accessible button/RPC counts"
+    },
+    "targeted": {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-work-queue.interaction.test.tsx src/routes/-today.interaction.test.tsx src/routes/-work-queue-case-links.test.tsx",
+      "exit": 0,
+      "log": "targeted.txt",
+      "passed": 43,
+      "files": 3
+    },
+    "unit": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "log": "unit.txt",
+      "passed": 2906,
+      "files": 290
+    },
+    "typecheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    "lint": {
+      "command": "node node_modules/eslint/bin/eslint.js src/routes/work-queue.tsx src/routes/-work-queue.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    "format": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/routes/work-queue.tsx src/routes/-work-queue.interaction.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  },
+  "new_test_cases": 2,
+  "existing_coverage_tightened": "Retained cursor/actor scenario now requires commands+bulk blocked before fresh recovery; preserves actor/dialog cleanup coverage.",
+  "review": "Focused read-only review: no important findings.",
+  "scope": "Unit project and mocked RPC/JSDOM only; targeted tests included in full total. Bulk toolbar is stubbed and selectionDisabled prop asserted, not real bulk execution/cancellation. Final checks ran on files matching final product hashes; evidence-only commit follows.",
+  "further_local_passes_justified": true,
+  "remaining_local_candidates": [
+    {
+      "path": "src/routes/work-queue.tsx: AcknowledgementDialog",
+      "finding": "Acknowledgement mutation inherits retry defaults; failed write remains retryable without independent outcome readback. Not fixed by this read-admission slice."
+    },
+    {
+      "path": "src/features/documents/server-fns.ts: createDocumentUploadIntentForActor",
+      "finding": "Staff recovery rejects uploadRequestId; no durable handle/read-only lookup after lost intent creation or reload. Needs explicit identity/protocol design, not copied write replay."
+    }
+  ],
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "not_performed": [
+    "build",
+    "DB integration",
+    "hosted CI acceptance",
+    "Native execution or Native-only gates",
+    "deploy/promote",
+    "production Vercel/Neon changes"
+  ]
+}
