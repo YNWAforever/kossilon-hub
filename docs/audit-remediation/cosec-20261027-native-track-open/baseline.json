@@ -1,0 +1,75 @@
+{
+  "run_id": "cosec-20261027-native-track-open",
+  "phase": "NATIVE_TRACK_OPEN_PREPARE_ONLY",
+  "release_gate": "NO_GO",
+  "execution_enabled": false,
+  "native_executed": false,
+  "resources_created": 0,
+  "external_accesses": 0,
+  "hosted_ci_queried": false,
+  "candidate": {
+    "sha": "79ad0c04da892ec03601f11c12d82fcc84039b31",
+    "subject": "docs: record staff recovery finalize resume evidence",
+    "pr": 149,
+    "pr_state": "open_draft",
+    "branch": "cursor/reminder-upload-protocol-942a",
+    "pr_url": "https://github.com/YNWAforever/kossilon-hub/pull/149"
+  },
+  "relations": {
+    "pr_147": {
+      "sha": "fcce28d6b5483bd78bc31c8f32590325f3152d98",
+      "branch": "codex/cosec-20261023",
+      "pr_state": "open_draft",
+      "ancestor_of_candidate": true,
+      "pr_url": "https://github.com/YNWAforever/kossilon-hub/pull/147"
+    },
+    "pr_148": {
+      "sha": "713f4a3d1fddc41905b0c3243230185fc5bc18e3",
+      "branch": "cursor/protocol-review-reminder-upload-3c21",
+      "pr_state": "open_draft",
+      "parent_sha": "fcce28d6b5483bd78bc31c8f32590325f3152d98",
+      "ancestor_of_candidate": false,
+      "protocol_docs_diff_against_candidate": "empty",
+      "pr_url": "https://github.com/YNWAforever/kossilon-hub/pull/148"
+    },
+    "previous_native_plan": {
+      "plan_id": "cosec-20261025-native-plan-fccb7c22",
+      "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+      "evidence_base": "531887acce5468f7321a3a2919a7afaa20dedac1",
+      "source_sha_ancestor_of_candidate": true,
+      "evidence_base_ancestor_of_candidate": true,
+      "runtime_conclusions_transfer_to_candidate": false,
+      "approval_request_sha256": "20ad7c792f6a23b37b478005ea14ba4c065f69a29cd1f806ac64a730f5f5db96"
+    }
+  },
+  "commit_counts": {
+    "4d63818_to_531887ac": 2,
+    "531887ac_to_fcce28d6": 55,
+    "fcce28d6_to_candidate": 6,
+    "4d63818_to_candidate": 63
+  },
+  "product_delta_4d63818_to_candidate": {
+    "src_files": 41,
+    "docs_files": 458,
+    "db_server_wrangler_package_github_workflow_files": 0,
+    "native_bindings_supplied": 0
+  },
+  "historical_matrix_recount_not_a_new_run": {
+    "acceptance_results_csv": "../cosec-20261025-native-plan-fccb7c22/acceptance-results.csv",
+    "acceptance_results_sha256": "287bafceb836b4e42b96cfbc006ee83dd9ac65900100d1ba199f93631537e6fb",
+    "rows": 184,
+    "native_result_BLOCKED": 70,
+    "native_result_NOT_RUN": 114,
+    "native_result_PASS": 0,
+    "remeasured_on_candidate": false,
+    "scenario_map_csv": "../cosec-20261025-native-plan-fccb7c22/native-scenario-map.csv",
+    "scenario_map_sha256": "f50954198c73f2366e5c8905a2da083bc90c0ac3107f9d541dc9e534dacc2c13",
+    "scenario_map_rows": 100,
+    "scenario_map_native_BLOCKED": 41,
+    "scenario_map_native_NOT_RUN": 59,
+    "scenario_map_execution_evidence": "NONE_THIS_RUN"
+  },
+  "deployed": false,
+  "auth_runtime_verified": false,
+  "native_http_db_rls_verified": false
+}
