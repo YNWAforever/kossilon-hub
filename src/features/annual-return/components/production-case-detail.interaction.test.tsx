@@ -116,22 +116,21 @@ const caseItem: AnnualReturnCase = {
   },
 };
 
-function renderDetail(returnTo?: string) {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
+function renderDetail(
+  returnTo?: string,
+  queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  }),
+) {
   const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-  render(
+  const rendered = render(
     <QueryClientProvider client={queryClient}>
       <ProductionAnnualReturnCaseDetail caseId={caseId} returnTo={returnTo} />
     </QueryClientProvider>,
   );
 
-  return { queryClient, invalidateSpy };
+  return { queryClient, invalidateSpy, rerender: rendered.rerender };
 }
 
 afterEach(() => {
@@ -152,6 +151,7 @@ beforeEach(() => {
   serverFns.updateAnnualReturnStatus.mockResolvedValue(caseItem);
   serverFns.updateAnnualReturnChecklistItem.mockResolvedValue(caseItem);
   serverFns.updateAnnualReturnPayment.mockResolvedValue(caseItem);
+  serverFns.addAnnualReturnCaseNote.mockReset();
   serverFns.addAnnualReturnCaseNote.mockResolvedValue({});
   serverFns.queueAnnualReturnWhatsAppReminderMessage.mockResolvedValue({});
   serverFns.updateAnnualReturnFilingProof.mockResolvedValue(caseItem);
@@ -445,7 +445,7 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     expect((await screen.findByRole("alert")).textContent).toContain("Unable to save note.");
     expect((note as HTMLTextAreaElement).value).toBe("Keep this draft.");
     expect((screen.getByRole("button", { name: "加入備註" }) as HTMLButtonElement).disabled).toBe(
-      false,
+      true,
     );
   });
 
@@ -780,4 +780,277 @@ it("does not retry failed history when explicitly recovering failed notes", asyn
   expect(serverFns.listAnnualReturnCaseHistory).toHaveBeenCalledTimes(1);
   expect(serverFns.listAnnualReturnCaseNotes).toHaveBeenCalledTimes(2);
   expectNoCaseCommands();
+});
+
+function notePanel() {
+  return within(screen.getByRole("heading", { name: "備註" }).closest("section")!);
+}
+async function uncertainNote() {
+  serverFns.addAnnualReturnCaseNote.mockRejectedValueOnce(new Error("Note response lost"));
+  const rendered = renderDetail();
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "Keep this draft." } });
+  fireEvent.click(screen.getByRole("button", { name: "加入備註" }));
+  await notePanel().findByRole("button", { name: "重新核對備註結果" });
+  return rendered;
+}
+
+it("reads back an uncertain saved note without replaying it or clearing the retained draft", async () => {
+  const { queryClient } = await uncertainNote();
+  const panel = notePanel();
+  expect((panel.getByRole("button", { name: "加入備註" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  let finish!: (value: unknown) => void;
+  serverFns.listAnnualReturnCaseNotes.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const retry = panel.getByRole("button", { name: "重新核對備註結果" });
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  await waitFor(() => expect(serverFns.listAnnualReturnCaseNotes).toHaveBeenCalledTimes(2));
+  expect((retry as HTMLButtonElement).disabled).toBe(true);
+  expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(1);
+  await act(async () => {
+    finish([{ id: "saved-note", body: "Keep this draft.", createdAt: "2026-10-27T09:00:00Z" }]);
+  });
+  expect(await panel.findByText("Keep this draft.", { selector: "p" })).toBeTruthy();
+  expect(panel.getByText(/草稿仍保留/)).toBeTruthy();
+  expect((screen.getByLabelText("案件備註") as HTMLTextAreaElement).value).toBe("Keep this draft.");
+  expect(panel.queryByRole("alert")).toBeNull();
+  expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(1);
+  expect(serverFns.listAnnualReturnCaseHistory).toHaveBeenCalledTimes(2);
+  expect(serverFns.getAnnualReturnCase).toHaveBeenCalledTimes(1);
+  expect(toast.success).not.toHaveBeenCalled();
+  queryClient.clear();
+});
+
+it("keeps note writes blocked through failed recovery and background success while preserving edited drafts", async () => {
+  const { queryClient } = await uncertainNote();
+  fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "Revised follow-up" } });
+  serverFns.listAnnualReturnCaseNotes.mockRejectedValueOnce(new Error("Read denied"));
+  fireEvent.click(notePanel().getByRole("button", { name: "重新核對備註結果" }));
+  await waitFor(() => expect(serverFns.listAnnualReturnCaseNotes).toHaveBeenCalledTimes(2));
+  await waitFor(() =>
+    expect(
+      (notePanel().getByRole("button", { name: "重新核對備註結果" }) as HTMLButtonElement).disabled,
+    ).toBe(false),
+  );
+  await act(async () => {
+    await queryClient.invalidateQueries({
+      queryKey: annualReturnQueryKeys.notes(caseId),
+      exact: true,
+    });
+  });
+  expect(
+    (notePanel().getByRole("button", { name: "加入備註" }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+  expect((screen.getByLabelText("案件備註") as HTMLTextAreaElement).value).toBe(
+    "Revised follow-up",
+  );
+  expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(1);
+  fireEvent.click(notePanel().getByRole("button", { name: "重新核對備註結果" }));
+  await notePanel().findByText(/草稿仍保留/);
+  expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(1);
+  fireEvent.click(notePanel().getByRole("button", { name: "加入備註" }));
+  await waitFor(() => expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(2));
+  expect(serverFns.addAnnualReturnCaseNote).toHaveBeenLastCalledWith({
+    data: { caseId, body: "Revised follow-up" },
+  });
+  await waitFor(() =>
+    expect((screen.getByLabelText("案件備註") as HTMLTextAreaElement).value).toBe(""),
+  );
+  queryClient.clear();
+});
+
+it("admits one same-turn note submission and overrides configured automatic write retries", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: 1, retryDelay: 0 } },
+  });
+  let reject!: (reason: Error) => void;
+  serverFns.addAnnualReturnCaseNote.mockImplementation(
+    () =>
+      new Promise((_, fail) => {
+        reject = fail;
+      }),
+  );
+  renderDetail(undefined, client);
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "One note only" } });
+  const button = screen.getByRole("button", { name: "加入備註" });
+  act(() => {
+    button.click();
+    button.click();
+  });
+  await waitFor(() => expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(1));
+  serverFns.addAnnualReturnCaseNote.mockRejectedValue(new Error("Unknown result"));
+  await act(async () => {
+    reject(new Error("Response lost"));
+  });
+  await notePanel().findByRole("button", { name: "重新核對備註結果" });
+  expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(1);
+  client.clear();
+});
+
+it("does not unlock note writes from query cancellation or cache changes while independent readback is pending", async () => {
+  const { queryClient } = await uncertainNote();
+  let finish!: (value: unknown) => void;
+  serverFns.listAnnualReturnCaseNotes.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  fireEvent.click(notePanel().getByRole("button", { name: "重新核對備註結果" }));
+  await waitFor(() => expect(serverFns.listAnnualReturnCaseNotes).toHaveBeenCalledTimes(2));
+  await act(async () => {
+    await queryClient.cancelQueries({ queryKey: annualReturnQueryKeys.notes(caseId), exact: true });
+  });
+  act(() => {
+    queryClient.setQueryData(annualReturnQueryKeys.notes(caseId), []);
+  });
+  expect(
+    (notePanel().getByRole("button", { name: "加入備註" }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+  expect(
+    (notePanel().getByRole("button", { name: "重新核對備註結果" }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+  await act(async () => {
+    finish([]);
+  });
+  await notePanel().findByText(/草稿仍保留/);
+  expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(1);
+  queryClient.clear();
+});
+
+it("does not mistake an older pending notes read for reconciliation after an uncertain create", async () => {
+  let reject!: (reason: Error) => void;
+  serverFns.addAnnualReturnCaseNote.mockImplementationOnce(
+    () =>
+      new Promise((_, fail) => {
+        reject = fail;
+      }),
+  );
+  const { queryClient } = renderDetail();
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "Pending note" } });
+  fireEvent.click(screen.getByRole("button", { name: "加入備註" }));
+  await waitFor(() => expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(1));
+  let finishOld!: (value: unknown) => void;
+  serverFns.listAnnualReturnCaseNotes
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishOld = resolve;
+        }),
+    )
+    .mockRejectedValueOnce(new Error("Fresh read denied"));
+  act(() => {
+    void queryClient.invalidateQueries({
+      queryKey: annualReturnQueryKeys.notes(caseId),
+      exact: true,
+    });
+  });
+  await waitFor(() => expect(serverFns.listAnnualReturnCaseNotes).toHaveBeenCalledTimes(2));
+  await act(async () => {
+    reject(new Error("Unknown result"));
+  });
+  fireEvent.click(await notePanel().findByRole("button", { name: "重新核對備註結果" }));
+  await waitFor(() => expect(serverFns.listAnnualReturnCaseNotes).toHaveBeenCalledTimes(3));
+  await act(async () => {
+    finishOld([]);
+  });
+  await waitFor(() =>
+    expect(
+      (notePanel().getByRole("button", { name: "重新核對備註結果" }) as HTMLButtonElement).disabled,
+    ).toBe(false),
+  );
+  expect(
+    (notePanel().getByRole("button", { name: "加入備註" }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+  expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(1);
+  queryClient.clear();
+});
+
+it.each([null, undefined])(
+  "keeps the note draft blocked on unavailable readback: %s",
+  async (data) => {
+    await uncertainNote();
+    serverFns.listAnnualReturnCaseNotes.mockResolvedValueOnce(data);
+    fireEvent.click(notePanel().getByRole("button", { name: "重新核對備註結果" }));
+    await waitFor(() => expect(serverFns.listAnnualReturnCaseNotes).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(
+        (notePanel().getByRole("button", { name: "重新核對備註結果" }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false),
+    );
+    expect(
+      (notePanel().getByRole("button", { name: "加入備註" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect((screen.getByLabelText("案件備註") as HTMLTextAreaElement).value).toBe(
+      "Keep this draft.",
+    );
+    expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(1);
+  },
+);
+
+it("keeps a newer draft typed during a successful pending submission", async () => {
+  let finish!: (value: unknown) => void;
+  serverFns.addAnnualReturnCaseNote.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  renderDetail();
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "Submitted draft" } });
+  fireEvent.click(screen.getByRole("button", { name: "加入備註" }));
+  await waitFor(() => expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(1));
+  fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "New unsaved draft" } });
+  await act(async () => {
+    finish({});
+  });
+  expect((screen.getByLabelText("案件備註") as HTMLTextAreaElement).value).toBe(
+    "New unsaved draft",
+  );
+  expect(serverFns.addAnnualReturnCaseNote).toHaveBeenLastCalledWith({
+    data: { caseId, body: "Submitted draft" },
+  });
+});
+
+it("isolates note uncertainty and late recovery from a newly opened case draft", async () => {
+  const { queryClient, rerender } = await uncertainNote();
+  let finishOld!: (value: unknown) => void;
+  serverFns.listAnnualReturnCaseNotes.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finishOld = resolve;
+      }),
+  );
+  fireEvent.click(notePanel().getByRole("button", { name: "重新核對備註結果" }));
+  await waitFor(() => expect(serverFns.listAnnualReturnCaseNotes).toHaveBeenCalledTimes(2));
+  const newCaseId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  serverFns.getAnnualReturnCase.mockResolvedValue({ ...caseItem, id: newCaseId });
+  rerender(
+    <QueryClientProvider client={queryClient}>
+      <ProductionAnnualReturnCaseDetail caseId={newCaseId} />
+    </QueryClientProvider>,
+  );
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  expect((screen.getByLabelText("案件備註") as HTMLTextAreaElement).value).toBe("");
+  fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "New case draft" } });
+  await act(async () => {
+    finishOld([]);
+  });
+  expect((screen.getByLabelText("案件備註") as HTMLTextAreaElement).value).toBe("New case draft");
+  expect(notePanel().queryByRole("button", { name: "重新核對備註結果" })).toBeNull();
+  expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(1);
+  queryClient.clear();
 });

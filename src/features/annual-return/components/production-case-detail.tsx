@@ -7,7 +7,7 @@ import { caseReturnPath } from "../daily-view-state";
 import { readinessForCase } from "../readiness";
 import { parseEntityId } from "@/lib/entity-id";
 import { CaseParties } from "./case-parties";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -94,7 +94,9 @@ export function ProductionAnnualReturnCaseDetail(props: CaseDetailProps) {
   // anyway only fails schema validation, which the query retried behind an
   // endless loading state before showing the raw validation error.
   if (parseEntityId(props.caseId) === null) return <CaseNotFound returnTo={props.returnTo} />;
-  return <CaseDetail {...props} />;
+  return (
+    <CaseDetail key={JSON.stringify([props.caseId, props.actorScope ?? "session"])} {...props} />
+  );
 }
 
 function CaseNotFound({ returnTo }: Pick<CaseDetailProps, "returnTo">) {
@@ -144,6 +146,12 @@ function CaseDetail({
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("Payment pending");
   const [paymentProofDocumentId, setPaymentProofDocumentId] = useState("");
   const [note, setNote] = useState("");
+  const noteSubmission = useRef<string | null>(null);
+  const noteRecovering = useRef(false);
+  const [noteRecovery, setNoteRecovery] = useState<"none" | "required" | "reading" | "checked">(
+    "none",
+  );
+  const noteBlocked = noteRecovery === "required" || noteRecovery === "reading";
   const [recipientName, setRecipientName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
   const [filingReference, setFilingReference] = useState("");
@@ -180,10 +188,15 @@ function CaseDetail({
   });
   const noteMutation = useMutation({
     mutationFn: actions.addNote,
-    onSuccess: () => {
-      setNote("");
+    retry: false,
+    onError: () => setNoteRecovery("required"),
+    onSuccess: async () => {
+      const submittedDraft = noteSubmission.current;
+      setNote((current) => (current === submittedDraft ? "" : current));
+      setNoteRecovery("none");
       toast.success("已加入備註。");
-      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.notes(caseId) });
+      await queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.notes(caseId) });
+      noteSubmission.current = null;
     },
   });
   const reminderMutation = useMutation({
@@ -537,21 +550,73 @@ function CaseDetail({
               aria-label="案件備註"
               className="mt-3 min-h-24 w-full resize-y"
               value={note}
-              onChange={(event) => setNote(event.target.value)}
+              onChange={(event) => {
+                setNote(event.target.value);
+                if (noteRecovery === "checked") setNoteRecovery("none");
+              }}
             />
             <Button
               className="mt-2"
-              disabled={locked || noteMutation.isPending || !note.trim()}
-              onClick={() => noteMutation.mutate(note.trim())}
+              disabled={locked || noteBlocked || noteMutation.isPending || !note.trim()}
+              onClick={() => {
+                // Capture the raw draft and block same-turn duplicate writes.
+                if (locked || noteBlocked || noteSubmission.current !== null || !note.trim())
+                  return;
+                noteSubmission.current = note;
+                setNoteRecovery("none");
+                noteMutation.mutate(note.trim());
+              }}
               type="button"
             >
               <PendingIcon pending={noteMutation.isPending} />
               <MessageSquarePlus aria-hidden className="h-4 w-4" />
               加入備註
             </Button>
-            <MutationMessage error={noteMutation.error} />
+            {noteBlocked ? (
+              <div role="alert" className="mt-2 space-y-2 text-sm text-destructive">
+                <p>{noteMutation.error?.message}</p>
+                <p>備註儲存結果未能核實。草稿已保留，請先核對已儲存備註；沒有自動重試寫入。</p>
+                <Button
+                  type="button"
+                  className="min-h-11"
+                  disabled={noteRecovery === "reading"}
+                  onClick={async () => {
+                    if (noteRecovering.current) return;
+                    noteRecovering.current = true;
+                    setNoteRecovery("reading");
+                    const queryKey = annualReturnQueryKeys.notes(caseId);
+                    try {
+                      // Refetch cancellation may return reverted cached data.
+                      // Independently read and publish the actual response.
+                      await queryClient.cancelQueries({ queryKey, exact: true });
+                      const notes = await listAnnualReturnCaseNotes({ data: { caseId } });
+                      if (!Array.isArray(notes)) throw new Error("Notes unavailable");
+                      await queryClient.cancelQueries({ queryKey, exact: true });
+                      queryClient.setQueryData(queryKey, notes);
+                      await queryClient.invalidateQueries({
+                        queryKey: annualReturnQueryKeys.history(caseId),
+                      });
+                      noteMutation.reset();
+                      noteSubmission.current = null;
+                      setNoteRecovery("checked");
+                    } catch {
+                      setNoteRecovery("required");
+                    } finally {
+                      noteRecovering.current = false;
+                    }
+                  }}
+                >
+                  重新核對備註結果
+                </Button>
+              </div>
+            ) : null}
+            {noteRecovery === "checked" && notesQuery.isSuccess && !notesQuery.isFetching ? (
+              <p role="status" className="mt-2 text-sm">
+                已重新載入備註。草稿仍保留，請先核對清單，避免重複新增。
+              </p>
+            ) : null}
             <div className="mt-4 space-y-3">
-              {notesQuery.isPending ? (
+              {noteBlocked ? null : notesQuery.isPending ? (
                 <LoadingRows label="正在載入備註…" rows={2} className="p-0" />
               ) : notesQuery.isError ? (
                 <div role="alert" className="space-y-2 text-sm text-destructive">
