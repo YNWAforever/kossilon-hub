@@ -554,9 +554,17 @@ function CaseDetail({
               {notesQuery.isPending ? (
                 <LoadingRows label="正在載入備註…" rows={2} className="p-0" />
               ) : notesQuery.isError ? (
-                <p role="alert" className="text-sm text-destructive">
-                  {notesQuery.error.message}
-                </p>
+                <div role="alert" className="space-y-2 text-sm text-destructive">
+                  <p>{notesQuery.error.message}</p>
+                  <Button
+                    type="button"
+                    className="min-h-11"
+                    disabled={notesQuery.isFetching}
+                    onClick={() => void notesQuery.refetch({ cancelRefetch: false })}
+                  >
+                    重新載入備註
+                  </Button>
+                </div>
               ) : notesQuery.data.length === 0 ? (
                 <p className="text-sm text-muted-foreground">暫時沒有備註。</p>
               ) : (
@@ -577,9 +585,17 @@ function CaseDetail({
             {historyQuery.isPending ? (
               <LoadingRows label="正在載入記錄…" rows={3} className="mt-3 p-0" />
             ) : historyQuery.isError ? (
-              <p role="alert" className="mt-3 text-sm text-destructive">
-                {historyQuery.error.message}
-              </p>
+              <div role="alert" className="mt-3 space-y-2 text-sm text-destructive">
+                <p>{historyQuery.error.message}</p>
+                <Button
+                  type="button"
+                  className="min-h-11"
+                  disabled={historyQuery.isFetching}
+                  onClick={() => void historyQuery.refetch({ cancelRefetch: false })}
+                >
+                  重新載入審計記錄
+                </Button>
+              </div>
             ) : historyQuery.data.length === 0 ? (
               <p className="mt-3 text-sm text-muted-foreground">暫時沒有記錄。</p>
             ) : (

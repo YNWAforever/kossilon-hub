@@ -142,7 +142,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   serverFns.getAnnualReturnCase.mockReset();
   serverFns.getAnnualReturnCase.mockResolvedValue(caseItem);
+  serverFns.listAnnualReturnCaseNotes.mockReset();
   serverFns.listAnnualReturnCaseNotes.mockResolvedValue([]);
+  serverFns.listAnnualReturnCaseHistory.mockReset();
   serverFns.listAnnualReturnCaseHistory.mockResolvedValue([]);
   serverFns.listAnnualReturnCaseFindings.mockResolvedValue([]);
   serverFns.listAnnualReturnCaseParties.mockResolvedValue([]);
@@ -624,5 +626,158 @@ it("hides cached case commands after a denied refresh and respects a newly locke
   await screen.findByRole("heading", { name: "Acme Company Limited" });
   for (const name of ["更新", "更新付款", "準備交件套件", "分配"])
     expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled).toBe(true);
+  expectNoCaseCommands();
+});
+
+const contextReads = [
+  {
+    name: "notes",
+    heading: "備註",
+    retry: "重新載入備註",
+    empty: "暫時沒有備註。",
+    read: serverFns.listAnnualReturnCaseNotes,
+    other: serverFns.listAnnualReturnCaseHistory,
+    key: annualReturnQueryKeys.notes(caseId),
+    text: "Recovered notes",
+    data: [{ id: "saved-note", body: "Recovered notes", createdAt: "2026-10-27T09:00:00Z" }],
+  },
+  {
+    name: "history",
+    heading: "審計記錄",
+    retry: "重新載入審計記錄",
+    empty: "暫時沒有記錄。",
+    read: serverFns.listAnnualReturnCaseHistory,
+    other: serverFns.listAnnualReturnCaseNotes,
+    key: annualReturnQueryKeys.history(caseId),
+    text: "Recovered history",
+    data: [
+      {
+        kind: "audit",
+        id: "saved-audit",
+        createdAt: "2026-10-27T09:00:00Z",
+        actorId: ownerId,
+        actorName: "Ada Chan",
+        actorRole: "Staff",
+        action: "add_note",
+        result: "succeeded",
+        summary: "Recovered history",
+        metadata: {},
+      },
+    ],
+  },
+];
+
+it.each(contextReads)(
+  "recovers failed $name reads independently while preserving the unsaved note draft",
+  async (context) => {
+    context.read.mockRejectedValueOnce(new Error("Context read unavailable"));
+    renderDetail();
+    await screen.findByRole("heading", { name: "Acme Company Limited" });
+    const panel = within(
+      screen.getByRole("heading", { name: context.heading }).closest("section")!,
+    );
+    await panel.findByRole("alert");
+    expect(panel.queryByText(context.empty)).toBeNull();
+    fireEvent.change(screen.getByLabelText("案件備註"), {
+      target: { value: "Unsaved follow-up draft" },
+    });
+    const retry = panel.getByRole("button", { name: context.retry });
+    let finish!: (value: unknown) => void;
+    context.read.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    act(() => {
+      retry.click();
+      retry.click();
+    });
+    await waitFor(() => expect(context.read).toHaveBeenCalledTimes(2));
+    expect(await panel.findByRole("status")).toBeTruthy();
+    expect(panel.queryByText(context.empty)).toBeNull();
+    expectNoCaseCommands();
+    await act(async () => {
+      finish(context.data);
+    });
+    expect(await panel.findByText(context.text)).toBeTruthy();
+    expect(panel.queryByRole("alert")).toBeNull();
+    expect((screen.getByLabelText("案件備註") as HTMLTextAreaElement).value).toBe(
+      "Unsaved follow-up draft",
+    );
+    expect(context.read).toHaveBeenLastCalledWith({ data: { caseId } });
+    expect(context.other).toHaveBeenCalledTimes(1);
+    expect(serverFns.getAnnualReturnCase).toHaveBeenCalledTimes(1);
+    expectNoCaseCommands();
+  },
+);
+
+it.each(contextReads)(
+  "keeps cached $name hidden after denial and recovers repeated failures only through its own list",
+  async (context) => {
+    context.read.mockResolvedValue(context.data);
+    const { queryClient } = renderDetail();
+    await screen.findByRole("heading", { name: "Acme Company Limited" });
+    const panel = within(
+      screen.getByRole("heading", { name: context.heading }).closest("section")!,
+    );
+    await panel.findByText(context.text);
+    context.read.mockRejectedValue(new Error("Read denied"));
+    await act(async () => {
+      await queryClient.invalidateQueries({ queryKey: context.key, exact: true });
+    });
+    await panel.findByRole("alert");
+    expect(panel.queryByText(context.text)).toBeNull();
+    expect(panel.queryByText(context.empty)).toBeNull();
+    let reject!: (reason: Error) => void;
+    context.read.mockImplementationOnce(
+      () =>
+        new Promise((_, fail) => {
+          reject = fail;
+        }),
+    );
+    const retry = panel.getByRole("button", { name: context.retry });
+    act(() => {
+      retry.click();
+      retry.click();
+    });
+    await waitFor(() => expect(context.read).toHaveBeenCalledTimes(3));
+    expect((retry as HTMLButtonElement).disabled).toBe(true);
+    expect(panel.queryByText(context.text)).toBeNull();
+    await act(async () => {
+      reject(new Error("Still denied"));
+    });
+    await waitFor(() =>
+      expect(
+        (panel.getByRole("button", { name: context.retry }) as HTMLButtonElement).disabled,
+      ).toBe(false),
+    );
+    expect(panel.queryByText(context.empty)).toBeNull();
+    context.read.mockResolvedValue([]);
+    fireEvent.click(panel.getByRole("button", { name: context.retry }));
+    expect(await panel.findByText(context.empty)).toBeTruthy();
+    expect(panel.queryByRole("alert")).toBeNull();
+    expect(context.other).toHaveBeenCalledTimes(1);
+    expect(serverFns.getAnnualReturnCase).toHaveBeenCalledTimes(1);
+    expectNoCaseCommands();
+  },
+);
+
+it("does not retry failed history when explicitly recovering failed notes", async () => {
+  serverFns.listAnnualReturnCaseNotes.mockRejectedValue(new Error("Notes unavailable"));
+  serverFns.listAnnualReturnCaseHistory.mockRejectedValue(new Error("History unavailable"));
+  renderDetail();
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  const notes = within(screen.getByRole("heading", { name: "備註" }).closest("section")!);
+  const history = within(screen.getByRole("heading", { name: "審計記錄" }).closest("section")!);
+  await notes.findByRole("alert");
+  await history.findByRole("alert");
+  serverFns.listAnnualReturnCaseNotes.mockResolvedValue(contextReads[0].data);
+  fireEvent.click(notes.getByRole("button", { name: "重新載入備註" }));
+  await notes.findByText("Recovered notes");
+  expect(history.getByRole("button", { name: "重新載入審計記錄" })).toBeTruthy();
+  expect(history.queryByText("暫時沒有記錄。")).toBeNull();
+  expect(serverFns.listAnnualReturnCaseHistory).toHaveBeenCalledTimes(1);
+  expect(serverFns.listAnnualReturnCaseNotes).toHaveBeenCalledTimes(2);
   expectNoCaseCommands();
 });
