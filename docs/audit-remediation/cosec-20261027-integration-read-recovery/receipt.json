@@ -1,0 +1,81 @@
+{
+  "baseline": "0494e3a17648fec6c620009368dbd90ac2570ca6",
+  "product_commit": "9f5528fabe2da24fb13a0e2b88cdbea470f4aa07",
+  "files_sha256": {
+    "src/features/annual-return/components/production-whatsapp-automation.tsx": "03753d282a7c44f64c54b3cbc5ad52bc366cb76294f1bcc478a0d5b7a40178c4",
+    "src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx": "e985429ea7f72a3885c6cc904f5c1986e000b530095159c089418f8f2da40a3a"
+  },
+  "reviewed_server_files_sha256": {
+    "src/features/whatsapp/server-fns.ts": "e48f62e7d309b9d58b900bf250dea0113bd861bdf209bf45e7d8386a183d4ac2"
+  },
+  "checks": {
+    "red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx",
+      "exit": 1,
+      "log": "red.txt",
+      "failed": 5,
+      "passed": 18,
+      "files": 1
+    },
+    "targeted": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx src/features/whatsapp/server-fns.test.ts",
+      "exit": 0,
+      "log": "targeted.txt",
+      "passed": 48,
+      "files": 3
+    },
+    "unit": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "log": "unit.txt",
+      "passed": 2956,
+      "files": 290
+    },
+    "typecheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    "lint": {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/production-whatsapp-automation.tsx src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    "format": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/production-whatsapp-automation.tsx src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  },
+  "new_test_cases": 5,
+  "review": "Focused read-only review: no important findings.",
+  "server_semantics": "Authenticated GET reads environment/provider configuration and role metadata; verificationStatus:not_verified; no provider probe, send, queue, storage or credential/config write.",
+  "scope": "Unit/JSDOM mocked RPC and pure environment helpers only; targeted tests included in full total. Final verification matched final product hashes before commit; evidence-only commit follows. No real Auth/provider integration invoked.",
+  "further_speculative_local_product_pass_justified": false,
+  "assessment_limit": "No next high-value bounded fix established for tracked candidates; new work needs concrete reproduction or separately scoped protocol review. Not an assertion of no other local defects or complete inventory.",
+  "remaining_tracked_priorities": [
+    "Manual-reminder queue/log and upload lost-intent/reload recovery need safe identity/read protocol design.",
+    "Cross-tab duplicate-open has no reproduced defect.",
+    "Artifact/CI/DB/Auth bindings, full staff journeys, actual provider/filing, calendar, scheduler, storage/scan/restore and device/performance remain Native-bound."
+  ],
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "not_performed": [
+    "server/schema/config changes",
+    "build",
+    "DB integration",
+    "hosted CI acceptance",
+    "Native execution or Native-only gates",
+    "deploy/promote",
+    "real message/filing or provider probe",
+    "production Vercel/Neon changes"
+  ]
+}
