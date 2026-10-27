@@ -70,6 +70,7 @@ function AutomationSession({
   const integrationQuery = useQuery({
     queryKey: ["whatsapp-integration-status"],
     queryFn: () => getWhatsAppIntegrationStatus(),
+    retry: false,
   });
   const sendMutation = useMutation({
     retry: false,
@@ -189,7 +190,22 @@ function AutomationSession({
     currentPreview.version === preview?.version
       ? currentPreview
       : null;
-  const error = uncertain ? integrationQuery.error : (sendMutation.error ?? integrationQuery.error);
+  const error = uncertain ? null : sendMutation.error;
+  const integrationFeedback = integrationQuery.isFetching ? (
+    <p role="status" className="text-sm text-muted-foreground">
+      正在讀取通訊設定；尚未核實連線。
+    </p>
+  ) : integrationQuery.isError ? (
+    <div role="alert" className="space-y-2 border p-3 text-sm text-destructive">
+      <p>未能讀取通訊設定；這不代表供應商連線正常或訊息已送達。</p>
+      <Button
+        disabled={integrationQuery.isFetching}
+        onClick={() => void integrationQuery.refetch({ cancelRefetch: false })}
+      >
+        重新讀取通訊設定
+      </Button>
+    </div>
+  ) : null;
   const retryDrafts = () => void draftsQuery.refetch({ cancelRefetch: false });
 
   return (
@@ -228,7 +244,10 @@ function AutomationSession({
         />
       ) : null}
 
-      {integrationQuery.data?.deliveryMode === "simulated" ? (
+      {!preview ? integrationFeedback : null}
+      {integrationQuery.isSuccess &&
+      !integrationQuery.isFetching &&
+      integrationQuery.data?.deliveryMode === "simulated" ? (
         <div
           className="border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"
           role="status"
@@ -327,6 +346,7 @@ function AutomationSession({
               ) : null}
             </div>
           ) : null}
+          {integrationFeedback}
           {error ? (
             <p role="alert" className="text-sm text-destructive">
               {errorMessage(error)}

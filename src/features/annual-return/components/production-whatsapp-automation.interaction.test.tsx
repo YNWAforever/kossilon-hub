@@ -448,3 +448,114 @@ it("discards uncertain-send readback after leaving the actor session", async () 
     client.getQueriesData({ queryKey: ["annual-returns", "notifications", "automation"] }),
   ).toEqual(before);
 });
+
+it("retries integration metadata once while pending without draft reload or queue replay", async () => {
+  whatsAppServerFns.getWhatsAppIntegrationStatus.mockRejectedValue(
+    new Error("private metadata failure"),
+  );
+  renderAutomation();
+  const retry = await screen.findByRole("button", { name: "重新讀取通訊設定" });
+  expect(screen.queryByText("private metadata failure")).toBeNull();
+  let resolve!: (value: unknown) => void;
+  whatsAppServerFns.getWhatsAppIntegrationStatus.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  await waitFor(() =>
+    expect(whatsAppServerFns.getWhatsAppIntegrationStatus).toHaveBeenCalledTimes(2),
+  );
+  expect(
+    (screen.queryByRole("button", { name: "重新讀取通訊設定" }) as HTMLButtonElement | null)
+      ?.disabled ?? true,
+  ).toBe(true);
+  await act(async () => resolve({ deliveryMode: "simulated", verificationStatus: "not_verified" }));
+  await screen.findByText("示範模擬");
+  expect(serverFns.listProductionFollowUpDrafts).toHaveBeenCalledTimes(1);
+  expect(serverFns.sendProductionFollowUp).not.toHaveBeenCalled();
+});
+
+it("hides cached simulated metadata after denial and never calls fresh live configuration verified", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  renderAutomation(client);
+  await screen.findByText("示範模擬");
+  whatsAppServerFns.getWhatsAppIntegrationStatus.mockRejectedValue(new Error("denied"));
+  await act(async () => {
+    await client.refetchQueries({ queryKey: ["whatsapp-integration-status"] });
+  });
+  await screen.findByRole("button", { name: "重新讀取通訊設定" });
+  expect(screen.queryByText("示範模擬")).toBeNull();
+  expect(screen.queryByText("不會向外發送任何 WhatsApp 或電郵訊息。")).toBeNull();
+  whatsAppServerFns.getWhatsAppIntegrationStatus.mockResolvedValue({
+    deliveryMode: "live",
+    verificationStatus: "not_verified",
+  });
+  fireEvent.click(screen.getByRole("button", { name: "重新讀取通訊設定" }));
+  await waitFor(() =>
+    expect(client.getQueryState(["whatsapp-integration-status"])?.fetchStatus).toBe("idle"),
+  );
+  expect(screen.queryByText("示範模擬")).toBeNull();
+  for (const label of ["連線正常", "驗證成功", "PASS"])
+    expect(screen.queryByText(label)).toBeNull();
+  expect(serverFns.sendProductionFollowUp).not.toHaveBeenCalled();
+});
+
+it("offers integration retry inside an open preview without discarding or submitting its draft", async () => {
+  whatsAppServerFns.getWhatsAppIntegrationStatus.mockRejectedValue(
+    new Error("configuration read failed"),
+  );
+  serverFns.listProductionFollowUpDrafts.mockResolvedValue([drafts[0]]);
+  renderAutomation();
+  fireEvent.click(await screen.findByRole("button", { name: "預覽並批准" }));
+  const dialog = await screen.findByRole("dialog");
+  expect(dialog.textContent).toContain(drafts[0].messagePreview);
+  whatsAppServerFns.getWhatsAppIntegrationStatus.mockResolvedValue({
+    deliveryMode: "blocked",
+    verificationStatus: "not_verified",
+  });
+  fireEvent.click(screen.getByRole("button", { name: "重新讀取通訊設定" }));
+  await waitFor(() =>
+    expect(whatsAppServerFns.getWhatsAppIntegrationStatus).toHaveBeenCalledTimes(2),
+  );
+  expect(screen.getByRole("dialog")).toBe(dialog);
+  expect(dialog.textContent).toContain(drafts[0].messagePreview);
+  expect(serverFns.listProductionFollowUpDrafts).toHaveBeenCalledTimes(1);
+  expect(serverFns.sendProductionFollowUp).not.toHaveBeenCalled();
+});
+
+it("keeps repeated integration failure recoverable with generic errors", async () => {
+  whatsAppServerFns.getWhatsAppIntegrationStatus.mockRejectedValue(
+    new Error("secret metadata details"),
+  );
+  renderAutomation();
+  fireEvent.click(await screen.findByRole("button", { name: "重新讀取通訊設定" }));
+  await waitFor(() =>
+    expect(whatsAppServerFns.getWhatsAppIntegrationStatus).toHaveBeenCalledTimes(2),
+  );
+  await screen.findByRole("button", { name: "重新讀取通訊設定" });
+  expect(screen.queryByText("secret metadata details")).toBeNull();
+  expect(serverFns.sendProductionFollowUp).not.toHaveBeenCalled();
+});
+
+it("does not clear uncertain-send admission by refreshing integration metadata", async () => {
+  whatsAppServerFns.getWhatsAppIntegrationStatus.mockRejectedValue(
+    new Error("metadata unavailable"),
+  );
+  await failAutomationSend();
+  whatsAppServerFns.getWhatsAppIntegrationStatus.mockResolvedValue({
+    deliveryMode: "live",
+    verificationStatus: "not_verified",
+  });
+  fireEvent.click(screen.getByRole("button", { name: "重新讀取通訊設定" }));
+  await waitFor(() =>
+    expect(whatsAppServerFns.getWhatsAppIntegrationStatus).toHaveBeenCalledTimes(2),
+  );
+  expect(screen.getByRole("button", { name: "重新核對跟進結果" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "預覽並批准" })).toBeNull();
+  expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(1);
+});
