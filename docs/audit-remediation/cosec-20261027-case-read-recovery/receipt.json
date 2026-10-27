@@ -1,0 +1,61 @@
+{
+  "baseline": "59aeb86fc402988faa2a2fc702b02b9013f26942",
+  "product_commit": "6401add04e92b7e3107b4556060f426b6da1020d",
+  "verification_state": "Final checks ran at baseline HEAD with these two files modified. Final SHA256 values below match the committed files. No source/test changes after final verification. Evidence-only commit follows.",
+  "files": {
+    "src/features/annual-return/components/production-case-detail.tsx": "5ce2dbfccadf22b9f4e934bf9c9205557f703806908d1e1010d158a78c908f16",
+    "src/features/annual-return/components/production-case-detail.interaction.test.tsx": "6f229616c88241c70f2ba27f50f86975e8e38cd9bac2817054037dbbd09027ee"
+  },
+  "commands": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "result": "2840 passed / 290 files",
+      "log": "unit.txt",
+      "scope": "Local child-process-supported unit/component suite; DB integration project excluded"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-case-detail.interaction.test.tsx src/features/annual-return/components/case-findings.interaction.test.tsx src/features/annual-return/components/case-parties.interaction.test.tsx",
+      "exit": 0,
+      "result": "45 passed / 3 files, included in full unit count",
+      "new_tests": 5,
+      "log": "targeted.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/production-case-detail.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/production-case-detail.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "reproduction": {
+    "result": "5 failed / 9 passed before repair",
+    "log": "red.txt"
+  },
+  "review": "Focused independent reviewer reported no findings; reviewer ran no tests.",
+  "limits": "Case-query retry only. Existing query retry policy unchanged. No command replay/invalidation or successful notes/history reload. Unit mocks do not establish persisted status decisions, real Auth/HTTP/RLS, navigation or full readiness acceptance.",
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "build": "NOT_RUN",
+  "db_integration": "NOT_RUN",
+  "hosted_ci_acceptance": "NOT_CLAIMED",
+  "deployment": "NOT_RUN",
+  "production_changes": "NONE"
+}
