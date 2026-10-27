@@ -1,0 +1,62 @@
+{
+  "baseline": "162a0fa2e3297813162a719291dbbed516416554",
+  "product_commit": "e78e3cc7845fb558873ee134300f318fd626f073",
+  "verification_state": "Final checks ran at baseline HEAD with these two files modified. Final SHA256 values below match the committed files. No source/test changes after final verification. Evidence-only commit follows.",
+  "files": {
+    "src/features/annual-return/components/production-case-detail.tsx": "e9945f18f7a35f98fe68a82fa332890adba6160473cf9b8c91479e951481bf33",
+    "src/features/annual-return/components/production-case-detail.interaction.test.tsx": "d124b4fa9ccd87df36cbbddb372ffbc766c5d529b0841f785120eb260ff86710"
+  },
+  "commands": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "result": "2854 passed / 290 files",
+      "log": "unit.txt",
+      "scope": "Local child-process-supported unit/component suite; DB integration project excluded"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-case-detail.interaction.test.tsx src/features/annual-return/components/case-findings.interaction.test.tsx src/features/annual-return/components/case-parties.interaction.test.tsx",
+      "exit": 0,
+      "result": "59 passed / 3 files, included in full unit count",
+      "new_tests": 9,
+      "existing_test_adjusted": "Failed-note contract now expects disabled add button until explicit reconciliation",
+      "log": "targeted.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/production-case-detail.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/production-case-detail.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "reproduction": {
+    "result": "10 failed / 18 passed before repair: 9 new cases plus tightened existing failed-note assertion",
+    "log": "red.txt"
+  },
+  "review": "Focused independent reviewer reported no findings; reviewer ran no tests.",
+  "limits": "Existing create-note path only; no note-update API/server/DB changes. Mounted case/actor-scope lifetime resets on navigation. Recovery never replays write or clears draft; equal text is not a command receipt. Known success clears only unchanged submitted raw draft. No persisted notes/audit, durable idempotency, real Auth/HTTP/RLS or full journey proof.",
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "build": "NOT_RUN",
+  "db_integration": "NOT_RUN",
+  "hosted_ci_acceptance": "NOT_CLAIMED",
+  "deployment": "NOT_RUN",
+  "production_changes": "NONE"
+}

@@ -1,0 +1,1038 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx (28 tests | 10 failed) 11917ms
+     × retains note text and renders the error after a failed command 241ms
+   × reads back an uncertain saved note without replaying it or clearing the retained draft 1067ms
+   × keeps note writes blocked through failed recovery and background success while preserving edited drafts 1099ms
+   × admits one same-turn note submission and overrides configured automatic write retries 1100ms
+   × does not unlock note writes from query cancellation or cache changes while independent readback is pending 1087ms
+   × does not mistake an older pending notes read for reconciliation after an uncertain create 1101ms
+   × keeps the note draft blocked on unavailable readback: null 1107ms
+   × keeps the note draft blocked on unavailable readback: undefined 1101ms
+   × keeps a newer draft typed during a successful pending submission 99ms
+   × isolates note uncertainty and late recovery from a newly opened case draft 1081ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > ProductionAnnualReturnCaseDetail > retains note text and renders the error after a failed command
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:447:90
+    445|     expect((await screen.findByRole("alert")).textContent).toContain("…
+    446|     expect((note as HTMLTextAreaElement).value).toBe("Keep this draft.…
+    447|     expect((screen.getByRole("button", { name: "加入備註" }) as HTMLButton…
+       |                                                                                          ^
+    448|       true,
+    449|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > reads back an uncertain saved note without replaying it or clearing the retained draft
+TestingLibraryElementError: Unable to find role="button" and name "重新核對備註結果"
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m>[39m
+    [0mKeep this draft.[0m
+  [36m</textarea>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-2 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mNote response lost[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m暫時沒有備註。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m>[39m
+    [0mKeep this draft.[0m
+  [36m</textarea>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-2 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mNote response lost[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m暫時沒有備註。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ uncertainNote src/features/annual-return/components/production-case-detail.interaction.test.tsx:795:21
+    793|   fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "…
+    794|   fireEvent.click(screen.getByRole("button", { name: "加入備註" }));
+    795|   await notePanel().findByRole("button", { name: "重新核對備註結果" });
+       |                     ^
+    796|   return rendered;
+    797| }
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:800:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > keeps note writes blocked through failed recovery and background success while preserving edited drafts
+TestingLibraryElementError: Unable to find role="button" and name "重新核對備註結果"
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m>[39m
+    [0mKeep this draft.[0m
+  [36m</textarea>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-2 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mNote response lost[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m暫時沒有備註。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m>[39m
+    [0mKeep this draft.[0m
+  [36m</textarea>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-2 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mNote response lost[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m暫時沒有備註。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ uncertainNote src/features/annual-return/components/production-case-detail.interaction.test.tsx:795:21
+    793|   fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "…
+    794|   fireEvent.click(screen.getByRole("button", { name: "加入備註" }));
+    795|   await notePanel().findByRole("button", { name: "重新核對備註結果" });
+       |                     ^
+    796|   return rendered;
+    797| }
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:823:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > admits one same-turn note submission and overrides configured automatic write retries
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"border-b pb-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+              [36m>[39m
+                [0m案件與客戶[0m
+              [36m</p>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</h1>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0m申報年度 2026 · 到期日 2026年8月12日[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+              [36m>[39m
+                [36m<a[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                  [33mhref[39m=[32m"/annual-returns"[39m
+                [36m>[39m
+                  [0m返回工作列表[0m
+                [36m</a>[39m
+                [36m<a[39m
+                  [33mhref[39m=[32m"/annual-returns"[39m
+                [36m>[39m
+                  [0m開啟客戶入口[0m
+                [36m</a>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-right text-sm"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"font-medium"[39m
+                  [36m>[39m
+                    [0m即將開始[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m風險：[0m
+                    [0m正常[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-4"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"border-b pb-4"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-base font-semibold"[39m
+              [36m>[39m
+                [0m案件操作[0m
+              [36m</h2>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+              [36m>[39m
+                [36m<div>[39m
+                  [36m<div>[39m
+                    [36m<label[39m
+                      [33mclass[39m=[32m"text-sm"[39m
+                    [36m>[39m
+                      [0m搜尋[0m
+                      [0m負責同事[0m
+                      [36m<input[39m
+                        [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                        [33mvalue[39m=[32m""[39m
+                      [36m/>[39m
+                    [36m</label>[39m
+                    [36m<p[39m
+                      [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                    [36m>[39m
+                      [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                    [36m</p>[39m
+                    [36m<label[39m
+                      [33mclass[39m=[32m"text-sm font-medium"[39m
+                      [33mfor[39m=[32m"owner-id"[39m
+                    [36m>[39m
+                      [0m負責同事[0m
+                    [36m</label>[39m
+                    [36m<select[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                      [33mid[39m=[32m"owner-id"[39m
+                    [36m>[39m
+                      [36m<option[39m
+                        [33mvalue[39m=[32m""[39m
+                      [36m>[39m
+                        [0m選擇負責同事[0m
+                      [36m</option>[39m
+                      [36m<option[39m
+                        [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                      [36m>[39m
+                        [0mIris Wong[0m
+                        [0m · [0m
+                        [0m同事[0m
+                        [0m · Annual return[0m
+                      [36m</option>[39m
+                      [36m<option[39m
+                        [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                      [36m>[39m
+                        [0mCalvin Ho[0m
+                        [0m · [0m
+                        [0m同事[0m
+                        [0m · Annual return[0m
+                      [36m</option>[39m
+                    [36m</select>[39m
+                  [36m</div>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opac...
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:852:65
+    850|   const button = screen.getByRole("button", { name: "加入備註" });
+    851|   act(() => { button.click(); button.click(); });
+    852|   await waitFor(() => expect(serverFns.addAnnualReturnCaseNote).toHave…
+       |                                                                 ^
+    853|   serverFns.addAnnualReturnCaseNote.mockRejectedValue(new Error("Unkno…
+    854|   await act(async () => { reject(new Error("Response lost")); });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > does not unlock note writes from query cancellation or cache changes while independent readback is pending
+TestingLibraryElementError: Unable to find role="button" and name "重新核對備註結果"
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m>[39m
+    [0mKeep this draft.[0m
+  [36m</textarea>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-2 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mNote response lost[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m暫時沒有備註。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m>[39m
+    [0mKeep this draft.[0m
+  [36m</textarea>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-2 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mNote response lost[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m暫時沒有備註。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ uncertainNote src/features/annual-return/components/production-case-detail.interaction.test.tsx:795:21
+    793|   fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "…
+    794|   fireEvent.click(screen.getByRole("button", { name: "加入備註" }));
+    795|   await notePanel().findByRole("button", { name: "重新核對備註結果" });
+       |                     ^
+    796|   return rendered;
+    797| }
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:861:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > does not mistake an older pending notes read for reconciliation after an uncertain create
+TestingLibraryElementError: Unable to find role="button" and name "重新核對備註結果"
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m>[39m
+    [0mPending note[0m
+  [36m</textarea>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-2 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mUnknown result[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m暫時沒有備註。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m>[39m
+    [0mPending note[0m
+  [36m</textarea>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-2 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mUnknown result[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m暫時沒有備註。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:889:37
+    887|   await waitFor(() => expect(serverFns.listAnnualReturnCaseNotes).toHa…
+    888|   await act(async () => { reject(new Error("Unknown result")); });
+    889|   fireEvent.click(await notePanel().findByRole("button", { name: "重新核對…
+       |                                     ^
+    890|   await waitFor(() => expect(serverFns.listAnnualReturnCaseNotes).toHa…
+    891|   await act(async () => { finishOld([]); });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > keeps the note draft blocked on unavailable readback: null
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > keeps the note draft blocked on unavailable readback: undefined
+TestingLibraryElementError: Unable to find role="button" and name "重新核對備註結果"
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m>[39m
+    [0mKeep this draft.[0m
+  [36m</textarea>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-2 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mNote response lost[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m暫時沒有備註。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m>[39m
+    [0mKeep this draft.[0m
+  [36m</textarea>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-2 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mNote response lost[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m暫時沒有備註。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ uncertainNote src/features/annual-return/components/production-case-detail.interaction.test.tsx:795:21
+    793|   fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "…
+    794|   fireEvent.click(screen.getByRole("button", { name: "加入備註" }));
+    795|   await notePanel().findByRole("button", { name: "重新核對備註結果" });
+       |                     ^
+    796|   return rendered;
+    797| }
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:899:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > keeps a newer draft typed during a successful pending submission
+AssertionError: expected '' to be 'New unsaved draft' // Object.is equality
+
+- Expected
++ Received
+
+- New unsaved draft
+
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:919:72
+    917|   fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "…
+    918|   await act(async () => { finish({}); });
+    919|   expect((screen.getByLabelText("案件備註") as HTMLTextAreaElement).value)…
+       |                                                                        ^
+    920|   expect(serverFns.addAnnualReturnCaseNote).toHaveBeenLastCalledWith({…
+    921| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > isolates note uncertainty and late recovery from a newly opened case draft
+TestingLibraryElementError: Unable to find role="button" and name "重新核對備註結果"
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m>[39m
+    [0mKeep this draft.[0m
+  [36m</textarea>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-2 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mNote response lost[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m暫時沒有備註。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m>[39m
+    [0mKeep this draft.[0m
+  [36m</textarea>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-2 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mNote response lost[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [36m>[39m
+      [0m暫時沒有備註。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ uncertainNote src/features/annual-return/components/production-case-detail.interaction.test.tsx:795:21
+    793|   fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "…
+    794|   fireEvent.click(screen.getByRole("button", { name: "加入備註" }));
+    795|   await notePanel().findByRole("button", { name: "重新核對備註結果" });
+       |                     ^
+    796|   return rendered;
+    797| }
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:924:37
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 18 passed (28)
+   Start at  04:33:23
+   Duration  15.28s (transform 1.09s, setup 0ms, import 1.57s, tests 11.92s, environment 1.53s)
