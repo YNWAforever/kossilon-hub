@@ -44,6 +44,9 @@ export function ProductionPaymentReview({
   canBulk?: boolean;
 }) {
   const client = useQueryClient();
+  const recoveryInFlight = useRef(false);
+  const [reconciling, setReconciling] = useState(false);
+  const [uncertainCases, setUncertainCases] = useState<Set<string>>(() => new Set());
   const casesQuery = useInfiniteQuery({
     queryKey: [...annualReturnQueryKeys.list({ paymentEvidence: true }), actorScope],
     initialPageParam: undefined as string | undefined,
@@ -121,6 +124,34 @@ export function ProductionPaymentReview({
             document={document}
             readBlocked={documentsQuery.isError && !documentsQuery.isFetchNextPageError}
             onUpdated={updated}
+            recovery={{
+              pending: reconciling,
+              start: () => {
+                if (recoveryInFlight.current) return false;
+                recoveryInFlight.current = true;
+                setReconciling(true);
+                return true;
+              },
+              finish: () => {
+                recoveryInFlight.current = false;
+                setReconciling(false);
+              },
+            }}
+            needsReconciliation={uncertainCases.has(`${actorScope}:${document.caseId}`)}
+            setNeedsReconciliation={(required) => {
+              setUncertainCases((previous) => {
+                const next = new Set(previous);
+                const key = `${actorScope}:${document.caseId}`;
+                if (required) next.add(key);
+                else next.delete(key);
+                return next;
+              });
+            }}
+            refreshDocuments={async () => {
+              // Start a fresh read; joining fetchNextPage would leave old proofs stale.
+              const result = await documentsQuery.refetch({ cancelRefetch: true });
+              return !result.isError;
+            }}
           />
         ))}
       </section>
@@ -195,11 +226,19 @@ function PaymentEvidenceContextRow({
   actorScope,
   document,
   readBlocked,
+  refreshDocuments,
+  recovery,
+  needsReconciliation,
+  setNeedsReconciliation,
   onUpdated,
 }: {
   actorScope: string;
   document: DocumentSummary;
   readBlocked: boolean;
+  refreshDocuments: () => Promise<boolean>;
+  recovery: { pending: boolean; start: () => boolean; finish: () => void };
+  needsReconciliation: boolean;
+  setNeedsReconciliation: (required: boolean) => void;
   onUpdated: (case_: AnnualReturnCase) => void;
 }) {
   // A proof's review context must not depend on paging the unrelated case list.
@@ -210,6 +249,39 @@ function PaymentEvidenceContextRow({
     queryFn: () => getAnnualReturnCase({ data: { id: document.caseId! } }),
     retry: false,
   });
+  // The actor/case latch covers every proof, including when one disappears.
+  // A background refresh must not unlock writes before explicit reconciliation.
+  if (needsReconciliation) {
+    return (
+      <div role="alert" className="space-y-2 p-4">
+        <p>
+          {document.fileName}：未能確認付款覆核結果。請先重新核對案件及憑證；沒有自動重試付款操作。
+        </p>
+        <Button
+          className="min-h-11"
+          aria-label={`重新核對 ${document.fileName} 的付款結果`}
+          disabled={recovery.pending}
+          onClick={async () => {
+            // All rows share the document query. Serialize fresh recovery reads
+            // so a second row cannot cancel the first row's reconciliation.
+            if (!recovery.start()) return;
+            try {
+              const [caseResult, documentsOk] = await Promise.all([
+                caseQuery.refetch({ cancelRefetch: true }),
+                refreshDocuments(),
+              ]);
+              if (!caseResult.isError && caseResult.data?.id === document.caseId && documentsOk)
+                setNeedsReconciliation(false);
+            } finally {
+              recovery.finish();
+            }
+          }}
+        >
+          重新核對付款結果
+        </Button>
+      </div>
+    );
+  }
   if (caseQuery.isPending)
     return <LoadingRows label={`${document.fileName}：正在載入案件資料…`} rows={1} />;
   if (
@@ -241,6 +313,7 @@ function PaymentEvidenceContextRow({
       case_={caseQuery.data}
       refreshing={caseQuery.isFetching}
       onUpdated={onUpdated}
+      onMutationError={() => setNeedsReconciliation(true)}
     />
   );
 }
@@ -249,10 +322,12 @@ function PaymentEvidenceRow({
   case_,
   refreshing,
   onUpdated,
+  onMutationError,
 }: {
   document: DocumentSummary;
   case_: AnnualReturnCase;
   refreshing: boolean;
+  onMutationError: () => void;
   onUpdated: (case_: AnnualReturnCase) => void;
 }) {
   const submitting = useRef(false);
@@ -298,6 +373,7 @@ function PaymentEvidenceRow({
         },
       });
     },
+    onError: onMutationError,
     onSuccess: onUpdated,
     onSettled: () => {
       submitting.current = false;
@@ -315,6 +391,7 @@ function PaymentEvidenceRow({
         },
       });
     },
+    onError: onMutationError,
     onSuccess: onUpdated,
     onSettled: () => {
       submitting.current = false;
@@ -451,9 +528,6 @@ function PaymentEvidenceRow({
             </p>
           ))}
         {!safe ? <p>付款證據待安全掃描或版本核對，暫不可批准。</p> : null}
-        {record.isError || review.isError ? (
-          <p role="alert">未能保存付款覆核；可能版本或授權已更新，請重新載入案件。沒有自動重試。</p>
-        ) : null}
       </div>
     </article>
   );

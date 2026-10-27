@@ -412,3 +412,256 @@ it("requires document-list recovery before offering a proof's case retry", async
   expect(screen.queryByLabelText("憑證金額")).toBeNull();
   client.clear();
 });
+
+it.each(["record", "verified", "rejected"] as const)(
+  "requires read-only reconciliation after a failed %s command",
+  async (command) => {
+    const pendingEntry = {
+      id: "entry",
+      documentId: doc.id,
+      proofVersionId: doc.currentVersionId,
+      amount: 600,
+      receivedOn: "2026-10-23",
+      status: "pending",
+    };
+    if (command === "verified")
+      f.getCase.mockResolvedValue({
+        ...selectedCase,
+        payment: { ...selectedCase.payment, evidenceEntries: [pendingEntry] },
+      });
+    const mutation = command === "record" ? f.record : f.review;
+    mutation.mockRejectedValueOnce(new Error("Conflict or response lost"));
+    view();
+    const name =
+      command === "record"
+        ? "儲存憑證資料"
+        : command === "verified"
+          ? "批准此筆憑證金額"
+          : "退回補傳";
+    await screen.findByRole("button", { name });
+    if (command === "record") {
+      fireEvent.change(screen.getByLabelText("憑證金額"), { target: { value: "600" } });
+      fireEvent.change(screen.getByLabelText("憑證收款日期"), { target: { value: "2026-10-26" } });
+    } else if (command === "rejected")
+      fireEvent.change(screen.getByLabelText("具體退回原因"), { target: { value: "Unreadable" } });
+    fireEvent.click(screen.getByRole("button", { name }));
+    const recover = await screen.findByRole("button", {
+      name: `重新核對 ${doc.fileName} 的付款結果`,
+    });
+    expect(screen.queryByRole("button", { name })).toBeNull();
+    expect(mutation).toHaveBeenCalledTimes(1);
+    let finish!: (value: unknown) => void;
+    f.getCase.mockResolvedValue({
+      ...selectedCase,
+      readiness: { sourceVersion: "b".repeat(32) },
+      payment: {
+        ...selectedCase.payment,
+        receivedAmount: 1200,
+        balance: 600,
+        evidenceEntries:
+          command === "record"
+            ? [pendingEntry]
+            : command === "verified"
+              ? [{ ...pendingEntry, status: "verified" }]
+              : [],
+        proofReturns:
+          command === "rejected"
+            ? [
+                {
+                  documentId: doc.id,
+                  proofVersionId: doc.currentVersionId,
+                  reasonCode: "unreadable",
+                  reasonText: "Unreadable",
+                },
+              ]
+            : [],
+      },
+    });
+    f.documents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    fireEvent.click(recover);
+    await waitFor(() => expect(f.documents).toHaveBeenCalledTimes(2));
+    expect((recover as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(recover);
+    expect(mutation).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name })).toBeNull();
+    await act(async () => {
+      finish({ documents: [doc], nextCursor: null });
+    });
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: `重新核對 ${doc.fileName} 的付款結果` }),
+      ).toBeNull(),
+    );
+    expect(screen.getByText(/餘額：HK\$600.00/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name })).toBeNull();
+    expect(mutation).toHaveBeenCalledTimes(1);
+    expect(f.getCase).toHaveBeenCalledTimes(2);
+    expect(f.cases).toHaveBeenCalledTimes(1);
+  },
+);
+
+it("keeps writes blocked after failed reconciliation and permits only a new explicit command with fresh proof/version", async () => {
+  f.record.mockRejectedValueOnce(new Error("Response lost"));
+  view();
+  await screen.findByLabelText("憑證金額");
+  fireEvent.change(screen.getByLabelText("憑證金額"), { target: { value: "600" } });
+  fireEvent.change(screen.getByLabelText("憑證收款日期"), { target: { value: "2026-10-26" } });
+  fireEvent.click(screen.getByRole("button", { name: "儲存憑證資料" }));
+  const recoveryName = `重新核對 ${doc.fileName} 的付款結果`;
+  await screen.findByRole("button", { name: recoveryName });
+  f.getCase.mockResolvedValue({ ...selectedCase, readiness: { sourceVersion: "b".repeat(32) } });
+  f.documents.mockRejectedValueOnce(new Error("Document read failed"));
+  fireEvent.click(screen.getByRole("button", { name: recoveryName }));
+  await waitFor(() => expect(f.documents).toHaveBeenCalledTimes(2));
+  await waitFor(() =>
+    expect((screen.getByRole("button", { name: recoveryName }) as HTMLButtonElement).disabled).toBe(
+      false,
+    ),
+  );
+  expect(screen.queryByLabelText("憑證金額")).toBeNull();
+  expect(f.record).toHaveBeenCalledTimes(1);
+  f.documents.mockResolvedValue({
+    documents: [{ ...doc, currentVersionId: "fresh-proof" }],
+    nextCursor: null,
+  });
+  fireEvent.click(screen.getByRole("button", { name: recoveryName }));
+  await screen.findByLabelText("憑證金額");
+  expect((screen.getByLabelText("憑證金額") as HTMLInputElement).value).toBe("");
+  expect(f.record).toHaveBeenCalledTimes(1);
+  f.record.mockImplementation(() => new Promise(() => {}));
+  fireEvent.change(screen.getByLabelText("憑證金額"), { target: { value: "500" } });
+  fireEvent.change(screen.getByLabelText("憑證收款日期"), { target: { value: "2026-10-26" } });
+  fireEvent.click(screen.getByRole("button", { name: "儲存憑證資料" }));
+  await waitFor(() => expect(f.record).toHaveBeenCalledTimes(2));
+  expect(f.record).toHaveBeenLastCalledWith({
+    data: {
+      caseId,
+      paymentId: "payment-201",
+      documentId: doc.id,
+      proofVersionId: "fresh-proof",
+      expectedVersion: "b".repeat(32),
+      amount: "500",
+      receivedOn: "2026-10-26",
+    },
+  });
+});
+
+it.each([null, new Error("denied"), { ...selectedCase, id: "wrong-case" }])(
+  "does not unlock an unknown mutation result with unavailable case readback: %s",
+  async (result) => {
+    f.review.mockRejectedValue(new Error("Unknown result"));
+    view();
+    await screen.findByLabelText("具體退回原因");
+    fireEvent.change(screen.getByLabelText("具體退回原因"), { target: { value: "Unreadable" } });
+    fireEvent.click(screen.getByRole("button", { name: "退回補傳" }));
+    const name = `重新核對 ${doc.fileName} 的付款結果`;
+    await screen.findByRole("button", { name });
+    if (result instanceof Error) f.getCase.mockRejectedValue(result);
+    else f.getCase.mockResolvedValue(result);
+    fireEvent.click(screen.getByRole("button", { name }));
+    await waitFor(() => expect(f.getCase).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled).toBe(false),
+    );
+    expect(screen.queryByRole("button", { name: "退回補傳" })).toBeNull();
+    expect(f.review).toHaveBeenCalledTimes(1);
+    expect(f.record).not.toHaveBeenCalled();
+  },
+);
+
+it("blocks every proof for the same uncertain case, even if the failed proof disappears", async () => {
+  const second = { ...doc, id: "second-proof", fileName: "second.pdf" };
+  f.documents.mockResolvedValue({ documents: [doc, second], nextCursor: null });
+  f.review.mockRejectedValue(new Error("Unknown result"));
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  view("qa-team-a", client);
+  await screen.findAllByLabelText("具體退回原因");
+  const first = within(screen.getAllByRole("article")[0]);
+  fireEvent.change(first.getByLabelText("具體退回原因"), { target: { value: "Unreadable" } });
+  fireEvent.click(first.getByRole("button", { name: "退回補傳" }));
+  await screen.findByRole("button", { name: `重新核對 ${doc.fileName} 的付款結果` });
+  expect(screen.queryByRole("button", { name: "退回補傳" })).toBeNull();
+  f.documents.mockResolvedValue({ documents: [second], nextCursor: null });
+  await act(async () => {
+    await client.invalidateQueries({ queryKey: ["annual-returns", "payment"] });
+  });
+  expect(screen.getByRole("button", { name: "重新核對 second.pdf 的付款結果" })).toBeTruthy();
+  expect(screen.queryByLabelText("憑證金額")).toBeNull();
+  expect(f.review).toHaveBeenCalledTimes(1);
+  client.clear();
+});
+
+it("refreshes the original proof page instead of joining pending pagination during reconciliation", async () => {
+  let finishNext!: (value: unknown) => void;
+  f.documents
+    .mockResolvedValueOnce({ documents: [doc], nextCursor: "next" })
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishNext = resolve;
+        }),
+    )
+    .mockResolvedValue({ documents: [{ ...doc, uploadStatus: "rejected" }], nextCursor: null });
+  f.review.mockRejectedValue(new Error("Unknown result"));
+  view();
+  await screen.findByLabelText("具體退回原因");
+  fireEvent.click(screen.getByRole("button", { name: "載入更多付款憑證" }));
+  await waitFor(() => expect(f.documents).toHaveBeenCalledTimes(2));
+  fireEvent.change(screen.getByLabelText("具體退回原因"), { target: { value: "Unreadable" } });
+  fireEvent.click(screen.getByRole("button", { name: "退回補傳" }));
+  const name = `重新核對 ${doc.fileName} 的付款結果`;
+  fireEvent.click(await screen.findByRole("button", { name }));
+  await act(async () => {
+    finishNext({ documents: [], nextCursor: null });
+  });
+  await waitFor(() => expect(f.documents).toHaveBeenCalledTimes(3));
+  expect(f.documents).toHaveBeenLastCalledWith({
+    data: { category: "payment", limit: 100, cursor: undefined },
+  });
+  await waitFor(() => expect(screen.queryByRole("button", { name })).toBeNull());
+  expect((screen.getByRole("button", { name: "退回補傳" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expect(f.review).toHaveBeenCalledTimes(1);
+});
+
+it("serializes reconciliation across proof rows sharing the document read", async () => {
+  f.documents.mockResolvedValue({
+    documents: [doc, { ...doc, id: "second", fileName: "second.pdf" }],
+    nextCursor: null,
+  });
+  f.review.mockRejectedValue(new Error("Unknown result"));
+  view();
+  await screen.findAllByLabelText("具體退回原因");
+  fireEvent.change(screen.getAllByLabelText("具體退回原因")[0], {
+    target: { value: "Unreadable" },
+  });
+  fireEvent.click(screen.getAllByRole("button", { name: "退回補傳" })[0]);
+  const first = await screen.findByRole("button", { name: `重新核對 ${doc.fileName} 的付款結果` });
+  let finish!: (value: unknown) => void;
+  f.documents.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  act(() => {
+    first.click();
+    screen.getByRole("button", { name: "重新核對 second.pdf 的付款結果" }).click();
+  });
+  await waitFor(() => expect(f.documents).toHaveBeenCalledTimes(2));
+  expect(
+    (screen.getByRole("button", { name: "重新核對 second.pdf 的付款結果" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(true);
+  await act(async () => {
+    finish({ documents: [doc], nextCursor: null });
+  });
+  await screen.findByLabelText("憑證金額");
+  expect(f.review).toHaveBeenCalledTimes(1);
+});
