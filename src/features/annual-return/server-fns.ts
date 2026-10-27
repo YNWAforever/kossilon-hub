@@ -23,6 +23,7 @@ import {
   isAllowedStatusTransition,
 } from "./workflow";
 import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
+import { classifyManualReminderCommand } from "./reminder-command";
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
 import { deriveWorkViews } from "./work-views";
 import { ReadinessConflictError } from "./readiness";
@@ -84,7 +85,14 @@ export const queueAnnualReturnWhatsAppReminderSchema = z.object({
   caseId: z.string().guid(),
   recipientName: z.string().min(1),
   recipientPhone: z.string().min(3),
+  commandUuid: z.string().uuid(),
 });
+export const readAnnualReturnReminderCommandSchema = z
+  .object({
+    caseId: z.string().uuid(),
+    commandUuid: z.string().uuid(),
+  })
+  .strict();
 const updateChecklistItemSchema = z
   .object({
     caseId: z.string().guid(),
@@ -631,6 +639,7 @@ export async function queueAnnualReturnWhatsAppReminderMessageForActor(
     caseId: string;
     recipientName: string;
     recipientPhone: string;
+    commandUuid: string;
   },
   dependencies: AnnualReturnReminderCommandDependencies,
 ) {
@@ -673,6 +682,7 @@ export async function queueAnnualReturnWhatsAppReminderMessageForActor(
     recipientName: data.recipientName,
     actorAuthUserId: actor.authUserId,
     recipientPhone: data.recipientPhone,
+    commandUuid: data.commandUuid,
     today: hongKongBusinessDate(),
   });
 
@@ -682,7 +692,33 @@ export async function queueAnnualReturnWhatsAppReminderMessageForActor(
     currentStatus: result.case.currentStatus,
     messageId: result.message.id,
     messageStatus: result.message.status,
+    commandUuid: data.commandUuid,
+    idempotentReplay: result.message.idempotentReplay === true,
   };
+}
+
+export async function readAnnualReturnReminderCommandForActor(
+  actor: AuthenticatedActor,
+  input: { caseId: string; commandUuid: string },
+  dependencies: {
+    annualReturnRepository: Pick<
+      AnnualReturnRepository,
+      "assertCanMutateCase" | "readManualReminderOutbox"
+    >;
+  },
+) {
+  const data = readAnnualReturnReminderCommandSchema.parse(input);
+  const actorId = requireStaffUserId(actor);
+  await dependencies.annualReturnRepository.assertCanMutateCase(
+    data.caseId,
+    actorId,
+    "record_reminder",
+  );
+  const row = await dependencies.annualReturnRepository.readManualReminderOutbox({
+    caseId: data.caseId,
+    commandUuid: data.commandUuid,
+  });
+  return classifyManualReminderCommand(row);
 }
 
 export function assertAnnualReturnStatusActionAllowed(
@@ -1064,6 +1100,16 @@ export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
       await repository.assertCanMutateCase(data.caseId, actorId, "record_reminder");
       return repository.recordReminder({ ...data, actorId });
     }),
+  );
+
+export const readAnnualReturnReminderCommand = createServerFn({ method: "GET" })
+  .validator(readAnnualReturnReminderCommandSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      readAnnualReturnReminderCommandForActor(actor, data, {
+        annualReturnRepository: repository,
+      }),
+    ),
   );
 
 export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method: "POST" })

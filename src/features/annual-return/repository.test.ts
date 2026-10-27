@@ -1086,6 +1086,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           today: "2026-07-05",
         });
         const whatsAppRepository = createWhatsAppRepository({ sql: tx });
+        const reminderCommandUuid = "96000000-0000-4000-8000-000000000021";
         const result = await queueAnnualReturnWhatsAppReminder({
           annualReturnRepository,
           whatsAppRepository,
@@ -1093,6 +1094,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           actorId: USER_AMY_ID,
           recipientName: "Ada Director",
           recipientPhone: "+852 6123 4567",
+          commandUuid: reminderCommandUuid,
           today: "2026-07-05",
         });
 
@@ -1204,6 +1206,24 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
             actor_id: USER_AMY_ID,
           },
         ]);
+
+        const replay = await queueAnnualReturnWhatsAppReminder({
+          annualReturnRepository,
+          whatsAppRepository,
+          case_: (await annualReturnRepository.getCase(fixture.caseId))!,
+          actorId: USER_AMY_ID,
+          recipientName: "Ada Director",
+          recipientPhone: "+85261234567",
+          commandUuid: reminderCommandUuid,
+          today: "2026-07-05",
+        });
+        expect(replay.message.id).toBe(result.message.id);
+        expect(replay.message.idempotentReplay).toBe(true);
+        expect(replay.case.remindersSent).toBe(1);
+        const logsAfterReplay = await tx<{ count: number }[]>`
+          select count(*)::int as count from reminder_logs where case_id = ${fixture.caseId}
+        `;
+        expect(logsAfterReplay[0]?.count).toBe(1);
       });
     },
     INTEGRATION_TEST_TIMEOUT_MS,

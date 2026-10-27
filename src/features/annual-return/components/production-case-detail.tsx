@@ -27,6 +27,7 @@ import {
 import { annualReturnQueryKeys } from "../query-keys";
 import { DocumentPicker, StaffPicker } from "./scoped-pickers";
 import { createProductionCaseActions } from "./production-case-actions";
+import { useAnnualReturnReminderCommand } from "./use-reminder-command";
 import {
   getAnnualReturnCase,
   listAnnualReturnCaseHistory,
@@ -180,8 +181,22 @@ function CaseDetail({
     "none",
   );
   const noteBlocked = noteRecovery === "required" || noteRecovery === "reading";
-  const [recipientName, setRecipientName] = useState("");
-  const [recipientPhone, setRecipientPhone] = useState("");
+  const reminderLocked = Boolean(
+    caseQuery.data?.lockedAt ||
+    caseQuery.data?.completedAt ||
+    caseQuery.data?.currentStatus === "Completed",
+  );
+  const reminder = useAnnualReturnReminderCommand({
+    caseId,
+    actorScope,
+    locked: reminderLocked,
+    sendReminder: (input) => actions.sendReminder(input),
+    onQueued: () => {
+      toast.success("已排入 WhatsApp 提醒。");
+      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.detail(caseId) });
+      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.notifications(caseId) });
+    },
+  });
   const [filingReference, setFilingReference] = useState("");
   const [confirmationDocumentId, setConfirmationDocumentId] = useState("");
 
@@ -248,15 +263,6 @@ function CaseDetail({
       toast.success("已加入備註。");
       await queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.notes(caseId) });
       noteSubmission.current = null;
-    },
-  });
-  const reminderMutation = useMutation({
-    mutationKey: commandKey,
-    mutationFn: actions.sendReminder,
-    onSuccess: () => {
-      toast.success("已排入 WhatsApp 提醒。");
-      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.detail(caseId) });
-      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.notifications(caseId) });
     },
   });
   const packetMutation = useMutation({
@@ -904,37 +910,41 @@ function CaseDetail({
                 aria-label="提醒收件人姓名"
                 className="w-full"
                 placeholder="收件人姓名"
-                value={recipientName}
-                onChange={(event) => setRecipientName(event.target.value)}
+                value={reminder.recipientName}
+                onChange={(event) => reminder.setRecipientName(event.target.value)}
               />
               <Input
                 aria-label="提醒電話號碼"
                 className="w-full"
                 placeholder="+852..."
-                value={recipientPhone}
-                onChange={(event) => setRecipientPhone(event.target.value)}
+                value={reminder.recipientPhone}
+                onChange={(event) => reminder.setRecipientPhone(event.target.value)}
               />
               <Button
-                disabled={
-                  locked ||
-                  reminderMutation.isPending ||
-                  !recipientName.trim() ||
-                  recipientPhone.trim().length < 3
-                }
-                onClick={() =>
-                  reminderMutation.mutate({
-                    recipientName: recipientName.trim(),
-                    recipientPhone: recipientPhone.trim(),
-                  })
-                }
+                disabled={reminder.sendDisabled}
+                onClick={() => reminder.send()}
                 type="button"
               >
-                <PendingIcon pending={reminderMutation.isPending} />
+                <PendingIcon pending={reminder.pending} />
                 <Send aria-hidden className="h-4 w-4" />
                 發送提醒
               </Button>
+              {reminder.showReconcile ? (
+                <Button
+                  type="button"
+                  disabled={reminder.reconciling}
+                  onClick={() => void reminder.reconcile()}
+                >
+                  核對提醒結果
+                </Button>
+              ) : null}
             </div>
-            <MutationMessage error={reminderMutation.error} />
+            {reminder.statusMessage ? (
+              <p role="status" className="mt-2 text-sm text-muted-foreground">
+                {reminder.statusMessage}
+              </p>
+            ) : null}
+            {reminder.showMutationError ? <MutationMessage error={reminder.error} /> : null}
           </section>
         </aside>
       </div>

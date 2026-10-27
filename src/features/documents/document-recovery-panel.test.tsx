@@ -8,13 +8,16 @@ const rpc = vi.hoisted(() => ({
   createDocumentUploadIntent: vi.fn(),
   finalizeDocumentUpload: vi.fn(),
   readDocumentUploadReceipt: vi.fn(),
+  readOpenDocumentRecovery: vi.fn(),
 }));
 vi.mock("./server-fns", () => rpc);
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
-function setup() {
+function setup(
+  lookup: { state: string; intentId?: string; receiptState?: string } = { state: "absent" },
+) {
   rpc.previewDocumentRecovery.mockResolvedValue({
     documentId: "old",
     companyId: "company",
@@ -27,6 +30,7 @@ function setup() {
   });
   rpc.createDocumentUploadIntent.mockResolvedValue({ id: "new-intent", status: "created" });
   rpc.finalizeDocumentUpload.mockResolvedValue({ id: "new-document" });
+  rpc.readOpenDocumentRecovery.mockResolvedValue(lookup);
   const onRecovered = vi.fn();
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -154,19 +158,67 @@ describe("controlled document recovery", () => {
     expect(rpc.createDocumentUploadIntent).toHaveBeenCalledTimes(1);
     expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
   });
-  it("keeps unknown intent creation blocked without replay", async () => {
+  it("looks up a lost create before offering another explicit approve", async () => {
     setup();
     rpc.createDocumentUploadIntent.mockRejectedValue(new Error("lost response"));
     fireEvent.click(screen.getByRole("button", { name: "預覽受控補傳" }));
     await screen.findByText("保留舊登記；新檔案須重新掃描及覆核。");
     await chooseFile();
     fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
-    await screen.findByRole("alert");
+    await screen.findByText("先前的補傳沒有登記。可重新批准。");
+    expect(screen.getByRole("button", { name: "批准並補傳" })).toBeTruthy();
+    expect(rpc.createDocumentUploadIntent).toHaveBeenCalledTimes(1);
+    expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+    expect(rpc.readDocumentUploadReceipt).not.toHaveBeenCalled();
+    expect(rpc.readOpenDocumentRecovery).toHaveBeenCalledWith({
+      data: expect.objectContaining({ documentId: "old", fileName: "recovery.pdf" }),
+    });
+    expect(JSON.stringify(rpc.readOpenDocumentRecovery.mock.calls)).not.toContain(
+      "uploadRequestId",
+    );
+  });
+  it("reads an open recovery after a lost create and does not create again", async () => {
+    setup();
+    rpc.readOpenDocumentRecovery.mockResolvedValueOnce({ state: "absent" }).mockResolvedValueOnce({
+      state: "open",
+      intentId: "recovered-intent",
+      receiptState: "unconfirmed",
+    });
+    rpc.createDocumentUploadIntent.mockRejectedValue(new Error("lost response"));
+    rpc.readDocumentUploadReceipt.mockResolvedValue({
+      intentId: "recovered-intent",
+      state: "unconfirmed",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "預覽受控補傳" }));
+    await screen.findByText("保留舊登記；新檔案須重新掃描及覆核。");
+    await chooseFile();
+    fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    await screen.findByText(/recovered-intent/);
     expect(screen.queryByRole("button", { name: "批准並補傳" })).toBeNull();
     expect(rpc.createDocumentUploadIntent).toHaveBeenCalledTimes(1);
     expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
-    expect(screen.queryByRole("button", { name: "核對補傳結果" })).toBeNull();
-    expect(rpc.readDocumentUploadReceipt).not.toHaveBeenCalled();
+    expect(rpc.readDocumentUploadReceipt).toHaveBeenCalledWith({
+      data: { intentId: "recovered-intent" },
+    });
+  });
+  it("loads an open recovery on mount before offering a create", async () => {
+    setup({ state: "open", intentId: "existing-intent", receiptState: "unconfirmed" });
+    await screen.findByText(/existing-intent/);
+    expect(screen.queryByRole("button", { name: "批准並補傳" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "預覽受控補傳" })).toBeNull();
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+    expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+    expect(rpc.readOpenDocumentRecovery).toHaveBeenCalledWith({ data: { documentId: "old" } });
+    expect(rpc.readDocumentUploadReceipt).toHaveBeenCalledWith({
+      data: { intentId: "existing-intent" },
+    });
+  });
+  it("hides another actor's recovery without an intent id", async () => {
+    setup({ state: "blocked" });
+    await screen.findByText("已有其他補傳進行中，未能顯示該記錄。請勿再批准新的補傳。");
+    expect(screen.queryByRole("button", { name: "批准並補傳" })).toBeNull();
+    expect(screen.queryByText(/上載 ID/)).toBeNull();
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
   });
   it("checks a saved upload receipt without replaying either write", async () => {
     const onRecovered = setup();

@@ -40,7 +40,11 @@ import {
 } from "./workflow";
 import { toHongKongBusinessDate } from "@/lib/hong-kong-time";
 import { dueMilestone, type ReminderMilestone } from "./reminder-cadence";
-import { parseAnnualReturnReminderKey } from "./reminder-idempotency-key";
+import type { ManualReminderOutboxRow } from "./reminder-command";
+import {
+  annualReturnManualReminderIdempotencyKey,
+  parseAnnualReturnReminderKey,
+} from "./reminder-idempotency-key";
 import {
   assertAnnualReturnActionAllowed,
   assertAnnualReturnCaseCreatable,
@@ -507,6 +511,14 @@ export type AnnualReturnRepository = {
    * date, and a mistyped digit sends that to a stranger.
    */
   listCompanyContactPhones(companyId: string): Promise<string[]>;
+  /**
+   * One manual reminder command, read by the outbox key the queue writes.
+   * Does not insert, and does not return the recipient or the payload body.
+   */
+  readManualReminderOutbox(input: {
+    caseId: string;
+    commandUuid: string;
+  }): Promise<ManualReminderOutboxRow | null>;
   /**
    * Retracts the "client reminder sent" claim for a reminder whose outbox row can
    * never be delivered, and records the failure where a person will see it.
@@ -3001,6 +3013,44 @@ export function createAnnualReturnRepository(
     });
   }
 
+  async function readManualReminderOutbox(input: {
+    caseId: string;
+    commandUuid: string;
+  }): Promise<ManualReminderOutboxRow | null> {
+    const idempotencyKey = annualReturnManualReminderIdempotencyKey(
+      input.caseId,
+      input.commandUuid,
+    );
+    const rows = await sql<
+      {
+        status: string;
+        payload: postgres.JSONValue | null;
+        last_error_code: string | null;
+        dispatch_started_attempt: number | null;
+        redacted_at: string | null;
+      }[]
+    >`
+      select
+        status,
+        payload,
+        last_error_code,
+        dispatch_started_attempt,
+        redacted_at::text as redacted_at
+      from notification_outbox
+      where idempotency_key = ${idempotencyKey}
+      limit 1
+    `;
+    const row = rows[0];
+    if (!row) return null;
+    return {
+      status: row.status,
+      payload: row.payload,
+      lastErrorCode: row.last_error_code,
+      dispatchStartedAttempt: row.dispatch_started_attempt,
+      redactedAt: row.redacted_at,
+    };
+  }
+
   return {
     listCases,
     listWorkView: (input) => queryWorkView(sql, input, readToday()),
@@ -3029,6 +3079,7 @@ export function createAnnualReturnRepository(
     addNote,
     updateStatus,
     listCompanyContactPhones,
+    readManualReminderOutbox,
     reconcileFailedReminders,
     recordReminder,
     updateChecklistItem,

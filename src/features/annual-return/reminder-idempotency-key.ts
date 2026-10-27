@@ -10,21 +10,34 @@ export type ParsedAnnualReturnReminderKey = {
 };
 
 /**
+ * Manual reminder identity for a new send. The command UUID replaces the
+ * pre-increment counter and the phone. Historical rows stay
+ * `annual-return-reminder:{caseId}:{phone}:{remindersSent}` and are not rewritten.
+ */
+export function annualReturnManualReminderIdempotencyKey(
+  caseId: string,
+  commandUuid: string,
+): string {
+  return `${ANNUAL_RETURN_REMINDER_KEY_PREFIX}${caseId}:${commandUuid}`;
+}
+
+/**
  * Reads the two facts the reconciler is allowed to publish out of an outbox
  * idempotency key, and nothing else.
  *
- * TWO key shapes carry this prefix:
+ * Key shapes that carry this prefix:
  *
- *   automated  annual-return-reminder:{caseId}:{milestone}:{channel}:{recipient}
- *   manual     annual-return-reminder:{caseId}:{recipientPhone}:{remindersSent}
+ *   automated   annual-return-reminder:{caseId}:{milestone}:{channel}:{recipient}
+ *   manual      annual-return-reminder:{caseId}:{commandUuid}
+ *   historical  annual-return-reminder:{caseId}:{recipientPhone}:{remindersSent}
  *
- * The reconciler read segment 3 out of both as "the milestone". For a manual
- * reminder that segment is the client's PHONE NUMBER, which then went into
- * timeline_events.metadata.milestone -- mislabelled, and parked in a table the
- * outbox's 90-day redaction never reaches. So a segment is only a milestone if it
- * IS one of the milestones; anything else is reported as null rather than
- * guessed at, which also keeps a third key shape from leaking a recipient the
- * day someone adds one.
+ * The reconciler read segment 3 out of every shape as "the milestone". For a
+ * historical manual reminder that segment is the client's PHONE NUMBER, which
+ * then went into timeline_events.metadata.milestone -- mislabelled, and parked
+ * in a table the outbox's 90-day redaction never reaches. A command UUID is not
+ * a milestone either. So a segment is only a milestone if it IS one of the
+ * milestones; anything else is reported as null rather than guessed at, which
+ * also keeps a further key shape from leaking a recipient.
  *
  * Returning null rather than throwing on a malformed key is the point of it
  * being a parser. `${row.case_id}::uuid` was the first statement of every sweep

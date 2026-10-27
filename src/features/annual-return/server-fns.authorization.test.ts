@@ -19,6 +19,7 @@ import {
 } from "./server-fns";
 
 const caseId = "91000000-0000-4000-8000-000000000001";
+const reminderCommandUuid = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const ownerId = "20000000-0000-4000-8000-000000000002";
 const itemId = "30000000-0000-4000-8000-000000000003";
 const documentId = "40000000-0000-4000-8000-000000000004";
@@ -86,6 +87,7 @@ describe("production annual return command authorization", () => {
             caseId,
             recipientName: "Ada Chan",
             recipientPhone: "+85291234567",
+            commandUuid: reminderCommandUuid,
           },
           { annualReturnRepository: repository, whatsAppRepository },
         ),
@@ -619,7 +621,12 @@ describe("a manual reminder may only reach the case company's own contacts", () 
   function dependenciesFor(contactPhones: string[]) {
     const listCompanyContactPhones = vi.fn(async () => contactPhones);
     const recordReminder = vi.fn(async () => ({ id: caseId, remindersSent: 1 }));
-    const queueOutboundTemplateMessage = vi.fn(async () => ({ id: "msg-1", status: "queued" }));
+    const queueOutboundTemplateMessage = vi.fn(
+      async (_input: { idempotencyKey?: string; toPhone?: string }) => ({
+        id: "msg-1",
+        status: "queued" as const,
+      }),
+    );
     return {
       listCompanyContactPhones,
       queueOutboundTemplateMessage,
@@ -650,7 +657,12 @@ describe("a manual reminder may only reach the case company's own contacts", () 
     await expect(
       queueAnnualReturnWhatsAppReminderMessageForActor(
         staffActor,
-        { caseId, recipientName: "Ada Chan", recipientPhone: "+85299999999" },
+        {
+          caseId,
+          recipientName: "Ada Chan",
+          recipientPhone: "+85299999999",
+          commandUuid: reminderCommandUuid,
+        },
         dependencies,
       ),
     ).rejects.toThrow(/^Forbidden:/);
@@ -664,11 +676,23 @@ describe("a manual reminder may only reach the case company's own contacts", () 
 
     await queueAnnualReturnWhatsAppReminderMessageForActor(
       staffActor,
-      { caseId, recipientName: "Ada Chan", recipientPhone: "+85291234567" },
+      {
+        caseId,
+        recipientName: "Ada Chan",
+        recipientPhone: "+85291234567",
+        commandUuid: reminderCommandUuid,
+      },
       dependencies,
     );
 
     expect(queueOutboundTemplateMessage).toHaveBeenCalledOnce();
+    expect(queueOutboundTemplateMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        idempotencyKey: `annual-return-reminder:${caseId}:${reminderCommandUuid}`,
+        toPhone: "+85291234567",
+      }),
+    );
+    expect(queueOutboundTemplateMessage.mock.calls[0][0].idempotencyKey).not.toContain("852");
   });
 
   it("refuses when the company has no contacts at all", async () => {
@@ -677,7 +701,12 @@ describe("a manual reminder may only reach the case company's own contacts", () 
     await expect(
       queueAnnualReturnWhatsAppReminderMessageForActor(
         staffActor,
-        { caseId, recipientName: "Ada Chan", recipientPhone: "+85291234567" },
+        {
+          caseId,
+          recipientName: "Ada Chan",
+          recipientPhone: "+85291234567",
+          commandUuid: reminderCommandUuid,
+        },
         dependencies,
       ),
     ).rejects.toThrow(/^Forbidden:/);

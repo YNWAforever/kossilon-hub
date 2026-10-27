@@ -50,7 +50,7 @@ export function createProductionCaseActions(
     updatePayment: (input: { status: PaymentStatus; paymentProofDocumentId: string | null }) =>
       commands.updatePayment({ data: { caseId, ...input } }),
     addNote: (body: string) => commands.addNote({ data: { caseId, body } }),
-    sendReminder: (input: { recipientName: string; recipientPhone: string }) =>
+    sendReminder: (input: { recipientName: string; recipientPhone: string; commandUuid: string }) =>
       commands.sendReminder({ data: { caseId, ...input } }),
     submitPacket: () =>
       commands.updateStatus({ data: { caseId, nextStatus: "NAR1 prepared", ...version() } }),

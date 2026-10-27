@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 import { annualReturnQueryKeys } from "../query-keys";
 import type { AnnualReturnCase } from "../types";
+import { annualReturnReminderCommandStorageKey } from "../reminder-command";
 import { ProductionAnnualReturnCaseDetail } from "./production-case-detail";
 
 const serverFns = vi.hoisted(() => ({
@@ -21,6 +22,7 @@ const serverFns = vi.hoisted(() => ({
   updateAnnualReturnPayment: vi.fn(),
   addAnnualReturnCaseNote: vi.fn(),
   queueAnnualReturnWhatsAppReminderMessage: vi.fn(),
+  readAnnualReturnReminderCommand: vi.fn(),
   updateAnnualReturnFilingProof: vi.fn(),
   listAssignableStaff: vi.fn(),
 }));
@@ -138,6 +140,7 @@ afterEach(() => {
 });
 
 beforeEach(() => {
+  sessionStorage.clear();
   vi.clearAllMocks();
   serverFns.getAnnualReturnCase.mockReset();
   serverFns.getAnnualReturnCase.mockResolvedValue(caseItem);
@@ -154,6 +157,10 @@ beforeEach(() => {
   serverFns.addAnnualReturnCaseNote.mockReset();
   serverFns.addAnnualReturnCaseNote.mockResolvedValue({});
   serverFns.queueAnnualReturnWhatsAppReminderMessage.mockResolvedValue({});
+  serverFns.readAnnualReturnReminderCommand.mockResolvedValue({
+    state: "queued",
+    messageId: "message-1",
+  });
   serverFns.updateAnnualReturnFilingProof.mockResolvedValue(caseItem);
   serverFns.listAssignableStaff.mockResolvedValue([
     { id: ownerId, name: "Iris Wong", role: "Staff", teamId: null, teamName: "Annual return" },
@@ -334,8 +341,23 @@ describe("ProductionAnnualReturnCaseDetail", () => {
           caseId,
           recipientName: "Ada Chan",
           recipientPhone: "+85291234567",
+          commandUuid: expect.stringMatching(
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+          ),
         },
       });
+      const sentCommand =
+        serverFns.queueAnnualReturnWhatsAppReminderMessage.mock.calls[0][0].data.commandUuid;
+      expect(
+        sessionStorage.getItem(
+          annualReturnReminderCommandStorageKey({
+            actorScope: "session",
+            caseId,
+            recipientName: "Ada Chan",
+            recipientPhone: "+85291234567",
+          }),
+        ),
+      ).toContain(sentCommand);
       expect(serverFns.updateAnnualReturnStatus).toHaveBeenNthCalledWith(2, {
         data: { caseId, nextStatus: "NAR1 prepared", expectedVersion: "a".repeat(32) },
       });

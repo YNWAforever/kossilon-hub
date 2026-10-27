@@ -161,15 +161,17 @@ describe("an unknown dispatch outcome is recorded as unknown", () => {
 });
 
 /**
- * Two key shapes carry the 'annual-return-reminder:' prefix, and the reconciler
- * read segment 3 out of both as "the milestone":
+ * Key shapes carry the 'annual-return-reminder:' prefix, and the reconciler
+ * read segment 3 out of each as "the milestone":
  *
- *   automated  annual-return-reminder:{caseId}:{milestone}:{channel}:{recipient}
- *   manual     annual-return-reminder:{caseId}:{phone}:{remindersSent}
+ *   automated   annual-return-reminder:{caseId}:{milestone}:{channel}:{recipient}
+ *   manual      annual-return-reminder:{caseId}:{commandUuid}
+ *   historical  annual-return-reminder:{caseId}:{phone}:{remindersSent}
  *
- * For a manual reminder segment 3 is the client's PHONE NUMBER, which was then
- * written into timeline_events.metadata.milestone -- mislabelled, and parked in a
- * table the outbox's 90-day redaction does not reach.
+ * For a historical manual reminder segment 3 is the client's PHONE NUMBER, which
+ * was then written into timeline_events.metadata.milestone -- mislabelled, and
+ * parked in a table the outbox's 90-day redaction does not reach. A command UUID
+ * is not a milestone either.
  */
 describe("parseAnnualReturnReminderKey", () => {
   const caseId = "11111111-2222-3333-4444-555555555555";
@@ -180,7 +182,16 @@ describe("parseAnnualReturnReminderKey", () => {
     ).toEqual({ caseId, milestone: "1_week" });
   });
 
-  it("never reports a milestone for a manual key, whose segment 3 is a phone number", () => {
+  it("never reports a milestone for a command UUID, and does not publish that UUID", () => {
+    const commandUuid = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+    const parsed = parseAnnualReturnReminderKey(`annual-return-reminder:${caseId}:${commandUuid}`);
+
+    expect(parsed).toEqual({ caseId, milestone: null });
+    const { caseId: _caseId, ...rest } = parsed ?? {};
+    expect(JSON.stringify(rest)).not.toContain(commandUuid);
+  });
+
+  it("never reports a milestone for a historical manual key, whose segment 3 is a phone number", () => {
     const phone = "+85291234567";
     const parsed = parseAnnualReturnReminderKey(`annual-return-reminder:${caseId}:${phone}:2`);
 

@@ -7,6 +7,8 @@ import {
   finalizeDocumentUpload,
   previewDocumentRecovery,
   readDocumentUploadReceipt,
+  readOpenDocumentRecovery,
+  type OpenDocumentRecoveryLookup,
 } from "./server-fns";
 
 export function DocumentRecoveryPanel({
@@ -19,6 +21,32 @@ export function DocumentRecoveryPanel({
   return (
     <DocumentRecoverySession key={documentId} documentId={documentId} onRecovered={onRecovered} />
   );
+}
+
+type LookupPhase =
+  | { phase: "reading" }
+  | { phase: "failed" }
+  | { phase: "absent" }
+  | { phase: "blocked" }
+  | { phase: "open"; intentId: string };
+
+async function fileFingerprint(file: File) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const checksum = Array.from(new Uint8Array(digest), (value) =>
+    value.toString(16).padStart(2, "0"),
+  ).join("");
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 8192)
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+  return {
+    bytes,
+    binary,
+    fileName: file.name,
+    contentType: file.type,
+    sizeBytes: file.size,
+    checksum,
+  };
 }
 
 function DocumentRecoverySession({
@@ -43,8 +71,59 @@ function DocumentRecoverySession({
   const [attempted, setAttempted] = useState(false);
   const admitted = useRef(false);
   const writeStarted = useRef(false);
+  const intentIdRef = useRef<string | null>(null);
   const [preparationFailed, setPreparationFailed] = useState(false);
   const [intentId, setIntentId] = useState<string | null>(null);
+  const [lookup, setLookup] = useState<LookupPhase>({ phase: "reading" });
+
+  function rememberIntent(id: string) {
+    intentIdRef.current = id;
+    setIntentId(id);
+  }
+
+  function applyLookup(result: OpenDocumentRecoveryLookup) {
+    if (!active.current) return;
+    if (result.state === "open") {
+      rememberIntent(result.intentId);
+      setLookup({ phase: "open", intentId: result.intentId });
+      return;
+    }
+    if (result.state === "blocked") {
+      setLookup({ phase: "blocked" });
+      return;
+    }
+    setLookup({ phase: "absent" });
+    admitted.current = false;
+    writeStarted.current = false;
+    setAttempted(false);
+  }
+
+  async function reconcile(fileFields?: {
+    fileName: string;
+    contentType: string;
+    sizeBytes: number;
+    checksum: string;
+  }) {
+    setLookup({ phase: "reading" });
+    try {
+      const result = await readOpenDocumentRecovery({
+        data: { documentId, ...fileFields },
+      });
+      applyLookup(result);
+      return result;
+    } catch {
+      if (active.current) setLookup({ phase: "failed" });
+      return null;
+    }
+  }
+
+  useEffect(() => {
+    void reconcile();
+    // Reload has the source document id and no selected file. The lookup is the
+    // read that has to finish before another create is offered.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentId]);
+
   const preview = useMutation({
     mutationFn: () => previewDocumentRecovery({ data: { documentId } }),
     retry: false,
@@ -56,14 +135,17 @@ function DocumentRecoverySession({
       if (!source || !file || !reason.trim()) throw new Error("Preview, file and reason required.");
       if (file.size <= 0 || file.size > 10 * 1024 * 1024)
         throw new Error("File size is outside the allowed range.");
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      const digest = await crypto.subtle.digest("SHA-256", bytes);
-      const checksum = Array.from(new Uint8Array(digest), (value) =>
-        value.toString(16).padStart(2, "0"),
-      ).join("");
-      let binary = "";
-      for (let offset = 0; offset < bytes.length; offset += 8192)
-        binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+      const fingerprint = await fileFingerprint(file);
+      const found = await readOpenDocumentRecovery({
+        data: {
+          documentId: source.documentId,
+          fileName: fingerprint.fileName,
+          contentType: fingerprint.contentType,
+          sizeBytes: fingerprint.sizeBytes,
+          checksum: fingerprint.checksum,
+        },
+      });
+      if (found.state !== "absent") return { kind: "lookup" as const, found };
       // Once this boundary is crossed, a rejected response may hide a saved write.
       writeStarted.current = true;
       const intent = await createDocumentUploadIntent({
@@ -71,10 +153,10 @@ function DocumentRecoverySession({
           companyId: source.companyId,
           caseId: source.caseId ?? undefined,
           category: source.category,
-          fileName: file.name,
-          contentType: file.type,
-          sizeBytes: file.size,
-          checksum,
+          fileName: fingerprint.fileName,
+          contentType: fingerprint.contentType,
+          sizeBytes: fingerprint.sizeBytes,
+          checksum: fingerprint.checksum,
           recovery: {
             documentId: source.documentId,
             expectedToken: source.versionToken,
@@ -82,12 +164,21 @@ function DocumentRecoverySession({
           },
         },
       });
-      setIntentId(intent.id);
+      rememberIntent(intent.id);
       if (intent.status !== "created")
         throw new Error("Recovery already received; reconcile before further upload.");
-      return finalizeDocumentUpload({ data: { intentId: intent.id, bodyBase64: btoa(binary) } });
+      await finalizeDocumentUpload({
+        data: { intentId: intent.id, bodyBase64: btoa(fingerprint.binary) },
+      });
+      return { kind: "uploaded" as const };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      if (result.kind === "lookup") {
+        applyLookup(result.found);
+        admitted.current = false;
+        setAttempted(false);
+        return;
+      }
       if (active.current) onRecovered();
     },
     onError: () => {
@@ -95,18 +186,47 @@ function DocumentRecoverySession({
         admitted.current = false;
         setAttempted(false);
         setPreparationFailed(true);
+        return;
       }
+      if (intentIdRef.current) return;
+      setLookup({ phase: "reading" });
+      void (async () => {
+        try {
+          const fingerprint = file ? await fileFingerprint(file) : null;
+          await reconcile(
+            fingerprint
+              ? {
+                  fileName: fingerprint.fileName,
+                  contentType: fingerprint.contentType,
+                  sizeBytes: fingerprint.sizeBytes,
+                  checksum: fingerprint.checksum,
+                }
+              : undefined,
+          );
+        } catch {
+          if (active.current) setLookup({ phase: "failed" });
+        }
+      })();
     },
   });
-  async function checkReceipt() {
-    if (!intentId || readingReceipt.current) return;
+
+  const openIntentId = lookup.phase === "open" ? lookup.intentId : null;
+  useEffect(() => {
+    if (!openIntentId) return;
+    void checkReceipt(openIntentId);
+    // checkReceipt is stable enough for one intent id; a new id runs again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openIntentId]);
+
+  async function checkReceipt(id = intentIdRef.current) {
+    if (!id || readingReceipt.current) return;
     readingReceipt.current = true;
     setCheckingReceipt(true);
     setReceiptState(null);
     try {
-      const receipt = await readDocumentUploadReceipt({ data: { intentId } });
+      const receipt = await readDocumentUploadReceipt({ data: { intentId: id } });
       if (!active.current) return;
-      if (receipt?.intentId !== intentId || receipt.state !== "received" || !receipt.documentId) {
+      if (receipt?.intentId !== id || receipt.state !== "received" || !receipt.documentId) {
         setReceiptState("unconfirmed");
         return;
       }
@@ -119,35 +239,74 @@ function DocumentRecoverySession({
       if (active.current) setCheckingReceipt(false);
     }
   }
+
   if (receiptState === "received")
     return <p role="status">已核實補傳登記。請在文件庫查看目前掃描及覆核狀態。</p>;
+  if (lookup.phase === "blocked")
+    return (
+      <p role="alert" className="text-sm text-status-orange-text">
+        已有其他補傳進行中，未能顯示該記錄。請勿再批准新的補傳。
+      </p>
+    );
+  if (lookup.phase === "failed")
+    return (
+      <div className="space-y-2 text-sm">
+        <p role="alert">未能核對補傳記錄。請先重試核對，不要批准新的補傳。</p>
+        <Button type="button" onClick={() => void reconcile()}>
+          重新核對補傳
+        </Button>
+      </div>
+    );
+  if (lookup.phase === "open")
+    return (
+      <div className="space-y-2 text-sm">
+        <p role="status">
+          已有未完成補傳。請先核對結果，不要再批准新的補傳。
+          {openIntentId ? ` 上載 ID：${openIntentId}` : ""}
+        </p>
+        <Button
+          type="button"
+          disabled={checkingReceipt}
+          onClick={() => void checkReceipt(openIntentId)}
+        >
+          核對補傳結果
+        </Button>
+        {receiptState === "unconfirmed" ? (
+          <p role="status">尚未核實補傳登記。請勿重複補傳；可稍後再次核對。</p>
+        ) : null}
+      </div>
+    );
   if (upload.isSuccess)
     return (
       <p role="status" className="text-sm">
         已收取補傳檔案，等待掃描及覆核。
       </p>
     );
-  if (upload.isError && !preparationFailed)
+  if (upload.isError && !preparationFailed && intentId)
     return (
       <div className="space-y-2 text-sm">
         <p role="alert" className="text-status-orange-text">
           補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。
           {intentId ? ` 上載 ID：${intentId}` : ""}
         </p>
-        {intentId ? (
-          <Button type="button" disabled={checkingReceipt} onClick={() => void checkReceipt()}>
-            核對補傳結果
-          </Button>
-        ) : null}
+        <Button type="button" disabled={checkingReceipt} onClick={() => void checkReceipt()}>
+          核對補傳結果
+        </Button>
         {receiptState === "unconfirmed" ? (
           <p role="status">尚未核實補傳登記。請勿重複補傳；可稍後再次核對。</p>
         ) : null}
       </div>
     );
+  if (upload.isError && !preparationFailed && lookup.phase === "reading")
+    return <p role="status">正在核對未完成補傳。</p>;
+
   return (
     <div className="space-y-2 text-sm">
       {preparationFailed ? (
         <p role="alert">無法準備檔案，尚未提交上載。請重新選擇檔案後重試。</p>
+      ) : null}
+      {upload.isError && lookup.phase === "absent" ? (
+        <p role="status">先前的補傳沒有登記。可重新批准。</p>
       ) : null}
       {!preview.data ? (
         <Button type="button" disabled={preview.isPending} onClick={() => preview.mutate()}>
@@ -167,7 +326,7 @@ function DocumentRecoverySession({
               aria-label="補傳檔案"
               type="file"
               accept=".pdf,.png,.jpg,.jpeg"
-              disabled={attempted}
+              disabled={attempted || lookup.phase !== "absent"}
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
               className="mt-1 block w-full"
             />
@@ -178,7 +337,7 @@ function DocumentRecoverySession({
               aria-label="核對原因"
               maxLength={500}
               value={reason}
-              disabled={attempted}
+              disabled={attempted || lookup.phase !== "absent"}
               onChange={(event) => setReason(event.target.value)}
               className="mt-1 w-full"
             />
@@ -186,9 +345,9 @@ function DocumentRecoverySession({
           <Button
             type="button"
             variant="primary"
-            disabled={!file || !reason.trim() || attempted}
+            disabled={!file || !reason.trim() || attempted || lookup.phase !== "absent"}
             onClick={() => {
-              if (admitted.current) return;
+              if (admitted.current || lookup.phase !== "absent") return;
               admitted.current = true;
               setPreparationFailed(false);
               setAttempted(true);

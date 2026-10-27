@@ -11,6 +11,7 @@ import type { AnnualReturnRepository } from "./repository";
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 
 const actorId = "20000000-0000-0000-0000-000000000003";
+const commandUuid = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
 const harbourCase: AnnualReturnCase = {
   id: "40000000-0000-0000-0000-000000000001",
@@ -67,6 +68,7 @@ describe("annual return WhatsApp reminders", () => {
         actorId,
         recipientName: "Ada Director",
         recipientPhone: "+852 6123 4567",
+        commandUuid,
         today: "2026-07-13",
       }),
     ).toEqual({
@@ -85,8 +87,7 @@ describe("annual return WhatsApp reminders", () => {
         toPhone: "+852 6123 4567",
         contactName: "Ada Director",
         templateName: "annual_return_manual_reminder",
-        idempotencyKey:
-          "annual-return-reminder:40000000-0000-0000-0000-000000000001:+85261234567:1",
+        idempotencyKey: `annual-return-reminder:${harbourCase.id}:${commandUuid}`,
         languageCode: "en",
         category: "annual_return",
         body: draftBody,
@@ -137,6 +138,7 @@ describe("annual return WhatsApp reminders", () => {
         actorId,
         recipientName: "Ada Director",
         recipientPhone: "+852 6123 4567",
+        commandUuid,
         today: "2026-07-13",
       }),
     ).resolves.toEqual({ case: updatedCase, message });
@@ -161,6 +163,7 @@ describe("annual return WhatsApp reminders", () => {
         actorId,
         recipientName: "Ada Director",
         recipientPhone: "+852 6123 4567",
+        commandUuid,
         today: "2026-07-13",
       }),
     ).rejects.toThrow("WhatsApp queue unavailable.");
@@ -173,11 +176,13 @@ describe("annual return WhatsApp reminders", () => {
         caseId: harbourCase.id,
         recipientName: "Ada Director",
         recipientPhone: "+852 6123 4567",
+        commandUuid,
       }),
     ).toEqual({
       caseId: harbourCase.id,
       recipientName: "Ada Director",
       recipientPhone: "+852 6123 4567",
+      commandUuid,
     });
 
     expect(() =>
@@ -190,40 +195,100 @@ describe("annual return WhatsApp reminders", () => {
   });
 });
 
-/**
- * queueOutboundTemplateMessage has taken an idempotencyKey since the follow-up
- * work — an advisory lock plus an outbox replay check — and this path never
- * passed one, so two clicks on "send reminder" sent the client two WhatsApp
- * messages and incremented remindersSent twice.
- */
 describe("annualReturnReminderIdempotencyKey", () => {
-  const base = { caseId: "case-1", recipientPhone: "+852 6123 4567", remindersSent: 0 };
+  const base = { caseId: harbourCase.id, commandUuid };
 
-  it("is stable for the same reminder, so concurrent submits collapse into one", () => {
+  it("is the case and the command UUID, so a replay of one click collapses", () => {
+    expect(annualReturnReminderIdempotencyKey(base)).toBe(
+      `annual-return-reminder:${harbourCase.id}:${commandUuid}`,
+    );
     expect(annualReturnReminderIdempotencyKey(base)).toBe(
       annualReturnReminderIdempotencyKey({ ...base }),
     );
   });
 
-  it("ignores phone formatting, which the UI does not normalise", () => {
-    expect(annualReturnReminderIdempotencyKey(base)).toBe(
-      annualReturnReminderIdempotencyKey({ ...base, recipientPhone: "+85261234567" }),
+  it("does not put the phone in the command identity", () => {
+    const key = annualReturnReminderIdempotencyKey(base);
+    expect(key.split(":")).toEqual(["annual-return-reminder", harbourCase.id, commandUuid]);
+    expect(key).not.toContain("852");
+    expect(annualReturnReminderIdempotencyKey(base)).not.toBe(
+      annualReturnReminderIdempotencyKey({
+        ...base,
+        commandUuid: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      }),
     );
   });
 
-  // The other half: a genuinely later reminder must still be allowed through.
-  it("changes once the reminder counter advances", () => {
-    expect(annualReturnReminderIdempotencyKey(base)).not.toBe(
-      annualReturnReminderIdempotencyKey({ ...base, remindersSent: 1 }),
-    );
+  it("keeps the phone on the message when two spellings share one command", () => {
+    const spaced = buildAnnualReturnWhatsAppReminderRequest({
+      case_: harbourCase,
+      actorId,
+      recipientName: "Ada Director",
+      recipientPhone: "+852 6123 4567",
+      commandUuid,
+      today: "2026-07-13",
+    });
+    const compact = buildAnnualReturnWhatsAppReminderRequest({
+      case_: harbourCase,
+      actorId,
+      recipientName: "Ada Director",
+      recipientPhone: "+85261234567",
+      commandUuid,
+      today: "2026-07-13",
+    });
+    expect(spaced.whatsAppMessage.idempotencyKey).toBe(compact.whatsAppMessage.idempotencyKey);
+    expect(spaced.whatsAppMessage.toPhone).toBe("+852 6123 4567");
+    expect(compact.whatsAppMessage.toPhone).toBe("+85261234567");
+    expect(spaced.annualReturnReminder.recipientPhone).toBe("+852 6123 4567");
   });
+});
 
-  it("separates cases and recipients", () => {
-    expect(annualReturnReminderIdempotencyKey(base)).not.toBe(
-      annualReturnReminderIdempotencyKey({ ...base, caseId: "case-2" }),
-    );
-    expect(annualReturnReminderIdempotencyKey(base)).not.toBe(
-      annualReturnReminderIdempotencyKey({ ...base, recipientPhone: "+85299999999" }),
+describe("queueAnnualReturnWhatsAppReminder replay", () => {
+  it("returns the existing message and does not record another reminder", async () => {
+    const recordReminder = vi.fn();
+    const message = {
+      id: "message-1",
+      provider: "woztell" as const,
+      providerMessageId: null,
+      direction: "outbound" as const,
+      status: "queued" as const,
+      contactId: "contact-1",
+      companyId: harbourCase.companyId,
+      caseId: harbourCase.id,
+      templateId: "template-1",
+      phoneE164: "+85261234567",
+      whatsAppId: null,
+      body: "draft",
+      payload: {},
+      sentBy: actorId,
+      receivedAt: null,
+      sentAt: null,
+      createdAt: "2026-07-05T12:00:00.000Z",
+      idempotentReplay: true,
+    };
+    const queueOutboundTemplateMessage = vi.fn(async () => message);
+
+    await expect(
+      queueAnnualReturnWhatsAppReminder({
+        annualReturnRepository: { recordReminder } as unknown as AnnualReturnRepository,
+        whatsAppRepository: {
+          queueOutboundTemplateMessage,
+        } as unknown as WhatsAppRepository,
+        case_: harbourCase,
+        actorId,
+        recipientName: "Ada Director",
+        recipientPhone: "+852 6123 4567",
+        commandUuid,
+        today: "2026-07-13",
+      }),
+    ).resolves.toEqual({ case: harbourCase, message });
+
+    expect(recordReminder).not.toHaveBeenCalled();
+    expect(queueOutboundTemplateMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        idempotencyKey: `annual-return-reminder:${harbourCase.id}:${commandUuid}`,
+        toPhone: "+852 6123 4567",
+      }),
     );
   });
 });
