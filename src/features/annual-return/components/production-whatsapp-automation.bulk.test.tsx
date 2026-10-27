@@ -118,3 +118,23 @@ it("retains bulk selection through denied draft refresh while blocking new selec
   expect(api.snapshot).not.toHaveBeenCalled();
   expect(api.send).not.toHaveBeenCalled();
 });
+
+it("keeps bulk selection mounted but disabled until uncertain-send readback succeeds", async () => {
+  api.drafts.mockResolvedValue([draft]);
+  api.send.mockRejectedValue(new Error("lost queue result"));
+  setup();
+  const selected = (await screen.findByLabelText("選取 Draft company")) as HTMLInputElement;
+  fireEvent.click(selected);
+  fireEvent.click(screen.getByRole("button", { name: "預覽並批准" }));
+  fireEvent.click(screen.getByRole("button", { name: "批准並加入隊列" }));
+  const retry = await screen.findByRole("button", { name: "重新核對跟進結果" });
+  expect(screen.getByLabelText("選取 Draft company")).toBe(selected);
+  expect(selected.checked).toBe(true);
+  expect((selected.closest("fieldset") as HTMLFieldSetElement).disabled).toBe(true);
+  api.drafts.mockResolvedValue([{ ...draft, status: "unknown" }]);
+  fireEvent.click(retry);
+  await screen.findByRole("button", { name: "與供應商核對" });
+  expect(screen.queryByRole("button", { name: "預覽並批准" })).toBeNull();
+  expect(api.send).toHaveBeenCalledTimes(1);
+  expect(api.snapshot).not.toHaveBeenCalled();
+});

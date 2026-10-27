@@ -184,7 +184,7 @@ describe("ProductionWhatsAppAutomation", () => {
     ]);
   });
 
-  it("disables only the active row and surfaces mutation errors", async () => {
+  it("serializes queueing across rows and requires readback after mutation errors", async () => {
     let rejectSend!: (error: Error) => void;
     serverFns.sendProductionFollowUp.mockImplementation(
       () =>
@@ -198,11 +198,12 @@ describe("ProductionWhatsAppAutomation", () => {
     fireEvent.click(await screen.findByRole("button", { name: "批准並加入隊列" }));
 
     await waitFor(() => expect((buttons[1] as HTMLButtonElement).disabled).toBe(true));
-    expect((buttons[0] as HTMLButtonElement).disabled).toBe(false);
-    expect((buttons[2] as HTMLButtonElement).disabled).toBe(false);
+    expect((buttons[0] as HTMLButtonElement).disabled).toBe(true);
+    expect((buttons[2] as HTMLButtonElement).disabled).toBe(true);
 
-    rejectSend(new Error("Unable to queue follow-up."));
-    expect((await screen.findByRole("alert")).textContent).toContain("Unable to queue follow-up.");
+    await act(async () => rejectSend(new Error("Unable to queue follow-up.")));
+    await screen.findByRole("button", { name: "重新核對跟進結果" });
+    expect(screen.queryByText("Unable to queue follow-up.")).toBeNull();
   });
 });
 
@@ -314,3 +315,136 @@ it.each([{ fresh: [] }, { fresh: [{ ...drafts[0], status: "queued" }] }])(
     expect(serverFns.sendProductionFollowUp).not.toHaveBeenCalled();
   },
 );
+
+async function failAutomationSend(
+  client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: 2, retryDelay: 0 } },
+  }),
+) {
+  serverFns.listProductionFollowUpDrafts.mockResolvedValue([drafts[0]]);
+  serverFns.sendProductionFollowUp.mockRejectedValue(new Error("private unknown queue result"));
+  renderAutomation(client);
+  fireEvent.click(await screen.findByRole("button", { name: "預覽並批准" }));
+  const submit = screen.getByRole("button", { name: "批准並加入隊列" });
+  act(() => {
+    submit.click();
+    submit.click();
+  });
+  await screen.findByRole("button", { name: "重新核對跟進結果" });
+  return client;
+}
+
+it.each(["queued", "unknown", "failed"] as const)(
+  "reads back uncertain send as %s without queue replay",
+  async (status) => {
+    await failAutomationSend();
+    expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "預覽並批准" })).toBeNull();
+    serverFns.listProductionFollowUpDrafts.mockResolvedValue([{ ...drafts[0], status }]);
+    fireEvent.click(screen.getByRole("button", { name: "重新核對跟進結果" }));
+    await screen.findByText("已重新核對跟進狀態。請先核對清單，沒有重新加入隊列。");
+    expect(screen.queryByRole("button", { name: "預覽並批准" })).toBeNull();
+    expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("private unknown queue result")).toBeNull();
+  },
+);
+
+it("keeps automation writes blocked through cache changes and permits only a fresh explicit approval", async () => {
+  const client = await failAutomationSend();
+  let resolve!: (value: unknown) => void;
+  serverFns.listProductionFollowUpDrafts.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  const retry = screen.getByRole("button", { name: "重新核對跟進結果" });
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  await waitFor(() => expect(serverFns.listProductionFollowUpDrafts).toHaveBeenCalledTimes(2));
+  expect((retry as HTMLButtonElement).disabled).toBe(true);
+  await act(async () => {
+    await client.cancelQueries();
+    for (const query of client
+      .getQueryCache()
+      .findAll({ queryKey: ["annual-returns", "notifications", "automation"] }))
+      client.setQueryData(query.queryKey, [drafts[0]]);
+  });
+  expect(screen.queryByRole("button", { name: "預覽並批准" })).toBeNull();
+  const fresh = {
+    ...drafts[0],
+    version: "reconciled-version",
+    messagePreview: "Reconciled current draft",
+  };
+  await act(async () => resolve([fresh]));
+  fireEvent.click(await screen.findByRole("button", { name: "預覽並批准" }));
+  await screen.findAllByText("Reconciled current draft");
+  expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(1);
+  serverFns.sendProductionFollowUp.mockResolvedValue({ replayed: false });
+  fireEvent.click(screen.getByRole("button", { name: "批准並加入隊列" }));
+  await waitFor(() => expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(2));
+  expect(serverFns.sendProductionFollowUp.mock.calls[1][0]).toEqual({
+    data: {
+      source: fresh.source,
+      caseId,
+      entityId: fresh.entityId,
+      expectedVersion: "reconciled-version",
+    },
+  });
+});
+
+it.each([{ fresh: null }, { fresh: [] }, { fresh: [{ ...drafts[0], version: "" }] }])(
+  "keeps unavailable automation result readback blocked: %j",
+  async ({ fresh }) => {
+    await failAutomationSend();
+    serverFns.listProductionFollowUpDrafts.mockResolvedValue(fresh);
+    fireEvent.click(screen.getByRole("button", { name: "重新核對跟進結果" }));
+    await screen.findByText("未能核實跟進結果，請稍後重新核對；沒有重試寫入。");
+    expect(screen.queryByRole("button", { name: "預覽並批准" })).toBeNull();
+    expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(1);
+  },
+);
+
+it("retains uncertainty after ordinary background draft success", async () => {
+  const client = await failAutomationSend();
+  await act(async () => {
+    await client.refetchQueries({ queryKey: ["annual-returns", "notifications", "automation"] });
+  });
+  expect(screen.getByRole("button", { name: "重新核對跟進結果" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "預覽並批准" })).toBeNull();
+  expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(1);
+});
+
+it("allows a read-only retry after denied result readback", async () => {
+  await failAutomationSend();
+  serverFns.listProductionFollowUpDrafts.mockRejectedValueOnce(new Error("private read failure"));
+  fireEvent.click(screen.getByRole("button", { name: "重新核對跟進結果" }));
+  await screen.findByText("未能核實跟進結果，請稍後重新核對；沒有重試寫入。");
+  expect(screen.queryByText("private read failure")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "重新核對跟進結果" }));
+  await screen.findByRole("button", { name: "預覽並批准" });
+  expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(1);
+});
+
+it("discards uncertain-send readback after leaving the actor session", async () => {
+  const client = await failAutomationSend();
+  let resolve!: (value: unknown) => void;
+  serverFns.listProductionFollowUpDrafts.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "重新核對跟進結果" }));
+  await waitFor(() => expect(serverFns.listProductionFollowUpDrafts).toHaveBeenCalledTimes(2));
+  const before = client.getQueriesData({
+    queryKey: ["annual-returns", "notifications", "automation"],
+  });
+  cleanup();
+  await act(async () => resolve([{ ...drafts[0], status: "queued" }]));
+  expect(
+    client.getQueriesData({ queryKey: ["annual-returns", "notifications", "automation"] }),
+  ).toEqual(before);
+});

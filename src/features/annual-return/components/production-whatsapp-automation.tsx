@@ -1,6 +1,6 @@
 import { LoadingRows } from "@/components/ui/skeleton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -37,14 +37,33 @@ const STATUS_LABELS: Record<ProductionFollowUpDraft["status"], string> = {
   blocked: "受阻",
 };
 
-export function ProductionWhatsAppAutomation({
+export function ProductionWhatsAppAutomation(
+  props: { actorScope?: string; canBulk?: boolean } = {},
+) {
+  return <AutomationSession key={props.actorScope ?? ""} {...props} />;
+}
+
+function AutomationSession({
   actorScope = "",
   canBulk = false,
 }: { actorScope?: string; canBulk?: boolean } = {}) {
+  const active = useRef(true);
+  const submitting = useRef(false);
+  const recovering = useRef(false);
+  const uncertainRef = useRef<ProductionFollowUpDraft | null>(null);
+  const [uncertain, setUncertain] = useState<ProductionFollowUpDraft | null>(null);
+  const [recovery, setRecovery] = useState<"none" | "reading" | "failed" | "checked">("none");
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  const draftKey = [...annualReturnQueryKeys.automationNotifications, actorScope];
   const [preview, setPreview] = useState<ProductionFollowUpDraft | null>(null);
   const queryClient = useQueryClient();
   const draftsQuery = useQuery({
-    queryKey: [...annualReturnQueryKeys.automationNotifications, actorScope],
+    queryKey: draftKey,
     queryFn: () => listProductionFollowUpDrafts(),
     retry: false,
   });
@@ -53,6 +72,18 @@ export function ProductionWhatsAppAutomation({
     queryFn: () => getWhatsAppIntegrationStatus(),
   });
   const sendMutation = useMutation({
+    retry: false,
+    onError: (_error, draft) => {
+      uncertainRef.current = draft;
+      if (active.current) {
+        setUncertain(draft);
+        setPreview(null);
+        setRecovery("none");
+      }
+    },
+    onSettled: () => {
+      submitting.current = false;
+    },
     mutationFn: (draft: ProductionFollowUpDraft) =>
       sendProductionFollowUp({
         data: {
@@ -63,6 +94,7 @@ export function ProductionWhatsAppAutomation({
         },
       }),
     onSuccess: (_result, draft) => {
+      if (!active.current) return;
       setPreview((current) =>
         current?.source === draft.source && current.entityId === draft.entityId ? null : current,
       );
@@ -77,6 +109,59 @@ export function ProductionWhatsAppAutomation({
     },
   });
 
+  async function reconcileSend() {
+    const source = uncertainRef.current;
+    if (!source || recovering.current || submitting.current) return;
+    recovering.current = true;
+    setRecovery("reading");
+    try {
+      await queryClient.cancelQueries({ queryKey: draftKey, exact: true });
+      const fresh = await listProductionFollowUpDrafts();
+      if (!Array.isArray(fresh)) throw new Error("Drafts unavailable");
+      const matches = fresh.filter(
+        (row) =>
+          row &&
+          row.source === source.source &&
+          row.caseId === source.caseId &&
+          row.entityId === source.entityId,
+      );
+      const row = matches[0];
+      if (
+        matches.length !== 1 ||
+        !row ||
+        typeof row.version !== "string" ||
+        !row.version.trim() ||
+        !Object.hasOwn(STATUS_LABELS, row.status)
+      )
+        throw new Error("Follow-up unavailable");
+      await queryClient.cancelQueries({ queryKey: draftKey, exact: true });
+      if (!active.current) return;
+      await queryClient.invalidateQueries({
+        queryKey: annualReturnQueryKeys.automationNotifications,
+        refetchType: "none",
+      });
+      if (!active.current) return;
+      queryClient.setQueryData(draftKey, fresh);
+      void queryClient.invalidateQueries({
+        queryKey: annualReturnQueryKeys.detail(source.caseId),
+        refetchType: "none",
+      });
+      void queryClient.invalidateQueries({
+        queryKey: annualReturnQueryKeys.history(source.caseId),
+        refetchType: "none",
+      });
+      sendMutation.reset();
+      uncertainRef.current = null;
+      setUncertain(null);
+      setPreview(null);
+      setRecovery("checked");
+    } catch {
+      if (active.current) setRecovery("failed");
+    } finally {
+      recovering.current = false;
+    }
+  }
+
   const drafts = draftsQuery.data ?? [];
   // Bulk draft creation represents only cases with a draft in this displayed set.
   // Delivery/unknown rows remain visible for reconciliation, never bulk retry.
@@ -87,7 +172,7 @@ export function ProductionWhatsAppAutomation({
         .map((d) => [d.caseId, { id: d.caseId, label: d.companyName }]),
     ).values(),
   ].sort((a, b) => a.id.localeCompare(b.id));
-  const readBlocked = draftsQuery.isError || draftsQuery.isFetching;
+  const readBlocked = uncertain !== null || draftsQuery.isError || draftsQuery.isFetching;
   const currentPreview = preview
     ? drafts.find(
         (draft) =>
@@ -104,7 +189,7 @@ export function ProductionWhatsAppAutomation({
     currentPreview.version === preview?.version
       ? currentPreview
       : null;
-  const error = sendMutation.error ?? integrationQuery.error;
+  const error = uncertain ? integrationQuery.error : (sendMutation.error ?? integrationQuery.error);
   const retryDrafts = () => void draftsQuery.refetch({ cancelRefetch: false });
 
   return (
@@ -113,6 +198,23 @@ export function ProductionWhatsAppAutomation({
       <p className="text-sm text-muted-foreground">
         供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。
       </p>
+      {uncertain ? (
+        <div role="alert" className="space-y-2 border p-3 text-sm">
+          <p>跟進加入隊列的結果未能確認。請先重新核對目前狀態，避免重複操作。</p>
+          <Button
+            disabled={recovery === "reading" || sendMutation.isPending}
+            onClick={() => void reconcileSend()}
+          >
+            重新核對跟進結果
+          </Button>
+          {recovery === "failed" ? (
+            <p role="status">未能核實跟進結果，請稍後重新核對；沒有重試寫入。</p>
+          ) : null}
+        </div>
+      ) : null}
+      {recovery === "checked" ? (
+        <p role="status">已重新核對跟進狀態。請先核對清單，沒有重新加入隊列。</p>
+      ) : null}
       {canBulk && draftsQuery.data !== undefined ? (
         <BulkSelectionToolbar
           actorScope={actorScope}
@@ -155,7 +257,11 @@ export function ProductionWhatsAppAutomation({
           <span className="text-right">操作</span>
         </div>
         <div className="divide-y">
-          {draftsQuery.isPending || draftsQuery.isFetching ? (
+          {uncertain ? (
+            <p role="status" className="p-4 text-sm">
+              跟進結果待核實，暫停新增隊列操作。
+            </p>
+          ) : draftsQuery.isPending || draftsQuery.isFetching ? (
             <LoadingRows label="正在載入跟進…" rows={4} />
           ) : draftsQuery.isError ? (
             <div role="alert" className="p-4 space-y-2 text-sm text-muted-foreground">
@@ -176,7 +282,10 @@ export function ProductionWhatsAppAutomation({
                   sendMutation.variables?.source === draft.source &&
                   sendMutation.variables.entityId === draft.entityId
                 }
-                onSend={() => setPreview(draft)}
+                blocked={sendMutation.isPending}
+                onSend={() => {
+                  if (!submitting.current && !uncertainRef.current) setPreview(draft);
+                }}
               />
             ))
           )}
@@ -231,7 +340,11 @@ export function ProductionWhatsAppAutomation({
               variant="primary"
               disabled={!verifiedPreview || sendMutation.isPending}
               onClick={() => {
-                if (verifiedPreview) sendMutation.mutate(verifiedPreview);
+                if (verifiedPreview && !submitting.current && !uncertainRef.current) {
+                  submitting.current = true;
+                  setRecovery("none");
+                  sendMutation.mutate(verifiedPreview);
+                }
               }}
             >
               批准並加入隊列
@@ -246,13 +359,15 @@ export function ProductionWhatsAppAutomation({
 function ProductionAutomationRow({
   draft,
   active,
+  blocked,
   onSend,
 }: {
   draft: ProductionFollowUpDraft;
   active: boolean;
+  blocked: boolean;
   onSend: () => void;
 }) {
-  const disabled = active || draft.status !== "draft";
+  const disabled = blocked || active || draft.status !== "draft";
   return (
     <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center">
       <div className="min-w-0">
