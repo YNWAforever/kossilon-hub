@@ -75,6 +75,14 @@ function DocumentRecoverySession({
   const [preparationFailed, setPreparationFailed] = useState(false);
   const [intentId, setIntentId] = useState<string | null>(null);
   const [lookup, setLookup] = useState<LookupPhase>({ phase: "reading" });
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeAttempted, setResumeAttempted] = useState(false);
+  const [resumeInputKey, setResumeInputKey] = useState(0);
+  const resumeAdmitted = useRef(false);
+  const resumeWriteStarted = useRef(false);
+  const [resumeHold, setResumeHold] = useState<
+    null | "prepare" | "lookup" | "mismatch" | "uncertain" | "done"
+  >(null);
 
   function rememberIntent(id: string) {
     intentIdRef.current = id;
@@ -210,6 +218,84 @@ function DocumentRecoverySession({
     },
   });
 
+  const resume = useMutation({
+    retry: false,
+    mutationFn: async (source: File) => {
+      const currentIntentId = intentIdRef.current;
+      if (!currentIntentId || source.size <= 0 || source.size > 10 * 1024 * 1024)
+        return { kind: "prepare" as const };
+      let fingerprint: Awaited<ReturnType<typeof fileFingerprint>>;
+      try {
+        fingerprint = await fileFingerprint(source);
+      } catch {
+        return { kind: "prepare" as const };
+      }
+      let found: OpenDocumentRecoveryLookup;
+      try {
+        found = await readOpenDocumentRecovery({
+          data: {
+            documentId,
+            fileName: fingerprint.fileName,
+            contentType: fingerprint.contentType,
+            sizeBytes: fingerprint.sizeBytes,
+            checksum: fingerprint.checksum,
+          },
+        });
+      } catch {
+        return { kind: "lookup" as const };
+      }
+      if (found.state === "blocked") return { kind: "mismatch" as const };
+      if (
+        found.state !== "open" ||
+        found.intentId !== currentIntentId ||
+        found.receiptState !== "unconfirmed"
+      ) {
+        return { kind: "refresh" as const, found };
+      }
+      resumeWriteStarted.current = true;
+      await finalizeDocumentUpload({
+        data: { intentId: found.intentId, bodyBase64: btoa(fingerprint.binary) },
+      });
+      return { kind: "finalized" as const };
+    },
+    onSuccess: (result) => {
+      if (!active.current) return;
+      if (result.kind === "prepare" || result.kind === "lookup" || result.kind === "mismatch") {
+        resumeAdmitted.current = false;
+        setResumeAttempted(false);
+        if (result.kind === "mismatch") {
+          setResumeFile(null);
+          setResumeInputKey((key) => key + 1);
+        }
+        setResumeHold(result.kind);
+        return;
+      }
+      if (result.kind === "refresh") {
+        resumeAdmitted.current = false;
+        setResumeAttempted(false);
+        if (result.found.state === "open" && result.found.receiptState === "received") {
+          setReceiptState("received");
+          onRecovered();
+          return;
+        }
+        applyLookup(result.found);
+        return;
+      }
+      setResumeHold("done");
+      onRecovered();
+    },
+    onError: () => {
+      if (!active.current) return;
+      if (!resumeWriteStarted.current) {
+        resumeAdmitted.current = false;
+        setResumeAttempted(false);
+        setResumeHold("prepare");
+        return;
+      }
+      setResumeHold("uncertain");
+    },
+  });
+
   const openIntentId = lookup.phase === "open" ? lookup.intentId : null;
   useEffect(() => {
     if (!openIntentId) return;
@@ -240,6 +326,12 @@ function DocumentRecoverySession({
     }
   }
 
+  if (resumeHold === "done")
+    return (
+      <p role="status" className="text-sm">
+        已收取補傳檔案，等待掃描及覆核。
+      </p>
+    );
   if (receiptState === "received")
     return <p role="status">已核實補傳登記。請在文件庫查看目前掃描及覆核狀態。</p>;
   if (lookup.phase === "blocked")
@@ -264,16 +356,82 @@ function DocumentRecoverySession({
           已有未完成補傳。請先核對結果，不要再批准新的補傳。
           {openIntentId ? ` 上載 ID：${openIntentId}` : ""}
         </p>
-        <Button
-          type="button"
-          disabled={checkingReceipt}
-          onClick={() => void checkReceipt(openIntentId)}
-        >
-          核對補傳結果
-        </Button>
-        {receiptState === "unconfirmed" ? (
-          <p role="status">尚未核實補傳登記。請勿重複補傳；可稍後再次核對。</p>
-        ) : null}
+        {resumeHold === "uncertain" ? (
+          <>
+            <p role="alert" className="text-status-orange-text">
+              補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。
+              {openIntentId ? ` 上載 ID：${openIntentId}` : ""}
+            </p>
+            <Button
+              type="button"
+              disabled={checkingReceipt}
+              onClick={() => void checkReceipt(openIntentId)}
+            >
+              核對補傳結果
+            </Button>
+            {receiptState === "unconfirmed" ? (
+              <p role="status">尚未核實補傳登記。請勿重複補傳；可稍後再次核對。</p>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <Button
+              type="button"
+              disabled={checkingReceipt}
+              onClick={() => void checkReceipt(openIntentId)}
+            >
+              核對補傳結果
+            </Button>
+            {receiptState === "unconfirmed" ? (
+              <>
+                <p role="status">
+                  尚未核實補傳登記。不要批准新的補傳。若仍持有原檔，可選擇該檔以完成這次補傳。
+                </p>
+                {resumeHold === "prepare" ? (
+                  <p role="alert">無法準備檔案，尚未提交上載。請重新選擇檔案後重試。</p>
+                ) : null}
+                {resumeHold === "lookup" ? (
+                  <p role="alert">未能核對所選檔案。請先重試核對，不要批准新的補傳。</p>
+                ) : null}
+                {resumeHold === "mismatch" ? (
+                  <p role="alert">所選檔案未能繼續這次補傳。請勿再批准新的補傳。</p>
+                ) : null}
+                <label className="block">
+                  原補傳檔案
+                  <input
+                    key={resumeInputKey}
+                    aria-label="原補傳檔案"
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    disabled={resumeAttempted}
+                    onChange={(event) => setResumeFile(event.target.files?.[0] ?? null)}
+                    className="mt-1 block w-full"
+                  />
+                </label>
+                <Button
+                  type="button"
+                  variant="primary"
+                  disabled={!resumeFile || resumeAttempted || checkingReceipt}
+                  onClick={() => {
+                    if (
+                      resumeAdmitted.current ||
+                      resumeWriteStarted.current ||
+                      !resumeFile ||
+                      checkingReceipt
+                    )
+                      return;
+                    resumeAdmitted.current = true;
+                    setResumeAttempted(true);
+                    setResumeHold(null);
+                    resume.mutate(resumeFile);
+                  }}
+                >
+                  以所選檔案完成補傳
+                </Button>
+              </>
+            ) : null}
+          </>
+        )}
       </div>
     );
   if (upload.isSuccess)

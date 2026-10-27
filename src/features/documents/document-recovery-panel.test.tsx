@@ -13,7 +13,7 @@ const rpc = vi.hoisted(() => ({
 vi.mock("./server-fns", () => rpc);
 afterEach(() => {
   cleanup();
-  vi.clearAllMocks();
+  vi.resetAllMocks();
 });
 function setup(
   lookup: { state: string; intentId?: string; receiptState?: string } = { state: "absent" },
@@ -39,7 +39,7 @@ function setup(
   );
   return onRecovered;
 }
-async function chooseFile() {
+function recoveryFile() {
   const file = new File([new Uint8Array([1, 2, 3, 4])], "recovery.pdf", {
     type: "application/pdf",
   });
@@ -47,10 +47,16 @@ async function chooseFile() {
     configurable: true,
     value: async () => new Uint8Array([1, 2, 3, 4]).buffer,
   });
-  fireEvent.change(screen.getByLabelText("補傳檔案"), { target: { files: [file] } });
+  return file;
+}
+async function chooseFile() {
+  fireEvent.change(screen.getByLabelText("補傳檔案"), { target: { files: [recoveryFile()] } });
   fireEvent.change(screen.getByLabelText("核對原因"), {
     target: { value: "Confirmed source gap" },
   });
+}
+async function chooseResumeFile(file = recoveryFile()) {
+  fireEvent.change(screen.getByLabelText("原補傳檔案"), { target: { files: [file] } });
 }
 describe("controlled document recovery", () => {
   it("offers approved additive upload when a controlled inspection confirms missing object", async () => {
@@ -317,5 +323,190 @@ describe("controlled document recovery", () => {
     );
     expect(onRecovered).not.toHaveBeenCalled();
     expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
+  });
+  it("staff recovery resume: finalizes only after the original file is re-selected", async () => {
+    const onRecovered = setup({
+      state: "open",
+      intentId: "existing-intent",
+      receiptState: "unconfirmed",
+    });
+    const resume = await screen.findByRole("button", { name: "以所選檔案完成補傳" });
+    expect((resume as HTMLButtonElement).disabled).toBe(true);
+    expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "批准並補傳" })).toBeNull();
+    await chooseResumeFile();
+    fireEvent.click(screen.getByRole("button", { name: "以所選檔案完成補傳" }));
+    await screen.findByText("已收取補傳檔案，等待掃描及覆核。");
+    expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
+    expect(rpc.finalizeDocumentUpload).toHaveBeenCalledWith({
+      data: { intentId: "existing-intent", bodyBase64: "AQIDBA==" },
+    });
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+    expect(onRecovered).toHaveBeenCalledTimes(1);
+    const lookups = JSON.stringify(rpc.readOpenDocumentRecovery.mock.calls);
+    expect(lookups).toContain("recovery.pdf");
+    expect(lookups).not.toContain("uploadRequestId");
+  });
+  it("staff recovery resume: does not finalize when the re-selected file is blocked", async () => {
+    setup({ state: "open", intentId: "existing-intent", receiptState: "unconfirmed" });
+    await screen.findByRole("button", { name: "以所選檔案完成補傳" });
+    rpc.readOpenDocumentRecovery.mockResolvedValue({ state: "blocked" });
+    await chooseResumeFile();
+    fireEvent.click(screen.getByRole("button", { name: "以所選檔案完成補傳" }));
+    const blocked = await screen.findByRole("alert");
+    expect(blocked.textContent).toBe("所選檔案未能繼續這次補傳。請勿再批准新的補傳。");
+    expect(blocked.textContent).not.toMatch(/[0-9a-f]{64}/);
+    expect(screen.getByText(/existing-intent/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "批准並補傳" })).toBeNull();
+    expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+    expect(JSON.stringify(rpc.readOpenDocumentRecovery.mock.calls)).not.toContain(
+      "uploadRequestId",
+    );
+  });
+  it("staff recovery resume: does not retry finalize after an uncertain response", async () => {
+    setup({ state: "open", intentId: "existing-intent", receiptState: "unconfirmed" });
+    rpc.finalizeDocumentUpload.mockRejectedValue(new Error("lost response"));
+    rpc.readDocumentUploadReceipt.mockResolvedValue({
+      intentId: "existing-intent",
+      state: "unconfirmed",
+    });
+    await screen.findByRole("button", { name: "以所選檔案完成補傳" });
+    await chooseResumeFile();
+    fireEvent.click(screen.getByRole("button", { name: "以所選檔案完成補傳" }));
+    await screen.findByText(/補傳結果未確認/);
+    expect(screen.queryByRole("button", { name: "以所選檔案完成補傳" })).toBeNull();
+    expect(screen.queryByText("lost response")).toBeNull();
+    expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+    rpc.readDocumentUploadReceipt.mockResolvedValue({
+      intentId: "existing-intent",
+      state: "received",
+      documentId: "new-document",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "核對補傳結果" }));
+    await screen.findByText("已核實補傳登記。請在文件庫查看目前掃描及覆核狀態。");
+    expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
+  });
+  it("staff recovery resume: allows another explicit attempt after local preparation fails", async () => {
+    setup({ state: "open", intentId: "existing-intent", receiptState: "unconfirmed" });
+    await screen.findByRole("button", { name: "以所選檔案完成補傳" });
+    const file = recoveryFile();
+    Object.defineProperty(file, "arrayBuffer", {
+      configurable: true,
+      value: vi.fn().mockRejectedValue(new Error("local read failed")),
+    });
+    await chooseResumeFile(file);
+    fireEvent.click(screen.getByRole("button", { name: "以所選檔案完成補傳" }));
+    await screen.findByText("無法準備檔案，尚未提交上載。請重新選擇檔案後重試。");
+    expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+    await chooseResumeFile();
+    fireEvent.click(screen.getByRole("button", { name: "以所選檔案完成補傳" }));
+    await screen.findByText("已收取補傳檔案，等待掃描及覆核。");
+    expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+  });
+  it("staff recovery resume: admits only one finalize from the same turn", async () => {
+    setup({ state: "open", intentId: "existing-intent", receiptState: "unconfirmed" });
+    await screen.findByRole("button", { name: "以所選檔案完成補傳" });
+    await chooseResumeFile();
+    const resume = screen.getByRole("button", { name: "以所選檔案完成補傳" });
+    act(() => {
+      resume.click();
+      resume.click();
+    });
+    await screen.findByText("已收取補傳檔案，等待掃描及覆核。");
+    expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+  });
+  it("staff recovery resume: does not offer finalize when the receipt is already received", async () => {
+    rpc.readDocumentUploadReceipt.mockResolvedValue({
+      intentId: "existing-intent",
+      state: "received",
+      documentId: "new-document",
+    });
+    const onRecovered = setup({
+      state: "open",
+      intentId: "existing-intent",
+      receiptState: "received",
+    });
+    await screen.findByText("已核實補傳登記。請在文件庫查看目前掃描及覆核狀態。");
+    expect(screen.queryByRole("button", { name: "以所選檔案完成補傳" })).toBeNull();
+    expect(screen.queryByLabelText("原補傳檔案")).toBeNull();
+    expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+    expect(onRecovered).toHaveBeenCalledTimes(1);
+  });
+  it("staff recovery resume: does not finalize when a fresh lookup says the recovery is gone", async () => {
+    const onRecovered = setup({
+      state: "open",
+      intentId: "existing-intent",
+      receiptState: "unconfirmed",
+    });
+    await screen.findByRole("button", { name: "以所選檔案完成補傳" });
+    rpc.readOpenDocumentRecovery.mockResolvedValueOnce({ state: "absent" });
+    await chooseResumeFile();
+    fireEvent.click(screen.getByRole("button", { name: "以所選檔案完成補傳" }));
+    await screen.findByRole("button", { name: "預覽受控補傳" });
+    expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+    expect(onRecovered).not.toHaveBeenCalled();
+  });
+  it("staff recovery resume: treats a fresh received lookup as a receipt and does not finalize", async () => {
+    const onRecovered = setup({
+      state: "open",
+      intentId: "existing-intent",
+      receiptState: "unconfirmed",
+    });
+    await screen.findByRole("button", { name: "以所選檔案完成補傳" });
+    rpc.readOpenDocumentRecovery.mockResolvedValueOnce({
+      state: "open",
+      intentId: "existing-intent",
+      receiptState: "received",
+      documentId: "new-document",
+    });
+    await chooseResumeFile();
+    fireEvent.click(screen.getByRole("button", { name: "以所選檔案完成補傳" }));
+    await screen.findByText("已核實補傳登記。請在文件庫查看目前掃描及覆核狀態。");
+    expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+    expect(onRecovered).toHaveBeenCalledTimes(1);
+  });
+  it("staff recovery resume: keeps a failed file check closed without revealing the error", async () => {
+    setup({ state: "open", intentId: "existing-intent", receiptState: "unconfirmed" });
+    await screen.findByRole("button", { name: "以所選檔案完成補傳" });
+    rpc.readOpenDocumentRecovery.mockRejectedValueOnce(new Error("private SQL error"));
+    await chooseResumeFile();
+    fireEvent.click(screen.getByRole("button", { name: "以所選檔案完成補傳" }));
+    await screen.findByText("未能核對所選檔案。請先重試核對，不要批准新的補傳。");
+    expect(screen.queryByText("private SQL error")).toBeNull();
+    expect(screen.getByText(/existing-intent/)).toBeTruthy();
+    expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "以所選檔案完成補傳" })).toBeTruthy();
+  });
+  it("staff recovery resume: discards a late finalize after the panel unmounts", async () => {
+    const onRecovered = setup({
+      state: "open",
+      intentId: "existing-intent",
+      receiptState: "unconfirmed",
+    });
+    let resolveFinalize!: (value: unknown) => void;
+    rpc.finalizeDocumentUpload.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFinalize = resolve;
+        }),
+    );
+    await screen.findByRole("button", { name: "以所選檔案完成補傳" });
+    await chooseResumeFile();
+    fireEvent.click(screen.getByRole("button", { name: "以所選檔案完成補傳" }));
+    await waitFor(() => expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1));
+    cleanup();
+    await act(async () => resolveFinalize({ id: "new-document" }));
+    expect(onRecovered).not.toHaveBeenCalled();
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
   });
 });
