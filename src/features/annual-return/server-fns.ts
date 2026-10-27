@@ -697,23 +697,30 @@ export async function queueAnnualReturnWhatsAppReminderMessageForActor(
   };
 }
 
+/**
+ * Receipt for one manual reminder command.
+ *
+ * A case can lock after the command commits. Staff who can still see the case
+ * need that closed state, so this read checks active staff identity and current
+ * case visibility and then the exact outbox key. It does not take the
+ * writable-case guard. The queue POST keeps that guard.
+ */
 export async function readAnnualReturnReminderCommandForActor(
   actor: AuthenticatedActor,
   input: { caseId: string; commandUuid: string },
   dependencies: {
-    annualReturnRepository: Pick<
-      AnnualReturnRepository,
-      "assertCanMutateCase" | "readManualReminderOutbox"
-    >;
+    annualReturnRepository: Pick<AnnualReturnRepository, "getCase" | "readManualReminderOutbox">;
   },
 ) {
   const data = readAnnualReturnReminderCommandSchema.parse(input);
-  const actorId = requireStaffUserId(actor);
-  await dependencies.annualReturnRepository.assertCanMutateCase(
-    data.caseId,
-    actorId,
-    "record_reminder",
-  );
+  requireStaffUserId(actor);
+  const case_ = await dependencies.annualReturnRepository.getCase(data.caseId);
+
+  if (!case_) {
+    throw new Error("Annual return case not found.");
+  }
+
+  assertAnnualReturnCaseVisible(boardActorFrom(actor), case_);
   const row = await dependencies.annualReturnRepository.readManualReminderOutbox({
     caseId: data.caseId,
     commandUuid: data.commandUuid,
