@@ -1,0 +1,1435 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+[tanstack-router] These exports from "/workspace/kossilon-hub/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/routes/-work-queue.interaction.test.tsx
+[tanstack-router] These exports from "/workspace/kossilon-hub/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+ ❯ |unit| src/routes/-work-queue.interaction.test.tsx (38 tests | 6 failed) 15087ms
+   × reconciles an uncertain acknowledgement with independent saved-state readback and no write replay 1090ms
+   × retains uncertainty across close/reopen and ignores ordinary cached read success 1108ms
+   × deduplicates pending readback and allows a new explicit action only after fresh active-state recovery 1118ms
+   × keeps unavailable or missing acknowledgement readback blocked: null 1078ms
+   × keeps unavailable or missing acknowledgement readback blocked: {"items":[],"nextCursor":null} 1115ms
+   × keeps unavailable or missing acknowledgement readback blocked: {"items":[{"id":"another","version":1,"title":"Assignment recovery task","companyId":"company","companyName":"Recovery company","caseType":"annual_return","annualReturnCaseId":"case","corporateChangeRequestId":null,"sourceEventKey":"assignment-event","sourceEventType":"assignment-test","workType":"annual_return_case","requiredSkillKey":null,"ownerId":null,"ownerName":null,"reviewerId":null,"reviewerName":null,"teamId":null,"slaPolicyVersionId":"policy","slaStartedAt":"2026-10-22T00:00:00Z","slaWarningAt":"2026-10-23T00:00:00Z","slaDueAt":"2026-10-24T00:00:00Z","slaBreachedAt":null,"escalationState":"none","status":"open","priority":50,"completedAt":null}],"nextCursor":null} 1092ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > reconciles an uncertain acknowledgement with independent saved-state readback and no write replay
+TestingLibraryElementError: Unable to find role="button" and name "重新核對知悉結果"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-w-0 flex-1 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m今日工作[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m工作隊列[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m分配、工作量及 SLA 管控[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁今日到期[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁有風險[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-amber-700"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁已逾時[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-destructive"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁未分配[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m排序[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"工作排序"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"deadline"[39m
+            [36m>[39m
+              [0mSLA 到期[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"priority"[39m
+            [36m>[39m
+              [0m優先次序[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"工作隊列檢視"[39m
+          [33mclass[39m=[32m"flex min-w-0 gap-1"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m我的工作[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m團隊隊列[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m已逾時[0m
+          [36m</a>[39m
+        [36m</nav>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"relative block w-full lg:w-80"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [...
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-w-0 flex-1 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m今日工作[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m工作隊列[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m分配、工作量及 SLA 管控[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁今日到期[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁有風險[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-amber-700"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁已逾時[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-destructive"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁未分配[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m排序[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"工作排序"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"deadline"[39m
+            [36m>[39m
+              [0mSLA 到期[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"priority"[39m
+            [36m>[39m
+              [0m優先次序[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"工作隊列檢視"[39m
+          [33mclass[39m=[32m"flex min-w-0 gap-1"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m我的工作[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m團隊隊列[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m已逾時[0m
+          [36m</a>[39m
+        [36m</nav>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"relative block w-full lg:w-80"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openUnknownAcknowledgement src/routes/-work-queue.interaction.test.tsx:943:16
+    941|   const submit=screen.getByRole("button",{name:"確認知悉"});
+    942|   act(()=>{submit.click();submit.click();});
+    943|   await screen.findByRole("button",{name:"重新核對知悉結果"});
+       |                ^
+    944|   return client;
+    945| }
+ ❯ src/routes/-work-queue.interaction.test.tsx:948:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > retains uncertainty across close/reopen and ignores ordinary cached read success
+TestingLibraryElementError: Unable to find role="button" and name "重新核對知悉結果"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-w-0 flex-1 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m今日工作[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m工作隊列[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m分配、工作量及 SLA 管控[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁今日到期[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁有風險[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-amber-700"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁已逾時[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-destructive"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁未分配[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m排序[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"工作排序"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"deadline"[39m
+            [36m>[39m
+              [0mSLA 到期[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"priority"[39m
+            [36m>[39m
+              [0m優先次序[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"工作隊列檢視"[39m
+          [33mclass[39m=[32m"flex min-w-0 gap-1"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m我的工作[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m團隊隊列[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m已逾時[0m
+          [36m</a>[39m
+        [36m</nav>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"relative block w-full lg:w-80"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [...
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-w-0 flex-1 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m今日工作[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m工作隊列[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m分配、工作量及 SLA 管控[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁今日到期[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁有風險[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-amber-700"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁已逾時[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-destructive"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁未分配[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m排序[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"工作排序"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"deadline"[39m
+            [36m>[39m
+              [0mSLA 到期[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"priority"[39m
+            [36m>[39m
+              [0m優先次序[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"工作隊列檢視"[39m
+          [33mclass[39m=[32m"flex min-w-0 gap-1"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m我的工作[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m團隊隊列[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m已逾時[0m
+          [36m</a>[39m
+        [36m</nav>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"relative block w-full lg:w-80"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openUnknownAcknowledgement src/routes/-work-queue.interaction.test.tsx:943:16
+    941|   const submit=screen.getByRole("button",{name:"確認知悉"});
+    942|   act(()=>{submit.click();submit.click();});
+    943|   await screen.findByRole("button",{name:"重新核對知悉結果"});
+       |                ^
+    944|   return client;
+    945| }
+ ❯ src/routes/-work-queue.interaction.test.tsx:960:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > deduplicates pending readback and allows a new explicit action only after fresh active-state recovery
+TestingLibraryElementError: Unable to find role="button" and name "重新核對知悉結果"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-w-0 flex-1 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m今日工作[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m工作隊列[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m分配、工作量及 SLA 管控[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁今日到期[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁有風險[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-amber-700"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁已逾時[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-destructive"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁未分配[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m排序[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"工作排序"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"deadline"[39m
+            [36m>[39m
+              [0mSLA 到期[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"priority"[39m
+            [36m>[39m
+              [0m優先次序[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"工作隊列檢視"[39m
+          [33mclass[39m=[32m"flex min-w-0 gap-1"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m我的工作[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m團隊隊列[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m已逾時[0m
+          [36m</a>[39m
+        [36m</nav>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"relative block w-full lg:w-80"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [...
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-w-0 flex-1 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m今日工作[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m工作隊列[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m分配、工作量及 SLA 管控[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁今日到期[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁有風險[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-amber-700"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁已逾時[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-destructive"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁未分配[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m排序[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"工作排序"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"deadline"[39m
+            [36m>[39m
+              [0mSLA 到期[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"priority"[39m
+            [36m>[39m
+              [0m優先次序[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"工作隊列檢視"[39m
+          [33mclass[39m=[32m"flex min-w-0 gap-1"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m我的工作[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m團隊隊列[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m已逾時[0m
+          [36m</a>[39m
+        [36m</nav>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"relative block w-full lg:w-80"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openUnknownAcknowledgement src/routes/-work-queue.interaction.test.tsx:943:16
+    941|   const submit=screen.getByRole("button",{name:"確認知悉"});
+    942|   act(()=>{submit.click();submit.click();});
+    943|   await screen.findByRole("button",{name:"重新核對知悉結果"});
+       |                ^
+    944|   return client;
+    945| }
+ ❯ src/routes/-work-queue.interaction.test.tsx:970:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > keeps unavailable or missing acknowledgement readback blocked: null
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > keeps unavailable or missing acknowledgement readback blocked: {"items":[],"nextCursor":null}
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > keeps unavailable or missing acknowledgement readback blocked: {"items":[{"id":"another","version":1,"title":"Assignment recovery task","companyId":"company","companyName":"Recovery company","caseType":"annual_return","annualReturnCaseId":"case","corporateChangeRequestId":null,"sourceEventKey":"assignment-event","sourceEventType":"assignment-test","workType":"annual_return_case","requiredSkillKey":null,"ownerId":null,"ownerName":null,"reviewerId":null,"reviewerName":null,"teamId":null,"slaPolicyVersionId":"policy","slaStartedAt":"2026-10-22T00:00:00Z","slaWarningAt":"2026-10-23T00:00:00Z","slaDueAt":"2026-10-24T00:00:00Z","slaBreachedAt":null,"escalationState":"none","status":"open","priority":50,"completedAt":null}],"nextCursor":null}
+TestingLibraryElementError: Unable to find role="button" and name "重新核對知悉結果"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-w-0 flex-1 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m今日工作[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m工作隊列[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m分配、工作量及 SLA 管控[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁今日到期[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁有風險[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-amber-700"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁已逾時[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-destructive"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁未分配[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m排序[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"工作排序"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"deadline"[39m
+            [36m>[39m
+              [0mSLA 到期[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"priority"[39m
+            [36m>[39m
+              [0m優先次序[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"工作隊列檢視"[39m
+          [33mclass[39m=[32m"flex min-w-0 gap-1"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m我的工作[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m團隊隊列[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m已逾時[0m
+          [36m</a>[39m
+        [36m</nav>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"relative block w-full lg:w-80"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [...
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-w-0 flex-1 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m今日工作[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m工作隊列[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m分配、工作量及 SLA 管控[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁今日到期[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁有風險[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-amber-700"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁已逾時[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-destructive"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+          [36m>[39m
+            [0m本頁未分配[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m排序[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"工作排序"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"deadline"[39m
+            [36m>[39m
+              [0mSLA 到期[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"priority"[39m
+            [36m>[39m
+              [0m優先次序[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"工作隊列檢視"[39m
+          [33mclass[39m=[32m"flex min-w-0 gap-1"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m我的工作[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m團隊隊列[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mdata-route-search[39m=[32m"{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+            [33mhref[39m=[32m"#"[39m
+          [36m>[39m
+            [0m已逾時[0m
+          [36m</a>[39m
+        [36m</nav>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"relative block w-full lg:w-80"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openUnknownAcknowledgement src/routes/-work-queue.interaction.test.tsx:943:16
+    941|   const submit=screen.getByRole("button",{name:"確認知悉"});
+    942|   act(()=>{submit.click();submit.click();});
+    943|   await screen.findByRole("button",{name:"重新核對知悉結果"});
+       |                ^
+    944|   return client;
+    945| }
+ ❯ src/routes/-work-queue.interaction.test.tsx:987:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 32 passed (38)
+   Start at  06:02:28
+   Duration  18.53s (transform 1.39s, setup 0ms, import 2.00s, tests 15.09s, environment 1.16s)
