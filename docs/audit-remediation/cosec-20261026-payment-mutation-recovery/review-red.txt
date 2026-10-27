@@ -1,0 +1,257 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/features/annual-return/components/payment-pagination.test.tsx (34 tests | 2 failed) 4095ms
+   × blocks every proof for the same uncertain case, even if the failed proof disappears 43ms
+   × refreshes the original proof page instead of joining pending pagination during reconciliation 1046ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > blocks every proof for the same uncertain case, even if the failed proof disappears
+AssertionError: expected <button type="button" …(2)></button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+  disabled=""
+  type="button"
+>
+  退回補傳
+</button>
+
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:588:58
+    586|   fireEvent.click(first.getByRole("button", { name: "退回補傳" }));
+    587|   await screen.findByRole("button", { name: `重新核對 ${doc.fileName} 的付款結…
+    588|   expect(screen.queryByRole("button", { name: "退回補傳" })).toBeNull();
+       |                                                          ^
+    589|   f.documents.mockResolvedValue({ documents: [second], nextCursor: nul…
+    590|   await act(async () => { await client.invalidateQueries({ queryKey: […
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > refreshes the original proof page instead of joining pending pagination during reconciliation
+AssertionError: expected "vi.fn()" to be called 3 times, but got 2 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m文件與付款[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0m付款[0m
+            [36m</h1>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<p>[39m
+          [0m先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。[0m
+        [36m</p>[39m
+        [36m<section[39m
+          [33maria-label[39m=[32m"付款憑證覆核"[39m
+          [33mclass[39m=[32m"divide-y border-y"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"py-3 font-semibold"[39m
+          [36m>[39m
+            [0m付款憑證覆核[0m
+          [36m</h2>[39m
+          [36m<article[39m
+            [33mclass[39m=[32m"grid gap-4 p-4 lg:grid-cols-2"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"/annual-returns/40000000-0000-4000-8000-000000000201"[39m
+              [36m>[39m
+                [0mQA Case 201[0m
+              [36m</a>[39m
+              [36m<p>[39m
+                [0mqa-proof-201.pdf[0m
+                [0m · [0m
+                [0mAvailable[0m
+                [0m /[0m
+                [0m [0m
+                [0m待付款[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m應收：[0m
+                [0mHK$1,800.00[0m
+                [0m · 已核對：[0m
+                [0mHK$600.00[0m
+                [0m · 餘額：[0m
+                [0mHK$1,200.00[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m全付日期：[0m
+                [0m待補[0m
+              [36m</p>[39m
+              [36m<p>[39m
+                [0m狀態：[0m
+                [0m待付款[0m
+              [36m</p>[39m
+              [36m<div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0m預覽當前付款憑證[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0m憑證金額及收款日期：待補；以下由人手從文件記錄。[0m
+              [36m</p>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"block"[39m
+              [36m>[39m
+                [0m文件所示金額（HKD）[0m
+                [36m<input[39m
+                  [33maria-label[39m=[32m"憑證金額"[39m
+                  [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+                  [33minputmode[39m=[32m"decimal"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"block"[39m
+              [36m>[39m
+                [0m文件所示收款日期[0m
+                [36m<input[39m
+                  [33maria-label[39m=[32m"憑證收款日期"[39m
+                  [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+                  [33mtype[39m=[32m"date"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"block"[39m
+              [36m>[39m
+                [0m交易識別／備註[0m
+                [36m<input[39m
+                  [33maria-label[39m=[32m"憑證交易參考"[39m
+                  [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m儲存憑證資料[0m
+              [36m</button>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"block"[39m
+              [36m>[39m
+                [0m退回原因[0m
+                [36m<select[39m
+                  [33maria-label[39m=[32m"退回原因類別"[39m
+                  [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"unreadable"[39m
+                  [36m>[39m
+                    [0m無法閱讀[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"amount_mismatch"[39m
+                  [36m>[39m
+                    [0m金額不符[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"date_mismatch"[39m
+                  [36m>[39m
+                    [0m日期不符[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"duplicate_proof"[39m
+                  [36m>[39m
+                    [0m重複憑證[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"wrong_account"[39m
+                  [36m>[39m
+                    [0m收款帳戶錯誤[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"other"[39m
+                  [36m>[39m
+                    [0m其他[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+              [36m</label>[39m
+              [36m<textarea[39m
+                [33maria-label[39m=[32m"具體退回原因"[39m
+                [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto min-h-20 px-3 py-2 text-sm block w-full"[39m
+                [33mplaceholder[39m=[32m"指出需要補回或修正的內容"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m退回補傳[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</article>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33maria-label[39m=[32m"待收款案件"[39m
+          [33mclass[39m=[32m"divide-y border-y"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"py-3 font-semibold"[39m
+          [36m>[39m
+            [0m待收款案件[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"py-2 text-sm"[39m
+          [36m>[39m
+            [0m未有憑證亦可開啟案件跟進付款及補傳文件。[0m
+          [36m</p>[39m
+        [36m</section>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:612:43
+    610|   fireEvent.click(await screen.findByRole("button", { name }));
+    611|   await act(async () => { finishNext({ documents: [], nextCursor: null…
+    612|   await waitFor(() => expect(f.documents).toHaveBeenCalledTimes(3));
+       |                                           ^
+    613|   expect(f.documents).toHaveBeenLastCalledWith({ data: { category: "pa…
+    614|   await waitFor(() => expect(screen.queryByRole("button", { name })).t…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 32 passed (34)
+   Start at  02:50:17
+   Duration  5.77s (transform 305ms, setup 0ms, import 532ms, tests 4.10s, environment 949ms)
