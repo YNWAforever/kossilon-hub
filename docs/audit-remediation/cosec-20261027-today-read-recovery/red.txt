@@ -1,0 +1,96 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/routes/-today.interaction.test.tsx (7 tests | 3 failed) 1017ms
+   × hides cached annual rows after denied refresh and deduplicates read-only retry 84ms
+   × hides cached totals after denial and restores fresh totals with one pending retry 38ms
+   × hides other-business links after denial and restores only fresh readback without navigation 82ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-today.interaction.test.tsx > hides cached annual rows after denied refresh and deduplicates read-only retry
+AssertionError: expected <a href="#controlled-local" …(4)></a> to be null
+
+- Expected:
+null
+
++ Received:
+<a
+  class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11 justify-self-start md:justify-self-end"
+  data-params="{\"id\":\"11111111-1111-4111-8111-111111111111\"}"
+  data-search="{\"returnTo\":\"/today?view=chaseToday&q=&sort=deadline\"}"
+  href="#controlled-local"
+  to="/annual-returns/$id"
+>
+  開啟案件
+</a>
+
+ ❯ src/routes/-today.interaction.test.tsx:156:53
+    154|   await act(async () => {await client.refetchQueries({queryKey:["annua…
+    155|   await screen.findByRole("button", {name:"重新載入"});
+    156|   expect(screen.queryByRole("link", {name:"開啟案件"})).toBeNull();
+       |                                                     ^
+    157|   expect(screen.queryByText("Old queue company")).toBeNull();
+    158|   expect(screen.queryByText("現時沒有這一類工作。")).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |unit| src/routes/-today.interaction.test.tsx > hides cached totals after denial and restores fresh totals with one pending retry
+AssertionError: expected <button type="button" …(2)></button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  aria-pressed="true"
+  class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm min-h-11"
+  type="button"
+>
+  今日要追
+   (10000)
+</button>
+
+ ❯ src/routes/-today.interaction.test.tsx:180:62
+    178|   await act(async () => {await client.refetchQueries({queryKey:["annua…
+    179|   await screen.findByRole("button",{name:"重試總數"});
+    180|   expect(screen.queryByRole("button",{name:"今日要追 (10000)"})).toBeNull(…
+       |                                                              ^
+    181|   let resolve!: (value: unknown)=>void;
+    182|   state.metrics.mockImplementationOnce(()=>new Promise(done=>{resolve=…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |unit| src/routes/-today.interaction.test.tsx > hides other-business links after denial and restores only fresh readback without navigation
+AssertionError: expected <a …(2)></a> to be null
+
+- Expected:
+null
+
++ Received:
+<a
+  class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11 self-start justify-self-start md:justify-self-end"
+  href="/incorporations/other-case?returnTo=%2Ftoday%3Fview%3DchaseToday%26q%3D%26sort%3Ddeadline"
+>
+  開啟
+  公司註冊
+</a>
+
+ ❯ src/routes/-today.interaction.test.tsx:202:54
+    200|   await act(async()=>{await client.refetchQueries({queryKey:["today-ot…
+    201|   const retry=await screen.findByRole("button",{name:"重試其他業務"});
+    202|   expect(screen.queryByRole("link",{name:"開啟公司註冊"})).toBeNull();
+       |                                                      ^
+    203|   expect(screen.queryByText("Old other company")).toBeNull();
+    204|   let resolve!: (value:unknown)=>void;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 passed (7)
+   Start at  05:42:26
+   Duration  3.00s (transform 627ms, setup 0ms, import 689ms, tests 1.02s, environment 1.08s)

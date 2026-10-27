@@ -1,0 +1,12 @@
+
+/workspace/kossilon-hub/src/routes/-today.interaction.test.tsx
+  66:16  error  Replace `⏎····.mockReset()⏎····` with `.mockReset()`  prettier/prettier
+  69:1   error  Replace `······` with `····`                          prettier/prettier
+  70:1   error  Delete `··`                                           prettier/prettier
+  71:5   error  Delete `··`                                           prettier/prettier
+  72:1   error  Replace `······` with `····`                          prettier/prettier
+  73:1   error  Delete `··`                                           prettier/prettier
+  74:1   error  Delete `··`                                           prettier/prettier
+
+✖ 7 problems (7 errors, 0 warnings)
+  7 errors and 0 warnings potentially fixable with the `--fix` option.
