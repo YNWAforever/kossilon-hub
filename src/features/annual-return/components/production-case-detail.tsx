@@ -123,6 +123,29 @@ function CaseDetail({
       queryClient.getQueryData<AnnualReturnCase>(annualReturnQueryKeys.detail(caseId))?.readiness
         ?.sourceVersion,
   );
+  const caseAlive = useRef(true);
+  const uncertainCase = useRef(false);
+  const recoveringCase = useRef(false);
+  const statusSubmitting = useRef(false);
+  const checklistSubmitting = useRef(new Set<string>());
+  const [caseRecovery, setCaseRecovery] = useState<"none" | "required" | "reading" | "failed">(
+    "none",
+  );
+  useEffect(() => {
+    caseAlive.current = true;
+    return () => {
+      caseAlive.current = false;
+    };
+  }, []);
+  const commandKey = [...annualReturnQueryKeys.detail(caseId), "case-command"];
+  const pendingCaseCommands = useMutationState({
+    filters: { mutationKey: annualReturnQueryKeys.detail(caseId), status: "pending" },
+    select: () => true,
+  });
+  const requireCaseReadback = () => {
+    uncertainCase.current = true;
+    if (caseAlive.current) setCaseRecovery("required");
+  };
   const checklistMutationKey = [...annualReturnQueryKeys.detail(caseId), "checklist-mutation"];
   const pendingChecklistItemIds = useMutationState({
     filters: { mutationKey: checklistMutationKey, status: "pending" },
@@ -158,6 +181,7 @@ function CaseDetail({
   const [confirmationDocumentId, setConfirmationDocumentId] = useState("");
 
   const updateCaseCache = (caseItem: AnnualReturnCase) => {
+    if (!caseAlive.current) return;
     queryClient.setQueryData(annualReturnQueryKeys.detail(caseId), caseItem);
     void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
   };
@@ -170,23 +194,37 @@ function CaseDetail({
   };
 
   const ownerMutation = useMutation({
+    mutationKey: commandKey,
     mutationFn: actions.assignOwner,
     onSuccess: updateCaseCacheAndConfirm("已分配負責同事。"),
   });
   const statusMutation = useMutation({
+    mutationKey: commandKey,
     mutationFn: actions.updateStatus,
+    retry: false,
+    onError: requireCaseReadback,
+    onSettled: () => {
+      statusSubmitting.current = false;
+    },
     onSuccess: updateCaseCacheAndConfirm("已更新案件狀態。"),
   });
   const checklistMutation = useMutation({
     mutationKey: checklistMutationKey,
     mutationFn: actions.updateChecklist,
+    retry: false,
+    onError: requireCaseReadback,
+    onSettled: (_data, _error, input) => {
+      checklistSubmitting.current.delete(input.itemId);
+    },
     onSuccess: updateCaseCache,
   });
   const paymentMutation = useMutation({
+    mutationKey: commandKey,
     mutationFn: actions.updatePayment,
     onSuccess: updateCaseCacheAndConfirm("已更新付款。"),
   });
   const noteMutation = useMutation({
+    mutationKey: commandKey,
     mutationFn: actions.addNote,
     retry: false,
     onError: () => setNoteRecovery("required"),
@@ -200,6 +238,7 @@ function CaseDetail({
     },
   });
   const reminderMutation = useMutation({
+    mutationKey: commandKey,
     mutationFn: actions.sendReminder,
     onSuccess: () => {
       toast.success("已排入 WhatsApp 提醒。");
@@ -208,10 +247,17 @@ function CaseDetail({
     },
   });
   const packetMutation = useMutation({
+    mutationKey: commandKey,
     mutationFn: actions.submitPacket,
+    retry: false,
+    onError: requireCaseReadback,
+    onSettled: () => {
+      statusSubmitting.current = false;
+    },
     onSuccess: updateCaseCacheAndConfirm("已準備文件套件。"),
   });
   const receiptMutation = useMutation({
+    mutationKey: commandKey,
     mutationFn: actions.acceptReceipt,
     onSuccess: updateCaseCacheAndConfirm("已接納回條。"),
   });
@@ -229,6 +275,73 @@ function CaseDetail({
     setFilingReference((current) => current || caseItem.filingReference || "");
     setConfirmationDocumentId((current) => current || caseItem.confirmationDocumentId || "");
   }, [caseItem]);
+
+  async function reconcileCase() {
+    if (
+      recoveringCase.current ||
+      queryClient.isMutating({ mutationKey: annualReturnQueryKeys.detail(caseId) })
+    )
+      return;
+    recoveringCase.current = true;
+    setCaseRecovery("reading");
+    const queryKey = annualReturnQueryKeys.detail(caseId);
+    try {
+      await queryClient.cancelQueries({ queryKey, exact: true });
+      const fresh = await getAnnualReturnCase({ data: { id: caseId } });
+      if (
+        !fresh ||
+        fresh.id !== caseId ||
+        !Array.isArray(fresh.checklist) ||
+        !fresh.readiness ||
+        typeof fresh.readiness.sourceVersion !== "string" ||
+        !fresh.readiness.sourceVersion.trim() ||
+        typeof fresh.readiness.readyToPrepare !== "boolean" ||
+        typeof fresh.readiness.readyForApproval !== "boolean" ||
+        typeof fresh.readiness.readyToTransmit !== "boolean" ||
+        !Array.isArray(fresh.readiness.blockers)
+      )
+        throw new Error("Case readiness unavailable");
+      await queryClient.cancelQueries({ queryKey, exact: true });
+      if (!caseAlive.current) return;
+      await queryClient.invalidateQueries({
+        queryKey: annualReturnQueryKeys.all,
+        refetchType: "none",
+      });
+      if (!caseAlive.current) return;
+      queryClient.setQueryData(queryKey, fresh);
+      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.history(caseId) });
+      checklistMutation.reset();
+      statusMutation.reset();
+      packetMutation.reset();
+      uncertainCase.current = false;
+      setCaseRecovery("none");
+    } catch {
+      if (caseAlive.current) setCaseRecovery("failed");
+    } finally {
+      recoveringCase.current = false;
+    }
+  }
+
+  if (caseRecovery !== "none")
+    return (
+      <main className="flex-1 space-y-3 p-6">
+        <PageHeader eyebrow="案件與客戶" title="案件操作結果待核實" />
+        <p role="alert">案件或清單操作結果未確認。請先重新核對案件及就緒資料，避免重複操作。</p>
+        {caseRecovery === "failed" ? (
+          <p role="status">尚未核實案件結果。請稍後重新核對；沒有重試寫入。</p>
+        ) : null}
+        <Button
+          type="button"
+          disabled={caseRecovery === "reading" || pendingCaseCommands.length > 0}
+          onClick={() => void reconcileCase()}
+        >
+          重新核對案件結果
+        </Button>
+        <Button asChild>
+          <a href={caseReturnPath(returnTo)}>返回工作列表</a>
+        </Button>
+      </main>
+    );
 
   if (caseQuery.isPending) {
     return <LoadingRows label="正在載入周年申報案件" rows={6} className="p-6" />;
@@ -340,9 +453,16 @@ function CaseDetail({
                   </Select>
                   <Button
                     disabled={
-                      locked || statusMutation.isPending || nextStatus === caseItem.currentStatus
+                      locked ||
+                      statusMutation.isPending ||
+                      packetMutation.isPending ||
+                      nextStatus === caseItem.currentStatus
                     }
-                    onClick={() => statusMutation.mutate(nextStatus)}
+                    onClick={() => {
+                      if (uncertainCase.current || statusSubmitting.current) return;
+                      statusSubmitting.current = true;
+                      statusMutation.mutate(nextStatus);
+                    }}
                     type="button"
                   >
                     <PendingIcon pending={statusMutation.isPending} />
@@ -382,13 +502,16 @@ function CaseDetail({
                     </div>
                     <Button
                       disabled={locked || pendingChecklistItemIds.includes(item.id)}
-                      onClick={() =>
+                      onClick={() => {
+                        if (uncertainCase.current || checklistSubmitting.current.has(item.id))
+                          return;
+                        checklistSubmitting.current.add(item.id);
                         checklistMutation.mutate({
                           itemId: item.id,
                           status: nextChecklistStatus,
                           documentId: nextChecklistStatus === "Missing" ? null : item.documentId,
-                        })
-                      }
+                        });
+                      }}
                       type="button"
                     >
                       <CheckSquare aria-hidden className="h-4 w-4" />
@@ -487,8 +610,14 @@ function CaseDetail({
             </ul>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
-                disabled={locked || packetMutation.isPending || !packetReady}
-                onClick={() => packetMutation.mutate()}
+                disabled={
+                  locked || packetMutation.isPending || statusMutation.isPending || !packetReady
+                }
+                onClick={() => {
+                  if (uncertainCase.current || statusSubmitting.current) return;
+                  statusSubmitting.current = true;
+                  packetMutation.mutate();
+                }}
                 type="button"
               >
                 <PendingIcon pending={packetMutation.isPending} />

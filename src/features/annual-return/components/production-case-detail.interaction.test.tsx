@@ -287,6 +287,11 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
 
+    await waitFor(() =>
+      expect(
+        (screen.getByRole("button", { name: "準備交件套件" }) as HTMLButtonElement).disabled,
+      ).toBe(false),
+    );
     fireEvent.click(screen.getByRole("button", { name: "準備交件套件" }));
 
     fireEvent.change(screen.getByLabelText("遞交編號"), {
@@ -1053,4 +1058,160 @@ it("isolates note uncertainty and late recovery from a newly opened case draft",
   expect(notePanel().queryByRole("button", { name: "重新核對備註結果" })).toBeNull();
   expect(serverFns.addAnnualReturnCaseNote).toHaveBeenCalledTimes(1);
   queryClient.clear();
+});
+
+async function failReadinessCommand(kind: "checklist" | "status" | "packet", client?: QueryClient) {
+  if (kind === "checklist")
+    serverFns.updateAnnualReturnChecklistItem.mockRejectedValue(new Error("lost response"));
+  else serverFns.updateAnnualReturnStatus.mockRejectedValue(new Error("lost response"));
+  renderDetail(undefined, client);
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  if (kind === "status") {
+    fireEvent.change(screen.getByLabelText("案件狀態"), { target: { value: "Ready to file" } });
+    fireEvent.click(screen.getByRole("button", { name: "更新" }));
+  } else
+    fireEvent.click(
+      screen.getByRole("button", { name: kind === "checklist" ? "標記為缺少" : "準備交件套件" }),
+    );
+  return screen.findByRole("button", { name: "重新核對案件結果" });
+}
+
+it.each(["checklist", "status", "packet"] as const)(
+  "reconciles uncertain %s with a fresh case read and no write replay",
+  async (kind) => {
+    const retry = await failReadinessCommand(kind);
+    expect(screen.queryByRole("button", { name: "更新" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "分配" })).toBeNull();
+    serverFns.getAnnualReturnCase.mockResolvedValue({
+      ...caseItem,
+      readiness: { ...caseItem.readiness!, sourceVersion: "c".repeat(32) },
+      checklist: [{ ...caseItem.checklist[0], status: "Missing", documentId: null }],
+    });
+    fireEvent.click(retry);
+    await screen.findByRole("button", { name: "標記為已收到" });
+    expect(serverFns.getAnnualReturnCase).toHaveBeenLastCalledWith({ data: { id: caseId } });
+    expect(serverFns.updateAnnualReturnChecklistItem).toHaveBeenCalledTimes(
+      kind === "checklist" ? 1 : 0,
+    );
+    expect(serverFns.updateAnnualReturnStatus).toHaveBeenCalledTimes(kind === "checklist" ? 0 : 1);
+    serverFns.updateAnnualReturnStatus.mockResolvedValue(caseItem);
+    fireEvent.change(screen.getByLabelText("案件狀態"), { target: { value: "Ready to file" } });
+    fireEvent.click(screen.getByRole("button", { name: "更新" }));
+    await waitFor(() =>
+      expect(serverFns.updateAnnualReturnStatus).toHaveBeenLastCalledWith({
+        data: { caseId, nextStatus: "Ready to file", expectedVersion: "c".repeat(32) },
+      }),
+    );
+  },
+);
+
+it.each([null, { ...caseItem, id: ownerId }, { ...caseItem, readiness: null }])(
+  "keeps unavailable readiness readback blocked: %j",
+  async (fresh) => {
+    const retry = await failReadinessCommand("checklist");
+    serverFns.getAnnualReturnCase.mockResolvedValue(fresh);
+    fireEvent.click(retry);
+    await screen.findByText("尚未核實案件結果。請稍後重新核對；沒有重試寫入。");
+    expect(screen.queryByRole("button", { name: "標記為缺少" })).toBeNull();
+    expect(serverFns.updateAnnualReturnChecklistItem).toHaveBeenCalledTimes(1);
+  },
+);
+
+it("deduplicates pending readback and ignores cache changes until the independent read succeeds", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const retry = await failReadinessCommand("status", client);
+  let resolve!: (value: AnnualReturnCase) => void;
+  serverFns.getAnnualReturnCase.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  await waitFor(() => expect(serverFns.getAnnualReturnCase).toHaveBeenCalledTimes(2));
+  expect((retry as HTMLButtonElement).disabled).toBe(true);
+  await act(async () => {
+    await client.cancelQueries();
+    client.setQueryData(annualReturnQueryKeys.detail(caseId), caseItem);
+  });
+  expect(screen.queryByRole("button", { name: "更新" })).toBeNull();
+  await act(async () => resolve({ ...caseItem, lockedAt: "2026-10-27T00:00:00Z" }));
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  expect((screen.getByRole("button", { name: "標記為缺少" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expect(serverFns.updateAnnualReturnStatus).toHaveBeenCalledTimes(1);
+});
+
+it("keeps failed readback recoverable without replay", async () => {
+  const retry = await failReadinessCommand("checklist");
+  serverFns.getAnnualReturnCase.mockRejectedValueOnce(new Error("private read failure"));
+  fireEvent.click(retry);
+  await screen.findByText("尚未核實案件結果。請稍後重新核對；沒有重試寫入。");
+  expect(screen.queryByText("private read failure")).toBeNull();
+  fireEvent.click(retry);
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  expect(serverFns.updateAnnualReturnChecklistItem).toHaveBeenCalledTimes(1);
+});
+
+it("does not publish a late reconciliation after leaving the case", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const retry = await failReadinessCommand("checklist", client);
+  let resolve!: (value: AnnualReturnCase) => void;
+  serverFns.getAnnualReturnCase.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  fireEvent.click(retry);
+  await waitFor(() => expect(serverFns.getAnnualReturnCase).toHaveBeenCalledTimes(2));
+  cleanup();
+  await act(async () => resolve({ ...caseItem, companyName: "Late response" }));
+  expect(
+    client.getQueryData<AnnualReturnCase>(annualReturnQueryKeys.detail(caseId))?.companyName,
+  ).toBe(caseItem.companyName);
+});
+
+it("deduplicates same-turn checklist submissions and suppresses configured mutation retries", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: 2, retryDelay: 0 } },
+  });
+  serverFns.updateAnnualReturnChecklistItem.mockRejectedValue(new Error("unknown"));
+  renderDetail(undefined, client);
+  const submit = await screen.findByRole("button", { name: "標記為缺少" });
+  act(() => {
+    submit.click();
+    submit.click();
+  });
+  await screen.findByRole("button", { name: "重新核對案件結果" });
+  expect(serverFns.updateAnnualReturnChecklistItem).toHaveBeenCalledTimes(1);
+});
+
+it("waits for an already pending case command before allowing readback", async () => {
+  let settleOwner!: (value: AnnualReturnCase) => void;
+  serverFns.assignAnnualReturnCaseOwner.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        settleOwner = resolve;
+      }),
+  );
+  serverFns.updateAnnualReturnChecklistItem.mockRejectedValue(new Error("unknown"));
+  renderDetail();
+  await screen.findByLabelText("負責同事");
+  fireEvent.click(screen.getByRole("button", { name: "分配" }));
+  await waitFor(() => expect(serverFns.assignAnnualReturnCaseOwner).toHaveBeenCalledTimes(1));
+  fireEvent.click(screen.getByRole("button", { name: "標記為缺少" }));
+  const retry = await screen.findByRole("button", { name: "重新核對案件結果" });
+  expect((retry as HTMLButtonElement).disabled).toBe(true);
+  fireEvent.click(retry);
+  expect(serverFns.getAnnualReturnCase).toHaveBeenCalledTimes(1);
+  await act(async () => settleOwner(caseItem));
+  await waitFor(() => expect((retry as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(retry);
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  expect(serverFns.updateAnnualReturnChecklistItem).toHaveBeenCalledTimes(1);
 });
