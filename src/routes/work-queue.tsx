@@ -128,6 +128,7 @@ function WorkQueueSession() {
     enabled: dataMode === "production",
     retry: false,
   });
+  const queueReadBlocked = queueQuery.isError || queueQuery.isFetching;
   const response = useMemo(
     () =>
       queueQuery.data ? { page: queueQuery.data, search: queueViewSearch(search) } : undefined,
@@ -136,8 +137,18 @@ function WorkQueueSession() {
   const retained = useRetainedPage(readScope, response);
   const page = retained?.page;
   const items = useMemo(() => page?.items ?? [], [page]);
+  const currentAcknowledgementRow = queueQuery.data?.items.find(
+    (row) => row.id === acknowledgementItem?.id,
+  );
+  const acknowledgementReadBlocked =
+    queueReadBlocked ||
+    !currentAcknowledgementRow ||
+    (currentAcknowledgementRow.escalationState !== "warning" &&
+      currentAcknowledgementRow.escalationState !== "breach") ||
+    currentAcknowledgementRow.status === "completed" ||
+    currentAcknowledgementRow.status === "cancelled";
   const currentAssignmentRow = queueQuery.data?.items.find((row) => row.id === assignmentItem?.id);
-  const assignmentQueueIssue = queueQuery.isError
+  const assignmentQueueIssue = queueReadBlocked
     ? "未能重新讀取目前隊列，請重新讀取工作及建議人選。"
     : !currentAssignmentRow
       ? "此工作不在目前隊列，請核對範圍後重新讀取。"
@@ -340,6 +351,7 @@ function WorkQueueSession() {
           <BulkSelectionToolbar
             actorScope={actorScope}
             resource="work_item"
+            selectionDisabled={queueReadBlocked}
             filters={bulkFilters}
             page={pageItems.map((i) => ({
               id: i.id,
@@ -351,7 +363,12 @@ function WorkQueueSession() {
         {queueQuery.isError ? (
           <QueueMessage>
             無法載入這一頁；同一範圍已讀取內容仍保留。資料或篩選可能已變更，請重試或返回第一頁。
-            <Button onClick={() => void queueQuery.refetch()}>重試</Button>
+            <Button
+              disabled={queueQuery.isFetching}
+              onClick={() => void queueQuery.refetch({ cancelRefetch: false })}
+            >
+              重試
+            </Button>
             <Button onClick={() => void navigate({ search: { ...search, cursor: undefined } })}>
               返回第一頁
             </Button>
@@ -442,6 +459,7 @@ function WorkQueueSession() {
                       <QueueActions
                         item={item}
                         canManage={canManage}
+                        readBlocked={queueReadBlocked}
                         onAssign={setAssignmentItem}
                         onAcknowledge={setAcknowledgementItem}
                       />
@@ -493,6 +511,7 @@ function WorkQueueSession() {
                   <QueueActions
                     item={item}
                     canManage={canManage}
+                    readBlocked={queueReadBlocked}
                     onAssign={setAssignmentItem}
                     onAcknowledge={setAcknowledgementItem}
                   />
@@ -554,6 +573,7 @@ function WorkQueueSession() {
       {acknowledgementItem ? (
         <AcknowledgementDialog
           item={acknowledgementItem}
+          readBlocked={acknowledgementReadBlocked}
           onClose={() => setAcknowledgementItem(null)}
           onAcknowledged={() => {
             setAcknowledgementItem(null);
@@ -850,10 +870,12 @@ function assignmentFailureMessage(error: unknown): string {
 
 function AcknowledgementDialog({
   item,
+  readBlocked,
   onClose,
   onAcknowledged,
 }: {
   item: PersistedWorkItem;
+  readBlocked: boolean;
   onClose: () => void;
   onAcknowledged: () => void;
 }) {
@@ -883,6 +905,11 @@ function AcknowledgementDialog({
           placeholder="覆核結果及下一步"
           className="min-h-24 w-full"
         />
+        {readBlocked ? (
+          <p role="alert" className="text-sm text-destructive">
+            隊列讀取或升級狀態未能核實；暫不能確認知悉。
+          </p>
+        ) : null}
         {acknowledge.isError ? (
           <p className="text-sm text-destructive">未能儲存確認知悉記錄。</p>
         ) : null}
@@ -890,8 +917,10 @@ function AcknowledgementDialog({
           <Button onClick={onClose}>取消</Button>
           <Button
             variant="primary"
-            disabled={!note.trim() || acknowledge.isPending}
-            onClick={() => acknowledge.mutate()}
+            disabled={readBlocked || !note.trim() || acknowledge.isPending}
+            onClick={() => {
+              if (!readBlocked) acknowledge.mutate();
+            }}
           >
             確認知悉
           </Button>
@@ -996,23 +1025,35 @@ function FilterSelect({
 function QueueActions({
   item,
   canManage,
+  readBlocked,
   onAssign,
   onAcknowledge,
 }: {
   item: PersistedWorkItem;
   canManage: boolean;
+  readBlocked: boolean;
   onAssign: (item: PersistedWorkItem) => void;
   onAcknowledge: (item: PersistedWorkItem) => void;
 }) {
   return (
     <div className="flex justify-end gap-2">
       {canManage ? (
-        <Button size="icon" title="分配工作項目" onClick={() => onAssign(item)}>
+        <Button
+          disabled={readBlocked}
+          size="icon"
+          title="分配工作項目"
+          onClick={() => onAssign(item)}
+        >
           <UserRoundPlus className="h-4 w-4" />
         </Button>
       ) : null}
       {canManage && (item.escalationState === "warning" || item.escalationState === "breach") ? (
-        <Button size="icon" title="確認知悉升級" onClick={() => onAcknowledge(item)}>
+        <Button
+          disabled={readBlocked}
+          size="icon"
+          title="確認知悉升級"
+          onClick={() => onAcknowledge(item)}
+        >
           <Check className="h-4 w-4" />
         </Button>
       ) : null}

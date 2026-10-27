@@ -26,9 +26,24 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 vi.mock("@/components/bulk-selection-toolbar", () => ({
-  BulkSelectionToolbar: ({ resource, filters }: { resource: string; filters: unknown }) => {
+  BulkSelectionToolbar: ({
+    resource,
+    filters,
+    selectionDisabled,
+  }: {
+    resource: string;
+    filters: unknown;
+    selectionDisabled?: boolean;
+  }) => {
     mocks.bulk(filters);
-    return <section aria-label="Bulk assignment">{resource}</section>;
+    return (
+      <section
+        aria-label="Bulk assignment"
+        data-selection-disabled={String(Boolean(selectionDisabled))}
+      >
+        {resource}
+      </section>
+    );
   },
 }));
 vi.mock("@/features/work-items/server-fns", () => ({
@@ -606,6 +621,37 @@ describe("work queue assignment and blockers", () => {
           "cursor",
         ),
       ).toBeNull();
+    expect((screen.getAllByTitle("確認知悉升級")[0] as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getAllByTitle("分配工作項目")[0] as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      screen
+        .getByRole("region", { name: "Bulk assignment" })
+        .getAttribute("data-selection-disabled"),
+    ).toBe("true");
+    let finishRead!: (value: unknown) => void;
+    mocks.list.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishRead = resolve;
+        }),
+    );
+    const retry = screen.getByRole("button", { name: "重試" });
+    act(() => {
+      retry.click();
+      retry.click();
+    });
+    await waitFor(() =>
+      expect((screen.getAllByTitle("確認知悉升級")[0] as HTMLButtonElement).disabled).toBe(true),
+    );
+    expect(
+      (screen.queryByRole("button", { name: "重試" }) as HTMLButtonElement | null)?.disabled ??
+        true,
+    ).toBe(true);
+    await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(3));
+    await act(async () => finishRead({ items: [item], nextCursor: null }));
+    await waitFor(() =>
+      expect((screen.getAllByTitle("確認知悉升級")[0] as HTMLButtonElement).disabled).toBe(false),
+    );
     fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
     expect(screen.getByRole("dialog")).toBeTruthy();
     mocks.actorId = "another-actor";
@@ -782,4 +828,105 @@ describe("work queue assignment and blockers", () => {
       }),
     );
   });
+});
+
+it("deduplicates failed queue retry and restores commands only after fresh read success", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  mocks.list.mockRejectedValue(new Error("private list failure"));
+  render(
+    <QueryClientProvider client={client}>
+      <WorkQueueRoute />
+    </QueryClientProvider>,
+  );
+  const retry = await screen.findByRole("button", { name: "重試" });
+  expect(screen.queryByText("此檢視沒有符合的工作項目。")).toBeNull();
+  expect(
+    screen.getByRole("region", { name: "Bulk assignment" }).getAttribute("data-selection-disabled"),
+  ).toBe("true");
+  let resolve!: (value: unknown) => void;
+  mocks.list.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+  expect(
+    (screen.queryByRole("button", { name: "重試" }) as HTMLButtonElement | null)?.disabled ?? true,
+  ).toBe(true);
+  await act(async () => resolve({ items: [assignmentWork], nextCursor: null }));
+  await screen.findAllByText(assignmentWork.title);
+  expect((screen.getAllByTitle("分配工作項目")[0] as HTMLButtonElement).disabled).toBe(false);
+  expect(
+    screen.getByRole("region", { name: "Bulk assignment" }).getAttribute("data-selection-disabled"),
+  ).toBe("false");
+  expect(mocks.assign).not.toHaveBeenCalled();
+  expect(mocks.navigate).not.toHaveBeenCalled();
+});
+
+it("blocks an already open acknowledgement during queue refresh and denial while retaining its draft", async () => {
+  mocks.ack.mockReset();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  mocks.list.mockResolvedValue({
+    items: [{ ...assignmentWork, escalationState: "warning" }],
+    nextCursor: null,
+  });
+  render(
+    <QueryClientProvider client={client}>
+      <WorkQueueRoute />
+    </QueryClientProvider>,
+  );
+  await screen.findAllByText(assignmentWork.title);
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), {
+    target: { value: "Unsaved review note" },
+  });
+  let reject!: (error: Error) => void;
+  mocks.list.mockImplementationOnce(
+    () =>
+      new Promise((_done, fail) => {
+        reject = fail;
+      }),
+  );
+  let refreshing!: Promise<void>;
+  act(() => {
+    refreshing = client.refetchQueries({ queryKey: ["work-queue"] });
+  });
+  const submit = screen.getByRole("button", { name: "確認知悉" });
+  await waitFor(() => expect((submit as HTMLButtonElement).disabled).toBe(true));
+  fireEvent.click(submit);
+  expect(mocks.ack).not.toHaveBeenCalled();
+  await act(async () => {
+    reject(new Error("denied"));
+    await refreshing;
+  });
+  expect((submit as HTMLButtonElement).disabled).toBe(true);
+  expect((screen.getByLabelText("確認知悉備註") as HTMLTextAreaElement).value).toBe(
+    "Unsaved review note",
+  );
+  expect(mocks.ack).not.toHaveBeenCalled();
+  mocks.list.mockResolvedValue({
+    items: [{ ...assignmentWork, escalationState: "acknowledged" }],
+    nextCursor: null,
+  });
+  await act(async () => {
+    await client.refetchQueries({ queryKey: ["work-queue"] });
+  });
+  expect((submit as HTMLButtonElement).disabled).toBe(true);
+  mocks.list.mockResolvedValue({
+    items: [{ ...assignmentWork, escalationState: "warning" }],
+    nextCursor: null,
+  });
+  await act(async () => {
+    await client.refetchQueries({ queryKey: ["work-queue"] });
+  });
+  await waitFor(() => expect((submit as HTMLButtonElement).disabled).toBe(false));
+  expect((screen.getByLabelText("確認知悉備註") as HTMLTextAreaElement).value).toBe(
+    "Unsaved review note",
+  );
+  expect(mocks.ack).not.toHaveBeenCalled();
 });
