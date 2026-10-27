@@ -1215,3 +1215,143 @@ it("waits for an already pending case command before allowing readback", async (
   await screen.findByRole("heading", { name: "Acme Company Limited" });
   expect(serverFns.updateAnnualReturnChecklistItem).toHaveBeenCalledTimes(1);
 });
+
+async function failOwnerCommand(client?: QueryClient) {
+  serverFns.assignAnnualReturnCaseOwner.mockRejectedValue(
+    new Error("private unknown owner result"),
+  );
+  const rendered = renderDetail(undefined, client);
+  const picker = await screen.findByLabelText("負責同事");
+  await waitFor(() => expect(within(picker as HTMLElement).queryByText(/Calvin Ho/)).toBeTruthy());
+  fireEvent.change(picker, { target: { value: nextOwnerId } });
+  fireEvent.click(screen.getByRole("button", { name: "分配" }));
+  await screen.findByRole("button", { name: "重新核對案件結果" });
+  return rendered;
+}
+
+it.each([ownerId, nextOwnerId])(
+  "restores the read-back owner %s after uncertainty without replaying assignment",
+  async (freshOwner) => {
+    await failOwnerCommand();
+    expect(screen.queryByRole("button", { name: "分配" })).toBeNull();
+    serverFns.getAnnualReturnCase.mockResolvedValue({
+      ...caseItem,
+      ownerId: freshOwner,
+      ownerName: "Fresh owner",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "重新核對案件結果" }));
+    const picker = await screen.findByLabelText("負責同事");
+    expect((picker as HTMLSelectElement).value).toBe(freshOwner);
+    expect(serverFns.assignAnnualReturnCaseOwner).toHaveBeenCalledTimes(1);
+    expect(serverFns.getAnnualReturnCase).toHaveBeenLastCalledWith({ data: { id: caseId } });
+    serverFns.assignAnnualReturnCaseOwner.mockResolvedValue(caseItem);
+    fireEvent.change(picker, { target: { value: ownerId } });
+    fireEvent.click(screen.getByRole("button", { name: "分配" }));
+    await waitFor(() => expect(serverFns.assignAnnualReturnCaseOwner).toHaveBeenCalledTimes(2));
+    expect(serverFns.assignAnnualReturnCaseOwner.mock.calls[1][0]).toEqual({
+      data: { caseId, ownerId },
+    });
+  },
+);
+
+it.each([null, { ...caseItem, id: nextOwnerId }, { ...caseItem, ownerId: "unverified" }])(
+  "keeps unavailable owner readback blocked: %j",
+  async (fresh) => {
+    await failOwnerCommand();
+    serverFns.getAnnualReturnCase.mockResolvedValue(fresh);
+    fireEvent.click(screen.getByRole("button", { name: "重新核對案件結果" }));
+    await screen.findByText("尚未核實案件結果。請稍後重新核對；沒有重試寫入。");
+    expect(screen.queryByRole("button", { name: "分配" })).toBeNull();
+    expect(serverFns.assignAnnualReturnCaseOwner).toHaveBeenCalledTimes(1);
+  },
+);
+
+it("deduplicates owner submissions even with mutation retry defaults enabled", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: 2, retryDelay: 0 } },
+  });
+  serverFns.assignAnnualReturnCaseOwner.mockRejectedValue(new Error("unknown"));
+  renderDetail(undefined, client);
+  await screen.findByLabelText("負責同事");
+  await waitFor(() =>
+    expect((screen.getByRole("button", { name: "分配" }) as HTMLButtonElement).disabled).toBe(
+      false,
+    ),
+  );
+  const submit = screen.getByRole("button", { name: "分配" });
+  act(() => {
+    submit.click();
+    submit.click();
+  });
+  await screen.findByRole("button", { name: "重新核對案件結果" });
+  expect(serverFns.assignAnnualReturnCaseOwner).toHaveBeenCalledTimes(1);
+});
+
+it("keeps owner writes blocked during independent readback despite cache updates and cancellation", async () => {
+  const { queryClient } = await failOwnerCommand();
+  let resolve!: (value: AnnualReturnCase) => void;
+  serverFns.getAnnualReturnCase.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  const retry = screen.getByRole("button", { name: "重新核對案件結果" });
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  await waitFor(() => expect(serverFns.getAnnualReturnCase).toHaveBeenCalledTimes(2));
+  expect((retry as HTMLButtonElement).disabled).toBe(true);
+  await act(async () => {
+    await queryClient.cancelQueries();
+    queryClient.setQueryData(annualReturnQueryKeys.detail(caseId), {
+      ...caseItem,
+      ownerId: nextOwnerId,
+    });
+  });
+  expect(screen.queryByRole("button", { name: "分配" })).toBeNull();
+  await act(async () => resolve({ ...caseItem, lockedAt: "2026-10-27T00:00:00Z" }));
+  const picker = await screen.findByLabelText("負責同事");
+  expect((picker as HTMLSelectElement).value).toBe(ownerId);
+  expect((screen.getByRole("button", { name: "分配" }) as HTMLButtonElement).disabled).toBe(true);
+  expect(serverFns.assignAnnualReturnCaseOwner).toHaveBeenCalledTimes(1);
+});
+
+it("retains note drafts and allows owner read retry after denial", async () => {
+  serverFns.assignAnnualReturnCaseOwner.mockRejectedValue(new Error("unknown"));
+  renderDetail();
+  await screen.findByLabelText("負責同事");
+  fireEvent.change(screen.getByLabelText("案件備註"), {
+    target: { value: "Unsaved unrelated note" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "分配" }));
+  const retry = await screen.findByRole("button", { name: "重新核對案件結果" });
+  serverFns.getAnnualReturnCase.mockRejectedValueOnce(new Error("denied"));
+  fireEvent.click(retry);
+  await screen.findByText("尚未核實案件結果。請稍後重新核對；沒有重試寫入。");
+  fireEvent.click(retry);
+  await screen.findByLabelText("負責同事");
+  expect((screen.getByLabelText("案件備註") as HTMLTextAreaElement).value).toBe(
+    "Unsaved unrelated note",
+  );
+  expect(serverFns.assignAnnualReturnCaseOwner).toHaveBeenCalledTimes(1);
+  expect(serverFns.addAnnualReturnCaseNote).not.toHaveBeenCalled();
+});
+
+it("discards owner recovery after leaving the keyed case lifetime", async () => {
+  const { queryClient } = await failOwnerCommand();
+  let resolve!: (value: AnnualReturnCase) => void;
+  serverFns.getAnnualReturnCase.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "重新核對案件結果" }));
+  await waitFor(() => expect(serverFns.getAnnualReturnCase).toHaveBeenCalledTimes(2));
+  cleanup();
+  const before = queryClient.getQueryData(annualReturnQueryKeys.detail(caseId));
+  await act(async () => resolve({ ...caseItem, ownerId: nextOwnerId }));
+  expect(queryClient.getQueryData(annualReturnQueryKeys.detail(caseId))).toEqual(before);
+});

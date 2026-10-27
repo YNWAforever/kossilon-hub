@@ -127,6 +127,8 @@ function CaseDetail({
   const uncertainCase = useRef(false);
   const recoveringCase = useRef(false);
   const statusSubmitting = useRef(false);
+  const ownerSubmitting = useRef(false);
+  const ownerNeedsRead = useRef(false);
   const checklistSubmitting = useRef(new Set<string>());
   const [caseRecovery, setCaseRecovery] = useState<"none" | "required" | "reading" | "failed">(
     "none",
@@ -196,6 +198,14 @@ function CaseDetail({
   const ownerMutation = useMutation({
     mutationKey: commandKey,
     mutationFn: actions.assignOwner,
+    retry: false,
+    onError: () => {
+      ownerNeedsRead.current = true;
+      requireCaseReadback();
+    },
+    onSettled: () => {
+      ownerSubmitting.current = false;
+    },
     onSuccess: updateCaseCacheAndConfirm("已分配負責同事。"),
   });
   const statusMutation = useMutation({
@@ -301,6 +311,7 @@ function CaseDetail({
         !Array.isArray(fresh.readiness.blockers)
       )
         throw new Error("Case readiness unavailable");
+      if (ownerNeedsRead.current && !isUuid(fresh.ownerId)) throw new Error("Owner unavailable");
       await queryClient.cancelQueries({ queryKey, exact: true });
       if (!caseAlive.current) return;
       await queryClient.invalidateQueries({
@@ -310,6 +321,9 @@ function CaseDetail({
       if (!caseAlive.current) return;
       queryClient.setQueryData(queryKey, fresh);
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.history(caseId) });
+      if (ownerNeedsRead.current) setOwnerId(fresh.ownerId);
+      ownerNeedsRead.current = false;
+      ownerMutation.reset();
       checklistMutation.reset();
       statusMutation.reset();
       packetMutation.reset();
@@ -424,7 +438,17 @@ function CaseDetail({
                 <Button
                   className="mt-2"
                   disabled={locked || ownerMutation.isPending || !isUuid(ownerId)}
-                  onClick={() => ownerMutation.mutate(ownerId)}
+                  onClick={() => {
+                    if (
+                      locked ||
+                      uncertainCase.current ||
+                      ownerSubmitting.current ||
+                      !isUuid(ownerId)
+                    )
+                      return;
+                    ownerSubmitting.current = true;
+                    ownerMutation.mutate(ownerId);
+                  }}
                   type="button"
                 >
                   <PendingIcon pending={ownerMutation.isPending} />
