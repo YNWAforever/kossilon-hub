@@ -1,0 +1,332 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx (19 tests | 5 failed) 2720ms
+   × recovers failed 'notes' reads independently while preserving the unsaved note draft 145ms
+   × recovers failed 'history' reads independently while preserving the unsaved note draft 96ms
+   × keeps cached 'notes' hidden after denial and recovers repeated failures only through its own list 90ms
+   × keeps cached 'history' hidden after denial and recovers repeated failures only through its own list 74ms
+   × does not retry failed history when explicitly recovering failed notes 81ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > recovers failed 'notes' reads independently while preserving the unsaved note draft
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "重新載入備註"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "備註":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m/>[39m
+
+  --------------------------------------------------textbox:
+
+  Name "案件備註":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "加入備註":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------alert:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m>[39m
+    [0mUnsaved follow-up draft[0m
+  [36m</textarea>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mContext read unavailable[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:656:23
+    654|   expect(panel.queryByText(context.empty)).toBeNull();
+    655|   fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "…
+    656|   const retry = panel.getByRole("button", { name: context.retry });
+       |                       ^
+    657|   let finish!: (value: unknown) => void;
+    658|   context.read.mockImplementationOnce(() => new Promise(resolve => { f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > recovers failed 'history' reads independently while preserving the unsaved note draft
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "重新載入審計記錄"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "審計記錄":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m/>[39m
+
+  --------------------------------------------------alert:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-3 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m審計記錄[0m
+  [36m</h2>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"mt-3 text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m>[39m
+    [0mContext read unavailable[0m
+  [36m</p>[39m
+[36m</section>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:656:23
+    654|   expect(panel.queryByText(context.empty)).toBeNull();
+    655|   fireEvent.change(screen.getByLabelText("案件備註"), { target: { value: "…
+    656|   const retry = panel.getByRole("button", { name: context.retry });
+       |                       ^
+    657|   let finish!: (value: unknown) => void;
+    658|   context.read.mockImplementationOnce(() => new Promise(resolve => { f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > keeps cached 'notes' hidden after denial and recovers repeated failures only through its own list
+AssertionError: expected <p class="text-sm"></p> to be null
+
+- Expected:
+null
+
++ Received:
+<p
+  class="text-sm"
+>
+  Recovered notes
+</p>
+
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:682:43
+    680|   context.read.mockRejectedValue(new Error("Read denied"));
+    681|   await act(async () => { await queryClient.invalidateQueries({ queryK…
+    682|   expect(panel.queryByText(context.text)).toBeNull();
+       |                                           ^
+    683|   expect(panel.queryByText(context.empty)).toBeNull();
+    684|   let reject!: (reason: Error) => void;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > keeps cached 'history' hidden after denial and recovers repeated failures only through its own list
+AssertionError: expected <p …(1)></p> to be null
+
+- Expected:
+null
+
++ Received:
+<p
+  class="mt-1 text-sm text-muted-foreground"
+>
+  Recovered history
+</p>
+
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:682:43
+    680|   context.read.mockRejectedValue(new Error("Read denied"));
+    681|   await act(async () => { await queryClient.invalidateQueries({ queryK…
+    682|   expect(panel.queryByText(context.text)).toBeNull();
+       |                                           ^
+    683|   expect(panel.queryByText(context.empty)).toBeNull();
+    684|   let reject!: (reason: Error) => void;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > does not retry failed history when explicitly recovering failed notes
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "重新載入備註"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "備註":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m/>[39m
+
+  --------------------------------------------------textbox:
+
+  Name "案件備註":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "加入備註":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------alert:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm text-destructive"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33mclass[39m=[32m"border-b pb-4"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-base font-semibold"[39m
+  [36m>[39m
+    [0m備註[0m
+  [36m</h2>[39m
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"案件備註"[39m
+    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-auto px-3 py-2 text-sm mt-3 min-h-24 w-full resize-y"[39m
+  [36m/>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<svg[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"lucide lucide-message-square-plus h-4 w-4"[39m
+      [33mfill[39m=[32m"none"[39m
+      [33mheight[39m=[32m"24"[39m
+      [33mstroke[39m=[32m"currentColor"[39m
+      [33mstroke-linecap[39m=[32m"round"[39m
+      [33mstroke-linejoin[39m=[32m"round"[39m
+      [33mstroke-width[39m=[32m"2"[39m
+      [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [33mwidth[39m=[32m"24"[39m
+      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+    [36m>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M12 8v6"[39m
+      [36m/>[39m
+      [36m<path[39m
+        [33md[39m=[32m"M9 11h6"[39m
+      [36m/>[39m
+    [36m</svg>[39m
+    [0m加入備註[0m
+  [36m</button>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"mt-4 space-y-3"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mNotes unavailable[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:713:25
+    711|   await history.findByRole("alert");
+    712|   serverFns.listAnnualReturnCaseNotes.mockResolvedValue(contextReads[0…
+    713|   fireEvent.click(notes.getByRole("button", { name: "重新載入備註" }));
+       |                         ^
+    714|   await notes.findByText("Recovered notes");
+    715|   expect(history.getByRole("button", { name: "重新載入審計記錄" })).toBeTruthy…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 14 passed (19)
+   Start at  04:23:54
+   Duration  5.42s (transform 893ms, setup 0ms, import 1.38s, tests 2.72s, environment 1.10s)
