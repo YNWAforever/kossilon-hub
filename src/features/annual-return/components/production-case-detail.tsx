@@ -228,6 +228,14 @@ function CaseDetail({
         <p role="alert" className="text-sm text-destructive">
           {caseQuery.error.message}
         </p>
+        <Button
+          type="button"
+          className="min-h-11"
+          disabled={caseQuery.isFetching}
+          onClick={() => void caseQuery.refetch({ cancelRefetch: false })}
+        >
+          重新載入案件資料
+        </Button>
         <Button asChild>
           <a href={caseReturnPath(returnTo)}>返回工作列表</a>
         </Button>

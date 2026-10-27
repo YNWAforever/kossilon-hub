@@ -116,7 +116,7 @@ const caseItem: AnnualReturnCase = {
   },
 };
 
-function renderDetail() {
+function renderDetail(returnTo?: string) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -127,7 +127,7 @@ function renderDetail() {
 
   render(
     <QueryClientProvider client={queryClient}>
-      <ProductionAnnualReturnCaseDetail caseId={caseId} />
+      <ProductionAnnualReturnCaseDetail caseId={caseId} returnTo={returnTo} />
     </QueryClientProvider>,
   );
 
@@ -140,6 +140,7 @@ afterEach(() => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  serverFns.getAnnualReturnCase.mockReset();
   serverFns.getAnnualReturnCase.mockResolvedValue(caseItem);
   serverFns.listAnnualReturnCaseNotes.mockResolvedValue([]);
   serverFns.listAnnualReturnCaseHistory.mockResolvedValue([]);
@@ -497,4 +498,131 @@ describe("ProductionAnnualReturnCaseDetail", () => {
 
     expect(await screen.findByText("暫時沒有記錄。")).toBeTruthy();
   });
+});
+
+function expectNoCaseCommands() {
+  for (const command of [
+    serverFns.assignAnnualReturnCaseOwner,
+    serverFns.updateAnnualReturnStatus,
+    serverFns.updateAnnualReturnChecklistItem,
+    serverFns.updateAnnualReturnPayment,
+    serverFns.addAnnualReturnCaseNote,
+    serverFns.queueAnnualReturnWhatsAppReminderMessage,
+    serverFns.updateAnnualReturnFilingProof,
+  ])
+    expect(command).not.toHaveBeenCalled();
+}
+
+it("recovers the exact case/readiness with no command replay and uses the fresh source version only on explicit action", async () => {
+  serverFns.getAnnualReturnCase.mockRejectedValueOnce(new Error("Temporary case failure"));
+  renderDetail("/today?view=blocked&q=Acme");
+  await screen.findByRole("heading", { name: "無法載入周年申報案件" });
+  expect(screen.getByRole("link", { name: "返回工作列表" }).getAttribute("href")).toBe(
+    "/today?view=blocked&q=Acme",
+  );
+  const retry = screen.getByRole("button", { name: "重新載入案件資料" });
+  serverFns.getAnnualReturnCase.mockResolvedValue({
+    ...caseItem,
+    readiness: { ...caseItem.readiness!, sourceVersion: "b".repeat(32), readyToPrepare: false },
+  });
+  fireEvent.click(retry);
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  expect(serverFns.getAnnualReturnCase).toHaveBeenCalledTimes(2);
+  expect(serverFns.getAnnualReturnCase).toHaveBeenLastCalledWith({ data: { id: caseId } });
+  expect(serverFns.listAnnualReturnCaseNotes).toHaveBeenCalledTimes(1);
+  expect(serverFns.listAnnualReturnCaseHistory).toHaveBeenCalledTimes(1);
+  expect((screen.getByRole("button", { name: "準備交件套件" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expectNoCaseCommands();
+  fireEvent.change(screen.getByLabelText("案件狀態"), { target: { value: "Ready to file" } });
+  fireEvent.click(screen.getByRole("button", { name: "更新" }));
+  await waitFor(() =>
+    expect(serverFns.updateAnnualReturnStatus).toHaveBeenCalledWith({
+      data: { caseId, nextStatus: "Ready to file", expectedVersion: "b".repeat(32) },
+    }),
+  );
+});
+
+it("deduplicates pending initial-case recovery and keeps commands unavailable", async () => {
+  serverFns.getAnnualReturnCase.mockRejectedValueOnce(new Error("Temporary failure"));
+  renderDetail();
+  const retry = await screen.findByRole("button", { name: "重新載入案件資料" });
+  let finish!: (value: AnnualReturnCase) => void;
+  serverFns.getAnnualReturnCase.mockImplementationOnce(
+    () =>
+      new Promise<AnnualReturnCase>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  await waitFor(() => expect(serverFns.getAnnualReturnCase).toHaveBeenCalledTimes(2));
+  expect(await screen.findByRole("status")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "準備交件套件" })).toBeNull();
+  expectNoCaseCommands();
+  await act(async () => {
+    finish(caseItem);
+  });
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  expect(serverFns.getAnnualReturnCase).toHaveBeenCalledTimes(2);
+  expectNoCaseCommands();
+});
+
+it("keeps a repeated failed case recovery closed and offers another explicit read retry", async () => {
+  serverFns.getAnnualReturnCase.mockRejectedValue(new Error("Read denied"));
+  renderDetail();
+  fireEvent.click(await screen.findByRole("button", { name: "重新載入案件資料" }));
+  await waitFor(() => expect(serverFns.getAnnualReturnCase).toHaveBeenCalledTimes(2));
+  const retry = await screen.findByRole("button", { name: "重新載入案件資料" });
+  await waitFor(() => expect((retry as HTMLButtonElement).disabled).toBe(false));
+  expect(screen.queryByRole("heading", { name: "Acme Company Limited" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "更新" })).toBeNull();
+  expect(screen.queryByRole("heading", { name: "找不到案件" })).toBeNull();
+  expectNoCaseCommands();
+});
+
+it("treats a missing recovery result as not found without exposing commands", async () => {
+  serverFns.getAnnualReturnCase.mockRejectedValueOnce(new Error("Unavailable"));
+  renderDetail();
+  const retry = await screen.findByRole("button", { name: "重新載入案件資料" });
+  serverFns.getAnnualReturnCase.mockResolvedValue(null);
+  fireEvent.click(retry);
+  expect(await screen.findByRole("heading", { name: "找不到案件" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "準備交件套件" })).toBeNull();
+  expectNoCaseCommands();
+});
+
+it("hides cached case commands after a denied refresh and respects a newly locked recovery result", async () => {
+  const { queryClient } = renderDetail();
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  serverFns.getAnnualReturnCase.mockRejectedValue(new Error("Refresh denied"));
+  await act(async () => {
+    await queryClient.invalidateQueries({
+      queryKey: annualReturnQueryKeys.detail(caseId),
+      exact: true,
+    });
+  });
+  const retry = await screen.findByRole("button", { name: "重新載入案件資料" });
+  expect(screen.queryByRole("heading", { name: "Acme Company Limited" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "更新" })).toBeNull();
+  let finish!: (value: AnnualReturnCase) => void;
+  serverFns.getAnnualReturnCase.mockImplementationOnce(
+    () =>
+      new Promise<AnnualReturnCase>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  fireEvent.click(retry);
+  await waitFor(() => expect((retry as HTMLButtonElement).disabled).toBe(true));
+  expect(screen.queryByRole("button", { name: "更新" })).toBeNull();
+  await act(async () => {
+    finish({ ...caseItem, lockedAt: "2026-10-27T00:00:00Z" });
+  });
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
+  for (const name of ["更新", "更新付款", "準備交件套件", "分配"])
+    expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled).toBe(true);
+  expectNoCaseCommands();
 });
