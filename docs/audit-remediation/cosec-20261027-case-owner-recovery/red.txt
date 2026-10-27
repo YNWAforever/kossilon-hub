@@ -1,0 +1,1819 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx (48 tests | 9 failed) 16513ms
+   × restores the read-back owner 22222222-2222-4222-8222-222222222222 after uncertainty without replaying assignment 1071ms
+   × restores the read-back owner 33333333-3333-4333-8333-333333333333 after uncertainty without replaying assignment 1082ms
+   × keeps unavailable owner readback blocked: null 1062ms
+   × keeps unavailable owner readback blocked: {"readiness":{"sourceVersion":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","readyToPrepare":true,"readyForApproval":true,"readyToTransmit":false,"manifestPayload":null,"blockers":[]},"id":"33333333-3333-4333-8333-333333333333","companyId":"88888888-8888-4888-8888-888888888888","companyTeamId":"99999999-9999-4999-8999-999999999999","companyName":"Acme Company Limited","returnYear":2026,"madeUpDate":"2026-06-30","filingDueDate":"2026-08-12","currentStatus":"Upcoming","riskLevel":"green","ownerId":"22222222-2222-4222-8222-222222222222","ownerName":"Ada Chan","reviewerId":null,"reviewerName":null,"remindersSent":0,"filingReference":null,"confirmationDocumentId":null,"lockedAt":null,"completedAt":null,"checklist":[{"id":"44444444-4444-4444-8444-444444444444","caseId":"11111111-1111-4111-8111-111111111111","itemLabel":"Signed NAR1","required":true,"status":"Verified","dueDate":"2026-08-01","receivedAt":"2026-07-10T00:00:00.000Z","verifiedAt":"2026-07-11T00:00:00.000Z","documentId":"55555555-5555-4555-8555-555555555555"}],"payment":{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","caseId":"11111111-1111-4111-8111-111111111111","invoiceNumber":"INV-2026-001","amount":1800,"currency":"HKD","status":"Payment received","dueDate":"2026-08-01","paidAt":"2026-07-11T00:00:00.000Z","paymentProofDocumentId":"66666666-6666-4666-8666-666666666666"}} 1066ms
+   × keeps unavailable owner readback blocked: {"readiness":{"sourceVersion":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","readyToPrepare":true,"readyForApproval":true,"readyToTransmit":false,"manifestPayload":null,"blockers":[]},"id":"11111111-1111-4111-8111-111111111111","companyId":"88888888-8888-4888-8888-888888888888","companyTeamId":"99999999-9999-4999-8999-999999999999","companyName":"Acme Company Limited","returnYear":2026,"madeUpDate":"2026-06-30","filingDueDate":"2026-08-12","currentStatus":"Upcoming","riskLevel":"green","ownerId":"unverified","ownerName":"Ada Chan","reviewerId":null,"reviewerName":null,"remindersSent":0,"filingReference":null,"confirmationDocumentId":null,"lockedAt":null,"completedAt":null,"checklist":[{"id":"44444444-4444-4444-8444-444444444444","caseId":"11111111-1111-4111-8111-111111111111","itemLabel":"Signed NAR1","required":true,"status":"Verified","dueDate":"2026-08-01","receivedAt":"2026-07-10T00:00:00.000Z","verifiedAt":"2026-07-11T00:00:00.000Z","documentId":"55555555-5555-4555-8555-555555555555"}],"payment":{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","caseId":"11111111-1111-4111-8111-111111111111","invoiceNumber":"INV-2026-001","amount":1800,"currency":"HKD","status":"Payment received","dueDate":"2026-08-01","paidAt":"2026-07-11T00:00:00.000Z","paymentProofDocumentId":"66666666-6666-4666-8666-666666666666"}} 1070ms
+   × deduplicates owner submissions even with mutation retry defaults enabled 1062ms
+   × keeps owner writes blocked during independent readback despite cache updates and cancellation 1070ms
+   × retains note drafts and allows owner read retry after denial 1073ms
+   × discards owner recovery after leaving the keyed case lifetime 1075ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > restores the read-back owner 22222222-2222-4222-8222-222222222222 after uncertainty without replaying assignment
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > restores the read-back owner 33333333-3333-4333-8333-333333333333 after uncertainty without replaying assignment
+TestingLibraryElementError: Unable to find role="button" and name "重新核對案件結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border-b pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m案件與客戶[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0mAcme Company Limited[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m申報年度 2026 · 到期日 2026年8月12日[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m返回工作列表[0m
+              [36m</a>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m開啟客戶入口[0m
+              [36m</a>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-right text-sm"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m即將開始[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0m風險：[0m
+                  [0m正常[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"border-b pb-4"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-base font-semibold"[39m
+            [36m>[39m
+              [0m案件操作[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm"[39m
+                  [36m>[39m
+                    [0m搜尋[0m
+                    [0m負責同事[0m
+                    [36m<input[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</label>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                  [36m</p>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm font-medium"[39m
+                    [33mfor[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [0m負責同事[0m
+                  [36m</label>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                    [33mid[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m>[39m
+                      [0m選擇負責同事[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                    [36m>[39m
+                      [0mIris Wong[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                    [36m>[39m
+                      [0mCalvin Ho[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+        ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border-b pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m案件與客戶[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0mAcme Company Limited[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m申報年度 2026 · 到期日 2026年8月12日[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m返回工作列表[0m
+              [36m</a>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m開啟客戶入口[0m
+              [36m</a>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-right text-sm"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m即將開始[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0m風險：[0m
+                  [0m正常[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"border-b pb-4"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-base font-semibold"[39m
+            [36m>[39m
+              [0m案件操作[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm"[39m
+                  [36m>[39m
+                    [0m搜尋[0m
+                    [0m負責同事[0m
+                    [36m<input[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</label>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                  [36m</p>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm font-medium"[39m
+                    [33mfor[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [0m負責同事[0m
+                  [36m</label>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                    [33mid[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m>[39m
+                      [0m選擇負責同事[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                    [36m>[39m
+                      [0mIris Wong[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                    [36m>[39m
+                      [0mCalvin Ho[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ failOwnerCommand src/features/annual-return/components/production-case-detail.interaction.test.tsx:1226:16
+    1224|   fireEvent.change(picker,{target:{value:nextOwnerId}});
+    1225|   fireEvent.click(screen.getByRole("button",{name:"分配"}));
+    1226|   await screen.findByRole("button",{name:"重新核對案件結果"});
+       |                ^
+    1227|   return rendered;
+    1228| }
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:1231:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > keeps unavailable owner readback blocked: null
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > keeps unavailable owner readback blocked: {"readiness":{"sourceVersion":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","readyToPrepare":true,"readyForApproval":true,"readyToTransmit":false,"manifestPayload":null,"blockers":[]},"id":"33333333-3333-4333-8333-333333333333","companyId":"88888888-8888-4888-8888-888888888888","companyTeamId":"99999999-9999-4999-8999-999999999999","companyName":"Acme Company Limited","returnYear":2026,"madeUpDate":"2026-06-30","filingDueDate":"2026-08-12","currentStatus":"Upcoming","riskLevel":"green","ownerId":"22222222-2222-4222-8222-222222222222","ownerName":"Ada Chan","reviewerId":null,"reviewerName":null,"remindersSent":0,"filingReference":null,"confirmationDocumentId":null,"lockedAt":null,"completedAt":null,"checklist":[{"id":"44444444-4444-4444-8444-444444444444","caseId":"11111111-1111-4111-8111-111111111111","itemLabel":"Signed NAR1","required":true,"status":"Verified","dueDate":"2026-08-01","receivedAt":"2026-07-10T00:00:00.000Z","verifiedAt":"2026-07-11T00:00:00.000Z","documentId":"55555555-5555-4555-8555-555555555555"}],"payment":{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","caseId":"11111111-1111-4111-8111-111111111111","invoiceNumber":"INV-2026-001","amount":1800,"currency":"HKD","status":"Payment received","dueDate":"2026-08-01","paidAt":"2026-07-11T00:00:00.000Z","paymentProofDocumentId":"66666666-6666-4666-8666-666666666666"}}
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > keeps unavailable owner readback blocked: {"readiness":{"sourceVersion":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","readyToPrepare":true,"readyForApproval":true,"readyToTransmit":false,"manifestPayload":null,"blockers":[]},"id":"11111111-1111-4111-8111-111111111111","companyId":"88888888-8888-4888-8888-888888888888","companyTeamId":"99999999-9999-4999-8999-999999999999","companyName":"Acme Company Limited","returnYear":2026,"madeUpDate":"2026-06-30","filingDueDate":"2026-08-12","currentStatus":"Upcoming","riskLevel":"green","ownerId":"unverified","ownerName":"Ada Chan","reviewerId":null,"reviewerName":null,"remindersSent":0,"filingReference":null,"confirmationDocumentId":null,"lockedAt":null,"completedAt":null,"checklist":[{"id":"44444444-4444-4444-8444-444444444444","caseId":"11111111-1111-4111-8111-111111111111","itemLabel":"Signed NAR1","required":true,"status":"Verified","dueDate":"2026-08-01","receivedAt":"2026-07-10T00:00:00.000Z","verifiedAt":"2026-07-11T00:00:00.000Z","documentId":"55555555-5555-4555-8555-555555555555"}],"payment":{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","caseId":"11111111-1111-4111-8111-111111111111","invoiceNumber":"INV-2026-001","amount":1800,"currency":"HKD","status":"Payment received","dueDate":"2026-08-01","paidAt":"2026-07-11T00:00:00.000Z","paymentProofDocumentId":"66666666-6666-4666-8666-666666666666"}}
+TestingLibraryElementError: Unable to find role="button" and name "重新核對案件結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border-b pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m案件與客戶[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0mAcme Company Limited[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m申報年度 2026 · 到期日 2026年8月12日[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m返回工作列表[0m
+              [36m</a>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m開啟客戶入口[0m
+              [36m</a>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-right text-sm"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m即將開始[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0m風險：[0m
+                  [0m正常[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"border-b pb-4"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-base font-semibold"[39m
+            [36m>[39m
+              [0m案件操作[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm"[39m
+                  [36m>[39m
+                    [0m搜尋[0m
+                    [0m負責同事[0m
+                    [36m<input[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</label>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                  [36m</p>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm font-medium"[39m
+                    [33mfor[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [0m負責同事[0m
+                  [36m</label>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                    [33mid[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m>[39m
+                      [0m選擇負責同事[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                    [36m>[39m
+                      [0mIris Wong[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                    [36m>[39m
+                      [0mCalvin Ho[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+        ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border-b pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m案件與客戶[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0mAcme Company Limited[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m申報年度 2026 · 到期日 2026年8月12日[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m返回工作列表[0m
+              [36m</a>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m開啟客戶入口[0m
+              [36m</a>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-right text-sm"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m即將開始[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0m風險：[0m
+                  [0m正常[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"border-b pb-4"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-base font-semibold"[39m
+            [36m>[39m
+              [0m案件操作[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm"[39m
+                  [36m>[39m
+                    [0m搜尋[0m
+                    [0m負責同事[0m
+                    [36m<input[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</label>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                  [36m</p>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm font-medium"[39m
+                    [33mfor[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [0m負責同事[0m
+                  [36m</label>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                    [33mid[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m>[39m
+                      [0m選擇負責同事[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                    [36m>[39m
+                      [0mIris Wong[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                    [36m>[39m
+                      [0mCalvin Ho[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ failOwnerCommand src/features/annual-return/components/production-case-detail.interaction.test.tsx:1226:16
+    1224|   fireEvent.change(picker,{target:{value:nextOwnerId}});
+    1225|   fireEvent.click(screen.getByRole("button",{name:"分配"}));
+    1226|   await screen.findByRole("button",{name:"重新核對案件結果"});
+       |                ^
+    1227|   return rendered;
+    1228| }
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:1247:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > deduplicates owner submissions even with mutation retry defaults enabled
+TestingLibraryElementError: Unable to find role="button" and name "重新核對案件結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border-b pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m案件與客戶[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0mAcme Company Limited[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m申報年度 2026 · 到期日 2026年8月12日[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m返回工作列表[0m
+              [36m</a>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m開啟客戶入口[0m
+              [36m</a>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-right text-sm"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m即將開始[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0m風險：[0m
+                  [0m正常[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"border-b pb-4"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-base font-semibold"[39m
+            [36m>[39m
+              [0m案件操作[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm"[39m
+                  [36m>[39m
+                    [0m搜尋[0m
+                    [0m負責同事[0m
+                    [36m<input[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</label>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                  [36m</p>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm font-medium"[39m
+                    [33mfor[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [0m負責同事[0m
+                  [36m</label>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                    [33mid[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m>[39m
+                      [0m選擇負責同事[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                    [36m>[39m
+                      [0mIris Wong[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                    [36m>[39m
+                      [0mCalvin Ho[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+        ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border-b pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m案件與客戶[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0mAcme Company Limited[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m申報年度 2026 · 到期日 2026年8月12日[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m返回工作列表[0m
+              [36m</a>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m開啟客戶入口[0m
+              [36m</a>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-right text-sm"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m即將開始[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0m風險：[0m
+                  [0m正常[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"border-b pb-4"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-base font-semibold"[39m
+            [36m>[39m
+              [0m案件操作[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm"[39m
+                  [36m>[39m
+                    [0m搜尋[0m
+                    [0m負責同事[0m
+                    [36m<input[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</label>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                  [36m</p>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm font-medium"[39m
+                    [33mfor[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [0m負責同事[0m
+                  [36m</label>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                    [33mid[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m>[39m
+                      [0m選擇負責同事[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                    [36m>[39m
+                      [0mIris Wong[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                    [36m>[39m
+                      [0mCalvin Ho[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:1263:16
+    1261|   const submit=screen.getByRole("button",{name:"分配"});
+    1262|   act(()=>{submit.click();submit.click();});
+    1263|   await screen.findByRole("button",{name:"重新核對案件結果"});
+       |                ^
+    1264|   expect(serverFns.assignAnnualReturnCaseOwner).toHaveBeenCalledTimes(…
+    1265| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > keeps owner writes blocked during independent readback despite cache updates and cancellation
+TestingLibraryElementError: Unable to find role="button" and name "重新核對案件結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border-b pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m案件與客戶[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0mAcme Company Limited[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m申報年度 2026 · 到期日 2026年8月12日[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m返回工作列表[0m
+              [36m</a>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m開啟客戶入口[0m
+              [36m</a>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-right text-sm"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m即將開始[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0m風險：[0m
+                  [0m正常[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"border-b pb-4"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-base font-semibold"[39m
+            [36m>[39m
+              [0m案件操作[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm"[39m
+                  [36m>[39m
+                    [0m搜尋[0m
+                    [0m負責同事[0m
+                    [36m<input[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</label>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                  [36m</p>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm font-medium"[39m
+                    [33mfor[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [0m負責同事[0m
+                  [36m</label>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                    [33mid[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m>[39m
+                      [0m選擇負責同事[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                    [36m>[39m
+                      [0mIris Wong[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                    [36m>[39m
+                      [0mCalvin Ho[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+        ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border-b pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m案件與客戶[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0mAcme Company Limited[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m申報年度 2026 · 到期日 2026年8月12日[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m返回工作列表[0m
+              [36m</a>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m開啟客戶入口[0m
+              [36m</a>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-right text-sm"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m即將開始[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0m風險：[0m
+                  [0m正常[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"border-b pb-4"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-base font-semibold"[39m
+            [36m>[39m
+              [0m案件操作[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm"[39m
+                  [36m>[39m
+                    [0m搜尋[0m
+                    [0m負責同事[0m
+                    [36m<input[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</label>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                  [36m</p>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm font-medium"[39m
+                    [33mfor[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [0m負責同事[0m
+                  [36m</label>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                    [33mid[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m>[39m
+                      [0m選擇負責同事[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                    [36m>[39m
+                      [0mIris Wong[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                    [36m>[39m
+                      [0mCalvin Ho[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ failOwnerCommand src/features/annual-return/components/production-case-detail.interaction.test.tsx:1226:16
+    1224|   fireEvent.change(picker,{target:{value:nextOwnerId}});
+    1225|   fireEvent.click(screen.getByRole("button",{name:"分配"}));
+    1226|   await screen.findByRole("button",{name:"重新核對案件結果"});
+       |                ^
+    1227|   return rendered;
+    1228| }
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:1268:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > retains note drafts and allows owner read retry after denial
+TestingLibraryElementError: Unable to find role="button" and name "重新核對案件結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border-b pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m案件與客戶[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0mAcme Company Limited[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m申報年度 2026 · 到期日 2026年8月12日[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m返回工作列表[0m
+              [36m</a>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m開啟客戶入口[0m
+              [36m</a>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-right text-sm"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m即將開始[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0m風險：[0m
+                  [0m正常[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"border-b pb-4"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-base font-semibold"[39m
+            [36m>[39m
+              [0m案件操作[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm"[39m
+                  [36m>[39m
+                    [0m搜尋[0m
+                    [0m負責同事[0m
+                    [36m<input[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</label>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                  [36m</p>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm font-medium"[39m
+                    [33mfor[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [0m負責同事[0m
+                  [36m</label>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                    [33mid[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m>[39m
+                      [0m選擇負責同事[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                    [36m>[39m
+                      [0mIris Wong[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                    [36m>[39m
+                      [0mCalvin Ho[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+        ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border-b pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m案件與客戶[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0mAcme Company Limited[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m申報年度 2026 · 到期日 2026年8月12日[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m返回工作列表[0m
+              [36m</a>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m開啟客戶入口[0m
+              [36m</a>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-right text-sm"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m即將開始[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0m風險：[0m
+                  [0m正常[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"border-b pb-4"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-base font-semibold"[39m
+            [36m>[39m
+              [0m案件操作[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm"[39m
+                  [36m>[39m
+                    [0m搜尋[0m
+                    [0m負責同事[0m
+                    [36m<input[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</label>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                  [36m</p>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm font-medium"[39m
+                    [33mfor[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [0m負責同事[0m
+                  [36m</label>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                    [33mid[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m>[39m
+                      [0m選擇負責同事[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                    [36m>[39m
+                      [0mIris Wong[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                    [36m>[39m
+                      [0mCalvin Ho[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:1290:28
+    1288|   fireEvent.change(screen.getByLabelText("案件備註"),{target:{value:"Unsav…
+    1289|   fireEvent.click(screen.getByRole("button",{name:"分配"}));
+    1290|   const retry=await screen.findByRole("button",{name:"重新核對案件結果"});
+       |                            ^
+    1291|   serverFns.getAnnualReturnCase.mockRejectedValueOnce(new Error("denie…
+    1292|   fireEvent.click(retry);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > discards owner recovery after leaving the keyed case lifetime
+TestingLibraryElementError: Unable to find role="button" and name "重新核對案件結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border-b pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m案件與客戶[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0mAcme Company Limited[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m申報年度 2026 · 到期日 2026年8月12日[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m返回工作列表[0m
+              [36m</a>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m開啟客戶入口[0m
+              [36m</a>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-right text-sm"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m即將開始[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0m風險：[0m
+                  [0m正常[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"border-b pb-4"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-base font-semibold"[39m
+            [36m>[39m
+              [0m案件操作[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm"[39m
+                  [36m>[39m
+                    [0m搜尋[0m
+                    [0m負責同事[0m
+                    [36m<input[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</label>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                  [36m</p>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm font-medium"[39m
+                    [33mfor[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [0m負責同事[0m
+                  [36m</label>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                    [33mid[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m>[39m
+                      [0m選擇負責同事[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                    [36m>[39m
+                      [0mIris Wong[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                    [36m>[39m
+                      [0mCalvin Ho[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+        ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border-b pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m案件與客戶[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0mAcme Company Limited[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m申報年度 2026 · 到期日 2026年8月12日[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m返回工作列表[0m
+              [36m</a>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"/annual-returns"[39m
+              [36m>[39m
+                [0m開啟客戶入口[0m
+              [36m</a>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-right text-sm"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m即將開始[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0m風險：[0m
+                  [0m正常[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"border-b pb-4"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-base font-semibold"[39m
+            [36m>[39m
+              [0m案件操作[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm"[39m
+                  [36m>[39m
+                    [0m搜尋[0m
+                    [0m負責同事[0m
+                    [36m<input[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</label>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                  [36m</p>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"text-sm font-medium"[39m
+                    [33mfor[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [0m負責同事[0m
+                  [36m</label>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                    [33mid[39m=[32m"owner-id"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m>[39m
+                      [0m選擇負責同事[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                    [36m>[39m
+                      [0mIris Wong[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                    [36m>[39m
+                      [0mCalvin Ho[0m
+                      [0m · [0m
+                      [0m同事[0m
+                      [0m · Annual return[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm mt-2"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ failOwnerCommand src/features/annual-return/components/production-case-detail.interaction.test.tsx:1226:16
+    1224|   fireEvent.change(picker,{target:{value:nextOwnerId}});
+    1225|   fireEvent.click(screen.getByRole("button",{name:"分配"}));
+    1226|   await screen.findByRole("button",{name:"重新核對案件結果"});
+       |                ^
+    1227|   return rendered;
+    1228| }
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:1302:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 39 passed (48)
+   Start at  06:16:35
+   Duration  18.75s (transform 709ms, setup 0ms, import 1.08s, tests 16.51s, environment 930ms)

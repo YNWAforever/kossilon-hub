@@ -1,0 +1,79 @@
+{
+  "baseline": "e330b6962f59ba2d8a871cc8e2ac8d4687e50bf4",
+  "product_commit": "0e7cbdec094cf8e6d914137ea09a214ead315977",
+  "files_sha256": {
+    "src/features/annual-return/components/production-case-detail.tsx": "a847b7922436dcd1fa8f8cd64078bcbda1cd25ad0a35d63da2385e126d7f0fdc",
+    "src/features/annual-return/components/production-case-detail.interaction.test.tsx": "af57b6a9387195aca2eca347299a7f8b244f50ad88a5c0a4adaa2cbd420f2765"
+  },
+  "checks": {
+    "red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 1,
+      "log": "red.txt",
+      "failed": 9,
+      "passed": 39,
+      "files": 1
+    },
+    "targeted": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-case-detail.interaction.test.tsx src/features/annual-return/components/case-findings.interaction.test.tsx src/features/annual-return/components/case-parties.interaction.test.tsx",
+      "exit": 0,
+      "log": "targeted.txt",
+      "passed": 79,
+      "files": 3
+    },
+    "unit": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "log": "unit.txt",
+      "passed": 2926,
+      "files": 290
+    },
+    "typecheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    "lint": {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/production-case-detail.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    "format": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/production-case-detail.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  },
+  "new_test_cases": 9,
+  "review": "Focused read-only review: no important findings.",
+  "scope": "JSDOM/mock RPC plus unit project only; targeted tests included in full total. Final checks ran on modified baseline matching final product hashes. No source changes after checks; evidence-only commit follows.",
+  "owner_recovery": "Existing independent case/readiness read, extra valid owner UUID requirement after owner failure, picker restored from actual readback. No owner write replay or durable receipt/expected-version protocol. Existing case/checklist read-recovery behavior preserved.",
+  "further_local_passes_justified": true,
+  "remaining_local_candidates": [
+    {
+      "path": "src/features/annual-return/components/production-case-detail.tsx:receiptMutation",
+      "finding": "Filing-receipt acceptance still inherits retry defaults and renders an error without independent result gate. Separate bounded local review candidate; no server duplicate filing or lock bypass claimed."
+    },
+    "Other mutation families and cross-tab navigation semantics require scoped review; no exhaustive inventory claimed.",
+    "Upload durable identity/reload recovery remains separate; no protocol invented."
+  ],
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "not_performed": [
+    "server/schema/config changes",
+    "build",
+    "DB integration",
+    "hosted CI acceptance",
+    "Native execution or Native-only gates",
+    "deploy/promote",
+    "production Vercel/Neon changes"
+  ]
+}
