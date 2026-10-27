@@ -1,0 +1,170 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx (35 tests | 1 failed) 5492ms
+     × clicks every production command with case-scoped payloads and refreshes cache 1484ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-case-detail.interaction.test.tsx > ProductionAnnualReturnCaseDetail > clicks every production command with case-scoped payloads and refreshes cache
+AssertionError: expected 2nd "vi.fn()" call to have been called with [ { data: { …(3) } } ], but called only 1 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 space-y-4 p-4 md:p-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"border-b pb-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+              [36m>[39m
+                [0m案件與客戶[0m
+              [36m</p>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</h1>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0m申報年度 2026 · 到期日 2026年8月12日[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex shrink-0 flex-wrap items-center gap-2"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+              [36m>[39m
+                [36m<a[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"[39m
+                  [33mhref[39m=[32m"/annual-returns"[39m
+                [36m>[39m
+                  [0m返回工作列表[0m
+                [36m</a>[39m
+                [36m<a[39m
+                  [33mhref[39m=[32m"/annual-returns"[39m
+                [36m>[39m
+                  [0m開啟客戶入口[0m
+                [36m</a>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-right text-sm"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"font-medium"[39m
+                  [36m>[39m
+                    [0m即將開始[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m風險：[0m
+                    [0m正常[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-4"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"border-b pb-4"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-base font-semibold"[39m
+              [36m>[39m
+                [0m案件操作[0m
+              [36m</h2>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"mt-3 grid gap-3 md:grid-cols-2"[39m
+              [36m>[39m
+                [36m<div>[39m
+                  [36m<div>[39m
+                    [36m<label[39m
+                      [33mclass[39m=[32m"text-sm"[39m
+                    [36m>[39m
+                      [0m搜尋[0m
+                      [0m負責同事[0m
+                      [36m<input[39m
+                        [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 w-full"[39m
+                        [33mvalue[39m=[32m""[39m
+                      [36m/>[39m
+                    [36m</label>[39m
+                    [36m<p[39m
+                      [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                    [36m>[39m
+                      [0m最多顯示200項；搜尋涵蓋全部獲授權同事。[0m
+                    [36m</p>[39m
+                    [36m<label[39m
+                      [33mclass[39m=[32m"text-sm font-medium"[39m
+                      [33mfor[39m=[32m"owner-id"[39m
+                    [36m>[39m
+                      [0m負責同事[0m
+                    [36m</label>[39m
+                    [36m<select[39m
+                      [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm mt-1 w-full"[39m
+                      [33mid[39m=[32m"owner-id"[39m
+                    [36m>[39m
+                      [36m<option[39m
+                        [33mvalue[39m=[32m""[39m
+                      [36m>[39m
+                        [0m選擇負責同事[0m
+                      [36m</option>[39m
+                      [36m<option[39m
+                        [33mvalue[39m=[32m"22222222-2222-4222-8222-222222222222"[39m
+                      [36m>[39m
+                        [0mIris Wong[0m
+                        [0m · [0m
+                        [0m同事[0m
+                        [0m · Annual return[0m
+                      [36m</option>[39m
+                      [36m<option[39m
+                        [33mvalue[39m=[32m"33333333-3333-4333-8333-333333333333"[39m
+                      [36m>[39m
+                        [0mCalvin Ho[0m
+                        [0m · [0m
+                        [0m同事[0m
+                        [0m · Annual return[0m
+                      [36m</option>[39m
+                    [36m</select>[39m
+                  [36m</div>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opac...
+ ❯ src/features/annual-return/components/production-case-detail.interaction.test.tsx:334:50
+    332|         },
+    333|       });
+    334|       expect(serverFns.updateAnnualReturnStatus).toHaveBeenNthCalledWi…
+       |                                                  ^
+    335|         data: { caseId, nextStatus: "NAR1 prepared", expectedVersion: …
+    336|       });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 34 passed (35)
+   Start at  05:34:55
+   Duration  7.67s (transform 646ms, setup 0ms, import 1.02s, tests 5.49s, environment 957ms)

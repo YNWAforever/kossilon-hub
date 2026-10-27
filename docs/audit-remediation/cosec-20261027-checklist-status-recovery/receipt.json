@@ -1,0 +1,85 @@
+{
+  "baseline": "9bd21eda8a69395ca66d51aa907d4fa05c7ff4a4",
+  "product_commit": "6d44ca23218db2f61122eee3cbe996244a77fe40",
+  "files_sha256": {
+    "src/features/annual-return/components/production-case-detail.tsx": "f19a1b320e16c8d81910db2efb8d9c01ce2f16d43f2c1e4684cec1aafd9d847a",
+    "src/features/annual-return/components/production-case-detail.interaction.test.tsx": "b5543bc479f3a694a405168119eb7c61934d8a9ac684efb8e6c1e2929b2f3a52"
+  },
+  "checks": {
+    "red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 1,
+      "log": "red.txt",
+      "failed": 7,
+      "passed": 28,
+      "files": 1
+    },
+    "targeted-initial": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 1,
+      "log": "targeted-initial.txt",
+      "failed": 1,
+      "passed": 34,
+      "files": 1,
+      "cause": "Existing test attempted packet preparation during prior pending status command; updated to wait for enabled control."
+    },
+    "targeted": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-case-detail.interaction.test.tsx src/features/annual-return/components/case-findings.interaction.test.tsx src/features/annual-return/components/case-parties.interaction.test.tsx",
+      "exit": 0,
+      "log": "targeted.txt",
+      "passed": 70,
+      "files": 3
+    },
+    "unit": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "log": "unit.txt",
+      "passed": 2901,
+      "files": 290
+    },
+    "typecheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    "lint": {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/production-case-detail.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    "format": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/production-case-detail.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  },
+  "new_test_cases": 11,
+  "review": "Focused read-only review: no important findings.",
+  "scope": "Unit/JSDOM mock-server only; targeted tests included in full total. Final checks ran on modified baseline matching product file hashes; no source changes afterward. Evidence-only commit follows.",
+  "reconciliation": "Independent exact-case/readiness read only; waits pending parent commands. Not durable receipt, atomic server-wide snapshot or cross-session serialization.",
+  "remaining_local_scope": [
+    "Other parent/child command failure protocols",
+    "General background-refresh policy",
+    "Independent child-panel lifetimes",
+    "Cross-reload recovery",
+    "Upload lost intent without ID/reload recovery"
+  ],
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "not_performed": [
+    "build",
+    "DB integration",
+    "hosted CI acceptance",
+    "Native execution",
+    "deploy/promote",
+    "production Vercel/Neon changes"
+  ]
+}
