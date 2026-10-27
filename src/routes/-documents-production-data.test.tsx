@@ -82,6 +82,9 @@ async function render(options: {
   caseId?: string;
 }) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  // This fixture represents a completed idle archive read. A stale seed would
+  // start a background refresh, where review controls must now stay hidden.
+  queryClient.setQueryDefaults(["documents", "archive"], { staleTime: Infinity });
   const selectedId = options.caseId ?? CASE_ID;
   const path = options.withCaseId ? `/documents?caseId=${selectedId}` : "/documents";
   const router = createRouter({

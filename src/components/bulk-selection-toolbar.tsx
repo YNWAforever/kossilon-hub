@@ -40,6 +40,8 @@ type Props = {
   total: number | null;
   pageSize?: number;
   maintenanceActions?: MaintenanceActionKind[];
+  /** Disable new selection/commands while the source list is unverified. */
+  selectionDisabled?: boolean;
 };
 const maintenanceLabels: Record<MaintenanceActionKind, string> = {
   client_maintenance: "客戶負責同事／團隊維護（更改資料）",
@@ -101,11 +103,13 @@ function BulkSession(props: Props) {
           />
         </summary>
         <div className="border-t px-4 py-4">
-          <SelectionControls
-            key={JSON.stringify([props.resource, props.filters])}
-            {...props}
-            onCreated={setJobId}
-          />
+          <fieldset className="min-w-0" disabled={props.selectionDisabled}>
+            <SelectionControls
+              key={JSON.stringify([props.resource, props.filters])}
+              {...props}
+              onCreated={setJobId}
+            />
+          </fieldset>
           {jobId ? null : (
             <div className="mt-4 border-t pt-4">
               <BulkJobProgress actorScope={props.actorScope} jobId={jobId} onJobChange={setJobId} />

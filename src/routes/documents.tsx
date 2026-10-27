@@ -102,8 +102,14 @@ function DocumentsRoute() {
     enabled: dataMode === "production" && !invalidCaseId,
     retry: false,
   });
-  const productionDocuments =
-    productionDocumentsQuery.data?.pages.flatMap((p) => p.documents ?? []) ?? [];
+  const archiveReadBlocked =
+    productionDocumentsQuery.isError ||
+    (productionDocumentsQuery.isFetching && !productionDocumentsQuery.isFetchingNextPage);
+  // Cached rows must not keep preview/review/upload controls alive after a
+  // denied read or while their archive context is being refreshed.
+  const productionDocuments = archiveReadBlocked
+    ? []
+    : (productionDocumentsQuery.data?.pages.flatMap((p) => p.documents ?? []) ?? []);
   // The production section had no filter of its own: the only case <select> on
   // this screen lived inside the demo branch and listed demo cases, so in
   // production the case filter was reachable only by typing ?caseId=<uuid> into
@@ -202,6 +208,7 @@ function DocumentsRoute() {
       actor?.active &&
       (actor.role === "Admin" || actor.role === "Manager") ? (
         <BulkSelectionToolbar
+          selectionDisabled={archiveReadBlocked || !productionDocumentsQuery.isSuccess}
           actorScope={JSON.stringify(actor)}
           resource="document"
           filters={{
@@ -305,7 +312,12 @@ function DocumentsRoute() {
           onSelectCase={(next) => setCaseFilter(next)}
           documents={invalidCaseId ? [] : productionDocuments}
           error={productionDocumentsQuery.error}
-          loading={productionDocumentsQuery.isLoading}
+          loading={
+            productionDocumentsQuery.isLoading ||
+            (productionDocumentsQuery.isFetching && !productionDocumentsQuery.isFetchingNextPage)
+          }
+          retrying={productionDocumentsQuery.isFetching}
+          onRetry={() => void productionDocumentsQuery.refetch({ cancelRefetch: false })}
           onDownload={handleDownload}
           onPreview={handlePreview}
           onReview={(input) => reviewMutation.mutate({ data: input })}
@@ -315,14 +327,14 @@ function DocumentsRoute() {
       {dataMode === "production" && productionDocumentsQuery.hasNextPage ? (
         <Button
           className="min-h-11"
-          disabled={productionDocumentsQuery.isFetchingNextPage}
+          disabled={productionDocumentsQuery.isFetching || productionDocumentsQuery.isError}
           onClick={() => void productionDocumentsQuery.fetchNextPage({ cancelRefetch: false })}
         >
           載入更多文件
         </Button>
       ) : null}
       {productionDocumentsQuery.isFetchNextPageError ? (
-        <p role="alert">下一頁文件未能載入；保留已讀資料，請重試。</p>
+        <p role="alert">下一頁文件未能載入；請重新載入正式文件後再覆核。</p>
       ) : null}
 
       {/* The archive below is fixture-backed: getDocumentArchiveRows reads the
@@ -596,6 +608,8 @@ function ProductionDocumentsSection({
   documents,
   error,
   loading,
+  retrying,
+  onRetry,
   onDownload,
   onPreview,
   onReview,
@@ -609,6 +623,8 @@ function ProductionDocumentsSection({
   documents: DocumentSummary[];
   error: Error | null;
   loading: boolean;
+  retrying: boolean;
+  onRetry: () => void;
   onDownload: (documentId: string, expectedVersionId?: string) => void;
   onPreview: (documentId: string, fileName: string, expectedVersionId?: string) => void;
   onReview: (input: {
@@ -657,8 +673,19 @@ function ProductionDocumentsSection({
           <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">Neon + R2</span>
         </div>
       </div>
-      {error ? <p className="mt-4 text-sm text-status-yellow-text">無法載入正式記錄。</p> : null}
-      {loading ? <p className="mt-4 text-sm text-muted-foreground">正式記錄載入中…</p> : null}
+      {error ? (
+        <div role="alert" className="mt-4 space-y-2 text-sm text-status-yellow-text">
+          <p>無法載入正式記錄。</p>
+          <Button type="button" className="min-h-11" disabled={retrying} onClick={onRetry}>
+            重新載入正式文件
+          </Button>
+        </div>
+      ) : null}
+      {loading ? (
+        <p role="status" className="mt-4 text-sm text-muted-foreground">
+          正式記錄載入中…
+        </p>
+      ) : null}
       {!loading && !error && documents.length === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">此範圍內沒有正式文件。</p>
       ) : null}
