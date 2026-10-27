@@ -14,6 +14,7 @@ const serverFns = vi.hoisted(() => ({
   listAnnualReturnCaseNotes: vi.fn(),
   listAnnualReturnCaseHistory: vi.fn(),
   listAnnualReturnCaseFindings: vi.fn(),
+  listAnnualReturnCaseParties: vi.fn(),
   assignAnnualReturnCaseOwner: vi.fn(),
   updateAnnualReturnStatus: vi.fn(),
   updateAnnualReturnChecklistItem: vi.fn(),
@@ -143,6 +144,7 @@ beforeEach(() => {
   serverFns.listAnnualReturnCaseNotes.mockResolvedValue([]);
   serverFns.listAnnualReturnCaseHistory.mockResolvedValue([]);
   serverFns.listAnnualReturnCaseFindings.mockResolvedValue([]);
+  serverFns.listAnnualReturnCaseParties.mockResolvedValue([]);
   serverFns.assignAnnualReturnCaseOwner.mockResolvedValue(caseItem);
   serverFns.updateAnnualReturnStatus.mockResolvedValue(caseItem);
   serverFns.updateAnnualReturnChecklistItem.mockResolvedValue(caseItem);

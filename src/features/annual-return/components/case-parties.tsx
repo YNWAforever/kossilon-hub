@@ -55,14 +55,16 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
     },
   });
 
-  const parties = partiesQuery.data ?? [];
+  const current = partiesQuery.isSuccess && !partiesQuery.isFetching;
+  // Cached candidates cannot establish current completeness or authority to confirm.
+  const parties = current ? (partiesQuery.data ?? []) : [];
   const unconfirmed = parties.filter((party) => party.active && !party.confirmedByUserId);
 
   return (
     <section className="border-b pb-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold">申報相關人士</h2>
-        {partiesQuery.isPending ? null : (
+        {!current ? null : (
           <span className="text-sm text-muted-foreground">
             {parties.length - unconfirmed.length}/{parties.length} 已確認
           </span>
@@ -70,9 +72,20 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
       </div>
 
       {partiesQuery.error ? (
-        <p className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text">
-          無法載入相關人士名單。在確認之前，個人層面的要求不會出現。
-        </p>
+        <div
+          role="alert"
+          className="mt-3 space-y-2 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
+        >
+          <p>無法載入相關人士名單。在確認之前，個人層面的要求不會出現。</p>
+          <Button
+            type="button"
+            className="min-h-11"
+            disabled={partiesQuery.isFetching}
+            onClick={() => void partiesQuery.refetch({ cancelRefetch: false })}
+          >
+            重新載入相關人士
+          </Button>
+        </div>
       ) : null}
 
       {/* The requirement set is knowably incomplete while a candidate is
@@ -86,9 +99,9 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
         </p>
       ) : null}
 
-      {partiesQuery.isPending ? (
+      {partiesQuery.isPending || partiesQuery.isFetching ? (
         <LoadingRows label="正在載入當事人…" rows={2} className="mt-3 p-0" />
-      ) : parties.length === 0 ? (
+      ) : partiesQuery.isError ? null : parties.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">
           公司董事名冊沒有在任人士，因此沒有可確認的對象。個人層面的要求不會建立。
         </p>
