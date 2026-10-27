@@ -128,10 +128,13 @@ function TodayRoute() {
     );
   }
 
-  const current = page
-    ? { definition: WORK_VIEWS.find((v) => v.key === active)!, rows: page.rows }
-    : undefined;
-  const rows = page?.rows ?? [];
+  const annualReadBlocked = viewsQuery.isError || viewsQuery.isFetching;
+  const otherReadBlocked = otherWorkQuery.isError || otherWorkQuery.isFetching;
+  const current =
+    page && !annualReadBlocked
+      ? { definition: WORK_VIEWS.find((v) => v.key === active)!, rows: page.rows }
+      : undefined;
+  const rows = !annualReadBlocked ? (page?.rows ?? []) : [];
 
   return (
     <main className="flex-1 space-y-6 p-6">
@@ -178,7 +181,7 @@ function TodayRoute() {
           </Select>
         </label>
       </div>
-      {viewsQuery.isPending ? <LoadingRows label="正在載入今日工作…" rows={5} /> : null}
+      {viewsQuery.isFetching ? <LoadingRows label="正在載入今日工作…" rows={5} /> : null}
 
       {viewsQuery.error ? (
         <p
@@ -186,7 +189,11 @@ function TodayRoute() {
           className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
         >
           無法載入今日工作。這不代表沒有工作，請直接開啟案件板。
-          <Button className="ml-3 min-h-11" onClick={() => void viewsQuery.refetch()}>
+          <Button
+            className="ml-3 min-h-11"
+            disabled={viewsQuery.isFetching}
+            onClick={() => void viewsQuery.refetch({ cancelRefetch: false })}
+          >
             重新載入
           </Button>
         </p>
@@ -205,7 +212,10 @@ function TodayRoute() {
             {definition.label}
             {/* A count is only shown for a view that can actually count. An
                 unreleased view showing "0" would be a claim it cannot make. */}
-            {definition.released && metricsQuery.data
+            {definition.released &&
+            !metricsQuery.isError &&
+            !metricsQuery.isFetching &&
+            metricsQuery.data
               ? ` (${metricsQuery.data[definition.key]})`
               : ""}
           </Button>
@@ -217,7 +227,12 @@ function TodayRoute() {
       {metricsQuery.isError ? (
         <p role="alert">
           工作總數未能載入；已顯示列表不是全範圍總數。
-          <Button variant="ghost" className="min-h-11" onClick={() => void metricsQuery.refetch()}>
+          <Button
+            variant="ghost"
+            className="min-h-11"
+            disabled={metricsQuery.isFetching}
+            onClick={() => void metricsQuery.refetch({ cancelRefetch: false })}
+          >
             重試總數
           </Button>
         </p>
@@ -311,11 +326,17 @@ function TodayRoute() {
               同一分類及搜尋範圍；期限為註冊目標完成日或變更工作的 SLA。缺少資料不代表已可交件。
             </p>
           </div>
-          {otherWorkQuery.isPending ? <LoadingRows label="正在載入其他業務工作…" rows={3} /> : null}
+          {otherWorkQuery.isFetching ? (
+            <LoadingRows label="正在載入其他業務工作…" rows={3} />
+          ) : null}
           {otherWorkQuery.isError ? (
             <p role="alert" className="p-4 text-status-yellow-text">
               公司註冊及公司變更未能載入，這不代表沒有工作。
-              <Button className="ml-3 min-h-11" onClick={() => void otherWorkQuery.refetch()}>
+              <Button
+                className="ml-3 min-h-11"
+                disabled={otherWorkQuery.isFetching}
+                onClick={() => void otherWorkQuery.refetch({ cancelRefetch: false })}
+              >
                 重試其他業務
               </Button>
             </p>
@@ -324,13 +345,13 @@ function TodayRoute() {
             <p className="p-4 text-sm">
               公司註冊及公司變更須在個案核對交件資格；狀態標籤及文件數量不能代替批准證據。請到「等我覆核」核對負責個案。
             </p>
-          ) : otherPage && !otherWorkQuery.isError && otherPage.rows.length === 0 ? (
+          ) : otherPage && !otherReadBlocked && otherPage.rows.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">
               此分類沒有符合的公司註冊或公司變更工作。
             </p>
           ) : null}
           <div className="divide-y">
-            {otherPage?.rows.map((row) => {
+            {(!otherReadBlocked ? otherPage?.rows : [])?.map((row) => {
               const label = row.business === "incorporation" ? "公司註冊" : "公司變更";
               const href =
                 row.target.replace("$id", encodeURIComponent(row.caseId)) +
