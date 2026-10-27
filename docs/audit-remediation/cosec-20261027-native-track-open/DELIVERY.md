@@ -4,10 +4,13 @@
 
 Hong Kong date 2026-10-27. This packet refreshes the unapproved plan in
 [../cosec-20261025-native-plan-fccb7c22/](../cosec-20261025-native-plan-fccb7c22/).
-It does not approve any AP, does not execute Native, and does not fill a binding.
+It does not approve any AP or execute Native. The repo-only follow-up fills
+non-secret reference identifiers and field contracts; every selected Gate A
+binding still requires owner input.
 
-`execution_enabled` is `false`. `approved_packet_ids` is `[]`. Every binding value
-below is `NOT_READY`.
+`execution_enabled` is `false`. `approved_packet_ids` is `[]`. Gate A selected
+bindings and 14 actual alias IDs are `OWNER_REQUIRED`; Gate B stays `NOT_READY`.
+Neither placeholder is ready or approved.
 
 ## Baseline SHAs
 
@@ -32,7 +35,7 @@ They do not transfer to `79ad0c04`. A later approval has to name `79ad0c04`, or 
 newer SHA that a human pins after reading the diff. This file does not observe a
 deployed artifact of either SHA.
 
-## What was re-read
+## Original track-open evidence (historical)
 
 The prior packet still has empty bindings, `execution_enabled: false`, and
 `approved_packet_ids: []`. Its `approval-request.json` SHA256 is
@@ -73,8 +76,11 @@ fields are [approval-request.json](approval-request.json). Secrets stay in the
 existing secret store or an operator session. Do not paste secrets into git or
 chat.
 
-**Gate A — required before the first slice can be proposed for approval.** All
-are `NOT_READY` today.
+**Gate A — required before the first slice can be proposed for approval.**
+Repo-only discovery is now filled in [APPROVAL-CHECKLIST.md](APPROVAL-CHECKLIST.md)
+and [gate-a-discovery.json](gate-a-discovery.json). All selected bindings still
+need `OWNER_REQUIRED` input or confirmation. The table below describes the
+remaining requirements, not an empty repo discovery form.
 
 | Field | What to supply |
 | --- | --- |
@@ -98,7 +104,7 @@ are `NOT_READY` today.
 | `read_only_cost_ceiling_and_expiry_hkt` | Currency, amount, window, and expiry in HKT for the read-only slice |
 | `cleanup_manifest_and_disposition` | Retain-only disposition for sessions opened by that slice. Exact disposable IDs, if any, come from the owner |
 
-Gate A aliases, each actual Auth ID `NOT_READY`: `ADMIN_PRIMARY`,
+Gate A aliases, each actual Auth ID `OWNER_REQUIRED`: `ADMIN_PRIMARY`,
 `ADMIN_RECOVERY`, `STAFF_SOURCE`, `STAFF_OWNER`, `STAFF_REVIEWER`, `MANAGER_A`,
 `STAFF_B`, `MANAGER_B`, `CLIENT_A`, `CLIENT_B`, `STAFF_NO_TEAM`,
 `AUTH_NO_PROFILE`, `STAFF_INACTIVE`, `STAFF_NO_SKILL`.
@@ -144,8 +150,8 @@ write, and no continuation into AP-02.
 
 | AP | Why it stays NOT_READY |
 | --- | --- |
-| AP-00 | Every binding field is `NOT_READY`. No owner, URL, CI run, database, Auth tenant, storage, fixture, cost ceiling, or expiry was supplied |
-| AP-01 | Gate A is empty. No metadata read, session, or HTTP call was made |
+| AP-00 | Repo references are filled; every Gate A selected binding/actual alias ID remains `OWNER_REQUIRED`, Gate B `NOT_READY`; no AP approval |
+| AP-01 | No approved isolated target or same-candidate deployment/CI/DB/Auth binding; no ComSec metadata/session/HTTP call in this follow-up |
 | AP-02 | No reviewed fixture driver, no exact IDs, no disposable database target |
 | AP-03 | No bound staff session, no core fixture, no same-SHA deployed runtime. Local Today and case edits are not that journey |
 | AP-04 | Storage, object prefix, scanner sandbox, and real scan receipts are `NOT_READY`. No payment was taken |
@@ -173,9 +179,37 @@ and the reminder and recovery work on #149, stays local. It does not close the
 
 ## Recommended next human step
 
-Willy fills Gate A outside this repo, then returns only the non-secret
-identifiers he is willing to commit. He leaves Gate B as `NOT_READY` until the
-packet that needs it. He does not mark an AP approved by filling the table.
+Willy confirms or replaces the historical reference identifiers and supplies the
+remaining Gate A owner fields in [APPROVAL-CHECKLIST.md](APPROVAL-CHECKLIST.md).
+Secret material remains outside git. Gate B stays `NOT_READY` until the packet
+that needs it; completing the form does not approve an AP.
 
 Until those identifiers exist, the Native gate stays **NO_GO** and no executor
 should start AP-01-RO-1.
+
+## Repo-only Gate A follow-up for #150
+
+Reviewed source is #150 head `165e8cd53d9f85221e06d7b8bfb705f1681b2db7`;
+#149 remains only the pinned product comparison candidate `79ad0c04…`.
+No #149 source, previous Native plan, provider state, or runtime setting was edited.
+
+Filled: historical demo Vercel project/team/name/slug, fixed URL/deployment ID;
+production references explicitly excluded; historical Neon project, staging child,
+parent and database name with no-endpoint/Auth limitations; CI workflow/check
+names; both candidate lockfile hashes; binding names, flags and code paths;
+role/profile/team/revision manifest columns; retain-only proposal.
+
+Remaining `OWNER_REQUIRED`: accountable human, selected currently isolated target,
+same-candidate deployed SHA/checksum, exact CI run IDs/results and dependency
+disposition, DB/server/role/Auth bindings, 14 actual alias identities and existing
+session method, approved hosts, budget/currency/HKT expiry and retain sign-off.
+All 19 Gate A fields still need input or confirmation. Historical demo READY and
+staging names do not close any field.
+
+The JSON discovery source map pins repo paths, git blobs and SHA256. No ComSec
+HTTP/Auth/DB/browser/native/provider/CI/scheduler/restore action was run. GitHub
+fetch/push and PR metadata are delivery operations, separate from Native execution.
+Original baseline counters and old receipts describe their original passes;
+`baseline.json.repo_discovery_refresh` describes this follow-up. No old metadata
+approval or expiry is reused. Local validation checks packet invariants, source
+hashes/references, historical-file immutability and docs-only scope.

@@ -10,7 +10,11 @@ Previous plan candidate `4d63818fe2562146f85e9a7b9917d8f0eb58f4c1` is an ancesto
 not the candidate. No deployed checksum is bound to either SHA.
 
 `execution_enabled` is `false`. `approved_packet_ids` is `[]`. Actual actions
-for AP-00 through AP-12 are 0. Bindings are `NOT_READY`.
+for AP-00 through AP-12 are 0. Gate A selected bindings and 14 actual alias IDs
+are `OWNER_REQUIRED`; Gate B remains `NOT_READY`. Repo reference values are
+filled in [gate-a-discovery.json](gate-a-discovery.json) and
+[APPROVAL-CHECKLIST.md](APPROVAL-CHECKLIST.md), with hashed source paths.
+Historical identifiers and code contracts do not close a Native binding.
 
 ## Still blocked
 
@@ -32,3 +36,21 @@ or a browser reload of a committed intent.
 AP-01-RO-1, described in [DELIVERY.md](DELIVERY.md). It is not authorized.
 AP-02 through AP-12 wait on Gate B as well as on AP-01. AP-12 has no resource
 IDs because this prepare pass created none.
+
+## Repo discovery narrows owner lookup, not the execution gate
+
+The demo Vercel project/team/deployment and fixed hostname are already in a
+2026-10-25 committed receipt. That receipt leaves its deployed Git SHA and
+DB/Auth isolation unknown. The historical Neon child
+`br-fragrant-sunset-aosoylhr` / `kossilon-r01-staging-20261004` in
+`red-morning-00331124` had no endpoint; a later endpoint create failed and Auth
+was not enabled. It is not proved linked to the demo runtime. Production
+`br-muddy-mountain-aov8bbku` and its privileged observer are reference evidence,
+not selected Native bindings.
+
+Workflow `CI` / `Node22` / `Node24` / `verify`, lockfile hashes, runtime binding
+names, feature flags, and role-manifest columns are filled from repo code.
+Exact candidate CI runs, deployed artifact/SBOM, actual target/roles/Auth/14 QA
+identities, approved hosts, cost/expiry and human sign-off remain
+`OWNER_REQUIRED`. Every Gate A row still needs input or confirmation; all AP
+statuses, Gate B fields, historical 70/114/0 counts and execution disable remain.

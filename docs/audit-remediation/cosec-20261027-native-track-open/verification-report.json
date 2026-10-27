@@ -1,0 +1,41 @@
+{
+  "status": "PASS_REPOSITORY_PACKET_CHECKS_ONLY",
+  "verified_at_utc": "2026-10-27T16:22:44.183328+00:00",
+  "reviewed_repository_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
+  "validation_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
+  "validation_scope": "Working packet bytes below; no product tests, CI runs, app import, network probe, Auth, DB, browser or Native execution.",
+  "release_gate": "NO_GO",
+  "execution_enabled": false,
+  "approved_packet_ids": [],
+  "gate_a_fields_owner_required": 19,
+  "gate_a_alias_ids_owner_required": 14,
+  "gate_b_unchanged": true,
+  "source_files_hash_and_git_blob_verified": 26,
+  "source_references_resolved": 56,
+  "candidate_lock_hashes_verified": 2,
+  "historical_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "previous_native_plan_unchanged": true,
+  "changes_scoped_to_requested_packet": true,
+  "checks": [
+    "JSON parsing and execution/approval/AP invariants",
+    "Gate A unresolved, Gate B and previous baseline preserved",
+    "Repo source paths/SHA256/git blobs/JSON pointers",
+    "Candidate lockfiles match pinned source",
+    "Historical matrix hash/recount and old packet immutability",
+    "Relative Markdown links",
+    "No credential values in changed packet files matching basic token/key/email/connection-string patterns",
+    "git diff --check"
+  ],
+  "file_sha256_excluding_this_report": {
+    "docs/audit-remediation/cosec-20261027-native-track-open/APPROVAL-CHECKLIST.md": "533381bf2444ea849246e1e27c6c83467f50742338ff2e611bc4b6f3e2448c68",
+    "docs/audit-remediation/cosec-20261027-native-track-open/DELIVERY.md": "cffde744994d69c443b73caebb93f50456c578cdc78047ae41be5d7500be9004",
+    "docs/audit-remediation/cosec-20261027-native-track-open/approval-request.json": "5de9431d018dd7086a1b3f0cd4eb5e7ef6a15046565eb567c220540a59344d1d",
+    "docs/audit-remediation/cosec-20261027-native-track-open/baseline.json": "affdefc444b7d17871f61bb06693ec7bcc0c2d1b83c7913ce4280ff1e3e2d16e",
+    "docs/audit-remediation/cosec-20261027-native-track-open/blockers.md": "928364e53675bd818bc81773cc688ab290de97f4755dc03264c85f0c54ad94f6",
+    "docs/audit-remediation/cosec-20261027-native-track-open/gate-a-discovery.json": "38234e3c0ac5eededad7e837abb3c9e37d0505dd780d6381bfa80a784f861848"
+  }
+}

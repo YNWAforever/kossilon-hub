@@ -71,5 +71,23 @@
   },
   "deployed": false,
   "auth_runtime_verified": false,
-  "native_http_db_rls_verified": false
+  "native_http_db_rls_verified": false,
+  "repo_discovery_refresh": {
+    "status": "PARTIAL_REPOSITORY_IDENTIFIERS_ONLY",
+    "reviewed_repository_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
+    "discovery_file": "gate-a-discovery.json",
+    "original_baseline_counters_scope": "Original track-open prepare pass; not a count of this follow-up GitHub fetch/push or PR metadata delivery operations.",
+    "native_executed": false,
+    "live_comsec_http_requests": 0,
+    "auth_actions": 0,
+    "database_connections": 0,
+    "browser_or_native_flows": 0,
+    "provider_control_plane_requests": 0,
+    "hosted_ci_queried": false,
+    "resources_created": 0,
+    "fully_bound_gate_a_fields": 0,
+    "gate_a_fields_requiring_owner": 19,
+    "actual_gate_a_alias_ids_requiring_owner": 14,
+    "gate_b_changed": false
+  }
 }
