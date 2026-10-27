@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { LoadingRows } from "@/components/ui/skeleton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserCheck, Users } from "lucide-react";
@@ -32,7 +33,15 @@ const PARTY_TYPE_LABELS: Record<string, string> = {
   other: "其他",
 };
 
-export function CaseParties({ caseId, locked }: { caseId: string; locked: boolean }) {
+export function CaseParties(props: { caseId: string; locked: boolean }) {
+  return <CasePartiesPanel key={props.caseId} {...props} />;
+}
+
+function CasePartiesPanel({ caseId, locked }: { caseId: string; locked: boolean }) {
+  const submitting = useRef(false);
+  const recovering = useRef(false);
+  const [needsReconciliation, setNeedsReconciliation] = useState(false);
+  const [reconciling, setReconciling] = useState(false);
   const queryClient = useQueryClient();
   const queryKey = ["annual-return", "case-parties", caseId];
 
@@ -45,6 +54,8 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
   const confirmMutation = useMutation({
     mutationFn: (input: { partyId: string }) =>
       confirmAnnualReturnCaseParty({ data: { caseId, partyId: input.partyId } }),
+    retry: false,
+    onError: () => setNeedsReconciliation(true),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey });
       // The requirements this party owes were created by the same transaction,
@@ -52,10 +63,11 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
       await queryClient.invalidateQueries({
         queryKey: ["annual-return", "case-findings", caseId],
       });
+      submitting.current = false;
     },
   });
 
-  const current = partiesQuery.isSuccess && !partiesQuery.isFetching;
+  const current = !needsReconciliation && partiesQuery.isSuccess && !partiesQuery.isFetching;
   // Cached candidates cannot establish current completeness or authority to confirm.
   const parties = current ? (partiesQuery.data ?? []) : [];
   const unconfirmed = parties.filter((party) => party.active && !party.confirmedByUserId);
@@ -71,7 +83,7 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
         )}
       </div>
 
-      {partiesQuery.error ? (
+      {partiesQuery.error && !needsReconciliation ? (
         <div
           role="alert"
           className="mt-3 space-y-2 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
@@ -88,6 +100,45 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
         </div>
       ) : null}
 
+      {needsReconciliation ? (
+        <div role="alert" className="mt-3 space-y-2 text-sm">
+          <p>相關人士確認結果未能核實。請先重新核對名單；沒有自動重試確認操作。</p>
+          <Button
+            type="button"
+            className="min-h-11"
+            disabled={reconciling}
+            onClick={async () => {
+              if (recovering.current) return;
+              recovering.current = true;
+              setReconciling(true);
+              try {
+                // Independent readback avoids accepting reverted cached data
+                // from a cancelled refetch as a fresh confirmation result.
+                await queryClient.cancelQueries({ queryKey, exact: true });
+                const parties = await listAnnualReturnCaseParties({ data: { caseId } });
+                if (!Array.isArray(parties)) throw new Error("Parties unavailable");
+                await queryClient.cancelQueries({ queryKey, exact: true });
+                queryClient.setQueryData(queryKey, parties);
+                // A lost response may follow creation of person-level requirements.
+                await queryClient.invalidateQueries({
+                  queryKey: ["annual-return", "case-findings", caseId],
+                });
+                confirmMutation.reset();
+                submitting.current = false;
+                setNeedsReconciliation(false);
+              } catch {
+                // Keep every candidate blocked until explicit readback succeeds.
+              } finally {
+                recovering.current = false;
+                setReconciling(false);
+              }
+            }}
+          >
+            重新核對確認結果
+          </Button>
+        </div>
+      ) : null}
+
       {/* The requirement set is knowably incomplete while a candidate is
           unconfirmed, and saying so is the point. A short list presented as the
           whole list is exactly the false completeness this model prevents. */}
@@ -99,7 +150,7 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
         </p>
       ) : null}
 
-      {partiesQuery.isPending || partiesQuery.isFetching ? (
+      {needsReconciliation ? null : partiesQuery.isPending || partiesQuery.isFetching ? (
         <LoadingRows label="正在載入當事人…" rows={2} className="mt-3 p-0" />
       ) : partiesQuery.isError ? null : parties.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">
@@ -129,7 +180,12 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
                 <Button
                   size="sm"
                   disabled={locked || confirmMutation.isPending}
-                  onClick={() => confirmMutation.mutate({ partyId: party.id })}
+                  onClick={() => {
+                    // Pending renders cannot guard multiple clicks in one event turn.
+                    if (locked || submitting.current || partiesQuery.isFetching) return;
+                    submitting.current = true;
+                    confirmMutation.mutate({ partyId: party.id });
+                  }}
                 >
                   <UserCheck aria-hidden className="h-3.5 w-3.5" />
                   確認為相關人士
@@ -139,10 +195,6 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
           ))}
         </div>
       )}
-
-      {confirmMutation.error ? (
-        <p className="mt-3 text-sm text-status-red-text">無法確認，請再試一次。</p>
-      ) : null}
     </section>
   );
 }
