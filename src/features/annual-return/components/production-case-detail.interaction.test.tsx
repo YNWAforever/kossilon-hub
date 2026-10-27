@@ -1355,3 +1355,165 @@ it("discards owner recovery after leaving the keyed case lifetime", async () => 
   await act(async () => resolve({ ...caseItem, ownerId: nextOwnerId }));
   expect(queryClient.getQueryData(annualReturnQueryKeys.detail(caseId))).toEqual(before);
 });
+
+async function failReceiptCommand(client?: QueryClient) {
+  serverFns.updateAnnualReturnFilingProof.mockRejectedValue(
+    new Error("private unknown receipt result"),
+  );
+  const rendered = renderDetail(undefined, client);
+  await screen.findByLabelText("已核對回條文件");
+  fireEvent.change(screen.getByLabelText("遞交編號"), { target: { value: "ATTEMPT-REF" } });
+  await waitFor(() =>
+    expect(
+      within(screen.getByLabelText("已核對回條文件")).queryByText(/filing-receipt.pdf/),
+    ).toBeTruthy(),
+  );
+  fireEvent.change(screen.getByLabelText("已核對回條文件"), { target: { value: receiptId } });
+  fireEvent.click(screen.getByRole("button", { name: "接納回條" }));
+  await screen.findByRole("button", { name: "重新核對案件結果" });
+  return rendered;
+}
+
+it.each(["ATTEMPT-REF", "OTHER-ACCEPTED-REF"])(
+  "restores read-back receipt %s without replay or replacement",
+  async (filingReference) => {
+    await failReceiptCommand();
+    expect(screen.queryByRole("button", { name: "接納回條" })).toBeNull();
+    serverFns.getAnnualReturnCase.mockResolvedValue({
+      ...caseItem,
+      filingReference,
+      confirmationDocumentId: receiptId,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "重新核對案件結果" }));
+    const reference = await screen.findByLabelText("遞交編號");
+    expect((reference as HTMLInputElement).value).toBe(filingReference);
+    expect((reference as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByLabelText("已核對回條文件") as HTMLSelectElement).value).toBe(receiptId);
+    expect((screen.getByRole("button", { name: "接納回條" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    expect(serverFns.updateAnnualReturnFilingProof).toHaveBeenCalledTimes(1);
+  },
+);
+
+it("retains the draft after empty receipt readback and submits only a new explicit action", async () => {
+  await failReceiptCommand();
+  fireEvent.click(screen.getByRole("button", { name: "重新核對案件結果" }));
+  const reference = await screen.findByLabelText("遞交編號");
+  expect((reference as HTMLInputElement).value).toBe("ATTEMPT-REF");
+  expect(serverFns.updateAnnualReturnFilingProof).toHaveBeenCalledTimes(1);
+  serverFns.updateAnnualReturnFilingProof.mockResolvedValue({
+    ...caseItem,
+    filingReference: "NEW-REF",
+    confirmationDocumentId: receiptId,
+  });
+  fireEvent.change(reference, { target: { value: "NEW-REF" } });
+  await waitFor(() =>
+    expect((screen.getByRole("button", { name: "接納回條" }) as HTMLButtonElement).disabled).toBe(
+      false,
+    ),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "接納回條" }));
+  await waitFor(() => expect(serverFns.updateAnnualReturnFilingProof).toHaveBeenCalledTimes(2));
+  expect(serverFns.updateAnnualReturnFilingProof.mock.calls[1][0]).toEqual({
+    data: { caseId, filingReference: "NEW-REF", confirmationDocumentId: receiptId },
+  });
+});
+
+it.each([
+  { filingReference: "REF", confirmationDocumentId: null },
+  { filingReference: null, confirmationDocumentId: receiptId },
+  { filingReference: "REF", confirmationDocumentId: "invalid" },
+])("keeps incomplete receipt readback blocked: %j", async (pair) => {
+  await failReceiptCommand();
+  serverFns.getAnnualReturnCase.mockResolvedValue({ ...caseItem, ...pair });
+  fireEvent.click(screen.getByRole("button", { name: "重新核對案件結果" }));
+  await screen.findByText("尚未核實案件結果。請稍後重新核對；沒有重試寫入。");
+  expect(screen.queryByRole("button", { name: "接納回條" })).toBeNull();
+  expect(serverFns.updateAnnualReturnFilingProof).toHaveBeenCalledTimes(1);
+});
+
+it("deduplicates receipt submissions and suppresses configured mutation retries", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: 2, retryDelay: 0 } },
+  });
+  serverFns.updateAnnualReturnFilingProof.mockRejectedValue(new Error("unknown"));
+  renderDetail(undefined, client);
+  await screen.findByLabelText("已核對回條文件");
+  fireEvent.change(screen.getByLabelText("遞交編號"), { target: { value: "REF" } });
+  await waitFor(() =>
+    expect(
+      within(screen.getByLabelText("已核對回條文件")).queryByText(/filing-receipt.pdf/),
+    ).toBeTruthy(),
+  );
+  fireEvent.change(screen.getByLabelText("已核對回條文件"), { target: { value: receiptId } });
+  const submit = screen.getByRole("button", { name: "接納回條" });
+  act(() => {
+    submit.click();
+    submit.click();
+  });
+  await screen.findByRole("button", { name: "重新核對案件結果" });
+  expect(serverFns.updateAnnualReturnFilingProof).toHaveBeenCalledTimes(1);
+});
+
+it("keeps receipt recovery pending through cache changes and honors a fresh completed case", async () => {
+  const { queryClient } = await failReceiptCommand();
+  let resolve!: (value: AnnualReturnCase) => void;
+  serverFns.getAnnualReturnCase.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  const retry = screen.getByRole("button", { name: "重新核對案件結果" });
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  await waitFor(() => expect(serverFns.getAnnualReturnCase).toHaveBeenCalledTimes(2));
+  await act(async () => {
+    await queryClient.cancelQueries();
+    queryClient.setQueryData(annualReturnQueryKeys.detail(caseId), caseItem);
+  });
+  expect(screen.queryByRole("button", { name: "接納回條" })).toBeNull();
+  await act(async () =>
+    resolve({
+      ...caseItem,
+      currentStatus: "Completed",
+      completedAt: "2026-10-27T00:00:00Z",
+      filingReference: "SAVED",
+      confirmationDocumentId: receiptId,
+    }),
+  );
+  await screen.findByLabelText("遞交編號");
+  expect((screen.getByRole("button", { name: "接納回條" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expect((screen.getByRole("button", { name: "分配" }) as HTMLButtonElement).disabled).toBe(true);
+  expect(serverFns.updateAnnualReturnFilingProof).toHaveBeenCalledTimes(1);
+});
+
+it("shows the immutable stored pair rather than an unsaved draft after background readback", async () => {
+  const { queryClient } = renderDetail();
+  await screen.findByLabelText("遞交編號");
+  fireEvent.change(screen.getByLabelText("遞交編號"), { target: { value: "LOCAL-DRAFT" } });
+  serverFns.getAnnualReturnCase.mockResolvedValue({
+    ...caseItem,
+    filingReference: "OTHER-STORED-REF",
+    confirmationDocumentId: receiptId,
+  });
+  await act(async () => {
+    await queryClient.refetchQueries({
+      queryKey: annualReturnQueryKeys.detail(caseId),
+      exact: true,
+    });
+  });
+  await waitFor(() =>
+    expect((screen.getByLabelText("遞交編號") as HTMLInputElement).value).toBe("OTHER-STORED-REF"),
+  );
+  expect((screen.getByLabelText("已核對回條文件") as HTMLSelectElement).value).toBe(receiptId);
+  expect((screen.getByRole("button", { name: "接納回條" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expect(serverFns.updateAnnualReturnFilingProof).not.toHaveBeenCalled();
+});

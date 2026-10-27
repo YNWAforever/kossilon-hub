@@ -129,6 +129,9 @@ function CaseDetail({
   const statusSubmitting = useRef(false);
   const ownerSubmitting = useRef(false);
   const ownerNeedsRead = useRef(false);
+  const receiptSubmitting = useRef(false);
+  const receiptNeedsRead = useRef(false);
+  const [receiptChecked, setReceiptChecked] = useState(false);
   const checklistSubmitting = useRef(new Set<string>());
   const [caseRecovery, setCaseRecovery] = useState<"none" | "required" | "reading" | "failed">(
     "none",
@@ -269,6 +272,14 @@ function CaseDetail({
   const receiptMutation = useMutation({
     mutationKey: commandKey,
     mutationFn: actions.acceptReceipt,
+    retry: false,
+    onError: () => {
+      receiptNeedsRead.current = true;
+      requireCaseReadback();
+    },
+    onSettled: () => {
+      receiptSubmitting.current = false;
+    },
     onSuccess: updateCaseCacheAndConfirm("已接納回條。"),
   });
 
@@ -282,8 +293,8 @@ function CaseDetail({
     setPaymentProofDocumentId(
       (current) => current || caseItem.payment?.paymentProofDocumentId || "",
     );
-    setFilingReference((current) => current || caseItem.filingReference || "");
-    setConfirmationDocumentId((current) => current || caseItem.confirmationDocumentId || "");
+    setFilingReference((current) => caseItem.filingReference ?? current);
+    setConfirmationDocumentId((current) => caseItem.confirmationDocumentId ?? current);
   }, [caseItem]);
 
   async function reconcileCase() {
@@ -312,6 +323,14 @@ function CaseDetail({
       )
         throw new Error("Case readiness unavailable");
       if (ownerNeedsRead.current && !isUuid(fresh.ownerId)) throw new Error("Owner unavailable");
+      if (receiptNeedsRead.current) {
+        const emptyPair = fresh.filingReference === null && fresh.confirmationDocumentId === null;
+        const storedPair =
+          typeof fresh.filingReference === "string" &&
+          fresh.filingReference.trim() &&
+          isUuid(fresh.confirmationDocumentId ?? "");
+        if (!emptyPair && !storedPair) throw new Error("Receipt unavailable");
+      }
       await queryClient.cancelQueries({ queryKey, exact: true });
       if (!caseAlive.current) return;
       await queryClient.invalidateQueries({
@@ -324,6 +343,15 @@ function CaseDetail({
       if (ownerNeedsRead.current) setOwnerId(fresh.ownerId);
       ownerNeedsRead.current = false;
       ownerMutation.reset();
+      if (receiptNeedsRead.current) {
+        if (fresh.filingReference !== null && fresh.confirmationDocumentId !== null) {
+          setFilingReference(fresh.filingReference);
+          setConfirmationDocumentId(fresh.confirmationDocumentId);
+        }
+        setReceiptChecked(true);
+      }
+      receiptNeedsRead.current = false;
+      receiptMutation.reset();
       checklistMutation.reset();
       statusMutation.reset();
       packetMutation.reset();
@@ -385,6 +413,9 @@ function CaseDetail({
 
   if (!caseItem) return <CaseNotFound returnTo={returnTo} />;
 
+  // The server stores this pair once and rejects a different replacement.
+  const receiptRecorded =
+    caseItem.filingReference !== null || caseItem.confirmationDocumentId !== null;
   const readiness = readinessForCase(caseItem);
   const packetReady = readiness.readyToPrepare && Boolean(readiness.sourceVersion);
   const locked = Boolean(
@@ -657,6 +688,7 @@ function CaseDetail({
             <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
               <Input
                 aria-label="遞交編號"
+                disabled={locked || receiptRecorded || receiptMutation.isPending}
                 className="w-full min-w-0"
                 placeholder="遞交編號"
                 value={filingReference}
@@ -670,21 +702,33 @@ function CaseDetail({
                 categories={["receipt", "submission", "registry"]}
                 value={confirmationDocumentId}
                 onChange={setConfirmationDocumentId}
-                disabled={locked || receiptMutation.isPending}
+                disabled={locked || receiptRecorded || receiptMutation.isPending}
               />
               <Button
                 disabled={
                   locked ||
+                  receiptRecorded ||
                   receiptMutation.isPending ||
                   !filingReference.trim() ||
                   !isUuid(confirmationDocumentId)
                 }
-                onClick={() =>
+                onClick={() => {
+                  if (
+                    locked ||
+                    receiptRecorded ||
+                    uncertainCase.current ||
+                    receiptSubmitting.current ||
+                    !filingReference.trim() ||
+                    !isUuid(confirmationDocumentId)
+                  )
+                    return;
+                  receiptSubmitting.current = true;
+                  setReceiptChecked(false);
                   receiptMutation.mutate({
                     filingReference: filingReference.trim(),
                     confirmationDocumentId,
-                  })
-                }
+                  });
+                }}
                 type="button"
               >
                 <PendingIcon pending={receiptMutation.isPending} />
@@ -692,6 +736,13 @@ function CaseDetail({
                 接納回條
               </Button>
             </div>
+            {receiptChecked ? (
+              <p role="status" className="mt-2 text-sm">
+                {receiptRecorded
+                  ? "案件已有回條登記；請核對以上已儲存記錄。"
+                  : "案件目前未有回條登記。草稿已保留；如需提交，請再次明確確認。"}
+              </p>
+            ) : null}
             <MutationMessage error={receiptMutation.error} />
           </section>
         </div>
