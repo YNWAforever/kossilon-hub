@@ -1,0 +1,62 @@
+{
+  "baseline": "be47049bab5cee55c55cdb3cd56681ac0abb43e0",
+  "product_commit": "f1622ae033c0c97d459c29d9e1e14ff9b03394ab",
+  "verification_state": "Final checks ran at baseline HEAD with these three source/test files modified. Final SHA256 values below match the committed files. No source/test changes after final verification. Evidence-only commit follows.",
+  "files": {
+    "src/features/annual-return/components/case-parties.tsx": "ab3a3787cee66e6117c05aea2bd787b5cc455fbcf74af13bdc39f4e84b6dca1e",
+    "src/features/annual-return/components/case-parties.interaction.test.tsx": "ae09afda623cb56c60d7b906d2a89425bf0844a0302aa9288b8a4f40800ccd22",
+    "src/features/annual-return/components/production-case-detail.interaction.test.tsx": "3bcf21f45ee126b2e1b883c0b6922ca7178995c071087557f5b6027dc59e4133"
+  },
+  "commands": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "result": "2826 passed / 290 files",
+      "log": "unit.txt",
+      "scope": "Local child-process-supported unit/component suite; DB integration project excluded"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/case-parties.interaction.test.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx src/features/annual-return/components/case-findings.interaction.test.tsx",
+      "exit": 0,
+      "result": "31 passed / 3 files, included in full unit count",
+      "new_tests": 5,
+      "log": "targeted.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/case-parties.tsx src/features/annual-return/components/case-parties.interaction.test.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/case-parties.tsx src/features/annual-return/components/case-parties.interaction.test.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "reproduction": {
+    "result": "5 failed / 5 new tests before repair",
+    "log": "red.txt"
+  },
+  "review": "Focused independent reviewer reported no findings; reviewer ran no tests.",
+  "limits": "Recovery invokes only the existing list API, which synchronizes officer candidates before listing. No confirmation replay, no server/DB changes; no persisted sync or requirement-creation proof. Confirmation mutation reconciliation remains outside scope.",
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "build": "NOT_RUN",
+  "db_integration": "NOT_RUN",
+  "hosted_ci_acceptance": "NOT_CLAIMED",
+  "deployment": "NOT_RUN",
+  "production_changes": "NONE"
+}
