@@ -13,6 +13,7 @@ import {
   finalizeDocumentUploadForActor,
   listDocumentsForActor,
   previewDocumentRecoveryForActor,
+  readDocumentUploadReceiptForActor,
   scanQuarantinedDocumentForActor,
 } from "./server-fns";
 
@@ -610,5 +611,93 @@ describe("a deployment with no scanner configured", () => {
     await expect(scanQuarantinedDocumentForActor(staffActor, intent.id, deps)).rejects.toThrow(
       /DOCUMENT_SCANNER_URL/,
     );
+  });
+});
+
+describe("staff upload receipt readback", () => {
+  function received() {
+    const d = dependencies();
+    vi.mocked(d.repository.getUploadIntent).mockResolvedValue({
+      ...intent,
+      requestedByAuthUserId: staffActor.authUserId,
+      documentId: document.id,
+      status: "quarantined",
+    });
+    vi.mocked(d.repository.getDocument).mockResolvedValue({
+      ...document,
+      currentVersionId: intent.currentVersionId,
+    });
+    return d;
+  }
+  it("returns only a receipt after matching committed lineage and rechecking access", async () => {
+    const d = received();
+    await expect(readDocumentUploadReceiptForActor(staffActor, intent.id, d)).resolves.toEqual({
+      intentId: intent.id,
+      state: "received",
+      documentId: document.id,
+    });
+    expect(d.authorizeDocument).toHaveBeenCalledTimes(2);
+    expect(d.repository.createUploadIntent).not.toHaveBeenCalled();
+    expect(d.repository.finalizeUploadIntent).not.toHaveBeenCalled();
+    expect(d.storage.put).not.toHaveBeenCalled();
+    expect(d.storage.head).not.toHaveBeenCalled();
+  });
+  it("does not infer receipt from an uncommitted intent", async () => {
+    const d = received();
+    vi.mocked(d.repository.getUploadIntent).mockResolvedValue({
+      ...intent,
+      requestedByAuthUserId: staffActor.authUserId,
+    });
+    await expect(readDocumentUploadReceiptForActor(staffActor, intent.id, d)).resolves.toEqual({
+      intentId: intent.id,
+      state: "unconfirmed",
+    });
+    expect(d.repository.getDocument).not.toHaveBeenCalled();
+  });
+  it.each(["missing", "wrong-version", "wrong-checksum"])(
+    "rejects inconsistent committed lineage: %s",
+    async (kind) => {
+      const d = received();
+      vi.mocked(d.repository.getDocument).mockResolvedValue(
+        kind === "missing"
+          ? null
+          : {
+              ...document,
+              currentVersionId: kind === "wrong-version" ? "other" : intent.currentVersionId,
+              checksum: kind === "wrong-checksum" ? "other" : document.checksum,
+            },
+      );
+      await expect(readDocumentUploadReceiptForActor(staffActor, intent.id, d)).rejects.toThrow();
+    },
+  );
+  it.each([actor, { ...staffActor, active: false }, { ...staffActor, authUserId: "other" }])(
+    "refuses non-staff, inactive or non-owning actors: %j",
+    async (candidate) => {
+      const d = received();
+      await expect(readDocumentUploadReceiptForActor(candidate, intent.id, d)).rejects.toThrow();
+      expect(d.repository.getDocument).not.toHaveBeenCalled();
+    },
+  );
+  it("refuses revoked access after the asynchronous document read", async () => {
+    const d = received();
+    vi.mocked(d.authorizeDocument)
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("revoked"));
+    await expect(readDocumentUploadReceiptForActor(staffActor, intent.id, d)).rejects.toThrow(
+      "revoked",
+    );
+  });
+  it("refuses a missing intent or denied scope before document readback", async () => {
+    const d = received();
+    vi.mocked(d.repository.getUploadIntent).mockResolvedValue(null);
+    await expect(readDocumentUploadReceiptForActor(staffActor, intent.id, d)).rejects.toThrow(
+      "not found",
+    );
+    expect(d.repository.getDocument).not.toHaveBeenCalled();
+    vi.mocked(d.authorizeDocument).mockRejectedValue(new Error("denied"));
+    await expect(readDocumentUploadReceiptForActor(staffActor, intent.id, d)).rejects.toThrow(
+      "denied",
+    );
+    expect(d.repository.getDocument).not.toHaveBeenCalled();
   });
 });

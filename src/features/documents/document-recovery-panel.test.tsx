@@ -7,6 +7,7 @@ const rpc = vi.hoisted(() => ({
   previewDocumentRecovery: vi.fn(),
   createDocumentUploadIntent: vi.fn(),
   finalizeDocumentUpload: vi.fn(),
+  readDocumentUploadReceipt: vi.fn(),
 }));
 vi.mock("./server-fns", () => rpc);
 afterEach(() => {
@@ -164,5 +165,105 @@ describe("controlled document recovery", () => {
     expect(screen.queryByRole("button", { name: "批准並補傳" })).toBeNull();
     expect(rpc.createDocumentUploadIntent).toHaveBeenCalledTimes(1);
     expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "核對補傳結果" })).toBeNull();
+    expect(rpc.readDocumentUploadReceipt).not.toHaveBeenCalled();
+  });
+  it("checks a saved upload receipt without replaying either write", async () => {
+    const onRecovered = setup();
+    rpc.finalizeDocumentUpload.mockRejectedValue(new Error("lost response"));
+    rpc.readDocumentUploadReceipt.mockResolvedValue({
+      intentId: "new-intent",
+      state: "received",
+      documentId: "new-document",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "預覽受控補傳" }));
+    await screen.findByText("保留舊登記；新檔案須重新掃描及覆核。");
+    await chooseFile();
+    fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    fireEvent.click(await screen.findByRole("button", { name: "核對補傳結果" }));
+    await screen.findByText("已核實補傳登記。請在文件庫查看目前掃描及覆核狀態。");
+    expect(rpc.readDocumentUploadReceipt.mock.calls[0][0]).toEqual({
+      data: { intentId: "new-intent" },
+    });
+    expect(onRecovered).toHaveBeenCalledTimes(1);
+    expect(rpc.createDocumentUploadIntent).toHaveBeenCalledTimes(1);
+    expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "批准並補傳" })).toBeNull();
+  });
+  it.each([
+    null,
+    { intentId: "other", state: "received", documentId: "new-document" },
+    { intentId: "new-intent", state: "unconfirmed" },
+    { intentId: "new-intent", state: "received" },
+  ])("keeps unconfirmed or mismatched receipt closed: %j", async (receipt) => {
+    const onRecovered = setup();
+    rpc.finalizeDocumentUpload.mockRejectedValue(new Error("lost response"));
+    rpc.readDocumentUploadReceipt.mockResolvedValue(receipt);
+    fireEvent.click(screen.getByRole("button", { name: "預覽受控補傳" }));
+    await screen.findByText("保留舊登記；新檔案須重新掃描及覆核。");
+    await chooseFile();
+    fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    fireEvent.click(await screen.findByRole("button", { name: "核對補傳結果" }));
+    await screen.findByText("尚未核實補傳登記。請勿重複補傳；可稍後再次核對。");
+    expect(onRecovered).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "批准並補傳" })).toBeNull();
+    expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
+  });
+  it("deduplicates receipt reads and allows a read retry after denial", async () => {
+    const onRecovered = setup();
+    rpc.finalizeDocumentUpload.mockRejectedValue(new Error("lost response"));
+    let rejectRead!: (error: Error) => void;
+    rpc.readDocumentUploadReceipt.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectRead = reject;
+        }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "預覽受控補傳" }));
+    await screen.findByText("保留舊登記；新檔案須重新掃描及覆核。");
+    await chooseFile();
+    fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    const check = await screen.findByRole("button", { name: "核對補傳結果" });
+    act(() => {
+      check.click();
+      check.click();
+    });
+    await waitFor(() => expect(rpc.readDocumentUploadReceipt).toHaveBeenCalledTimes(1));
+    expect((check as HTMLButtonElement).disabled).toBe(true);
+    await act(async () => rejectRead(new Error("private read error")));
+    await screen.findByText("尚未核實補傳登記。請勿重複補傳；可稍後再次核對。");
+    expect(screen.queryByText("private read error")).toBeNull();
+    rpc.readDocumentUploadReceipt.mockResolvedValue({
+      intentId: "new-intent",
+      state: "received",
+      documentId: "new-document",
+    });
+    fireEvent.click(check);
+    await screen.findByText("已核實補傳登記。請在文件庫查看目前掃描及覆核狀態。");
+    expect(onRecovered).toHaveBeenCalledTimes(1);
+    expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
+  });
+  it("discards a receipt arriving after the panel unmounts", async () => {
+    const onRecovered = setup();
+    rpc.finalizeDocumentUpload.mockRejectedValue(new Error("lost response"));
+    let resolveRead!: (value: unknown) => void;
+    rpc.readDocumentUploadReceipt.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveRead = resolve;
+        }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "預覽受控補傳" }));
+    await screen.findByText("保留舊登記；新檔案須重新掃描及覆核。");
+    await chooseFile();
+    fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    fireEvent.click(await screen.findByRole("button", { name: "核對補傳結果" }));
+    await waitFor(() => expect(rpc.readDocumentUploadReceipt).toHaveBeenCalledTimes(1));
+    cleanup();
+    await act(async () =>
+      resolveRead({ intentId: "new-intent", state: "received", documentId: "new-document" }),
+    );
+    expect(onRecovered).not.toHaveBeenCalled();
+    expect(rpc.finalizeDocumentUpload).toHaveBeenCalledTimes(1);
   });
 });

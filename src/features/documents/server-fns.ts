@@ -340,6 +340,28 @@ export async function previewDocumentRecoveryForActor(
   };
 }
 
+/** A read-only persisted receipt; never transmits bytes or resumes a write. */
+export async function readDocumentUploadReceiptForActor(
+  actor: AuthenticatedActor,
+  intentId: string,
+  dependencies: DocumentOperationDependencies,
+) {
+  assertStaffAccess(actor);
+  await authorizeIntentById(actor, intentId, dependencies);
+  const intent = await dependencies.repository.getUploadIntent(intentId);
+  if (!intent || intent.id !== intentId) throw new Error("Upload intent not found.");
+  if (intent.requestedByAuthUserId !== actor.authUserId)
+    throw new Error("Forbidden: upload intent belongs to another user.");
+  if (!intent.documentId) return { intentId, state: "unconfirmed" as const };
+  await committedUploadDocument(
+    intent,
+    await dependencies.repository.getDocument(intent.documentId),
+  );
+  await authorizeIntentById(actor, intentId, dependencies);
+  // Do not expose storage keys, bytes, checksums or scanner/provider internals.
+  return { intentId, state: "received" as const, documentId: intent.documentId };
+}
+
 export async function finalizeDocumentUploadForActor(
   actor: AuthenticatedActor,
   intentId: string,
@@ -572,6 +594,14 @@ export const createDocumentUploadIntent = createServerFn({ method: "POST" })
   .handler(({ data }) =>
     withDefaultDocumentContext((actor, dependencies) =>
       createDocumentUploadIntentForActor(actor, data, dependencies),
+    ),
+  );
+
+export const readDocumentUploadReceipt = createServerFn({ method: "GET" })
+  .validator(intentIdSchema)
+  .handler(({ data }) =>
+    withDefaultDocumentContext((actor, dependencies) =>
+      readDocumentUploadReceiptForActor(actor, data.intentId, dependencies),
     ),
   );
 

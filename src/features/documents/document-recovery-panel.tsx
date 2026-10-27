@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/field";
@@ -6,6 +6,7 @@ import {
   createDocumentUploadIntent,
   finalizeDocumentUpload,
   previewDocumentRecovery,
+  readDocumentUploadReceipt,
 } from "./server-fns";
 
 export function DocumentRecoveryPanel({
@@ -15,6 +16,28 @@ export function DocumentRecoveryPanel({
   documentId: string;
   onRecovered: () => void;
 }) {
+  return (
+    <DocumentRecoverySession key={documentId} documentId={documentId} onRecovered={onRecovered} />
+  );
+}
+
+function DocumentRecoverySession({
+  documentId,
+  onRecovered,
+}: {
+  documentId: string;
+  onRecovered: () => void;
+}) {
+  const active = useRef(true);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  const readingReceipt = useRef(false);
+  const [checkingReceipt, setCheckingReceipt] = useState(false);
+  const [receiptState, setReceiptState] = useState<"unconfirmed" | "received" | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [reason, setReason] = useState("");
   const [attempted, setAttempted] = useState(false);
@@ -64,7 +87,9 @@ export function DocumentRecoveryPanel({
         throw new Error("Recovery already received; reconcile before further upload.");
       return finalizeDocumentUpload({ data: { intentId: intent.id, bodyBase64: btoa(binary) } });
     },
-    onSuccess: onRecovered,
+    onSuccess: () => {
+      if (active.current) onRecovered();
+    },
     onError: () => {
       if (!writeStarted.current) {
         admitted.current = false;
@@ -73,6 +98,29 @@ export function DocumentRecoveryPanel({
       }
     },
   });
+  async function checkReceipt() {
+    if (!intentId || readingReceipt.current) return;
+    readingReceipt.current = true;
+    setCheckingReceipt(true);
+    setReceiptState(null);
+    try {
+      const receipt = await readDocumentUploadReceipt({ data: { intentId } });
+      if (!active.current) return;
+      if (receipt?.intentId !== intentId || receipt.state !== "received" || !receipt.documentId) {
+        setReceiptState("unconfirmed");
+        return;
+      }
+      setReceiptState("received");
+      onRecovered();
+    } catch {
+      if (active.current) setReceiptState("unconfirmed");
+    } finally {
+      readingReceipt.current = false;
+      if (active.current) setCheckingReceipt(false);
+    }
+  }
+  if (receiptState === "received")
+    return <p role="status">已核實補傳登記。請在文件庫查看目前掃描及覆核狀態。</p>;
   if (upload.isSuccess)
     return (
       <p role="status" className="text-sm">
@@ -81,10 +129,20 @@ export function DocumentRecoveryPanel({
     );
   if (upload.isError && !preparationFailed)
     return (
-      <p role="alert" className="text-sm text-status-orange-text">
-        補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。
-        {intentId ? ` 上載 ID：${intentId}` : ""}
-      </p>
+      <div className="space-y-2 text-sm">
+        <p role="alert" className="text-status-orange-text">
+          補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。
+          {intentId ? ` 上載 ID：${intentId}` : ""}
+        </p>
+        {intentId ? (
+          <Button type="button" disabled={checkingReceipt} onClick={() => void checkReceipt()}>
+            核對補傳結果
+          </Button>
+        ) : null}
+        {receiptState === "unconfirmed" ? (
+          <p role="status">尚未核實補傳登記。請勿重複補傳；可稍後再次核對。</p>
+        ) : null}
+      </div>
     );
   return (
     <div className="space-y-2 text-sm">
