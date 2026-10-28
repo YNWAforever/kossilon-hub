@@ -1,0 +1,38 @@
+{
+  "kind": "protocol-implementation",
+  "accepted_on": "2026-10-27",
+  "design_review": "docs/audit-remediation/cosec-20261027-protocol-review-reminder-upload/",
+  "design_pr": 148,
+  "starting_ref": "fcce28d6b5483bd78bc31c8f32590325f3152d98",
+  "implementation_commit": "740077307c61d664d2209e0eec3cc1c541a0a18f",
+  "starting_branch": "codex/cosec-20261023",
+  "context_pr": 147,
+  "native": "70 BLOCKED / 114 NOT_RUN / 0 PASS — BLOCKED / NO_GO",
+  "schema_changed": false,
+  "migration_added": false,
+  "recovery_upload_request_id_ban_lifted": false,
+  "filename_or_checksum_search_added": false,
+  "cross_tab_lock_added": false,
+  "portal_journal_changed": false,
+  "ci_claimed_green": false,
+  "hosted_ci_run": false,
+  "production_touched": false,
+  "database_integration_run": false,
+  "tests": {
+    "command": "vitest run",
+    "passed": 2998,
+    "skipped": 440,
+    "failed": 0,
+    "typecheck": "tsc --noEmit exit 0"
+  },
+  "implemented": {
+    "manual_reminder": "annual-return-reminder:{caseId}:{commandUuid} on notification_outbox.idempotency_key; sessionStorage before POST; staff GET closed states; recordReminder skipped on idempotentReplay",
+    "staff_upload": "read-only GET of the existing open document_recovery_requested intent by source documentId, then readDocumentUploadReceipt"
+  },
+  "deferred": [
+    "portal journal and create response both gone",
+    "cross-tab dedupe",
+    "explicit finalize resume of an open recovery",
+    "native provider, auth, storage, and scan evidence"
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "kind": "reminder-receipt-read-after-lock",
+  "baseline": "b3c15cf298eb23b7288a1b683dfaadbdbbfa63b1",
+  "product_commit": "6f47262a5734001377e6c15baf6e0d0817146872",
+  "pr": 149,
+  "branch": "cursor/reminder-upload-protocol-942a",
+  "files_sha256": {
+    "src/features/annual-return/server-fns.ts": "ea6854ff3a2ec3874e293bf108afd21efe360ea70a8755f17c0e2493f5ab2333",
+    "src/features/annual-return/server-fns.authorization.test.ts": "b39b8b21a8e63aeaec6213b02a022520fc8b20b0ae2c62aae94066657738ec8a"
+  },
+  "checks": {
+    "red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/server-fns.authorization.test.ts -t \"reminder command receipt read after a case lock\"",
+      "exit": 1,
+      "log": "red.txt",
+      "failed": 3,
+      "passed": 3,
+      "skipped": 31,
+      "files": 1,
+      "note": "Visible, hidden, and missing cases received the writable-guard lock error. Inactive, client, and missing-identity refusals already preceded that guard."
+    },
+    "targeted": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/server-fns.authorization.test.ts src/features/annual-return/reminder-command.test.ts src/features/annual-return/whatsapp-reminders.test.ts",
+      "exit": 0,
+      "log": "targeted.txt",
+      "passed": 52,
+      "failed": 0,
+      "files": 3
+    },
+    "unit": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "log": "unit.txt",
+      "passed": 2987,
+      "failed": 0,
+      "files": 292
+    },
+    "typecheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    "lint": {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/server-fns.ts src/features/annual-return/server-fns.authorization.test.ts",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    "format": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/server-fns.ts src/features/annual-return/server-fns.authorization.test.ts",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  },
+  "new_authorization_tests": 6,
+  "existing_client_sweep_includes_get": true,
+  "writable_case_guard_on_get": false,
+  "queue_post_write_guards_changed": false,
+  "explicit_recovery_finalize_or_resume": false,
+  "schema_changed": false,
+  "migration_added": false,
+  "database_integration_run": false,
+  "ci_claimed_green": false,
+  "hosted_ci_run": false,
+  "production_touched": false,
+  "merged": false,
+  "marked_ready": false,
+  "deployed": false,
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "not_performed": [
+    "explicit recovery finalize or resume",
+    "schema or migration change",
+    "DB integration",
+    "hosted CI acceptance",
+    "Native execution or Native PASS",
+    "deploy or promote",
+    "production Vercel or Neon change",
+    "merge or ready-for-review"
+  ]
+}

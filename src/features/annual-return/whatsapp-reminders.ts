@@ -1,5 +1,6 @@
 import type { AnnualReturnRepository, RecordAnnualReturnReminderInput } from "./repository";
 import { assertApprovedTemplate } from "@/features/whatsapp/approved-templates";
+import { annualReturnManualReminderIdempotencyKey } from "./reminder-idempotency-key";
 import type { AnnualReturnCase } from "./types";
 import { buildReminderDraft } from "./workflow";
 import type {
@@ -14,6 +15,7 @@ export type BuildAnnualReturnWhatsAppReminderRequestInput = {
   actorAuthUserId?: string;
   recipientName: string;
   recipientPhone: string;
+  commandUuid: string;
   today: string;
 };
 
@@ -37,28 +39,20 @@ const ANNUAL_RETURN_REMINDER_TEMPLATE_LABEL = "Annual return WhatsApp reminder";
 const ANNUAL_RETURN_REMINDER_TEMPLATE_NAME = "annual_return_manual_reminder";
 
 /**
- * Dedupes a double-submit without blocking a deliberate second reminder.
+ * One staff click is one command UUID, stored on the existing outbox unique key.
  *
- * queueOutboundTemplateMessage has taken an idempotencyKey since the follow-up
- * work — an advisory lock plus an outbox replay check — and this path simply never
- * passed one. Two clicks on "send reminder" therefore sent the client two WhatsApp
- * messages and incremented remindersSent twice.
- *
- * remindersSent is part of the key, so concurrent submits share it and collapse to
- * one send, while a reminder sent later (after the counter has advanced) gets a
- * fresh key and goes through as intended.
+ * The phone stays a contact check and the message's toPhone. It is not part of
+ * the key: spelling differences must not fork a command, and a new normalisation
+ * would not match historical `phone:remindersSent` keys, which are left untouched.
+ * A deliberate second reminder is a new UUID after the first receipt is visible.
+ * The counter is no longer the idempotency input, because a lost response advances
+ * it and the next click would otherwise mint a different key.
  */
 export function annualReturnReminderIdempotencyKey(input: {
   caseId: string;
-  recipientPhone: string;
-  remindersSent: number;
+  commandUuid: string;
 }): string {
-  return [
-    "annual-return-reminder",
-    input.caseId,
-    input.recipientPhone.replace(/\s+/g, ""),
-    input.remindersSent,
-  ].join(":");
+  return annualReturnManualReminderIdempotencyKey(input.caseId, input.commandUuid);
 }
 
 export function buildAnnualReturnWhatsAppReminderRequest({
@@ -67,6 +61,7 @@ export function buildAnnualReturnWhatsAppReminderRequest({
   actorAuthUserId,
   recipientName,
   recipientPhone,
+  commandUuid,
   today,
 }: BuildAnnualReturnWhatsAppReminderRequestInput): AnnualReturnWhatsAppReminderRequest {
   const draftBody = buildReminderDraft(case_, recipientName, today);
@@ -102,8 +97,7 @@ export function buildAnnualReturnWhatsAppReminderRequest({
       body: draftBody,
       idempotencyKey: annualReturnReminderIdempotencyKey({
         caseId: case_.id,
-        recipientPhone,
-        remindersSent: case_.remindersSent,
+        commandUuid,
       }),
     },
   };
@@ -116,6 +110,12 @@ export async function queueAnnualReturnWhatsAppReminder({
 }: QueueAnnualReturnWhatsAppReminderInput): Promise<QueueAnnualReturnWhatsAppReminderResult> {
   const request = buildAnnualReturnWhatsAppReminderRequest(input);
   const message = await whatsAppRepository.queueOutboundTemplateMessage(request.whatsAppMessage);
+  // The outbox row and the reminder log share the caller's transaction. A replay
+  // means that pair already committed, so a second recordReminder would count one
+  // message twice. This matches follow-up send.
+  if (message.idempotentReplay) {
+    return { case: input.case_, message };
+  }
   const updatedCase = await annualReturnRepository.recordReminder(request.annualReturnReminder);
 
   return {

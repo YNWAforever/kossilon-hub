@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import type { AnnualReturnRepository } from "./repository";
+import type { AnnualReturnCase } from "./types";
 import {
   addAnnualReturnCaseNoteForActor,
   assignAnnualReturnCaseOwnerForActor,
@@ -11,6 +12,7 @@ import {
   listAnnualReturnCaseNotesForActor,
   listCompaniesEligibleForCaseForActor,
   queueAnnualReturnWhatsAppReminderMessageForActor,
+  readAnnualReturnReminderCommandForActor,
   updateAnnualReturnChecklistItemForActor,
   updateAnnualReturnFilingProofForActor,
   updateAnnualReturnPaymentForActor,
@@ -19,6 +21,7 @@ import {
 } from "./server-fns";
 
 const caseId = "91000000-0000-4000-8000-000000000001";
+const reminderCommandUuid = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const ownerId = "20000000-0000-4000-8000-000000000002";
 const itemId = "30000000-0000-4000-8000-000000000003";
 const documentId = "40000000-0000-4000-8000-000000000004";
@@ -86,6 +89,7 @@ describe("production annual return command authorization", () => {
             caseId,
             recipientName: "Ada Chan",
             recipientPhone: "+85291234567",
+            commandUuid: reminderCommandUuid,
           },
           { annualReturnRepository: repository, whatsAppRepository },
         ),
@@ -98,6 +102,12 @@ describe("production annual return command authorization", () => {
             confirmationDocumentId: documentId,
           },
           { repository },
+        ),
+      () =>
+        readAnnualReturnReminderCommandForActor(
+          clientActor,
+          { caseId, commandUuid: reminderCommandUuid },
+          { annualReturnRepository: repository },
         ),
     ];
 
@@ -619,7 +629,12 @@ describe("a manual reminder may only reach the case company's own contacts", () 
   function dependenciesFor(contactPhones: string[]) {
     const listCompanyContactPhones = vi.fn(async () => contactPhones);
     const recordReminder = vi.fn(async () => ({ id: caseId, remindersSent: 1 }));
-    const queueOutboundTemplateMessage = vi.fn(async () => ({ id: "msg-1", status: "queued" }));
+    const queueOutboundTemplateMessage = vi.fn(
+      async (_input: { idempotencyKey?: string; toPhone?: string }) => ({
+        id: "msg-1",
+        status: "queued" as const,
+      }),
+    );
     return {
       listCompanyContactPhones,
       queueOutboundTemplateMessage,
@@ -650,7 +665,12 @@ describe("a manual reminder may only reach the case company's own contacts", () 
     await expect(
       queueAnnualReturnWhatsAppReminderMessageForActor(
         staffActor,
-        { caseId, recipientName: "Ada Chan", recipientPhone: "+85299999999" },
+        {
+          caseId,
+          recipientName: "Ada Chan",
+          recipientPhone: "+85299999999",
+          commandUuid: reminderCommandUuid,
+        },
         dependencies,
       ),
     ).rejects.toThrow(/^Forbidden:/);
@@ -664,11 +684,23 @@ describe("a manual reminder may only reach the case company's own contacts", () 
 
     await queueAnnualReturnWhatsAppReminderMessageForActor(
       staffActor,
-      { caseId, recipientName: "Ada Chan", recipientPhone: "+85291234567" },
+      {
+        caseId,
+        recipientName: "Ada Chan",
+        recipientPhone: "+85291234567",
+        commandUuid: reminderCommandUuid,
+      },
       dependencies,
     );
 
     expect(queueOutboundTemplateMessage).toHaveBeenCalledOnce();
+    expect(queueOutboundTemplateMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        idempotencyKey: `annual-return-reminder:${caseId}:${reminderCommandUuid}`,
+        toPhone: "+85291234567",
+      }),
+    );
+    expect(queueOutboundTemplateMessage.mock.calls[0][0].idempotencyKey).not.toContain("852");
   });
 
   it("refuses when the company has no contacts at all", async () => {
@@ -677,10 +709,198 @@ describe("a manual reminder may only reach the case company's own contacts", () 
     await expect(
       queueAnnualReturnWhatsAppReminderMessageForActor(
         staffActor,
-        { caseId, recipientName: "Ada Chan", recipientPhone: "+85291234567" },
+        {
+          caseId,
+          recipientName: "Ada Chan",
+          recipientPhone: "+85291234567",
+          commandUuid: reminderCommandUuid,
+        },
         dependencies,
       ),
     ).rejects.toThrow(/^Forbidden:/);
     expect(queueOutboundTemplateMessage).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The receipt GET used the writable-case mutation guard. A case that locks
+ * after the command commits then refused the read, so staff could not see
+ * whether that command had queued. The read checks active staff identity and
+ * current case visibility, then the exact outbox key. It does not take the
+ * writable-case guard. The queue POST keeps its own write guards.
+ */
+describe("reminder command receipt read after a case lock", () => {
+  const teamId = "10000000-0000-4000-8000-000000000001";
+  const otherTeamId = "10000000-0000-4000-8000-000000000002";
+  const otherOwnerId = "20000000-0000-4000-8000-00000000000a";
+  const staffActor: AuthenticatedActor = {
+    authUserId: "staff-auth",
+    userId: "20000000-0000-4000-8000-000000000009",
+    role: "Staff",
+    teamId,
+    active: true,
+  };
+
+  function caseRecord(overrides: Partial<AnnualReturnCase> = {}): AnnualReturnCase {
+    return {
+      id: caseId,
+      companyId: "90000000-0000-4000-8000-000000000001",
+      companyTeamId: teamId,
+      companyName: "Harbour Holdings Limited",
+      returnYear: 2026,
+      madeUpDate: "2026-08-01",
+      filingDueDate: "2026-10-31",
+      currentStatus: "Upcoming",
+      riskLevel: "green",
+      ownerId: staffActor.userId!,
+      ownerName: "Ada Chan",
+      reviewerId: null,
+      reviewerName: null,
+      remindersSent: 1,
+      filingReference: null,
+      confirmationDocumentId: null,
+      lockedAt: null,
+      completedAt: null,
+      checklist: [],
+      payment: null,
+      ...overrides,
+    };
+  }
+
+  function repositoryFor(case_: AnnualReturnCase | null) {
+    const getCase = vi.fn(async () => case_);
+    const readManualReminderOutbox = vi.fn(async () => ({
+      status: "sent",
+      payload: { whatsappMessageId: "msg-1", toPhone: "+85291234567", body: "secret deadline" },
+      lastErrorCode: null,
+      dispatchStartedAttempt: null,
+      redactedAt: null,
+    }));
+    const assertCanMutateCase = vi.fn(async () => {
+      throw new Error("Completed annual return cases are locked.");
+    });
+    const annualReturnRepository = {
+      getCase,
+      readManualReminderOutbox,
+      assertCanMutateCase,
+    } as unknown as Pick<
+      AnnualReturnRepository,
+      "getCase" | "readManualReminderOutbox" | "assertCanMutateCase"
+    >;
+    return { getCase, readManualReminderOutbox, assertCanMutateCase, annualReturnRepository };
+  }
+
+  function read(actor: AuthenticatedActor, repository: ReturnType<typeof repositoryFor>) {
+    return readAnnualReturnReminderCommandForActor(
+      actor,
+      { caseId, commandUuid: reminderCommandUuid },
+      { annualReturnRepository: repository.annualReturnRepository },
+    );
+  }
+
+  it("returns the closed receipt for a visible completed or locked case without the writable guard", async () => {
+    const shapes: Partial<AnnualReturnCase>[] = [
+      {
+        currentStatus: "Completed",
+        lockedAt: "2026-10-27T00:00:00.000Z",
+        completedAt: "2026-10-27T00:00:00.000Z",
+      },
+      { currentStatus: "Filed", lockedAt: "2026-10-27T00:00:00.000Z" },
+      { completedAt: "2026-10-27T00:00:00.000Z" },
+      {},
+    ];
+
+    for (const shape of shapes) {
+      const repository = repositoryFor(caseRecord(shape));
+      await expect(read(staffActor, repository)).resolves.toEqual({
+        state: "sent",
+        messageId: "msg-1",
+      });
+      expect(repository.getCase).toHaveBeenCalledWith(caseId);
+      expect(repository.readManualReminderOutbox).toHaveBeenCalledWith({
+        caseId,
+        commandUuid: reminderCommandUuid,
+      });
+      expect(JSON.stringify(await read(staffActor, repository))).not.toMatch(/852|secret/);
+      expect(repository.assertCanMutateCase).not.toHaveBeenCalled();
+    }
+  });
+
+  it("reads a receipt for an existing GUID case accepted by the reminder queue", async () => {
+    const existingCaseId = "40000000-0000-0000-0000-000000000001";
+    const repository = repositoryFor(caseRecord({ id: existingCaseId }));
+
+    await expect(
+      readAnnualReturnReminderCommandForActor(
+        staffActor,
+        { caseId: existingCaseId, commandUuid: reminderCommandUuid },
+        { annualReturnRepository: repository.annualReturnRepository },
+      ),
+    ).resolves.toEqual({ state: "sent", messageId: "msg-1" });
+    expect(repository.readManualReminderOutbox).toHaveBeenCalledWith({
+      caseId: existingCaseId,
+      commandUuid: reminderCommandUuid,
+    });
+  });
+
+  it("refuses a case the actor cannot see and does not read the outbox", async () => {
+    const hidden = [
+      caseRecord({
+        companyTeamId: otherTeamId,
+        ownerId: otherOwnerId,
+        currentStatus: "Completed",
+        lockedAt: "2026-10-27T00:00:00.000Z",
+        completedAt: "2026-10-27T00:00:00.000Z",
+      }),
+      caseRecord({ ownerId: otherOwnerId }),
+    ];
+
+    for (const case_ of hidden) {
+      const repository = repositoryFor(case_);
+      await expect(read(staffActor, repository)).rejects.toThrow(
+        "Forbidden: this annual return case is outside your scope.",
+      );
+      expect(repository.getCase).toHaveBeenCalledWith(caseId);
+      expect(repository.readManualReminderOutbox).not.toHaveBeenCalled();
+      expect(repository.assertCanMutateCase).not.toHaveBeenCalled();
+    }
+  });
+
+  it("refuses a missing case and does not read the outbox", async () => {
+    const repository = repositoryFor(null);
+    await expect(read(staffActor, repository)).rejects.toThrow("Annual return case not found.");
+    expect(repository.getCase).toHaveBeenCalledWith(caseId);
+    expect(repository.readManualReminderOutbox).not.toHaveBeenCalled();
+    expect(repository.assertCanMutateCase).not.toHaveBeenCalled();
+  });
+
+  it("refuses an inactive staff actor before reading the case or the outbox", async () => {
+    const repository = repositoryFor(caseRecord());
+    await expect(read({ ...staffActor, active: false }, repository)).rejects.toThrow(
+      "Forbidden: staff account is inactive.",
+    );
+    expect(repository.getCase).not.toHaveBeenCalled();
+    expect(repository.readManualReminderOutbox).not.toHaveBeenCalled();
+    expect(repository.assertCanMutateCase).not.toHaveBeenCalled();
+  });
+
+  it("refuses a client before reading the case or the outbox", async () => {
+    const repository = repositoryFor(caseRecord());
+    await expect(read(clientActor, repository)).rejects.toThrow(
+      "Forbidden: staff access is required.",
+    );
+    expect(repository.getCase).not.toHaveBeenCalled();
+    expect(repository.readManualReminderOutbox).not.toHaveBeenCalled();
+    expect(repository.assertCanMutateCase).not.toHaveBeenCalled();
+  });
+
+  it("refuses a staff actor with no database identity before reading the case or the outbox", async () => {
+    const repository = repositoryFor(caseRecord());
+    await expect(read({ ...staffActor, userId: null }, repository)).rejects.toThrow(
+      "Forbidden: staff access is required.",
+    );
+    expect(repository.getCase).not.toHaveBeenCalled();
+    expect(repository.readManualReminderOutbox).not.toHaveBeenCalled();
+    expect(repository.assertCanMutateCase).not.toHaveBeenCalled();
   });
 });

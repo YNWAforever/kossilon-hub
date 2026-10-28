@@ -1,0 +1,93 @@
+{
+  "kind": "staff-recovery-finalize-resume",
+  "baseline": "520402352ef947f1c9a1e87b8df866875e704bac",
+  "product_commit": "ce3d4136dc231198050f9041e507241b8348c187",
+  "pr": 149,
+  "branch": "cursor/reminder-upload-protocol-942a",
+  "files_sha256": {
+    "src/features/documents/document-recovery-panel.tsx": "60aca21c2fae3378e791b967fc1fde60b32a53dbf9fd42f5d8ead51368f06c80",
+    "src/features/documents/document-recovery-panel.test.tsx": "cf367421ee165c86adb851ea346fac2effc3efc09e44ced1f4767682af2ca451"
+  },
+  "checks": {
+    "red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/documents/document-recovery-panel.test.tsx -t \"staff recovery resume\"",
+      "exit": 1,
+      "log": "red.txt",
+      "failed": 9,
+      "passed": 1,
+      "skipped": 17,
+      "files": 1,
+      "note": "Nine tests could not find 以所選檔案完成補傳 while the open-recovery status was visible. The already-received receipt passed because that screen already hides every write control."
+    },
+    "targeted": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/documents/document-recovery-panel.test.tsx",
+      "exit": 0,
+      "log": "targeted.txt",
+      "passed": 27,
+      "failed": 0,
+      "files": 1
+    },
+    "unit": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "log": "unit.txt",
+      "passed": 2997,
+      "failed": 0,
+      "files": 292
+    },
+    "typecheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    "lint": {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/documents/document-recovery-panel.tsx src/features/documents/document-recovery-panel.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    "format": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/documents/document-recovery-panel.tsx src/features/documents/document-recovery-panel.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0,
+      "log": "diff-check.txt"
+    }
+  },
+  "new_panel_tests": 10,
+  "server_files_changed": false,
+  "schema_changed": false,
+  "migration_added": false,
+  "upload_request_id_on_recovery": false,
+  "filename_or_checksum_search": false,
+  "cross_tab_lock": false,
+  "database_integration_run": false,
+  "ci_claimed_green": false,
+  "hosted_ci_run": false,
+  "production_touched": false,
+  "merged": false,
+  "marked_ready": false,
+  "deployed": false,
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "not_performed": [
+    "schema or migration change",
+    "new recovery server function",
+    "filename or checksum search",
+    "lifting the recovery/uploadRequestId ban",
+    "cross-tab lock",
+    "portal journal-loss recovery",
+    "DB integration",
+    "hosted CI acceptance",
+    "Native execution or Native PASS",
+    "deploy or promote",
+    "production Vercel or Neon change",
+    "merge or ready-for-review"
+  ]
+}

@@ -14,6 +14,8 @@ import {
   listDocumentsForActor,
   previewDocumentRecoveryForActor,
   readDocumentUploadReceiptForActor,
+  readOpenDocumentRecoveryForActor,
+  readOpenDocumentRecoverySchema,
   scanQuarantinedDocumentForActor,
 } from "./server-fns";
 
@@ -108,6 +110,7 @@ function dependencies(
       getUploadIntent: vi.fn(async () => intent),
       finalizeUploadIntent: vi.fn(async () => document),
       getDocument: vi.fn(async () => document),
+      findOpenDocumentRecoveryIntent: vi.fn(async () => null),
       getDocumentRecoveryPreview: vi.fn(async () => ({
         documentId: document.id,
         companyId,
@@ -699,5 +702,151 @@ describe("staff upload receipt readback", () => {
       "denied",
     );
     expect(d.repository.getDocument).not.toHaveBeenCalled();
+  });
+});
+
+describe("open document recovery lookup", () => {
+  const sourceId = document.id;
+  function ownIntent(overrides: Partial<DocumentUploadIntent> = {}): DocumentUploadIntent {
+    return {
+      ...intent,
+      requestedByAuthUserId: staffActor.authUserId,
+      documentId: null,
+      ...overrides,
+    };
+  }
+  function lookupDeps(found: DocumentUploadIntent | null = null) {
+    const d = dependencies();
+    vi.mocked(d.repository.findOpenDocumentRecoveryIntent).mockResolvedValue(found);
+    if (found) vi.mocked(d.repository.getUploadIntent).mockResolvedValue(found);
+    return d;
+  }
+  it("rejects uploadRequestId and a partial file comparison before any read", () => {
+    expect(
+      readOpenDocumentRecoverySchema.safeParse({
+        documentId: sourceId,
+        uploadRequestId: "98d2f4c9-0150-4150-8150-000000000001",
+      }).success,
+    ).toBe(false);
+    expect(
+      readOpenDocumentRecoverySchema.safeParse({ documentId: sourceId, fileName: "a.pdf" }).success,
+    ).toBe(false);
+    const source = readFileSync(new URL("./server-fns.ts", import.meta.url), "utf8");
+    expect(source).toContain("Recovery cannot include an upload request ID.");
+  });
+  it("uses the create path's prior-intent query, including expiry", () => {
+    const source = readFileSync(new URL("./repository.ts", import.meta.url), "utf8");
+    expect(source.match(/await selectOpenRecoveryIntent\(/g)).toHaveLength(2);
+    expect(source).toContain("e.event_type = 'document_recovery_requested'");
+    expect(source).toContain("i.expires_at > now()");
+  });
+  it("returns absent when no open recovery exists and writes nothing", async () => {
+    const d = lookupDeps(null);
+    await expect(
+      readOpenDocumentRecoveryForActor(staffActor, { documentId: sourceId }, d),
+    ).resolves.toEqual({ state: "absent" });
+    expect(d.repository.createUploadIntent).not.toHaveBeenCalled();
+    expect(d.repository.finalizeUploadIntent).not.toHaveBeenCalled();
+    expect(d.storage.put).not.toHaveBeenCalled();
+  });
+  it("returns the caller's unconfirmed intent without a receipt document", async () => {
+    const found = ownIntent();
+    const d = lookupDeps(found);
+    await expect(
+      readOpenDocumentRecoveryForActor(staffActor, { documentId: sourceId }, d),
+    ).resolves.toEqual({
+      state: "open",
+      intentId: found.id,
+      receiptState: "unconfirmed",
+    });
+    expect(d.repository.getDocument).not.toHaveBeenCalled();
+    expect(d.repository.createUploadIntent).not.toHaveBeenCalled();
+    expect(d.repository.finalizeUploadIntent).not.toHaveBeenCalled();
+  });
+  it("returns received only after the committed lineage matches", async () => {
+    const found = ownIntent({ documentId: document.id, status: "quarantined" });
+    const d = lookupDeps(found);
+    vi.mocked(d.repository.getDocument).mockResolvedValue({
+      ...document,
+      currentVersionId: intent.currentVersionId,
+    });
+    await expect(
+      readOpenDocumentRecoveryForActor(staffActor, { documentId: sourceId }, d),
+    ).resolves.toEqual({
+      state: "open",
+      intentId: found.id,
+      receiptState: "received",
+      documentId: document.id,
+    });
+    expect(
+      JSON.stringify(
+        await readOpenDocumentRecoveryForActor(staffActor, { documentId: sourceId }, d),
+      ),
+    ).not.toContain(found.checksum);
+    expect(d.repository.createUploadIntent).not.toHaveBeenCalled();
+    expect(d.repository.finalizeUploadIntent).not.toHaveBeenCalled();
+  });
+  it("blocks another actor without an intent id or checksum", async () => {
+    const found = ownIntent({ requestedByAuthUserId: "other-staff" });
+    const d = lookupDeps(found);
+    const result = await readOpenDocumentRecoveryForActor(staffActor, { documentId: sourceId }, d);
+    expect(result).toEqual({ state: "blocked" });
+    expect(JSON.stringify(result)).not.toContain(found.id);
+    expect(JSON.stringify(result)).not.toContain(found.checksum);
+    expect(d.repository.getUploadIntent).not.toHaveBeenCalled();
+    expect(d.repository.createUploadIntent).not.toHaveBeenCalled();
+  });
+  it("blocks a file mismatch without echoing the stored checksum", async () => {
+    const found = ownIntent();
+    const d = lookupDeps(found);
+    const result = await readOpenDocumentRecoveryForActor(
+      staffActor,
+      {
+        documentId: sourceId,
+        fileName: "other.pdf",
+        contentType: found.contentType,
+        sizeBytes: found.expectedSizeBytes,
+        checksum: "ab".repeat(32),
+      },
+      d,
+    );
+    expect(result).toEqual({ state: "blocked" });
+    expect(JSON.stringify(result)).not.toContain(found.checksum);
+    expect(JSON.stringify(result)).not.toContain(found.fileName);
+    expect(d.repository.createUploadIntent).not.toHaveBeenCalled();
+  });
+  it("keeps an open intent when the selected file matches", async () => {
+    const found = ownIntent();
+    const d = lookupDeps(found);
+    await expect(
+      readOpenDocumentRecoveryForActor(
+        staffActor,
+        {
+          documentId: sourceId,
+          fileName: found.fileName,
+          contentType: found.contentType,
+          sizeBytes: found.expectedSizeBytes,
+          checksum: found.checksum,
+        },
+        d,
+      ),
+    ).resolves.toEqual({
+      state: "open",
+      intentId: found.id,
+      receiptState: "unconfirmed",
+    });
+    expect(d.repository.finalizeUploadIntent).not.toHaveBeenCalled();
+  });
+  it("refuses a client or a missing document before the prior-intent query", async () => {
+    const d = lookupDeps(ownIntent());
+    await expect(
+      readOpenDocumentRecoveryForActor(actor, { documentId: sourceId }, d),
+    ).rejects.toThrow(/staff/i);
+    expect(d.repository.findOpenDocumentRecoveryIntent).not.toHaveBeenCalled();
+    vi.mocked(d.authorizeDocument).mockRejectedValue(new Error("denied"));
+    await expect(
+      readOpenDocumentRecoveryForActor(staffActor, { documentId: sourceId }, d),
+    ).rejects.toThrow("denied");
+    expect(d.repository.findOpenDocumentRecoveryIntent).not.toHaveBeenCalled();
   });
 });

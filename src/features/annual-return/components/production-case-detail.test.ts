@@ -33,9 +33,11 @@ describe("createProductionCaseActions", () => {
       paymentProofDocumentId: proofId,
     });
     await actions.addNote("Checked with the client.");
+    const commandUuid = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
     await actions.sendReminder({
       recipientName: "Ada Chan",
       recipientPhone: "+85291234567",
+      commandUuid,
     });
     await actions.submitPacket();
     await actions.acceptReceipt({
@@ -61,6 +63,7 @@ describe("createProductionCaseActions", () => {
         caseId,
         recipientName: "Ada Chan",
         recipientPhone: "+85291234567",
+        commandUuid,
       },
     });
     expect(commands.updateStatus).toHaveBeenNthCalledWith(2, {

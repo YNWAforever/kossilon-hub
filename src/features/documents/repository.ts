@@ -439,6 +439,11 @@ export type DocumentRepository = {
   }): Promise<PrivateDocument>;
   getDocument(id: string): Promise<PrivateDocument | null>;
   getDocumentRecoveryPreview(id: string): Promise<DocumentRecoveryPreview | null>;
+  /**
+   * The open `document_recovery_requested` intent for one source document.
+   * Same filter as createUploadIntent's prior-intent lookup. Does not insert.
+   */
+  findOpenDocumentRecoveryIntent(documentId: string): Promise<DocumentUploadIntent | null>;
   listDocuments(filters?: DocumentListFilters): Promise<DocumentSummary[]>;
   listDocumentPage(
     filters?: DocumentListFilters,
@@ -486,6 +491,23 @@ export type DocumentRepository = {
   listStalledQuarantine(now: string, limit?: number): Promise<DocumentUploadIntent[]>;
   close(): Promise<void>;
 };
+
+async function selectOpenRecoveryIntent(
+  client: QueryClient,
+  sourceDocumentId: string,
+): Promise<IntentRow | undefined> {
+  const rows = await client<IntentRow[]>`
+    select i.* from timeline_events e
+    join document_upload_intents i on i.id::text = e.metadata->>'intentId'
+    where e.event_type = 'document_recovery_requested'
+      and e.metadata->>'sourceDocumentId' = ${sourceDocumentId}
+      and i.status not in ('expired', 'rejected', 'failed')
+      and (i.status <> 'created' or i.expires_at > now())
+    order by e.created_at desc
+    limit 1
+  `;
+  return rows[0];
+}
 
 export function createDocumentRepository(
   options?: CreateSqlClientOptions & { sql?: QueryClient },
@@ -616,21 +638,16 @@ export function createDocumentRepository(
             throw new Error("Recovery source changed; preview again.");
           if (availabilityOf(original) === "available" && input.recoveryObjectState !== "missing")
             throw new Error("Document has a complete verified chain; recovery is not required.");
-          const prior = await tx<
-            IntentRow[]
-          >`select i.* from timeline_events e join document_upload_intents i on i.id::text=e.metadata->>'intentId'
-            where e.event_type='document_recovery_requested' and e.metadata->>'sourceDocumentId'=${input.recovery.documentId}
-              and i.status not in ('expired','rejected','failed') and (i.status<>'created' or i.expires_at>now())
-            order by e.created_at desc limit 1`;
-          if (prior[0]) {
+          const prior = await selectOpenRecoveryIntent(tx, input.recovery.documentId);
+          if (prior) {
             if (
-              prior[0].requested_by_auth_user_id === input.requestedByAuthUserId &&
-              prior[0].checksum_sha256 === input.checksum &&
-              Number(prior[0].expected_size_bytes) === input.expectedSizeBytes &&
-              prior[0].file_name === input.fileName &&
-              prior[0].content_type === input.contentType
+              prior.requested_by_auth_user_id === input.requestedByAuthUserId &&
+              prior.checksum_sha256 === input.checksum &&
+              Number(prior.expected_size_bytes) === input.expectedSizeBytes &&
+              prior.file_name === input.fileName &&
+              prior.content_type === input.contentType
             )
-              return mapIntent(prior[0]);
+              return mapIntent(prior);
             throw new Error(
               "A recovery is already pending or received; review that attempt first.",
             );
@@ -898,6 +915,10 @@ export function createDocumentRepository(
         currentVersionId: row.current_version_id,
         availability: availabilityOf(row),
       };
+    },
+    async findOpenDocumentRecoveryIntent(documentId) {
+      const row = await selectOpenRecoveryIntent(sql, documentId);
+      return row ? mapIntent(row) : null;
     },
     async getDocumentRecoveryPreview(id) {
       const [row] = await documentRows({ id });

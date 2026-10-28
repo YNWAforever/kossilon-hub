@@ -31,6 +31,8 @@ vi.mock("../features/documents/server-fns", () => ({
   previewDocumentRecovery: rpc.preview,
   createDocumentUploadIntent: rpc.intent,
   finalizeDocumentUpload: rpc.finalize,
+  readOpenDocumentRecovery: async () => ({ state: "absent" as const }),
+  readDocumentUploadReceipt: vi.fn(),
 }));
 vi.mock("../features/annual-return/server-fns", () => ({
   listAnnualReturnCases: rpc.cases,

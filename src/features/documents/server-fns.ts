@@ -362,6 +362,66 @@ export async function readDocumentUploadReceiptForActor(
   return { intentId, state: "received" as const, documentId: intent.documentId };
 }
 
+export type OpenDocumentRecoveryLookup =
+  | { state: "absent" }
+  | { state: "blocked" }
+  | { state: "open"; intentId: string; receiptState: "unconfirmed" }
+  | {
+      state: "open";
+      intentId: string;
+      receiptState: "received";
+      documentId: string;
+    };
+
+/**
+ * Read-only lookup of the one open recovery for a source document.
+ * It does not create or finalise an intent, and it does not accept uploadRequestId.
+ */
+export async function readOpenDocumentRecoveryForActor(
+  actor: AuthenticatedActor,
+  input: {
+    documentId: string;
+    fileName?: string;
+    contentType?: string;
+    sizeBytes?: number;
+    checksum?: string;
+  },
+  dependencies: DocumentOperationDependencies,
+): Promise<OpenDocumentRecoveryLookup> {
+  const data = readOpenDocumentRecoverySchema.parse(input);
+  assertStaffAccess(actor);
+  await authorizeDocumentById(actor, data.documentId, dependencies);
+  const prior = await dependencies.repository.findOpenDocumentRecoveryIntent(data.documentId);
+  if (!prior) return { state: "absent" };
+  if (prior.requestedByAuthUserId !== actor.authUserId) return { state: "blocked" };
+  if (
+    data.checksum !== undefined &&
+    (prior.checksum !== data.checksum ||
+      prior.expectedSizeBytes !== data.sizeBytes ||
+      prior.fileName !== data.fileName ||
+      prior.contentType !== data.contentType)
+  ) {
+    return { state: "blocked" };
+  }
+  const intent = await dependencies.repository.getUploadIntent(prior.id);
+  if (!intent || intent.id !== prior.id) throw new Error("Upload intent not found.");
+  if (intent.requestedByAuthUserId !== actor.authUserId) return { state: "blocked" };
+  if (!intent.documentId) {
+    return { state: "open", intentId: intent.id, receiptState: "unconfirmed" };
+  }
+  await committedUploadDocument(
+    intent,
+    await dependencies.repository.getDocument(intent.documentId),
+  );
+  await authorizeIntentById(actor, intent.id, dependencies);
+  return {
+    state: "open",
+    intentId: intent.id,
+    receiptState: "received",
+    documentId: intent.documentId,
+  };
+}
+
 export async function finalizeDocumentUploadForActor(
   actor: AuthenticatedActor,
   intentId: string,
@@ -580,6 +640,29 @@ const createIntentSchema = z
   });
 const intentIdSchema = z.object({ intentId: z.string().guid() }).strict();
 const documentIdSchema = z.object({ documentId: z.string().guid() }).strict();
+export const readOpenDocumentRecoverySchema = z
+  .object({
+    documentId: z.string().guid(),
+    fileName: z.string().trim().min(1).max(255).optional(),
+    contentType: z.string().trim().min(1).max(120).optional(),
+    sizeBytes: z.number().int().positive().max(MAX_UPLOAD_BYTES).optional(),
+    checksum: z
+      .string()
+      .regex(/^[0-9a-f]{64}$/)
+      .optional(),
+  })
+  .strict()
+  .superRefine((input, ctx) => {
+    const present = [input.fileName, input.contentType, input.sizeBytes, input.checksum].filter(
+      (value) => value !== undefined,
+    ).length;
+    if (present !== 0 && present !== 4) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "File comparison requires name, content type, size, and checksum together.",
+      });
+    }
+  });
 
 export const previewDocumentRecovery = createServerFn({ method: "GET" })
   .validator(documentIdSchema)
@@ -594,6 +677,14 @@ export const createDocumentUploadIntent = createServerFn({ method: "POST" })
   .handler(({ data }) =>
     withDefaultDocumentContext((actor, dependencies) =>
       createDocumentUploadIntentForActor(actor, data, dependencies),
+    ),
+  );
+
+export const readOpenDocumentRecovery = createServerFn({ method: "GET" })
+  .validator(readOpenDocumentRecoverySchema)
+  .handler(({ data }) =>
+    withDefaultDocumentContext((actor, dependencies) =>
+      readOpenDocumentRecoveryForActor(actor, data, dependencies),
     ),
   );
 
