@@ -8,6 +8,7 @@ import {
   persistLatestAnnualReturnReminderCommand,
   readLatestAnnualReturnReminderCommand,
   readStoredAnnualReturnReminderCommand,
+  type AnnualReturnReminderCommandSnapshot,
   type ManualReminderCommandReceipt,
 } from "../reminder-command";
 import { readAnnualReturnReminderCommand } from "../server-fns";
@@ -19,6 +20,29 @@ type SendReminder = (input: {
 }) => Promise<unknown>;
 
 type ReminderStorage = Pick<Storage, "getItem" | "setItem">;
+
+function storedRecipientCommand(
+  storage: ReminderStorage,
+  snapshot: AnnualReturnReminderCommandSnapshot,
+): string | null {
+  const latest = readLatestAnnualReturnReminderCommand(
+    storage,
+    annualReturnReminderLatestStorageKey(snapshot),
+  );
+  // Keep the latest command across phone formatting edits, including when an
+  // older spelling still has a closed receipt cached. Preserve existing keys.
+  if (
+    latest &&
+    latest.recipientName === snapshot.recipientName.trim() &&
+    latest.recipientPhone.replace(/\D/g, "") === snapshot.recipientPhone.replace(/\D/g, "")
+  ) {
+    return latest.commandUuid;
+  }
+  return readStoredAnnualReturnReminderCommand(
+    storage,
+    annualReturnReminderCommandStorageKey(snapshot),
+  );
+}
 
 function reminderCommandQueryKey(caseId: string, commandUuid: string) {
   return ["annual-return-reminder-command", caseId, commandUuid] as const;
@@ -98,15 +122,12 @@ export function useAnnualReturnReminderCommand({
       return;
     }
     try {
-      const stored = readStoredAnnualReturnReminderCommand(
-        storageRef.current(),
-        annualReturnReminderCommandStorageKey({
-          actorScope,
-          caseId,
-          recipientName: name,
-          recipientPhone: phone,
-        }),
-      );
+      const stored = storedRecipientCommand(storageRef.current(), {
+        actorScope,
+        caseId,
+        recipientName: name,
+        recipientPhone: phone,
+      });
       setJournalError(null);
       setCommandUuid(stored);
       setWatch(Boolean(stored));
@@ -179,7 +200,7 @@ export function useAnnualReturnReminderCommand({
     const key = annualReturnReminderCommandStorageKey(snapshot);
     let nextCommand: string;
     try {
-      const stored = readStoredAnnualReturnReminderCommand(storageRef.current(), key);
+      const stored = storedRecipientCommand(storageRef.current(), snapshot);
       nextCommand = !stored || closed ? crypto.randomUUID() : stored;
       persistAnnualReturnReminderCommand(storageRef.current(), key, nextCommand);
       persistLatestAnnualReturnReminderCommand(

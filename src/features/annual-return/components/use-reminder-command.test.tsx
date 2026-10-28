@@ -167,6 +167,54 @@ describe("useAnnualReturnReminderCommand", () => {
     expect(send.mock.calls[3][0].commandUuid).not.toBe(first);
   });
 
+  it("keeps an absent command when only the phone formatting changes", async () => {
+    const storage = memoryStorage();
+    const send = vi.fn<(input: SendInput) => Promise<unknown>>(async () => {
+      throw new Error("lost response while the server is still committing");
+    });
+    mocks.read.mockResolvedValue({ state: "absent" });
+    renderHarness(storage, send);
+    await fill();
+    fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
+    await screen.findByText(/沿用同一指令/);
+    const commandUuid = send.mock.calls[0][0].commandUuid;
+
+    fireEvent.change(screen.getByLabelText("提醒電話號碼"), {
+      target: { value: "+852 9123 4567" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(2));
+    expect(send.mock.calls[1][0].commandUuid).toBe(commandUuid);
+    expect(send.mock.calls[1][0].recipientPhone).toBe("+852 9123 4567");
+  });
+
+  it("keeps the latest unresolved command ahead of an older spelling's cached receipt", async () => {
+    const storage = memoryStorage();
+    const send = vi.fn<(input: SendInput) => Promise<unknown>>(async () => ({ ok: true }));
+    mocks.read.mockResolvedValue({ state: "queued", messageId: "msg-old" });
+    renderHarness(storage, send);
+    await fill();
+    fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
+    await screen.findByText(/尚未確認送達/);
+
+    fireEvent.change(screen.getByLabelText("提醒電話號碼"), {
+      target: { value: "+852 9123 4567" },
+    });
+    mocks.read.mockResolvedValue({ state: "absent" });
+    send.mockRejectedValue(new Error("lost response"));
+    fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
+    await screen.findByText(/沿用同一指令/);
+    const unresolvedCommand = send.mock.calls[1][0].commandUuid;
+    expect(unresolvedCommand).not.toBe(send.mock.calls[0][0].commandUuid);
+
+    fireEvent.change(screen.getByLabelText("提醒電話號碼"), {
+      target: { value: "+85291234567" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(3));
+    expect(send.mock.calls[2][0].commandUuid).toBe(unresolvedCommand);
+  });
+
   it("does not send again when the receipt read fails", async () => {
     const storage = memoryStorage();
     const send = vi.fn<(input: SendInput) => Promise<unknown>>(async () => {
