@@ -1,0 +1,24 @@
+[
+  {
+    "path": "/",
+    "status": "HTTP/1.1 200 ",
+    "lang": "zh-HK",
+    "title": "ComSec OS — 讓公司秘書工作更有條理",
+    "h1": "讓每一宗公司秘書工作，都有清晰下一步。",
+    "primaryCTA": "/login",
+    "pricingTBC": true,
+    "redirect": false,
+    "mode": "local, demo auth disabled; no auth or DB configuration"
+  },
+  {
+    "path": "/en",
+    "status": "HTTP/1.1 200 ",
+    "lang": "en",
+    "title": "ComSec OS — Clarity for company secretarial teams",
+    "h1": "A clear next step for every company secretarial case.",
+    "primaryCTA": "/login",
+    "pricingTBC": true,
+    "redirect": false,
+    "mode": "local, demo auth disabled; no auth or DB configuration"
+  }
+]

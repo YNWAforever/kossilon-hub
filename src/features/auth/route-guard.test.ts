@@ -47,11 +47,31 @@ describe("auth route guard helpers", () => {
     storage = new MemoryStorage();
   });
 
-  it("treats only login as public", () => {
+  it("publishes only exact marketing and login routes", () => {
     expect(isPublicRoute("/login")).toBe(true);
-    expect(isPublicRoute("/")).toBe(false);
+    expect(isPublicRoute("/")).toBe(true);
+    expect(isPublicRoute("/en")).toBe(true);
+    for (const path of ["/dashboard", "/portal", "/documents", "/en/admin", "/english"]) {
+      expect(isPublicRoute(path)).toBe(false);
+    }
     expect(isPublicRoute("/admin")).toBe(false);
     expect(isPublicRoute("/login/help")).toBe(false);
+  });
+
+  it("does not send a signed-in user back to public marketing or login", () => {
+    for (const path of [
+      "/",
+      "/?campaign=launch",
+      "/#features",
+      "/en",
+      "/en?source=email",
+      "/en#pricing",
+      "/login/",
+    ]) {
+      expect(getSafeRedirectPath(path)).toBe("/dashboard");
+      storage.setItem(AUTH_REDIRECT_STORAGE_KEY, path);
+      expect(consumeRedirectPath(storage, "/today")).toBe("/today");
+    }
   });
 
   it("keeps demo auth disabled unless explicitly enabled", () => {
@@ -82,7 +102,7 @@ describe("auth route guard helpers", () => {
     ]) {
       rememberRedirectPath(unsafePath, storage);
 
-      expect(consumeRedirectPath(storage)).toBe("/");
+      expect(consumeRedirectPath(storage)).toBe("/dashboard");
       expect(storage.getItem(AUTH_REDIRECT_STORAGE_KEY)).toBeNull();
     }
   });
@@ -90,8 +110,8 @@ describe("auth route guard helpers", () => {
   it("returns safe redirect paths for URL search redirects", () => {
     expect(getSafeRedirectPath("/admin")).toBe("/admin");
     expect(getSafeRedirectPath("/annual-returns?risk=red")).toBe("/annual-returns?risk=red");
-    expect(getSafeRedirectPath("/login?redirect=/admin")).toBe("/");
-    expect(getSafeRedirectPath("https://example.com/phish")).toBe("/");
+    expect(getSafeRedirectPath("/login?redirect=/admin")).toBe("/dashboard");
+    expect(getSafeRedirectPath("https://example.com/phish")).toBe("/dashboard");
   });
 
   // startsWith("//") alone was not enough. Browsers normalise backslashes to
@@ -108,7 +128,9 @@ describe("auth route guard helpers", () => {
       "/\u0000//evil.com",
       "/\u007f/evil.com",
     ]) {
-      expect(getSafeRedirectPath(path), `${JSON.stringify(path)} should not be trusted`).toBe("/");
+      expect(getSafeRedirectPath(path), `${JSON.stringify(path)} should not be trusted`).toBe(
+        "/dashboard",
+      );
     }
   });
 
@@ -122,20 +144,20 @@ describe("auth route guard helpers", () => {
   it("normalizes empty stored redirects when consuming", () => {
     storage.setItem(AUTH_REDIRECT_STORAGE_KEY, "");
 
-    expect(consumeRedirectPath(storage)).toBe("/");
+    expect(consumeRedirectPath(storage)).toBe("/dashboard");
     expect(storage.getItem(AUTH_REDIRECT_STORAGE_KEY)).toBeNull();
   });
 
   it("is safe to call without browser storage", () => {
     expect(() => rememberRedirectPath("/admin")).not.toThrow();
-    expect(consumeRedirectPath()).toBe("/");
+    expect(consumeRedirectPath()).toBe("/dashboard");
   });
 
   it("falls back safely when storage operations fail", () => {
     const throwingStorage = new ThrowingStorage();
 
     expect(() => rememberRedirectPath("/admin", throwingStorage)).not.toThrow();
-    expect(consumeRedirectPath(throwingStorage)).toBe("/");
+    expect(consumeRedirectPath(throwingStorage)).toBe("/dashboard");
   });
 });
 
@@ -157,6 +179,7 @@ describe("isClientRoute", () => {
   it("refuses every staff surface", () => {
     for (const pathname of [
       "/",
+      "/dashboard",
       "/admin",
       "/annual-returns",
       "/annual-returns/9f0c2e1a-0000-4000-8000-000000000001",

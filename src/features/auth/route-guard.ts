@@ -26,8 +26,12 @@ export function isDemoAuthEnabled(
   );
 }
 
+export function isMarketingRoute(pathname: string): boolean {
+  return pathname === "/" || pathname === "/en";
+}
+
 export function isPublicRoute(pathname: string): boolean {
-  return pathname === "/login";
+  return isMarketingRoute(pathname) || pathname === "/login";
 }
 
 /**
@@ -67,11 +71,9 @@ export function getSafeRedirectPath(path: string | null): string {
     !path.startsWith("/") ||
     path.startsWith("//") ||
     UNSAFE_REDIRECT_CHARACTERS.test(path) ||
-    path === "/login" ||
-    path.startsWith("/login?") ||
-    path.startsWith("/login#")
+    isPublicRoute(path.split(/[?#]/, 1)[0].replace(/\/$/, "") || "/")
   ) {
-    return "/";
+    return "/dashboard";
   }
 
   return path;
@@ -87,7 +89,7 @@ export function rememberRedirectPath(path: string, storage = browserStorage()): 
   }
 }
 
-export function consumeRedirectPath(storage = browserStorage(), fallback = "/"): string {
+export function consumeRedirectPath(storage = browserStorage(), fallback = "/dashboard"): string {
   if (!storage) return fallback;
 
   try {

@@ -14,7 +14,9 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AnnualReturnsRouteImport } from './routes/annual-returns'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as CorporateChangesRouteImport } from './routes/corporate-changes'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DocumentsRouteImport } from './routes/documents'
+import { Route as EnRouteImport } from './routes/en'
 import { Route as ImportsRouteImport } from './routes/imports'
 import { Route as IncorporationRouteImport } from './routes/incorporation'
 import { Route as LoginRouteImport } from './routes/login'
@@ -56,9 +58,19 @@ const CorporateChangesRoute = CorporateChangesRouteImport.update({
   path: '/corporate-changes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DocumentsRoute = DocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnRoute = EnRouteImport.update({
+  id: '/en',
+  path: '/en',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ImportsRoute = ImportsRouteImport.update({
@@ -143,7 +155,9 @@ export interface FileRoutesByFullPath {
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/documents': typeof DocumentsRoute
+  '/en': typeof EnRoute
   '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
@@ -166,7 +180,9 @@ export interface FileRoutesByTo {
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/documents': typeof DocumentsRoute
+  '/en': typeof EnRoute
   '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
@@ -190,7 +206,9 @@ export interface FileRoutesById {
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/documents': typeof DocumentsRoute
+  '/en': typeof EnRoute
   '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
@@ -215,7 +233,9 @@ export interface FileRouteTypes {
     | '/annual-returns'
     | '/clients'
     | '/corporate-changes'
+    | '/dashboard'
     | '/documents'
+    | '/en'
     | '/imports'
     | '/incorporation'
     | '/login'
@@ -238,7 +258,9 @@ export interface FileRouteTypes {
     | '/annual-returns'
     | '/clients'
     | '/corporate-changes'
+    | '/dashboard'
     | '/documents'
+    | '/en'
     | '/imports'
     | '/incorporation'
     | '/login'
@@ -261,7 +283,9 @@ export interface FileRouteTypes {
     | '/annual-returns'
     | '/clients'
     | '/corporate-changes'
+    | '/dashboard'
     | '/documents'
+    | '/en'
     | '/imports'
     | '/incorporation'
     | '/login'
@@ -285,7 +309,9 @@ export interface RootRouteChildren {
   AnnualReturnsRoute: typeof AnnualReturnsRouteWithChildren
   ClientsRoute: typeof ClientsRouteWithChildren
   CorporateChangesRoute: typeof CorporateChangesRouteWithChildren
+  DashboardRoute: typeof DashboardRoute
   DocumentsRoute: typeof DocumentsRoute
+  EnRoute: typeof EnRoute
   ImportsRoute: typeof ImportsRoute
   IncorporationRoute: typeof IncorporationRouteWithChildren
   LoginRoute: typeof LoginRoute
@@ -335,11 +361,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CorporateChangesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/documents': {
       id: '/documents'
       path: '/documents'
       fullPath: '/documents'
       preLoaderRoute: typeof DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en': {
+      id: '/en'
+      path: '/en'
+      fullPath: '/en'
+      preLoaderRoute: typeof EnRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/imports': {
@@ -514,7 +554,9 @@ const rootRouteChildren: RootRouteChildren = {
   AnnualReturnsRoute: AnnualReturnsRouteWithChildren,
   ClientsRoute: ClientsRouteWithChildren,
   CorporateChangesRoute: CorporateChangesRouteWithChildren,
+  DashboardRoute: DashboardRoute,
   DocumentsRoute: DocumentsRoute,
+  EnRoute: EnRoute,
   ImportsRoute: ImportsRoute,
   IncorporationRoute: IncorporationRouteWithChildren,
   LoginRoute: LoginRoute,

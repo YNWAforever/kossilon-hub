@@ -9,7 +9,7 @@ test("Admin daily entry, all links, keyboard drawer, readable settings and touch
   await page.goto("/login");
   await page.getByRole("button", { name: /Amy Chan/ }).click();
   // The read-only demo lands on the fixture-backed dashboard; 今日工作 is production-only.
-  await expect(page).toHaveURL(/\/(?:\?|$)/);
+  await expect(page).toHaveURL(/\/dashboard(?:\?|$)/);
   await expect(page.getByRole("heading", { name: "總覽", exact: true })).toBeVisible();
   const mobile = info.project.name === "mobile390",
     trigger = page.getByRole("button", { name: "開啟導覽選單" });
@@ -66,7 +66,7 @@ test("Staff retains daily links while Admin settings/actions stay hidden", async
 }, info) => {
   await page.goto("/login");
   await page.getByRole("button", { name: /Mei Lam/ }).click();
-  await expect(page).toHaveURL(/\/(?:\?|$)/);
+  await expect(page).toHaveURL(/\/dashboard(?:\?|$)/);
   if (info.project.name === "mobile390")
     await page.getByRole("button", { name: "開啟導覽選單" }).click();
   const nav = page.getByRole("navigation", { name: "主要導覽" });

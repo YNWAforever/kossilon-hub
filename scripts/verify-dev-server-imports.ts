@@ -8,6 +8,8 @@ import { fileURLToPath } from "node:url";
 // data, so any well-formed UUID is fine.
 const ROUTE_PATHS = [
   "/",
+  "/en",
+  "/dashboard",
   "/admin",
   "/annual-returns",
   "/annual-returns/11111111-1111-4111-8111-111111111111",

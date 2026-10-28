@@ -7,7 +7,7 @@ export const PRODUCTION_STAFF_LANDING: StaffLanding = {
   url: /\/today(?:\?|$)/,
   heading: "今日工作",
 };
-export const DEMO_STAFF_LANDING: StaffLanding = { url: /\/(?:\?|$)/, heading: "總覽" };
+export const DEMO_STAFF_LANDING: StaffLanding = { url: /\/dashboard(?:\?|$)/, heading: "總覽" };
 
 /** Shared landing assertions; role evidence must come from the authenticated UI. */
 export async function assertAuditPersona(

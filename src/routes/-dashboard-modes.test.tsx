@@ -51,7 +51,7 @@ import { resetAnnualReturnCasesForTest } from "../lib/annual-return-store";
 async function renderDashboard(dataMode: "demo" | "production") {
   const router = createRouter({
     routeTree,
-    history: createMemoryHistory({ initialEntries: ["/"] }),
+    history: createMemoryHistory({ initialEntries: ["/dashboard"] }),
     context: { queryClient: new QueryClient(), dataMode, actor: null },
     defaultPreloadStaleTime: 0,
   });

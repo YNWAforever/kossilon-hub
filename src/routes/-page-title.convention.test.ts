@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
+import { marketingHead } from "@/features/marketing/seo";
 
 const routesDir = new URL("./", import.meta.url);
 
@@ -9,7 +10,14 @@ const routesDir = new URL("./", import.meta.url);
 // now names itself through pageTitle().
 describe("page title convention", () => {
   const routes = readdirSync(routesDir).filter(
-    (name) => name.endsWith(".tsx") && !name.startsWith("-") && name !== "__root.tsx",
+    (name) =>
+      name.endsWith(".tsx") &&
+      !name.startsWith("-") &&
+      name !== "__root.tsx" &&
+      // Public documents have localized ComSec OS metadata, exercised by the
+      // marketing browser suite, rather than internal pageTitle() branding.
+      name !== "index.tsx" &&
+      name !== "en.tsx",
   );
 
   it("finds the route files it polices", () => {
@@ -25,10 +33,15 @@ describe("page title convention", () => {
   });
 
   it("never gives two routes the same title", () => {
-    const titles = routes.map(
+    const staffTitles = routes.map(
       (name) =>
         readFileSync(new URL(name, routesDir), "utf8").match(/title: pageTitle\("([^"]+)"\)/)?.[1],
     );
+    const titles = [
+      ...staffTitles,
+      marketingHead("zh-HK").meta[0].title,
+      marketingHead("en").meta[0].title,
+    ];
 
     expect(new Set(titles).size).toBe(titles.length);
   });
