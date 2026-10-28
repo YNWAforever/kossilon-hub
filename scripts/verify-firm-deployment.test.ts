@@ -58,7 +58,7 @@ const verificationInputForWiring = (
   readOnlyCapabilities: { network: false, resourceWrite: false } as const,
   fileExists: async () => true,
   readFile: async (file: string) => gateFiles.get(file) ?? "",
-  routeFiles: ["index.tsx"],
+  routeFiles: ["dashboard.tsx"],
   readRoute: async () => "const { dataMode } = Route.useRouteContext();",
   readSchema: async () =>
     schemaTablesForWiring.map((table) => "create table if not exists " + table).join("\n"),
@@ -128,6 +128,23 @@ describe("verifyFirmDeployment", () => {
 describe("verifyFirmDeployment catches wiring, not just spelling", () => {
   const passingInput = (overrides: Partial<Parameters<typeof verifyFirmDeployment>[0]> = {}) =>
     verificationInputForWiring(overrides);
+
+  it("allows public marketing without firm data while still gating the staff dashboard", async () => {
+    const readRoute = async (file: string) =>
+      readFileSync(new URL(`../src/routes/${file}`, import.meta.url), "utf8");
+    const marketing = await verifyFirmDeployment(
+      passingInput({ routeFiles: ["index.tsx", "en.tsx"], readRoute }),
+    );
+    expect(marketing.checks).toContainEqual({ name: "route-data-mode", status: "pass" });
+
+    const staff = await verifyFirmDeployment(
+      passingInput({
+        routeFiles: ["dashboard.tsx"],
+        readRoute: async () => "export default function Dashboard() { return null; }",
+      }),
+    );
+    expect(staff.checks).toContainEqual({ name: "route-data-mode", status: "fail" });
+  });
 
   it("fails if the runtime no longer checks the single scheduler owner", async () => {
     const result = await verifyFirmDeployment(
