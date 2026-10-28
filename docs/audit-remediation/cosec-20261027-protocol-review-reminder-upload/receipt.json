@@ -40,9 +40,34 @@
     "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/UC150.md"
   ],
   "recommendation": {
-    "manual_reminder": "Client command UUID stored as notification_outbox.idempotency_key, staff GET of that row, recordReminder skipped on idempotent replay, single outer sql.begin kept.",
-    "staff_upload": "Read-only GET of the existing open document_recovery_requested intent by source documentId for the initiating auth user, then the existing receipt GET. No checksum search. No create replay.",
+    "manual_reminder": "Client command UUID stored as notification_outbox.idempotency_key, staff GET of that row, recordReminder skipped on idempotent replay, single outer sql.begin kept. A read miss is not rollback proof; retain the UUID and original data for any explicitly approved same-command retry.",
+    "staff_upload": "Read-only GET of the latest recorded document_recovery_requested intent by source documentId for the initiating auth user, retaining terminal/expired history, then the existing receipt GET. A read miss does not settle an in-flight create. No checksum search. No create replay.",
     "portal_journal_loss": "Deferred. No handle remains without uploadRequestId.",
     "cross_tab": "No reproduced defect. No fix."
+  },
+  "pr_diff_follow_up": {
+    "reviewed_commit": "031444eaaaa97fc37c98f7b61c312e207bb3c3ea",
+    "base": "7bfdfdc374f9ad3dfbb7720c2c3af1951fe2fbdc",
+    "scope": "Four protocol-review docs only; source reads substantiate documentation claims.",
+    "reviewed_commit_ci": {
+      "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/40677487375",
+      "checks": ["Node22", "Node24", "verify"],
+      "conclusion": "success",
+      "covers_follow_up_commit": false
+    },
+    "findings_corrected_in_docs": [
+      {
+        "severity": "P2",
+        "finding": "A read miss does not prove rollback while the original POST may still commit.",
+        "correction": "Retain the reminder UUID and original command data; any approved retry uses that same identity. An upload lookup miss leaves create uncertainty blocked instead of authorizing another upload."
+      },
+      {
+        "severity": "P2",
+        "finding": "Create-admission filters hide rejected/failed recovery intents that can retain committed document receipts.",
+        "correction": "Discover recorded recovery identity independently of create eligibility, retain terminal history, and validate committed lineage before reporting received."
+      }
+    ],
+    "product_code_changed": false,
+    "native_executed": false
   }
 }
