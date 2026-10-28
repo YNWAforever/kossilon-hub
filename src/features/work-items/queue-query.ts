@@ -53,7 +53,7 @@ export const queuePageCursorSchema = z
     rank: z.number().int().min(0).max(1),
     due: z.string().max(128),
     priority: z.number().int(),
-    id: z.string().uuid(),
+    id: z.string().guid(),
     version: z.number().int().positive(),
   })
   .strict();

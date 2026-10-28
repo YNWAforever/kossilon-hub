@@ -136,7 +136,7 @@ export const listAdminTeams = createServerFn({ method: "GET" })
     return repository.listTeams(actor);
   });
 export const listStaffAudit = createServerFn({ method: "GET" })
-  .validator(z.object({ userId: z.string().uuid() }).strict())
+  .validator(z.object({ userId: z.string().guid() }).strict())
   .handler(async ({ data }) => {
     const { actor, repository } = await context();
     return repository.listAudit(actor, data.userId);
@@ -158,7 +158,7 @@ export const executeStaffHandover = createServerFn({ method: "POST" })
     }),
   );
 export const readStaffHandoverReceipt = createServerFn({ method: "GET" })
-  .validator(z.object({ operationId: z.string().uuid() }).strict())
+  .validator(z.object({ operationId: z.string().guid() }).strict())
   .handler(async ({ data }) =>
     handoverResponse(async () => {
       const { actor, repository } = await context();

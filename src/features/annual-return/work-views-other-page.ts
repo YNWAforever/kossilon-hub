@@ -79,7 +79,7 @@ export async function otherWorkPageForActor(
           context: z.literal(context),
           sortKey: z.string().max(1000),
           business: z.enum(["incorporation", "corporate_change"]),
-          id: z.string().uuid(),
+          id: z.string().guid(),
         })
         .strict()
         .parse(JSON.parse(Buffer.from(data.cursor, "base64url").toString()));

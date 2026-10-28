@@ -79,25 +79,25 @@ const createCaseSchema = z.object({
   proposedCompanySecretary: z.string().min(1),
   registeredCapital: z.number().int().positive(),
   businessNature: z.string().min(1),
-  ownerId: z.string().uuid(),
-  teamId: z.string().uuid(),
+  ownerId: z.string().guid(),
+  teamId: z.string().guid(),
   targetCompletionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 const updateChecklistItemSchema = z.object({
-  caseId: z.string().uuid(),
-  itemId: z.string().uuid(),
+  caseId: z.string().guid(),
+  itemId: z.string().guid(),
   status: z.enum(["Missing", "Received", "Verified", "Rejected"]),
   note: z.string().nullable(),
 });
 
 const updateCaseStatusSchema = z.object({
-  caseId: z.string().uuid(),
+  caseId: z.string().guid(),
   status: z.enum(INCORPORATION_STATUSES),
 });
 
 const completeCaseSchema = z.object({
-  caseId: z.string().uuid(),
+  caseId: z.string().guid(),
   crNumber: z.string().transform(normalizeCrNumber).refine(isValidCrNumber, CR_NUMBER_MESSAGE),
   brNumber: z.string().transform(normalizeBrNumber).refine(isValidBrNumber, BR_NUMBER_MESSAGE),
   incorporationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -105,8 +105,8 @@ const completeCaseSchema = z.object({
 
 const listCasesSchema = z
   .object({
-    teamId: z.string().uuid().optional(),
-    ownerId: z.string().uuid().optional(),
+    teamId: z.string().guid().optional(),
+    ownerId: z.string().guid().optional(),
     q: z.string().trim().max(200).optional(),
     limit: z.number().int().min(1).max(500).optional(),
     offset: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
@@ -137,7 +137,7 @@ export const listIncorporationCasePage = createServerFn({ method: "GET" })
   });
 
 export const getIncorporationCase = createServerFn({ method: "GET" })
-  .validator(z.object({ id: z.string().uuid() }))
+  .validator(z.object({ id: z.string().guid() }))
   .handler(async ({ data }) => {
     const { getRequest, requireStaffActor } = await loadDefaultIncorporationContext();
     const actor = await requireStaffActor(getRequest());

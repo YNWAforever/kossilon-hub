@@ -24,7 +24,7 @@ const escalationStateSchema = z.enum(["none", "warning", "breach", "acknowledged
 export const listWorkQueueInputSchema = z
   .object({
     view: z.enum(["mine", "team", "breached"]).default("mine"),
-    ownerId: z.string().uuid().optional(),
+    ownerId: z.string().guid().optional(),
     escalationState: escalationStateSchema.optional(),
     q: z.string().trim().max(120).optional(),
     workType: z.string().min(1).max(100).optional(),
@@ -34,22 +34,22 @@ export const listWorkQueueInputSchema = z
     status: z.enum(["open", "in_progress", "blocked"]).optional(),
     limit: z.number().int().min(1).max(200).optional(),
     cursor: z.string().max(8192).optional(),
-    caseIds: z.array(z.string().uuid()).max(200).optional(),
+    caseIds: z.array(z.string().guid()).max(200).optional(),
   })
   .strict()
-  .default({});
+  .prefault({});
 
 export const workItemIdInputSchema = z
   .object({
-    workItemId: z.string().uuid(),
+    workItemId: z.string().guid(),
     assignmentTarget: z.enum(["owner", "reviewer"]).optional(),
   })
   .strict();
 
 export const assignWorkItemInputSchema = z
   .object({
-    workItemId: z.string().uuid(),
-    assigneeId: z.string().uuid(),
+    workItemId: z.string().guid(),
+    assigneeId: z.string().guid(),
     expectedVersion: z.number().int().positive(),
     assignmentTarget: z.enum(["owner", "reviewer"]).default("owner"),
     overrideReason: z.string().trim().min(1).optional(),
@@ -58,7 +58,7 @@ export const assignWorkItemInputSchema = z
 
 export const acknowledgeWorkItemInputSchema = z
   .object({
-    workItemId: z.string().uuid(),
+    workItemId: z.string().guid(),
     note: z.string().trim().min(1),
   })
   .strict();

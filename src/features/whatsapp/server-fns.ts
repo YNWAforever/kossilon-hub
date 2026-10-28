@@ -46,7 +46,7 @@ const templateCategories = [
 ] as const satisfies readonly WhatsAppTemplateCategory[];
 
 const jsonObjectSchema = z
-  .record(z.unknown())
+  .record(z.string(), z.unknown())
   .refine((value) => value !== null && !Array.isArray(value), {
     message: "payload must be a JSON object.",
   });
@@ -72,7 +72,7 @@ const timestampSchema = z
 const historyCursorSchema = z
   .object({
     at: timestampSchema,
-    id: z.string().uuid(),
+    id: z.string().guid(),
     scope: z.string().min(1).max(1000),
     asOf: timestampSchema.optional(),
   })
@@ -84,14 +84,14 @@ export const listWhatsAppConversationsInputSchema = z.object({
 });
 
 export const listWhatsAppConversationMessagesInputSchema = z.object({
-  contactId: z.string().uuid(),
+  contactId: z.string().guid(),
   limit: z.number().int().min(1).max(500).optional(),
   cursor: historyCursorSchema.optional(),
 });
 
 // No `actorId`: identity is derived from the request, never accepted from it.
 export const queueWhatsAppTemplateMessageInputSchema = z.object({
-  caseId: z.string().uuid(),
+  caseId: z.string().guid(),
   toPhone: z.string().min(3),
   toWhatsAppId: z.string().min(1).nullable().optional(),
   contactName: z.string().min(1).nullable().optional(),

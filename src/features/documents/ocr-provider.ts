@@ -25,7 +25,7 @@ export type DocumentOcrResult =
 const resultSchema = z
   .object({
     status: z.literal("extracted"),
-    documentVersionId: z.string().uuid(),
+    documentVersionId: z.string().guid(),
     sha256: z.string().regex(/^[a-f0-9]{64}$/),
     pages: z
       .array(

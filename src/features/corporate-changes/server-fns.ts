@@ -67,8 +67,8 @@ export const createCorporateChangeRequest = createServerFn({ method: "POST" })
   });
 
 const updateChecklistItemStatusSchema = z.object({
-  requestId: z.string().uuid(),
-  itemId: z.string().uuid(),
+  requestId: z.string().guid(),
+  itemId: z.string().guid(),
   status: z.enum(["Missing", "Received", "Verified", "Rejected"]),
   note: z.string().nullable(),
 });
@@ -84,7 +84,7 @@ export const updateCorporateChangeChecklistItemStatus = createServerFn({ method:
   );
 
 const transitionStatusSchema = z.object({
-  requestId: z.string().uuid(),
+  requestId: z.string().guid(),
   toStatus: z.enum([
     "Requested",
     "Documents pending",
@@ -105,7 +105,7 @@ export const transitionCorporateChangeRequestStatus = createServerFn({ method: "
     }),
   );
 
-const requestIdSchema = z.object({ requestId: z.string().uuid() });
+const requestIdSchema = z.object({ requestId: z.string().guid() });
 
 export const cancelCorporateChangeRequest = createServerFn({ method: "POST" })
   .validator(requestIdSchema)
@@ -168,7 +168,7 @@ export const listCorporateChangeRequestPage = createServerFn({ method: "GET" })
   });
 
 export const getCorporateChangeRequest = createServerFn({ method: "GET" })
-  .validator(z.object({ requestId: z.string().uuid() }))
+  .validator(z.object({ requestId: z.string().guid() }))
   .handler(async ({ data }) => {
     const { getRequest, requireStaffActor } = await loadDefaultCorporateChangeContext();
     const actor = await requireStaffActor(getRequest());

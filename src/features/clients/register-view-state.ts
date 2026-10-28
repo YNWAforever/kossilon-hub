@@ -9,7 +9,7 @@ const clientCursor = z
   .refine((value) => {
     try {
       // Same company-name/UUID boundary as the existing client page read.
-      z.tuple([z.string().max(512), z.string().uuid()]).parse(JSON.parse(value));
+      z.tuple([z.string().max(512), z.string().guid()]).parse(JSON.parse(value));
       return true;
     } catch {
       return false;
@@ -18,7 +18,7 @@ const clientCursor = z
 const searchSchema = z.object({
   q: z.string().max(200).default(""),
   status: z.enum(["all", "active", "inactive"]).default("all"),
-  team: z.union([z.literal("all"), z.string().uuid()]).default("all"),
+  team: z.union([z.literal("all"), z.string().guid()]).default("all"),
   includeFixtures: z.preprocess(
     (value) => (value === "true" ? true : value === "false" ? false : value),
     z.boolean().default(false),

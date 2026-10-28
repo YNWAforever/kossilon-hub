@@ -8,10 +8,10 @@ export const PAYMENT_RETURN_REASONS = [
   "other",
 ] as const;
 const source = {
-  caseId: z.string().uuid(),
-  paymentId: z.string().uuid(),
-  documentId: z.string().uuid(),
-  proofVersionId: z.string().uuid(),
+  caseId: z.string().guid(),
+  paymentId: z.string().guid(),
+  documentId: z.string().guid(),
+  proofVersionId: z.string().guid(),
   expectedVersion: z.string().regex(/^[0-9a-f]{32}$/),
 };
 const date = z

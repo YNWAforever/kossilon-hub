@@ -197,7 +197,7 @@ export const updateChecklistTemplate = createServerFn({ method: "POST" })
   .validator(
     z
       .object({
-        id: z.string().uuid(),
+        id: z.string().guid(),
         patch: patchSchema,
         expectedRevision: z.number().int().min(1),
       })
@@ -221,8 +221,8 @@ export const previewChecklistTemplateMigration = createServerFn({ method: "GET" 
   .validator(
     z
       .object({
-        id: z.string().uuid(),
-        cursor: z.string().uuid().optional(),
+        id: z.string().guid(),
+        cursor: z.string().guid().optional(),
         limit: z.number().int().min(1).max(100).optional(),
       })
       .strict(),
@@ -234,7 +234,7 @@ export const previewChecklistTemplateMigration = createServerFn({ method: "GET" 
   );
 
 export const duplicateChecklistTemplate = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.string().uuid() }).strict())
+  .validator(z.object({ id: z.string().guid() }).strict())
   .handler(({ data }) =>
     withDefaultChecklistTemplateContext((actor, dependencies) =>
       duplicateChecklistTemplateForActor(actor, { id: data.id }, dependencies),
@@ -242,7 +242,7 @@ export const duplicateChecklistTemplate = createServerFn({ method: "POST" })
   );
 
 export const deleteChecklistTemplate = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.string().uuid() }).strict())
+  .validator(z.object({ id: z.string().guid() }).strict())
   .handler(({ data }) =>
     withDefaultChecklistTemplateContext((actor, dependencies) =>
       deleteChecklistTemplateForActor(actor, { id: data.id }, dependencies),

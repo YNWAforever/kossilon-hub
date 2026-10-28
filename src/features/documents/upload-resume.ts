@@ -3,7 +3,7 @@ import { DOCUMENT_CATEGORIES } from "./types";
 
 const attemptSchema = z
   .object({
-    uploadRequestId: z.string().uuid(),
+    uploadRequestId: z.string().guid(),
     fileName: z.string().min(1).max(255),
     contentType: z.enum(["application/pdf", "image/png", "image/jpeg"]),
     sizeBytes: z
@@ -13,7 +13,7 @@ const attemptSchema = z
       .max(10 * 1024 * 1024),
     checksum: z.string().regex(/^[a-f0-9]{64}$/),
     category: z.enum(DOCUMENT_CATEGORIES),
-    checklistItemId: z.string().uuid().optional(),
+    checklistItemId: z.string().guid().optional(),
     phase: z.enum(["prepared", "confirming", "sending", "uncertain", "received", "expired"]),
   })
   .strict();

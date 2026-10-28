@@ -8,21 +8,21 @@ export const resourceSchema = z.enum([
   "document",
 ]);
 export const selectionSchema = z.discriminatedUnion("mode", [
-  z.object({ mode: z.literal("explicit_ids"), ids: z.array(z.string().uuid()).max(5000) }).strict(),
+  z.object({ mode: z.literal("explicit_ids"), ids: z.array(z.string().guid()).max(5000) }).strict(),
   z
     .object({
       mode: z.literal("filtered_snapshot"),
-      snapshotId: z.string().uuid(),
-      excludedIds: z.array(z.string().uuid()).max(5000),
+      snapshotId: z.string().guid(),
+      excludedIds: z.array(z.string().guid()).max(5000),
     })
     .strict(),
 ]);
 export const scopeFiltersSchema = z
   .object({
     q: z.string().trim().min(1).max(120).optional(),
-    ownerId: z.string().uuid().optional(),
-    reviewerId: z.string().uuid().optional(),
-    teamId: z.string().uuid().optional(),
+    ownerId: z.string().guid().optional(),
+    reviewerId: z.string().guid().optional(),
+    teamId: z.string().guid().optional(),
     status: z.enum(ANNUAL_RETURN_STATUSES).optional(),
     risk: z.enum(["green", "yellow", "orange", "red"]).optional(),
     activeOnly: z.boolean().optional(),
@@ -39,12 +39,12 @@ export const scopeFiltersSchema = z
     view: z.enum(["mine", "team", "breached"]).optional(),
     unassigned: z.boolean().optional(),
     clientStatus: z.enum(["active", "inactive"]).optional(),
-    caseId: z.string().uuid().optional(),
+    caseId: z.string().guid().optional(),
     category: documentSearchFields.category,
     source: documentSearchFields.source,
     reviewStatus: documentSearchFields.reviewStatus,
     // Exact displayed draft cases; [] means empty, never unrestricted.
-    draftCaseIds: z.array(z.string().uuid()).max(20000).optional(),
+    draftCaseIds: z.array(z.string().guid()).max(20000).optional(),
   })
   .strict();
 export const snapshotSchema = z
@@ -53,7 +53,7 @@ export const snapshotSchema = z
 export const assignmentSchema = z
   .object({
     target: z.enum(["owner", "reviewer"]),
-    assigneeId: z.string().uuid(),
+    assigneeId: z.string().guid(),
     overrideReason: z.string().trim().min(1).max(2000).optional(),
   })
   .strict();
@@ -68,8 +68,8 @@ export const maintenanceActionSchema = z.discriminatedUnion("kind", [
   z
     .object({
       kind: z.literal("client_maintenance"),
-      ownerId: z.string().uuid(),
-      teamId: z.string().uuid(),
+      ownerId: z.string().guid(),
+      teamId: z.string().guid(),
     })
     .strict(),
   z.object({ kind: z.literal("document_assignment"), ...assignmentSchema.shape }).strict(),
@@ -77,7 +77,7 @@ export const maintenanceActionSchema = z.discriminatedUnion("kind", [
     .object({
       kind: z.literal("document_return_draft"),
       reasons: z
-        .record(z.string().uuid(), z.string().trim().min(1).max(500))
+        .record(z.string().guid(), z.string().trim().min(1).max(500))
         .refine(
           (reasons) => Object.keys(reasons).length <= 5000,
           "At most 5000 individual reasons.",
@@ -95,13 +95,13 @@ export type MaintenanceAction = z.infer<typeof maintenanceActionSchema>;
 export type MaintenanceActionKind = MaintenanceAction["kind"];
 export type MaintenanceOutput = Record<string, string | number | boolean | null>;
 export const executeSchema = z
-  .object({ previewId: z.string().uuid(), idempotencyKey: z.string().min(16).max(120) })
+  .object({ previewId: z.string().guid(), idempotencyKey: z.string().min(16).max(120) })
   .strict();
-export const jobSchema = z.object({ jobId: z.string().uuid() }).strict();
+export const jobSchema = z.object({ jobId: z.string().guid() }).strict();
 export const jobHistorySchema = z
   .object({
     cursor: z
-      .object({ createdAt: z.string().datetime(), id: z.string().uuid() })
+      .object({ createdAt: z.string().datetime(), id: z.string().guid() })
       .strict()
       .optional(),
     limit: z.number().int().min(1).max(100).optional(),

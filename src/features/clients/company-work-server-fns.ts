@@ -16,7 +16,7 @@ export const listCompanyWorkPage = createServerFn({ method: "GET" })
   .validator(
     z
       .object({
-        companyId: z.string().uuid(),
+        companyId: z.string().guid(),
         cursor: z.string().max(2048).optional(),
         limit: z.number().int().min(1).max(200).optional(),
       })

@@ -5,7 +5,7 @@ import type { AuthenticatedActor } from "@/features/auth/types";
 import type { HandoffRepository } from "./handoff-repository";
 import type { ArchiveEvidence } from "./package-archive";
 
-const uuid = z.string().uuid(),
+const uuid = z.string().guid(),
   version = z.string().min(1).max(200),
   hash = z.string().regex(/^[a-f0-9]{64}$/);
 export const handoffCommandSchema = z.discriminatedUnion("command", [

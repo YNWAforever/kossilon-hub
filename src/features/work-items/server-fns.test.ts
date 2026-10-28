@@ -23,6 +23,31 @@ const workItem = {
 } as PersistedWorkItem;
 
 describe("work queue server authorization", () => {
+  it.each(["Admin", "Manager"] as const)(
+    "keeps the default queue scoped to the current %s when input is omitted",
+    (role) => {
+      const parsed = listWorkQueueInputSchema.parse(undefined);
+      expect(parsed).toEqual({ view: "mine" });
+      expect(queueFiltersForActor(actor(role), parsed)).toMatchObject({ ownerId: userId });
+    },
+  );
+
+  it("rejects an oversized case ID list before reading its entries", () => {
+    const caseIds = new Array(201).fill(workItem.id);
+    Object.defineProperty(caseIds, 0, {
+      get() {
+        throw new Error("An oversized collection must not be traversed");
+      },
+    });
+    const result = listWorkQueueInputSchema.safeParse({ caseIds });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({ code: "too_big", path: ["caseIds"], maximum: 200 }),
+      );
+    }
+  });
+
   it("loads request access only inside the server handler", () => {
     const source = readFileSync(new URL("./server-fns.ts", import.meta.url), "utf8");
 

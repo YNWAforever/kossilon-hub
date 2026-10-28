@@ -9,15 +9,15 @@ if (!databaseUrl || !["localhost", "127.0.0.1", "[::1]"].includes(new URL(databa
   throw new Error("Crash harness requires an owned local PostgreSQL target.");
 const actor = z
   .object({
-    userId: z.string().uuid(),
+    userId: z.string().guid(),
     authUserId: z.string().startsWith("synthetic-nar-"),
     role: z.literal("Admin"),
-    teamId: z.string().uuid(),
+    teamId: z.string().guid(),
     active: z.literal(true),
   })
   .strict()
   .parse(JSON.parse(process.env.NAR_CRASH_ACTOR_JSON ?? "null")) satisfies AuthenticatedActor;
-const jobId = z.string().uuid().parse(process.env.NAR_CRASH_JOB_ID);
+const jobId = z.string().guid().parse(process.env.NAR_CRASH_JOB_ID);
 const sql = createSqlClient(databaseUrl, { ssl: false, max: 1 });
 try {
   await runNarApplyChunk({

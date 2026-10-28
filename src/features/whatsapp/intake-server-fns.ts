@@ -2,20 +2,20 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { DOCUMENT_CATEGORIES } from "@/features/documents/types";
 
-export const messagePreviewSchema = z.object({ messageId: z.string().uuid() }).strict();
+export const messagePreviewSchema = z.object({ messageId: z.string().guid() }).strict();
 export const messageMappingSchema = messagePreviewSchema
   .extend({
-    caseId: z.string().uuid(),
+    caseId: z.string().guid(),
     expectedVersion: z.number().int().min(0),
     reason: z.string().trim().min(1).max(1000),
   })
   .strict();
 export const mediaIntakeSchema = z
   .object({
-    mediaId: z.string().uuid(),
+    mediaId: z.string().guid(),
     expectedMappingVersion: z.number().int().min(0),
     category: z.enum(DOCUMENT_CATEGORIES),
-    checklistItemId: z.string().uuid().optional(),
+    checklistItemId: z.string().guid().optional(),
   })
   .strict();
 const loadContext = createServerOnlyFn(async (needsStorage = false) => {

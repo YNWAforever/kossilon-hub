@@ -225,7 +225,7 @@ describe("/documents in production must not link demo rows into production route
     const html = await render({ documents: [], withCaseId: false });
 
     // Demo case ids look like ar-harbour. The production detail route validates
-    // its id with z.string().uuid(), so following such a link renders
+    // its id with z.string().guid(), so following such a link renders
     // "Annual return case unavailable" over a raw Zod error.
     const demoLinks = [...html.matchAll(/href="\/annual-returns\/(ar-[a-z-]+)"/g)].map(
       (match) => match[1],

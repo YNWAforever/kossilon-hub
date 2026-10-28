@@ -1,6 +1,6 @@
 import { z } from "zod";
 const baseCreateSchema = z.object({
-  companyId: z.string().uuid(),
+  companyId: z.string().guid(),
   quotedFee: z.number().nonnegative(),
 });
 
@@ -11,7 +11,7 @@ const createNameChangeSchema = baseCreateSchema.extend({
 });
 
 const transfereeFields = {
-  transfereeShareholdingId: z.string().uuid("請選擇有效的承讓人股權。").nullable(),
+  transfereeShareholdingId: z.string().guid("請選擇有效的承讓人股權。").nullable(),
   transfereeNewShareholderName: z
     .string()
     .trim()
@@ -38,9 +38,9 @@ export const shareTransferTransfereeSchema = z
 
 const createShareTransferSchema = baseCreateSchema.extend({
   changeType: z.literal("share_transfer"),
-  transferorShareholdingId: z.string().uuid("請選擇有效的轉讓人股權。"),
+  transferorShareholdingId: z.string().guid("請選擇有效的轉讓人股權。"),
   sharesTransferred: z
-    .number({ invalid_type_error: "請輸入有效轉讓股數。" })
+    .number({ error: (issue) => (issue.input === undefined ? undefined : "請輸入有效轉讓股數。") })
     .int("轉讓股數必須為整數。")
     .min(1, "轉讓股數必須大於零。")
     .max(2147483647, "轉讓股數不可超過 2,147,483,647。"),
@@ -53,7 +53,7 @@ const createShareTransferSchema = baseCreateSchema.extend({
 const createOfficerChangeSchema = baseCreateSchema.extend({
   changeType: z.literal("officer_change"),
   officerAction: z.enum(["appoint", "resign", "detail_change"]),
-  officerId: z.string().uuid().nullable(),
+  officerId: z.string().guid().nullable(),
   newOfficerType: z.enum(["director", "secretary"]).nullable(),
   newOfficerName: z.string().nullable(),
   newOfficerIdentificationType: z.enum(["hkid", "passport", "br_number"]).nullable(),
@@ -67,11 +67,8 @@ const createAddressChangeSchema = baseCreateSchema.extend({
   newRegisteredOffice: z.string().min(1),
 });
 
-// zod v3's discriminatedUnion introspects each member's `.shape`, so members must stay plain
-// ZodObjects — a `.refine()` on `createShareTransferSchema` would return a ZodEffects with no
-// `.shape` and crash discriminatedUnion at schema-construction time. The "exactly one of an
-// existing transferee or a new shareholder name" cross-field check is applied afterwards, via
-// superRefine on the assembled union, and only when the branch is share_transfer.
+// Keep the discriminated union members as plain objects and apply the transferee
+// cross-field check afterwards, only when the branch is share_transfer.
 export const createCorporateChangeRequestSchema = z
   .discriminatedUnion("changeType", [
     createNameChangeSchema,
@@ -82,6 +79,6 @@ export const createCorporateChangeRequestSchema = z
   .superRefine((input, ctx) => {
     if (input.changeType === "share_transfer") {
       const result = shareTransferTransfereeSchema.safeParse(input);
-      if (!result.success) for (const issue of result.error.issues) ctx.addIssue(issue);
+      if (!result.success) for (const issue of result.error.issues) ctx.addIssue({ ...issue });
     }
   });

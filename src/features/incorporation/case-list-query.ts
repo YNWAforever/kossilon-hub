@@ -5,8 +5,8 @@ export const caseListQuerySchema = z
   .object({
     q: z.string().trim().max(200).optional(),
     status: z.string().max(80).optional(),
-    ownerId: z.string().uuid().optional(),
-    teamId: z.string().uuid().optional(),
+    ownerId: z.string().guid().optional(),
+    teamId: z.string().guid().optional(),
     dueFrom: z.string().date().optional(),
     dueTo: z.string().date().optional(),
     sort: z.enum(["created", "company", "due"]).optional(),
@@ -23,7 +23,7 @@ const cursorSchema = z
     v: z.literal(1),
     scope: z.string().max(4096),
     value: z.string().max(1000),
-    id: z.string().uuid(),
+    id: z.string().guid(),
   })
   .strict();
 export type PreparedCaseListQuery = ReturnType<typeof prepareCaseListQuery>;

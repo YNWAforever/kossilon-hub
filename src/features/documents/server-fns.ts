@@ -260,7 +260,7 @@ export async function createDocumentUploadIntentForActor(
   dependencies: DocumentOperationDependencies,
 ) {
   if (input.uploadRequestId !== undefined) {
-    z.string().uuid().parse(input.uploadRequestId);
+    z.string().guid().parse(input.uploadRequestId);
     if (input.recovery) throw new Error("Recovery cannot include an upload request ID.");
   }
   if (input.recovery) assertStaffAccess(actor);
@@ -555,14 +555,14 @@ const MAX_UPLOAD_BASE64_LENGTH = Math.ceil(MAX_UPLOAD_BYTES / 3) * 4;
 
 const createIntentSchema = z
   .object({
-    companyId: z.string().uuid(),
-    caseId: z.string().uuid().optional(),
-    checklistItemId: z.string().uuid().optional(),
-    replacementDocumentId: z.string().uuid().optional(),
-    uploadRequestId: z.string().uuid().optional(),
+    companyId: z.string().guid(),
+    caseId: z.string().guid().optional(),
+    checklistItemId: z.string().guid().optional(),
+    replacementDocumentId: z.string().guid().optional(),
+    uploadRequestId: z.string().guid().optional(),
     recovery: z
       .object({
-        documentId: z.string().uuid(),
+        documentId: z.string().guid(),
         expectedToken: z.string().regex(/^[0-9a-f]{32}$/),
         reason: z.string().trim().min(1).max(500),
       })
@@ -578,8 +578,8 @@ const createIntentSchema = z
   .refine((input) => !input.recovery || !input.uploadRequestId, {
     message: "Recovery cannot include an upload request ID.",
   });
-const intentIdSchema = z.object({ intentId: z.string().uuid() }).strict();
-const documentIdSchema = z.object({ documentId: z.string().uuid() }).strict();
+const intentIdSchema = z.object({ intentId: z.string().guid() }).strict();
+const documentIdSchema = z.object({ documentId: z.string().guid() }).strict();
 
 export const previewDocumentRecovery = createServerFn({ method: "GET" })
   .validator(documentIdSchema)
@@ -631,7 +631,7 @@ export const scanQuarantinedDocument = createServerFn({ method: "POST" })
 export const downloadDocument = createServerFn({ method: "GET" })
   .validator(
     z
-      .object({ documentId: z.string().uuid(), expectedVersionId: z.string().uuid().optional() })
+      .object({ documentId: z.string().guid(), expectedVersionId: z.string().guid().optional() })
       .strict(),
   )
   .handler(({ data }) =>
@@ -655,7 +655,7 @@ export const downloadDocument = createServerFn({ method: "GET" })
 export const listDocuments = createServerFn({ method: "GET" })
   .validator(
     z
-      .object({ companyId: z.string().uuid().optional(), caseId: z.string().uuid().optional() })
+      .object({ companyId: z.string().guid().optional(), caseId: z.string().guid().optional() })
       .strict(),
   )
   .handler(({ data }) =>
@@ -665,8 +665,8 @@ export const listDocuments = createServerFn({ method: "GET" })
   );
 export const documentListPageSchema = z
   .object({
-    companyId: z.string().uuid().optional(),
-    caseId: z.string().uuid().optional(),
+    companyId: z.string().guid().optional(),
+    caseId: z.string().guid().optional(),
     ...documentSearchFields,
     cursor: z.string().max(2048).optional(),
     limit: z.number().int().min(1).max(200).optional(),
@@ -684,7 +684,7 @@ export const reviewDocument = createServerFn({ method: "POST" })
   .validator(
     documentIdSchema
       .extend({
-        expectedVersionId: z.string().uuid(),
+        expectedVersionId: z.string().guid(),
         decision: z.enum(["verified", "rejected"]),
         reason: z.string().trim().max(500).optional(),
       })

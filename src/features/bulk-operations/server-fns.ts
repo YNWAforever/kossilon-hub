@@ -121,7 +121,7 @@ export const listBulkAssignees = createServerFn({ method: "GET" })
   });
 export const getBulkSnapshotMembership = createServerFn({ method: "GET" })
   .validator(
-    z.object({ snapshotId: z.string().uuid(), ids: z.array(z.string().uuid()).max(5000) }).strict(),
+    z.object({ snapshotId: z.string().guid(), ids: z.array(z.string().guid()).max(5000) }).strict(),
   )
   .handler(async ({ data }) => {
     const { actor, repository } = await context();

@@ -56,23 +56,23 @@ async function withServiceSubscriptionRepository<T>(
   }
 }
 
-const listSubscriptionsSchema = z.object({ companyId: z.string().uuid() });
+const listSubscriptionsSchema = z.object({ companyId: z.string().guid() });
 
 const addSubscriptionSchema = z.object({
-  companyId: z.string().uuid(),
+  companyId: z.string().guid(),
   serviceType: z.enum(SERVICE_TYPES),
   fee: z.number().int().positive(),
   renewalDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 const renewSubscriptionSchema = z.object({
-  subscriptionId: z.string().uuid(),
-  companyId: z.string().uuid(),
+  subscriptionId: z.string().guid(),
+  companyId: z.string().guid(),
 });
 
 const cancelSubscriptionSchema = z.object({
-  subscriptionId: z.string().uuid(),
-  companyId: z.string().uuid(),
+  subscriptionId: z.string().guid(),
+  companyId: z.string().guid(),
 });
 
 export const listServiceSubscriptions = createServerFn({ method: "GET" })

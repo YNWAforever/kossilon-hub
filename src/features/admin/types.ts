@@ -8,23 +8,23 @@ export const staffFiltersSchema = z
   .object({
     q: z.string().trim().min(1).max(120).optional(),
     role: z.enum(STAFF_ROLES).optional(),
-    teamId: z.string().uuid().optional(),
+    teamId: z.string().guid().optional(),
     active: z.boolean().optional(),
-    cursor: z.string().uuid().optional(),
+    cursor: z.string().guid().optional(),
     limit: z.number().int().min(1).max(100).optional(),
   })
   .strict();
 export const updateStaffSchema = z
   .object({
-    userId: z.string().uuid(),
+    userId: z.string().guid(),
     expectedVersion: z.number().int().positive(),
     role: z.enum(STAFF_ROLES),
-    teamId: z.string().uuid().nullable(),
+    teamId: z.string().guid().nullable(),
     active: z.boolean(),
   })
   .strict();
 export const reassignmentPreviewSchema = z
-  .object({ userId: z.string().uuid(), expectedVersion: z.number().int().positive() })
+  .object({ userId: z.string().guid(), expectedVersion: z.number().int().positive() })
   .strict();
 const recipientSchema = reassignmentPreviewSchema;
 export const handoverSelectionSchema = reassignmentPreviewSchema
@@ -46,7 +46,7 @@ export const handoverPageSchema = handoverSelectionSchema
 export const handoverCommandSchema = handoverSelectionSchema
   .extend({
     fingerprint: z.string().regex(/^[a-f0-9]{64}$/),
-    operationId: z.string().uuid(),
+    operationId: z.string().guid(),
   })
   .strict();
 export type HandoverSelection = z.infer<typeof handoverSelectionSchema>;
@@ -82,9 +82,9 @@ export type HandoverCancellation =
   | { status: "committed"; receipt: HandoverReceipt };
 export const handoverReceiptSchema = z
   .object({
-    operationId: z.string().uuid(),
-    userId: z.string().uuid(),
-    actorId: z.string().uuid(),
+    operationId: z.string().guid(),
+    userId: z.string().guid(),
+    actorId: z.string().guid(),
     expectedVersion: z.number().int().positive(),
     caseCount: z.number().int().nonnegative(),
     workItemCount: z.number().int().nonnegative(),

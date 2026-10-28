@@ -7,10 +7,10 @@ import { withDocumentVersionConflict } from "@/features/documents/version-confli
 
 const reviewEvidenceSchema = z
   .object({
-    caseId: z.string().uuid(),
-    documentId: z.string().uuid(),
-    expectedDocumentVersionId: z.string().uuid(),
-    checklistItemId: z.string().uuid().optional(),
+    caseId: z.string().guid(),
+    documentId: z.string().guid(),
+    expectedDocumentVersionId: z.string().guid(),
+    checklistItemId: z.string().guid().optional(),
     decision: z.enum(["verified", "rejected"]),
     reason: z.string().trim().min(1).max(500).optional(),
   })
@@ -18,8 +18,8 @@ const reviewEvidenceSchema = z
 
 const acceptFilingReceiptSchema = z
   .object({
-    caseId: z.string().uuid(),
-    documentId: z.string().uuid(),
+    caseId: z.string().guid(),
+    documentId: z.string().guid(),
     filingReference: z.string().trim().min(1).max(200),
   })
   .strict();

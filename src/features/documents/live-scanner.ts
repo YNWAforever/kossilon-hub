@@ -104,7 +104,7 @@ export function createLiveDocumentScanner(
     verdictSource: "provider",
 
     async scan(input): Promise<DocumentScanResult> {
-      if (!z.string().uuid().safeParse(input.documentVersionId).success)
+      if (!z.string().guid().safeParse(input.documentVersionId).success)
         return { status: "failed", retryable: false, errorCode: "document-version-missing" };
       const controller = new AbortController();
       let timer: ReturnType<typeof setTimeout>;
