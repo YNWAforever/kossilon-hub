@@ -101,6 +101,9 @@ function DocumentRecoverySession({
       return;
     }
     setLookup({ phase: "absent" });
+    intentIdRef.current = null;
+    setIntentId(null);
+    setReceiptState(null);
     admitted.current = false;
     writeStarted.current = false;
     setAttempted(false);
@@ -434,7 +437,7 @@ function DocumentRecoverySession({
         )}
       </div>
     );
-  if (upload.isSuccess)
+  if (upload.isSuccess && upload.data.kind === "uploaded")
     return (
       <p role="status" className="text-sm">
         已收取補傳檔案，等待掃描及覆核。

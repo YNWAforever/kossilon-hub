@@ -59,6 +59,54 @@ async function chooseResumeFile(file = recoveryFile()) {
   fireEvent.change(screen.getByLabelText("原補傳檔案"), { target: { files: [file] } });
 }
 describe("controlled document recovery", () => {
+  it("offers a fresh approval when a discovered recovery expires before resume", async () => {
+    rpc.readOpenDocumentRecovery
+      .mockResolvedValueOnce({ state: "absent" })
+      .mockResolvedValueOnce({
+        state: "open",
+        intentId: "expired-intent",
+        receiptState: "unconfirmed",
+      })
+      .mockResolvedValue({ state: "absent" });
+    rpc.readDocumentUploadReceipt.mockResolvedValue({
+      intentId: "expired-intent",
+      state: "unconfirmed",
+    });
+    const onRecovered = setup();
+    fireEvent.click(screen.getByRole("button", { name: "預覽受控補傳" }));
+    await screen.findByText("保留舊登記；新檔案須重新掃描及覆核。");
+    await chooseFile();
+    fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    await screen.findByRole("button", { name: "以所選檔案完成補傳" });
+    await chooseResumeFile();
+    fireEvent.click(screen.getByRole("button", { name: "以所選檔案完成補傳" }));
+
+    await screen.findByRole("button", { name: "批准並補傳" });
+    expect(screen.queryByText("已收取補傳檔案，等待掃描及覆核。")).toBeNull();
+    expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
+    expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+    expect(onRecovered).not.toHaveBeenCalled();
+
+    rpc.createDocumentUploadIntent.mockRejectedValueOnce(new Error("lost create response"));
+    rpc.readOpenDocumentRecovery.mockResolvedValueOnce({ state: "absent" }).mockResolvedValue({
+      state: "open",
+      intentId: "current-intent",
+      receiptState: "unconfirmed",
+    });
+    rpc.readDocumentUploadReceipt.mockResolvedValue({
+      intentId: "current-intent",
+      state: "unconfirmed",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    await screen.findByText(/上載 ID：current-intent/);
+    expect(rpc.readDocumentUploadReceipt).toHaveBeenLastCalledWith({
+      data: { intentId: "current-intent" },
+    });
+    expect(rpc.createDocumentUploadIntent).toHaveBeenCalledTimes(1);
+    expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
+    expect(onRecovered).not.toHaveBeenCalled();
+  });
+
   it("offers approved additive upload when a controlled inspection confirms missing object", async () => {
     setup();
     rpc.previewDocumentRecovery.mockResolvedValueOnce({
