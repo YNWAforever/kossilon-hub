@@ -826,6 +826,23 @@ describe("reminder command receipt read after a case lock", () => {
     }
   });
 
+  it("reads a receipt for an existing GUID case accepted by the reminder queue", async () => {
+    const existingCaseId = "40000000-0000-0000-0000-000000000001";
+    const repository = repositoryFor(caseRecord({ id: existingCaseId }));
+
+    await expect(
+      readAnnualReturnReminderCommandForActor(
+        staffActor,
+        { caseId: existingCaseId, commandUuid: reminderCommandUuid },
+        { annualReturnRepository: repository.annualReturnRepository },
+      ),
+    ).resolves.toEqual({ state: "sent", messageId: "msg-1" });
+    expect(repository.readManualReminderOutbox).toHaveBeenCalledWith({
+      caseId: existingCaseId,
+      commandUuid: reminderCommandUuid,
+    });
+  });
+
   it("refuses a case the actor cannot see and does not read the outbox", async () => {
     const hidden = [
       caseRecord({

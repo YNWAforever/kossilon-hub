@@ -89,7 +89,7 @@ export const queueAnnualReturnWhatsAppReminderSchema = z.object({
 });
 export const readAnnualReturnReminderCommandSchema = z
   .object({
-    caseId: z.string().uuid(),
+    caseId: z.string().guid(),
     commandUuid: z.string().uuid(),
   })
   .strict();
