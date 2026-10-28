@@ -1,0 +1,44 @@
+{
+  "status": "PASS_REPOSITORY_PACKET_CHECKS_ONLY",
+  "verified_at_utc": "2026-10-28T14:39:11.813769+00:00",
+  "reviewed_repository_head": "51b9a2ebaff965726963cbeb6b7146e860248f90",
+  "validation_head": "51b9a2ebaff965726963cbeb6b7146e860248f90",
+  "validation_scope": "Working packet fingerprints below, based on reviewed input head 51b9a2ebaff965726963cbeb6b7146e860248f90 after restack on ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0. This report is included in a subsequent docs-only commit. No product tests, CI runs, app import, network probe, Auth, DB, browser or Native execution.",
+  "release_gate": "NO_GO",
+  "execution_enabled": false,
+  "approved_packet_ids": [],
+  "gate_a_fields_owner_required": 19,
+  "gate_a_alias_ids_owner_required": 14,
+  "gate_b_unchanged": true,
+  "source_files_hash_and_git_blob_verified": 26,
+  "source_references_resolved": 56,
+  "candidate_lock_hashes_verified": 2,
+  "historical_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "previous_native_plan_unchanged": true,
+  "changes_scoped_to_requested_packet": true,
+  "checks": [
+    "JSON parsing and execution/approval/AP invariants",
+    "Gate A unresolved; Gate B, historical matrix and prior-plan evidence preserved",
+    "Repo source paths/SHA256/git blobs/JSON pointers",
+    "Candidate lockfiles match pinned source",
+    "Historical matrix hash/recount and old packet immutability",
+    "Relative Markdown links",
+    "No credential values in changed packet files matching basic token/key/email/connection-string patterns",
+    "git diff --check"
+  ],
+  "file_sha256_excluding_this_report": {
+    "docs/audit-remediation/cosec-20261027-native-track-open/APPROVAL-CHECKLIST.md": "8168ec8c44a23bf371f11ee1090829101781fb81ed31d8836f3a341f8c178b7d",
+    "docs/audit-remediation/cosec-20261027-native-track-open/DELIVERY.md": "c15920acdaf83cecc4d68455bdc5860ef72ad8b9c91698abaeae7e162c0121ca",
+    "docs/audit-remediation/cosec-20261027-native-track-open/approval-request.json": "1aed1712ddc9be2e6d639f6d348c823107117f62f2208c421ecad15f368bdba0",
+    "docs/audit-remediation/cosec-20261027-native-track-open/baseline.json": "312f11fe53452d83c71bdd74ea77f6b2c4332c33ce0a693560dc5719ecb55e83",
+    "docs/audit-remediation/cosec-20261027-native-track-open/blockers.md": "a655aae001bfca7b2a90c73fb439a8e9747a1bb7f3c27356827d4ba6c98fa908",
+    "docs/audit-remediation/cosec-20261027-native-track-open/gate-a-discovery.json": "a6573884d1094f79b980a185d96e6d2edadae4ae0c01964ee3bed484855169aa"
+  },
+  "original_validation_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
+  "review_base_sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
+  "original_verified_at_utc": "2026-10-27T16:22:44.183328+00:00"
+}

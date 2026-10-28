@@ -1,0 +1,623 @@
+{
+  "schema": 1,
+  "plan_id": "cosec-20261027-native-track-open",
+  "native_pr": 150,
+  "native_branch": "cursor/native-track-open-df67",
+  "repository": "YNWAforever/kossilon-hub",
+  "reviewed_repository_head": "51b9a2ebaff965726963cbeb6b7146e860248f90",
+  "candidate_source_sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
+  "candidate_source_pr": 149,
+  "status": "PARTIAL_REPOSITORY_IDENTIFIERS_ONLY",
+  "release_gate": "NO_GO",
+  "execution_enabled": false,
+  "approved_packet_ids": [],
+  "scope": "Committed repo docs/code/public config only. GitHub transport/PR metadata serves delivery, not Gate A runtime discovery.",
+  "native_executed": false,
+  "live_comsec_http_requests": 0,
+  "auth_actions": 0,
+  "database_connections": 0,
+  "browser_or_native_flows": 0,
+  "provider_control_plane_requests": 0,
+  "hosted_ci_queried": false,
+  "resources_created": 0,
+  "interpretation": "repository_known is reference evidence, never a selected/approved binding. Every Gate A field still requires owner input. Historical observations were not refreshed and old approvals do not transfer.",
+  "sources": {
+    "demo_metadata": {
+      "path": "docs/audit-remediation/cosec-20261025-ap01-form-61f03672/AP01-METADATA-EXECUTION.json",
+      "git_blob": "2850572304cbdf394436e087f5c526bf47993215",
+      "sha256": "902c3e5adc618bd386ad353de2fe08a0af5107af50c1762f87712993e6502399"
+    },
+    "production_vercel": {
+      "path": "docs/audit-remediation/evidence/2026-10-03-r03-target-vercel.json",
+      "git_blob": "520476a71d8d062b6b129a3bb5aff75dee307742",
+      "sha256": "295d8d4a2e0039016ab51ca1e4dc6aa082de10abddedcdff8ee0783e50e6cde2"
+    },
+    "production_neon": {
+      "path": "docs/audit-remediation/evidence/2026-10-03-r03-target-neon.json",
+      "git_blob": "3afb8b20161cb9bd99dde8717a61ac3c2ca5503d",
+      "sha256": "bc9eb4b28ffd1084f852bf8be4b3a51496cec2db115a15427a216b7927d8964b"
+    },
+    "staging_child": {
+      "path": "docs/audit-remediation/evidence/2026-10-04-r01-staging-created.json",
+      "git_blob": "1bb9ce9f1a0164cea8a495c5b6c33d25f0db13fd",
+      "sha256": "befae6d233286e8f9bc3b906be6f32767f20687e7f0477eea242b377f9a54c48"
+    },
+    "staging_capability": {
+      "path": "docs/audit-remediation/evidence/2026-10-04-r01-b1-capability-blocked.json",
+      "git_blob": "daf4cfdd56eb8992f6fad05c579823ac4ffe7365",
+      "sha256": "1b84068dbc661cd5b73ccc79aea30325c7b40c13deb24abd6eb0f314df772be9"
+    },
+    "db_owners": {
+      "path": "docs/audit-remediation/runtime-parity-and-db-owners.md",
+      "git_blob": "48d083237e27b01029e4e391f105e7ba89f3b5e8",
+      "sha256": "0968a9188e2e0bab6005efc733c6cb83f5d2805bbdb661c40fbdaa626e5a10b1"
+    },
+    "firm_runbook": {
+      "path": "docs/runbooks/firm-deployment.md",
+      "git_blob": "69790e6d95977b784bec05ba39effa4688519a4e",
+      "sha256": "e962c5861bffbf59d75933ba8198272d4f738f4f8c2bd729f08b598b63b62597"
+    },
+    "demo_runbook": {
+      "path": "docs/runbooks/neon-auth-demo.md",
+      "git_blob": "17f2eae65a33b92ba9b9bb1c74d1ab7f6e3e1bbb",
+      "sha256": "df6bde569f423575156c557db22b4a7b92523b91503c6ec8f3fac8af33be220a"
+    },
+    "staging_guard": {
+      "path": "scripts/audit-staging-config.ts",
+      "git_blob": "6884c1840be61e9f918eed8fbaf35069cb6361e8",
+      "sha256": "bb57ca676dc39e3b24562caac67b9b20045457ce8bcfc5df57e90c04da889c15"
+    },
+    "runtime_bindings": {
+      "path": "src/server/runtime-env.ts",
+      "git_blob": "d38bfe816e6e7b4a8c219bd6689541a9dcaad689",
+      "sha256": "097b0ddc09774ccd66359d60f20fb48217d3433e6d81daa6c2f433930ece80dd"
+    },
+    "database_client": {
+      "path": "src/server/db/client.ts",
+      "git_blob": "0199e8615c7e103dd129bfcbefa32b4310e7f1ce",
+      "sha256": "21072e5a098a5ee5e16c42e92d38a763a52d898279b3fb7e684c6f402a846bbd"
+    },
+    "auth_resolver": {
+      "path": "src/features/auth/neon-auth-server.ts",
+      "git_blob": "80877a0e25524373a3b2e697a0ce0ee1b1469f2e",
+      "sha256": "43d2aaa4be89dd67983732de93e24b40b9aff105b23bc3071fdb015f1a997563"
+    },
+    "auth_types": {
+      "path": "src/features/auth/types.ts",
+      "git_blob": "530fc02defc6c261ad717d5b48bf9180ea363a50",
+      "sha256": "2b5eabe13d61dfdc2f54851bf372cdccc86ebf6696005274916bd68097b3dafa"
+    },
+    "identity_schema": {
+      "path": "db/migrations/0006_production_assignment_sla_foundation.sql",
+      "git_blob": "d5d04cd7e26d05a0c941c6ec878c70de1aa54b94",
+      "sha256": "f5247427ddcb7a57ffbc77c6c900030d993f85930a1c2a918b6694e1469138ca"
+    },
+    "identity_revision": {
+      "path": "db/migrations/0071_staff_admin_contract.sql",
+      "git_blob": "595e2c3acf197198089146f895c424bb8d2c9e66",
+      "sha256": "41caa6f1b2cab4ab5ce603af67d24c31755154e6d99b9a3aeb68be91c8e7bbd9"
+    },
+    "schema_catalog": {
+      "path": "src/features/operations/schema-catalog.ts",
+      "git_blob": "d002ce76c235e7215678474c97344b68a32e8427",
+      "sha256": "b4698c045854661a83f1b2a56d14013ca53c39c6363f979d06ec74aee7c5208e"
+    },
+    "migrator_source_only": {
+      "path": "scripts/db-migrate.ts",
+      "git_blob": "e98e4fe6816c62b7b2bb85e1f4bf8da614e702b8",
+      "sha256": "f2ee5616a2b2bdeb7655d0c9a27ba424c3ea3955334ff5af3fbed28662880d37"
+    },
+    "workflow": {
+      "path": ".github/workflows/ci.yml",
+      "git_blob": "4e30bf1e21941dc786144375be873b12dc6b2c1d",
+      "sha256": "b00865ba06b157098099ffd51d3da26ce0c2398e1f5209544f18112b8f5b81af"
+    },
+    "vercel_config": {
+      "path": "vercel.json",
+      "git_blob": "891f4ee55c78e655b2733c971db2b38be23a165f",
+      "sha256": "7cfb0eeeaed33b9effd9e6555d8832fc721a5df3cc442dac4fa39040f5a301a2"
+    },
+    "worker_template": {
+      "path": "wrangler.template.jsonc",
+      "git_blob": "d75077c39fde96e837953038f7c79b5d21f1f38c",
+      "sha256": "7a4f1af502bf072f464c8f2e216f60e5d40dbcf1fa80bd8d10b4cd712aefb794"
+    },
+    "provider_mode": {
+      "path": "src/server/provider-mode.ts",
+      "git_blob": "cb2f16ba5cd310df9f40bdc109d74f9fb997bb1a",
+      "sha256": "696855bc373c0e3d5cd971529d32ef566ec5aa10e8363e0b82133b5ea3daaeda"
+    },
+    "data_mode": {
+      "path": "src/features/runtime/data-mode.ts",
+      "git_blob": "047a2c30769453da696758b01fb7fad81fea2cd4",
+      "sha256": "dbbbe3b246cf2130534ee98d307fda4b8eb9fe586fa6147c7b45d1d908ee2e57"
+    },
+    "demo_validator": {
+      "path": "scripts/validate-neon-auth-demo.ts",
+      "git_blob": "bc88c2eff319dbdfda5c9dc39859d1650574c06f",
+      "sha256": "b990022967dd3d84ebe9f50cda900bdc99cf4e8f62b225c8a9efa69289202011"
+    },
+    "env_template": {
+      "path": ".env.example",
+      "git_blob": "c4a3c7788d4802727c6269041002b466bd57371a",
+      "sha256": "b7d693f007e6a1e16ec56e31051f81519a3714f0bfd62f8478b39325229b872c"
+    },
+    "npm_lock": {
+      "path": "package-lock.json",
+      "git_blob": "edac118ae868a36f6e495b8ba333f4cb0d58493e",
+      "sha256": "bd17e9f06ecaa5410cad9a75fa6ec5fbf277c57986583686d503f21d8bee2f2c"
+    },
+    "bun_lock": {
+      "path": "bun.lock",
+      "git_blob": "075646221414316b5205d720df9d2b15acfffa00",
+      "sha256": "f943a902e9ba1aa2ecb84262a796eb3e7d58b48229a6fce215d0f1a6909600db"
+    }
+  },
+  "gate_a_fields": {
+    "environment_owner": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "platform_team_id": "team_qvzlsFmfCsLkgItSypqHjw3z",
+        "platform_team_name": "ynwaforever's projects",
+        "platform_team_slug": "ynwaforevers-projects"
+      },
+      "remaining_owner_input": "Named accountable human/business owner of the isolated target. A platform team or GitHub actor is not that owner.",
+      "source_refs": [
+        "demo_metadata#/metadata_result/owner_team"
+      ]
+    },
+    "existing_isolated_url": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "historical_demo_fixed_url": "https://kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+        "historical_demo_alias_from_runbook": "https://kossilon-hub-demo.vercel.app",
+        "known_production_origin": "https://kossilon-hub.vercel.app",
+        "url_visited_this_pass": false
+      },
+      "remaining_owner_input": "Owner-confirmed existing isolated HTTPS origin, current availability, data/DB/Auth isolation and approval reference. Neither the demo label nor READY establishes isolation.",
+      "source_refs": [
+        "demo_metadata#/metadata_result/latest_visible_deployment",
+        "demo_metadata#/metadata_result/isolation",
+        "demo_runbook",
+        "staging_guard"
+      ]
+    },
+    "runtime_project_id": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "historical_demo_project_id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+        "historical_demo_project_name": "kossilon-hub-demo",
+        "historical_demo_account_id": "team_qvzlsFmfCsLkgItSypqHjw3z",
+        "historical_production_project_id": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+        "historical_production_project_name": "kossilon-hub"
+      },
+      "remaining_owner_input": "Confirm which runtime project is the isolated Gate A target; neither historical project is selected or approved here.",
+      "source_refs": [
+        "demo_metadata#/metadata_result/project",
+        "production_vercel#/project_id"
+      ]
+    },
+    "deployment_id": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "historical_demo_deployment_id": "dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY",
+        "historical_demo_target_label": "production",
+        "historical_demo_state": "READY",
+        "historical_demo_source_sha": null
+      },
+      "remaining_owner_input": "Same-candidate deployment ID and its current source/artifact binding. target=production describes this old demo-project deployment, not an approved Native environment.",
+      "source_refs": [
+        "demo_metadata#/metadata_result/latest_visible_deployment"
+      ]
+    },
+    "observed_source_sha": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "expected_candidate_sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
+        "candidate_pr": 149,
+        "native_packet_pr": 150,
+        "historical_latest_demo_git_sha_exposed": false,
+        "candidate_ref": "main (PR #149 squash merge; unapproved comparison only)"
+      },
+      "remaining_owner_input": "Deployment-observed Git SHA equal to the pinned candidate. The expected candidate is not an observed deployment SHA; old filtered results concern an earlier candidate only.",
+      "source_refs": [
+        "demo_metadata#/metadata_result/comparison"
+      ]
+    },
+    "observed_artifact_checksum": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "checksum_scope": "Deployed artifact, not this packet, a Git SHA, a lockfile, or the old local build manifest"
+      },
+      "remaining_owner_input": "Deployed artifact checksum bound to the selected deployment and candidate.",
+      "source_refs": [
+        "demo_metadata#/metadata_result/unknown"
+      ]
+    },
+    "required_ci_run_ids_and_results": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "workflow_path": ".github/workflows/ci.yml",
+        "workflow_name": "CI",
+        "runtime_job_id": "verify-runtime",
+        "runtime_check_names": [
+          "Node22",
+          "Node24"
+        ],
+        "aggregate_job_and_check_name": "verify",
+        "configured_triggers": [
+          "pull_request",
+          "push: main"
+        ],
+        "hosted_runs_queried_this_pass": false
+      },
+      "remaining_owner_input": "Required-check policy confirmation plus exact candidate-head run IDs, head SHA, conclusions, and dependency audit results. No historical run is carried forward.",
+      "source_refs": [
+        "workflow"
+      ]
+    },
+    "artifact_sbom_and_dependency_disposition": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "candidate_lockfiles": [
+          {
+            "path": "package-lock.json",
+            "sha256": "bd17e9f06ecaa5410cad9a75fa6ec5fbf277c57986583686d503f21d8bee2f2c",
+            "git_blob": "edac118ae868a36f6e495b8ba333f4cb0d58493e"
+          },
+          {
+            "path": "bun.lock",
+            "sha256": "f943a902e9ba1aa2ecb84262a796eb3e7d58b48229a6fce215d0f1a6909600db",
+            "git_blob": "075646221414316b5205d720df9d2b15acfffa00"
+          }
+        ],
+        "locks_unchanged_between_candidate_and_reviewed_head": true,
+        "ci_audits_both_tracked_locks": true
+      },
+      "remaining_owner_input": "Deployed resolved SBOM or verified deployed lockfile identity and accepted dependency disposition for that artifact. Repo hashes do not close this binding.",
+      "source_refs": [
+        "npm_lock",
+        "bun_lock",
+        "workflow"
+      ]
+    },
+    "db_provider_project_id": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "provider": "Neon",
+        "historical_project_id": "red-morning-00331124",
+        "staging_child_in_same_historical_project": "red-morning-00331124"
+      },
+      "remaining_owner_input": "Isolated DB provider project selection and owner confirmation; shared historical project identity alone is not data isolation.",
+      "source_refs": [
+        "production_neon#/target",
+        "staging_child#/observed_project_id"
+      ]
+    },
+    "db_branch_id": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "historical_staging_child_id": "br-fragrant-sunset-aosoylhr",
+        "historical_staging_child_name": "kossilon-r01-staging-20261004",
+        "historical_parent_production_branch_id": "br-muddy-mountain-aov8bbku",
+        "historical_child_endpoint_ids": [],
+        "later_endpoint_create_successes": 0,
+        "historical_auth_management_status": "HTTP404_not_enabled"
+      },
+      "remaining_owner_input": "Usable dedicated/disposable branch linked to the selected runtime, with data lineage and access policy confirmed. The 2026-10-04 no-compute child is a clue, not a usable Native target.",
+      "source_refs": [
+        "staging_child",
+        "staging_capability#/actual_create_result"
+      ]
+    },
+    "database_name": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "historical_database_name": "neondb",
+        "historical_technical_owner": "neondb_owner"
+      },
+      "remaining_owner_input": "Database name on the owner-selected isolated branch; historical neondb is not a binding to the demo runtime.",
+      "source_refs": [
+        "staging_child#/observed_database",
+        "production_neon#/databases"
+      ]
+    },
+    "app_role": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "historical_catalog_role_names": [
+          "neondb_owner",
+          "authenticator",
+          "anonymous",
+          "authenticated"
+        ],
+        "historical_app_role_acceptance": "not_verified",
+        "binding_name": "DATABASE_URL"
+      },
+      "remaining_owner_input": "Actual restricted application connection role and effective privileges on the isolated target. Catalog names do not select a role.",
+      "source_refs": [
+        "production_neon#/roles",
+        "production_neon#/app_role_acceptance",
+        "database_client"
+      ]
+    },
+    "readonly_observer_role": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "historical_observer_role": "neondb_owner",
+        "historical_observer_has_bypassrls": true,
+        "historical_observer_acceptable_as_gate_a_readonly_role": false
+      },
+      "remaining_owner_input": "Named non-superuser read-only observer with effective privileges verified. Historical neondb_owner has BYPASSRLS/CREATE capabilities and is not acceptable proof.",
+      "source_refs": [
+        "production_neon#/role_attributes",
+        "production_neon#/observer",
+        "db_owners"
+      ]
+    },
+    "server_identity_binding": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "connection_binding_names": [
+          "DATABASE_URL",
+          "HYPERDRIVE",
+          "DATABASE_SSL",
+          "PGSSLMODE"
+        ],
+        "application_client_reads": "DATABASE_URL",
+        "firm_runtime_resolver_fallback": "HYPERDRIVE.connectionString",
+        "migration_directory": "db/migrations/",
+        "application_migration_ledger": "schema_migrations",
+        "optional_ledger_checksum_column": "sha256",
+        "additional_historical_ledger_relation": "hk_funding_schema_migrations",
+        "host": "OWNER_REQUIRED",
+        "proxy": "OWNER_REQUIRED",
+        "port": "OWNER_REQUIRED"
+      },
+      "remaining_owner_input": "Selected server/endpoint host, proxy and port; migration ledger, physical catalog, deployed checksum and effective app/observer privileges. Do not assume port 5432 or paste a credentialed connection string.",
+      "source_refs": [
+        "database_client",
+        "runtime_bindings",
+        "schema_catalog",
+        "migrator_source_only",
+        "db_owners"
+      ]
+    },
+    "auth_tenant_id": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "auth_provider": "Neon Auth / better_auth",
+        "runtime_url_binding": "NEON_AUTH_URL",
+        "cookie_secret_binding_name_only": "NEON_AUTH_COOKIE_SECRET",
+        "session_resolution_source": "src/features/auth/neon-auth-server.ts",
+        "historical_staging_auth_status": "HTTP404_not_enabled"
+      },
+      "remaining_owner_input": "Actual existing isolated Auth tenant/instance ID and non-secret HTTPS base URL linked to selected DB/runtime. Trusted domains and a project ID are not an Auth tenant ID.",
+      "source_refs": [
+        "auth_resolver",
+        "runtime_bindings",
+        "production_neon#/trusted_domains",
+        "staging_child#/branch_auth_management"
+      ]
+    },
+    "role_identity_manifest": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "auth_roles": [
+          "Admin",
+          "Manager",
+          "Staff",
+          "Client"
+        ],
+        "staff_join": "staff_profiles.auth_user_id -> session.user.id; staff_profiles.user_id -> users.id",
+        "staff_fields": [
+          "staff_profiles.id",
+          "staff_profiles.auth_user_id",
+          "staff_profiles.user_id",
+          "staff_profiles.role",
+          "staff_profiles.team_id",
+          "staff_profiles.active",
+          "staff_profiles.access_revision",
+          "users.id",
+          "users.role",
+          "users.team_id",
+          "users.active"
+        ],
+        "skill_fields": [
+          "staff_skills.staff_profile_id",
+          "staff_skills.skill_key",
+          "staff_skills.active"
+        ],
+        "client_fields": [
+          "client_company_memberships.id",
+          "client_company_memberships.auth_user_id",
+          "client_company_memberships.company_id",
+          "client_company_memberships.active"
+        ],
+        "session_method": "OWNER_REQUIRED: existing QA sessions only; no session material in git"
+      },
+      "remaining_owner_input": "Owner-controlled manifest for all 14 aliases, with actual IDs, team/company, active state, revision or explicit not-applicable reason. Seed/demo/test IDs and emails must not be substituted.",
+      "source_refs": [
+        "auth_types",
+        "auth_resolver",
+        "identity_schema",
+        "identity_revision"
+      ]
+    },
+    "network_allowlist": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "approved_hosts": [],
+        "reference_app_hosts": [
+          "kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+          "kossilon-hub-demo.vercel.app"
+        ],
+        "known_production_hosts_excluded": [
+          "kossilon-hub.vercel.app",
+          "www.kossilon-hub.vercel.app"
+        ],
+        "auth_host": "OWNER_REQUIRED",
+        "database_endpoint_host": "OWNER_REQUIRED",
+        "storage_or_provider_sandbox_hosts": "OWNER_REQUIRED"
+      },
+      "remaining_owner_input": "Exact owner-approved hosts for the selected isolated target and slice. Reference URLs, trusted domains, environment egress policy and wildcard provider domains grant no access.",
+      "source_refs": [
+        "demo_metadata#/metadata_result/latest_visible_deployment",
+        "staging_guard",
+        "firm_runbook"
+      ]
+    },
+    "read_only_cost_ceiling_and_expiry_hkt": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "packet_timezone": "Asia/Hong_Kong",
+        "currency": "OWNER_REQUIRED",
+        "amount": "OWNER_REQUIRED",
+        "window": "OWNER_REQUIRED",
+        "expiry_hkt": "OWNER_REQUIRED",
+        "approver": "OWNER_REQUIRED",
+        "prior_metadata_window_reusable": false
+      },
+      "remaining_owner_input": "Explicit currency, amount, HKT window/expiry and approver. Prior 2026-10-25 metadata authorization/window is closed; copied limits are unapproved.",
+      "source_refs": [
+        "demo_metadata#/window_closed_for_further_requests"
+      ]
+    },
+    "cleanup_manifest_and_disposition": {
+      "status": "OWNER_REQUIRED",
+      "selected_binding": "OWNER_REQUIRED",
+      "repository_known": {
+        "proposed_disposition": "RETAIN_ONLY",
+        "resources_created_this_pass": 0,
+        "sessions_opened_this_pass": 0,
+        "delete_reset_suspend_revoke_signout_authorized": false
+      },
+      "remaining_owner_input": "Owner sign-off on retain-only disposition and exact references for any future sessions; this pass has no runtime resource/session IDs to clean up.",
+      "source_refs": [
+        "demo_metadata#/forbidden_actions"
+      ]
+    }
+  },
+  "public_config_contracts": {
+    "status": "REPOSITORY_CONTRACTS_ONLY_NOT_APPLIED",
+    "environment_labels": [
+      "production",
+      "preview",
+      "development"
+    ],
+    "environment_label_source_refs": [
+      "production_vercel#/related_binding_metadata"
+    ],
+    "runtime_binding_names": [
+      "FIRM_ID",
+      "NEON_AUTH_URL",
+      "DATABASE_URL",
+      "HYPERDRIVE",
+      "DOCUMENTS_BUCKET",
+      "R2_ACCOUNT_ID",
+      "R2_BUCKET_NAME",
+      "R2_ENDPOINT"
+    ],
+    "feature_flags": [
+      {
+        "name": "VITE_ENABLE_DEMO_AUTH",
+        "source_refs": [
+          "data_mode"
+        ],
+        "repository_behavior": "Only true in a non-production build selects local demo data; it is not Native Auth evidence."
+      },
+      {
+        "name": "VITE_PROVIDER_MODE",
+        "allowed_values": [
+          "local",
+          "simulated",
+          "live"
+        ],
+        "source_refs": [
+          "provider_mode"
+        ],
+        "repository_behavior": "Absent/blank defaults to live; local rejected for production builds; simulated restricted to FIRM_ID=kossilon-demo. Actual selected-target value OWNER_REQUIRED."
+      },
+      {
+        "name": "VITE_ENABLE_NEON_AUTH_DEMO",
+        "source_refs": [
+          "demo_runbook",
+          "demo_validator"
+        ],
+        "repository_behavior": "Demo runbook/validator requires true with simulated providers; this is not proof of a configured runtime flag."
+      },
+      {
+        "name": "FIRM_ID / DEMO_FIRM_ID",
+        "documented_demo_value": "kossilon-demo",
+        "source_refs": [
+          "demo_runbook",
+          "demo_validator"
+        ],
+        "repository_behavior": "Demo contract only; selected Native firm binding OWNER_REQUIRED."
+      },
+      {
+        "name": "MAINTENANCE_SCHEDULER_OWNER",
+        "template_value": "paused",
+        "source_refs": [
+          "worker_template",
+          "runtime_bindings"
+        ],
+        "repository_behavior": "Template paused; capability reports cloudflare or vercel with CRON_SECRET. No actual scheduler selected or activated."
+      }
+    ],
+    "deployment_hold": {
+      "source_ref": "vercel_config",
+      "path": "git.deploymentEnabled.main",
+      "value": false
+    },
+    "cron_contract": {
+      "source_refs": [
+        "vercel_config",
+        "worker_template"
+      ],
+      "path": "/api/cron/maintenance",
+      "schedule": "*/5 * * * *",
+      "gate": "Gate B / AP-11; not called or observed"
+    },
+    "secret_slots": {
+      "DATABASE_URL": "OWNER_REQUIRED",
+      "NEON_AUTH_COOKIE_SECRET": "OWNER_REQUIRED",
+      "R2_ACCESS_KEY_ID": "OWNER_REQUIRED",
+      "R2_SECRET_ACCESS_KEY": "OWNER_REQUIRED",
+      "WOZTELL_ACCESS_TOKEN": "OWNER_REQUIRED",
+      "WOZTELL_WEBHOOK_SECRET": "OWNER_REQUIRED",
+      "RESEND_API_KEY": "OWNER_REQUIRED",
+      "CRON_SECRET": "OWNER_REQUIRED",
+      "DOCUMENT_SCANNER_API_KEY": "OWNER_REQUIRED",
+      "DOCUMENT_AI_API_KEY": "OWNER_REQUIRED",
+      "QA_SESSION_MATERIAL": "OWNER_REQUIRED"
+    },
+    "secret_note": "Names only. No secret values read, copied or invented. NOT_IN_ENV is not claimed: ComSec environment values were not inspected."
+  },
+  "gate_b_status": "NOT_READY_UNCHANGED",
+  "all_14_gate_a_actual_alias_ids": "OWNER_REQUIRED",
+  "ap_01_ro_1": {
+    "authorized": false,
+    "executed": false
+  },
+  "original_reviewed_repository_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
+  "original_candidate_source_sha": "79ad0c04da892ec03601f11c12d82fcc84039b31"
+}
