@@ -1,0 +1,51 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/routes/-work-queue.interaction.test.tsx (30 tests) 4868ms
+     ✓ UC130: rereads manager A's assignment before manager B can deliberately confirm again (0)  603ms
+     ✓ refuses confirmation and retains input when explicit recovery returns missing  311ms
+ ✓ |unit| src/routes/-upload-resume.interaction.test.tsx (12 tests) 2203ms
+   ✓ reuses one logical upload after a near-limit PDF commits but its response is lost  1327ms
+ ✓ |unit| src/routes/-whatsapp-data-mode.test.tsx (7 tests) 1054ms
+     ✓ still renders the automation screen through the parent outlet in production mode  721ms
+ ✓ |unit| src/routes/-today.interaction.test.tsx (4 tests) 526ms
+     ✓ uses server totals and offers explicit next-page navigation  448ms
+ ✓ |unit| src/routes/-settings-templates.test.tsx (2 tests) 288ms
+ ✓ |unit| src/routes/-settings.interaction.test.tsx (5 tests) 165ms
+stdout | src/server/cron-wiring.test.ts > runScheduledMaintenanceForWorker > does not run if Vercel owns the slot or the owner is missing
+scheduled maintenance skipped { owner: 'vercel', source: 'cloudflare' }
+
+stdout | src/server/cron-wiring.test.ts > runScheduledMaintenanceForWorker > does not run if Vercel owns the slot or the owner is missing
+scheduled maintenance skipped { owner: 'paused', source: 'cloudflare' }
+
+stdout | src/server/cron-wiring.test.ts > runScheduledMaintenanceForWorker > converts the scheduled time into the maintenance clock
+scheduled maintenance { runId: '495a3900-1e4f-4921-b1ab-8ca0611ffad0', recorded: true }
+
+ ✓ |unit| src/server/cron-wiring.test.ts (11 tests) 52ms
+ ✓ |unit| src/server/db/client.test.ts (1 test) 24ms
+ ✓ |unit| src/server/db/production-schema.test.ts (8 tests) 5ms
+ ✓ |unit| src/server/cron.test.ts (4 tests) 6ms
+ ✓ |unit| src/routes/-work-queue-case-links.test.tsx (4 tests) 3ms
+ ✓ |unit| src/routes/-settings-sections.test.ts (3 tests) 3ms
+
+ Test Files  12 passed (12)
+      Tests  91 passed (91)
+   Start at  12:21:17
+   Duration  23.31s (transform 3.82s, setup 0ms, import 7.20s, tests 9.20s, environment 4.39s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/routes/-work-queue.interaction.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+stderr | src/server/cron-wiring.test.ts > runScheduledMaintenanceForWorker > rethrows so a failed run is visible to the platform
+scheduled maintenance failed {
+  runId: '493b102a-dd43-465d-9176-96f44ad80f10',
+  phase: 'start_or_record'
+}
+

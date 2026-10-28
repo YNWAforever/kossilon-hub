@@ -1,0 +1,40 @@
+diff --git a/docs/audit-remediation/cosec-20261023-79d324f0/R19-review3-case-detail-before.tsx.txt b/src/features/annual-return/components/production-case-detail.tsx
+index f957fdc..976c70d 100644
+--- a/docs/audit-remediation/cosec-20261023-79d324f0/R19-review3-case-detail-before.tsx.txt
++++ b/src/features/annual-return/components/production-case-detail.tsx
+@@ -93,16 +93,16 @@ export function ProductionAnnualReturnCaseDetail(props: CaseDetailProps) {
+   // A truncated or hand-edited link can never name a case. Asking the server
+   // anyway only fails schema validation, which the query retried behind an
+   // endless loading state before showing the raw validation error.
+-  if (parseEntityId(props.caseId) === null) return <CaseNotFound />;
++  if (parseEntityId(props.caseId) === null) return <CaseNotFound returnTo={props.returnTo} />;
+   return <CaseDetail {...props} />;
+ }
+ 
+-function CaseNotFound() {
++function CaseNotFound({ returnTo }: Pick<CaseDetailProps, "returnTo">) {
+   return (
+     <main className="flex-1 space-y-3 p-6">
+       <PageHeader eyebrow="案件與客戶" title="找不到案件" />
+       <Button asChild>
+-        <Link to="/annual-returns">返回周年申報</Link>
++        <a href={caseReturnPath(returnTo)}>返回工作列表</a>
+       </Button>
+     </main>
+   );
+@@ -229,13 +229,13 @@ function CaseDetail({
+           {caseQuery.error.message}
+         </p>
+         <Button asChild>
+-          <Link to="/annual-returns">返回周年申報</Link>
++          <a href={caseReturnPath(returnTo)}>返回工作列表</a>
+         </Button>
+       </main>
+     );
+   }
+ 
+-  if (!caseItem) return <CaseNotFound />;
++  if (!caseItem) return <CaseNotFound returnTo={returnTo} />;
+ 
+   const readiness = readinessForCase(caseItem);
+   const packetReady = readiness.readyToPrepare && Boolean(readiness.sourceVersion);

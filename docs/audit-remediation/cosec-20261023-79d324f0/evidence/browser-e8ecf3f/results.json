@@ -1,0 +1,549 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.local.config.ts"
+    ],
+    "configFile": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\playwright.local.config.ts",
+    "rootDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\local-evidence-guard.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/.worktrees/local-browser-runs/run-tIPFJd/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile390",
+        "name": "mobile390",
+        "testDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "local-ux.spec.ts",
+          "performance.spec.ts",
+          "audit-release-demo.spec.ts",
+          "audit-persona-local.spec.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/.worktrees/local-browser-runs/run-tIPFJd/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "desktop1280",
+        "name": "desktop1280",
+        "testDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "local-ux.spec.ts",
+          "performance.spec.ts",
+          "audit-release-demo.spec.ts",
+          "audit-persona-local.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-tIPFJd\\results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "npm run dev -- --host 127.0.0.1 --port 5180",
+      "url": "http://127.0.0.1:5180",
+      "reuseExistingServer": false,
+      "timeout": 30000,
+      "env": {
+        "VITE_ENABLE_DEMO_AUTH": "true"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "audit-persona-local.spec.ts",
+      "file": "audit-persona-local.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "LOCAL demo rejects a Staff session labelled as Admin despite the same dashboard landing",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile390",
+              "projectName": "mobile390",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5771,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-22T22:20:15.204Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7fd4ddcd093037ed411a-95f806f001415373a140",
+          "file": "audit-persona-local.spec.ts",
+          "line": 4,
+          "column": 1
+        },
+        {
+          "title": "LOCAL demo rejects a Staff session labelled as Admin despite the same dashboard landing",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop1280",
+              "projectName": "desktop1280",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2520,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-22T22:20:32.678Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7fd4ddcd093037ed411a-52bb5f3faba2c4a6f607",
+          "file": "audit-persona-local.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "audit-release-demo.spec.ts",
+      "file": "audit-release-demo.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "LOCAL supplemental: real DOCX parser retains paragraphs, Unicode and literal markup",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile390",
+              "projectName": "mobile390",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 957,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-22T22:20:21.353Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5931e566e1b912bdf178-523ddffa93c40dab9c52",
+          "file": "audit-release-demo.spec.ts",
+          "line": 5,
+          "column": 1
+        },
+        {
+          "title": "LOCAL supplemental: real PDF parser and worker extract a synthetic file without a provider claim",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile390",
+              "projectName": "mobile390",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1828,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-22T22:20:22.321Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5931e566e1b912bdf178-6efbead3ba4947cb03d8",
+          "file": "audit-release-demo.spec.ts",
+          "line": 39,
+          "column": 1
+        },
+        {
+          "title": "LOCAL supplemental: real DOCX parser retains paragraphs, Unicode and literal markup",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop1280",
+              "projectName": "desktop1280",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 554,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-22T22:20:35.558Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5931e566e1b912bdf178-285230d01db2da61a6ba",
+          "file": "audit-release-demo.spec.ts",
+          "line": 5,
+          "column": 1
+        },
+        {
+          "title": "LOCAL supplemental: real PDF parser and worker extract a synthetic file without a provider claim",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop1280",
+              "projectName": "desktop1280",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1075,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-22T22:20:36.124Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5931e566e1b912bdf178-910260819f5622f2dbd0",
+          "file": "audit-release-demo.spec.ts",
+          "line": 39,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "local-ux.spec.ts",
+      "file": "local-ux.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Admin daily entry, all links, keyboard drawer, readable settings and touch targets",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile390",
+              "projectName": "mobile390",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4502,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-22T22:20:24.182Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ea112186568907ef3893-7096f3019ec636a427c2",
+          "file": "local-ux.spec.ts",
+          "line": 4,
+          "column": 1
+        },
+        {
+          "title": "Staff retains daily links while Admin settings/actions stay hidden",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile390",
+              "projectName": "mobile390",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 961,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-22T22:20:28.694Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ea112186568907ef3893-397890f0cad6be022d29",
+          "file": "local-ux.spec.ts",
+          "line": 64,
+          "column": 1
+        },
+        {
+          "title": "Admin daily entry, all links, keyboard drawer, readable settings and touch targets",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop1280",
+              "projectName": "desktop1280",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1269,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-22T22:20:37.226Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ea112186568907ef3893-565b5baa862884b1148c",
+          "file": "local-ux.spec.ts",
+          "line": 4,
+          "column": 1
+        },
+        {
+          "title": "Staff retains daily links while Admin settings/actions stay hidden",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop1280",
+              "projectName": "desktop1280",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1289,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-22T22:20:38.505Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ea112186568907ef3893-ff4daa72d4815256e9b9",
+          "file": "local-ux.spec.ts",
+          "line": 64,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "performance.spec.ts",
+      "file": "performance.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "captures actual local demo browser timing and parser network boundaries",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile390",
+              "projectName": "mobile390",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1985,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-22T22:20:29.684Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b15d6361b2fc38288977-23413778301be1e3e845",
+          "file": "performance.spec.ts",
+          "line": 3,
+          "column": 1
+        },
+        {
+          "title": "captures actual local demo browser timing and parser network boundaries",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop1280",
+              "projectName": "desktop1280",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1411,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-22T22:20:39.815Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b15d6361b2fc38288977-b87ec729afd0fd7ac147",
+          "file": "performance.spec.ts",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-22T22:20:06.653Z",
+    "duration": 35049.227,
+    "expected": 12,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,4 @@
+86f5d9dcf847c5b3d80d4ff7adf0e124880c2ef71b59e5d7e89a2358d50191df  src/routes/operations.tsx
+1e2f440a3fd13abed625f5d69ee556241b296bbec49171c6ce49ef9b4a49e0de  src/routes/-operations.interaction.test.tsx
+e73af64509ffb2928f97bf4ab501b7349ad6ee65ffb86935a0b8ce6d17a1d055  src/routes/-settings-templates.test.tsx
+62fccaa865d5885cbf50234cdceb3cdedae2314ec1e83006c5077dc339163d4b  src/features/nar-import/apply-server.test.ts

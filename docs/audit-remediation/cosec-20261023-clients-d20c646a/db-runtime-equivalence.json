@@ -1,0 +1,12 @@
+{
+  "path": "src/features/clients/create-recovery.integration.test.ts",
+  "before_snapshot": "db-contract-before-type-fix.ts.snapshot",
+  "before_sha256": "be74c9a68b2e09e91f241eca3e9ed882be0afb9b1bd059e785d87686776a3b41",
+  "after_sha256": "299a9bd046e4d7e45be89c4db12ec394bf7d8b675759eff6a433611294ccc24e",
+  "emitted_javascript_sha256": "7c6c53c1bcd594eec9983463b07da529871657426bc4f6382a3b5a97e25a29cd",
+  "typescript_version": "5.9.3",
+  "remove_comments": true,
+  "runtime_equal": true,
+  "reason": "Two type annotations plus scoped cleanup lint directive; comments excluded from byte comparison, no runtime changes",
+  "db_not_repeated_after_type_only_change": true
+}

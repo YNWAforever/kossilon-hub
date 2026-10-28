@@ -1,0 +1,14 @@
+{
+  "production_current_verified": false,
+  "run_id": "cosec-20261023-79d324f0",
+  "repository": "https://github.com/YNWAforever/kossilon-hub",
+  "source_manifest": "source-final-freeze.json",
+  "release_gate": "NO_GO",
+  "auth_runtime_verified": false,
+  "source_manifest_sha256": "547a53e3a58f21f85c7dfea8c74fa50fe5537003a985c736e1d25bd11028b783",
+  "production_sha_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "branch": "codex/cosec-20261023",
+  "base_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "phase": "LOCAL_COMMITTED_CANDIDATE_FINAL_CHECKS_RUNNING",
+  "source_sha": "8bc1e0dea88c5796c37b2f32a781fac7aab31774"
+}

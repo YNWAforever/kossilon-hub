@@ -19,7 +19,7 @@ vi.mock("@/features/clients/server-fns", () => ({
   getClient: clientServerFns.getClient,
 }));
 
-const companies = [{ id: "company-1", companyName: "Test Co Ltd" }];
+const companies = [{ id: "f7337fb9-0166-4166-8166-000000000001", companyName: "Test Co Ltd" }];
 
 describe("CreateCorporateChangeRequestDialog", () => {
   beforeEach(() => {
@@ -46,7 +46,9 @@ describe("CreateCorporateChangeRequestDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("公司"), { target: { value: "company-1" } });
+    fireEvent.change(screen.getByLabelText("公司"), {
+      target: { value: "f7337fb9-0166-4166-8166-000000000001" },
+    });
     fireEvent.change(screen.getByLabelText("變更類別"), {
       target: { value: "address_change" },
     });
@@ -60,7 +62,7 @@ describe("CreateCorporateChangeRequestDialog", () => {
       expect(serverFns.createCorporateChangeRequest).toHaveBeenCalledWith({
         data: expect.objectContaining({
           changeType: "address_change",
-          companyId: "company-1",
+          companyId: "f7337fb9-0166-4166-8166-000000000001",
           quotedFee: 2800,
           newRegisteredOffice: "88 New Road, Hong Kong",
         }),
@@ -79,10 +81,10 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
     serverFns.createCorporateChangeRequest.mockReset();
     clientServerFns.getClient.mockReset();
     clientServerFns.getClient.mockResolvedValue({
-      id: "company-1",
+      id: "f7337fb9-0166-4166-8166-000000000001",
       officers: [
         {
-          id: "officer-1",
+          id: "f7337fb9-0166-4166-8166-000000000005",
           name: "Existing Director",
           officerType: "director",
           cessationDate: null,
@@ -90,7 +92,7 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
       ],
       shareholdings: [
         {
-          id: "holding-1",
+          id: "f7337fb9-0166-4166-8166-000000000002",
           shareholderName: "Existing Holder",
           numberOfShares: 1000,
           cessationDate: null,
@@ -114,19 +116,23 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("公司"), { target: { value: "company-1" } });
+    fireEvent.change(screen.getByLabelText("公司"), {
+      target: { value: "f7337fb9-0166-4166-8166-000000000001" },
+    });
     fireEvent.change(screen.getByLabelText("變更類別"), {
       target: { value: "share_transfer" },
     });
 
     await waitFor(() => {
-      expect(clientServerFns.getClient).toHaveBeenCalledWith({ data: { id: "company-1" } });
+      expect(clientServerFns.getClient).toHaveBeenCalledWith({
+        data: { id: "f7337fb9-0166-4166-8166-000000000001" },
+      });
     });
     await screen.findByRole("option", { name: /existing holder/i, hidden: true });
 
     fireEvent.change(screen.getByLabelText("報價（HKD）"), { target: { value: "2500" } });
     fireEvent.change(screen.getByLabelText("轉讓人股權"), {
-      target: { value: "holding-1" },
+      target: { value: "f7337fb9-0166-4166-8166-000000000002" },
     });
     fireEvent.click(screen.getByLabelText("新股東"));
     fireEvent.change(screen.getByLabelText("新股東名稱"), {
@@ -141,7 +147,7 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
       expect(serverFns.createCorporateChangeRequest).toHaveBeenCalledWith({
         data: expect.objectContaining({
           changeType: "share_transfer",
-          transferorShareholdingId: "holding-1",
+          transferorShareholdingId: "f7337fb9-0166-4166-8166-000000000002",
           transfereeShareholdingId: null,
           transfereeNewShareholderName: "New Holder",
           sharesTransferred: 400,
@@ -168,19 +174,25 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("公司"), { target: { value: "company-1" } });
+    fireEvent.change(screen.getByLabelText("公司"), {
+      target: { value: "f7337fb9-0166-4166-8166-000000000001" },
+    });
     fireEvent.change(screen.getByLabelText("變更類別"), {
       target: { value: "officer_change" },
     });
 
     await waitFor(() => {
-      expect(clientServerFns.getClient).toHaveBeenCalledWith({ data: { id: "company-1" } });
+      expect(clientServerFns.getClient).toHaveBeenCalledWith({
+        data: { id: "f7337fb9-0166-4166-8166-000000000001" },
+      });
     });
 
     fireEvent.change(screen.getByLabelText("報價（HKD）"), { target: { value: "1200" } });
     fireEvent.change(screen.getByLabelText("高級人員變更事項"), { target: { value: "resign" } });
     await screen.findByRole("option", { name: /existing director/i, hidden: true });
-    fireEvent.change(screen.getByLabelText("高級人員"), { target: { value: "officer-1" } });
+    fireEvent.change(screen.getByLabelText("高級人員"), {
+      target: { value: "f7337fb9-0166-4166-8166-000000000005" },
+    });
     fireEvent.change(screen.getByLabelText("生效日期"), {
       target: { value: "2026-09-01" },
     });
@@ -191,7 +203,7 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
         data: expect.objectContaining({
           changeType: "officer_change",
           officerAction: "resign",
-          officerId: "officer-1",
+          officerId: "f7337fb9-0166-4166-8166-000000000005",
           effectiveDate: "2026-09-01",
         }),
       });
@@ -202,8 +214,8 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
   it("clears the previously selected transferor shareholding when the company is switched", async () => {
     const onCreated = vi.fn();
     const twoCompanies = [
-      { id: "company-1", companyName: "Test Co Ltd" },
-      { id: "company-2", companyName: "Second Co Ltd" },
+      { id: "f7337fb9-0166-4166-8166-000000000001", companyName: "Test Co Ltd" },
+      { id: "f7337fb9-0166-4166-8166-000000000004", companyName: "Second Co Ltd" },
     ];
 
     render(
@@ -217,19 +229,23 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("公司"), { target: { value: "company-1" } });
+    fireEvent.change(screen.getByLabelText("公司"), {
+      target: { value: "f7337fb9-0166-4166-8166-000000000001" },
+    });
     fireEvent.change(screen.getByLabelText("變更類別"), {
       target: { value: "share_transfer" },
     });
 
     await waitFor(() => {
-      expect(clientServerFns.getClient).toHaveBeenCalledWith({ data: { id: "company-1" } });
+      expect(clientServerFns.getClient).toHaveBeenCalledWith({
+        data: { id: "f7337fb9-0166-4166-8166-000000000001" },
+      });
     });
     await screen.findByRole("option", { name: /existing holder/i, hidden: true });
 
     fireEvent.change(screen.getByLabelText("報價（HKD）"), { target: { value: "2500" } });
     fireEvent.change(screen.getByLabelText("轉讓人股權"), {
-      target: { value: "holding-1" },
+      target: { value: "f7337fb9-0166-4166-8166-000000000002" },
     });
     fireEvent.change(screen.getByLabelText("新股東名稱"), {
       target: { value: "New Holder" },
@@ -243,9 +259,11 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
     );
 
     // Switching companies must clear the shareholding selected against the previous company's
-    // register — otherwise the form could submit companyId: company-2 paired with a
-    // shareholding id that actually belongs to company-1.
-    fireEvent.change(screen.getByLabelText("公司"), { target: { value: "company-2" } });
+    // register — otherwise the form could submit companyId: f7337fb9-0166-4166-8166-000000000004 paired with a
+    // shareholding id that actually belongs to f7337fb9-0166-4166-8166-000000000001.
+    fireEvent.change(screen.getByLabelText("公司"), {
+      target: { value: "f7337fb9-0166-4166-8166-000000000004" },
+    });
 
     await waitFor(() => {
       expect((screen.getByLabelText("轉讓人股權") as HTMLSelectElement).value).toBe("");
@@ -270,13 +288,17 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("公司"), { target: { value: "company-1" } });
+    fireEvent.change(screen.getByLabelText("公司"), {
+      target: { value: "f7337fb9-0166-4166-8166-000000000001" },
+    });
     fireEvent.change(screen.getByLabelText("變更類別"), {
       target: { value: "officer_change" },
     });
 
     await waitFor(() => {
-      expect(clientServerFns.getClient).toHaveBeenCalledWith({ data: { id: "company-1" } });
+      expect(clientServerFns.getClient).toHaveBeenCalledWith({
+        data: { id: "f7337fb9-0166-4166-8166-000000000001" },
+      });
     });
 
     fireEvent.change(screen.getByLabelText("報價（HKD）"), { target: { value: "1200" } });
@@ -284,7 +306,9 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
       target: { value: "detail_change" },
     });
     await screen.findByRole("option", { name: /existing director/i, hidden: true });
-    fireEvent.change(screen.getByLabelText("高級人員"), { target: { value: "officer-1" } });
+    fireEvent.change(screen.getByLabelText("高級人員"), {
+      target: { value: "f7337fb9-0166-4166-8166-000000000005" },
+    });
     fireEvent.change(screen.getByLabelText("生效日期"), {
       target: { value: "2026-09-01" },
     });

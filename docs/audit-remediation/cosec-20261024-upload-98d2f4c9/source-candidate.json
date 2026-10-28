@@ -1,0 +1,72 @@
+{
+  "source_sha": "12305610d661418f60fdcaf17a24ef7371280822",
+  "parent_sha": "71dd6d003ffbcefc98e32eb8845e58c2c6eb217d",
+  "tested_head": "71dd6d003ffbcefc98e32eb8845e58c2c6eb217d",
+  "paths": [
+    "src/features/documents/repository.ts",
+    "src/features/documents/server-fns.ts",
+    "src/features/documents/upload-resume.integration.test.ts",
+    "src/features/documents/upload-resume.test.ts",
+    "src/features/documents/upload-resume.ts",
+    "src/features/documents/upload-retry.test.ts",
+    "src/routes/-upload-resume.interaction.test.tsx",
+    "src/routes/portal.tsx",
+    "src/test/db-integration-files.ts"
+  ],
+  "files": [
+    {
+      "path": "src/features/documents/repository.ts",
+      "bytes": 55472,
+      "sha256": "3bbbca6dd552fb4ee247b8aa28120c89bd76db414aae4a68756c5a527d61bc2b"
+    },
+    {
+      "path": "src/features/documents/server-fns.ts",
+      "bytes": 29097,
+      "sha256": "14c3f83a1e092b96ea88b51ab7e36af1b0fdeb2a6e83459774b8a7e156d68e91"
+    },
+    {
+      "path": "src/features/documents/upload-resume.integration.test.ts",
+      "bytes": 48345,
+      "sha256": "803c0f2bdfefeec8b244076b08a5e5311a8633394b04c42e29298b1d95b6199c"
+    },
+    {
+      "path": "src/features/documents/upload-resume.test.ts",
+      "bytes": 2919,
+      "sha256": "ef543231575020152f18166a7e3af37c12bde45f7cdaed6c5369d76ef09be844"
+    },
+    {
+      "path": "src/features/documents/upload-resume.ts",
+      "bytes": 2346,
+      "sha256": "6c91192f2a22e907446f7986d162339d706120aa5e268ad733bcb2e5990b3764"
+    },
+    {
+      "path": "src/features/documents/upload-retry.test.ts",
+      "bytes": 15411,
+      "sha256": "b8b0c86ab28cf3275400fe540352cb993ec675848f12083f92774878bceeba37"
+    },
+    {
+      "path": "src/routes/-upload-resume.interaction.test.tsx",
+      "bytes": 13317,
+      "sha256": "1a0593256939695a8aa70e29cd844286bc80a2bafd6e5f8210a15eb58712b13b"
+    },
+    {
+      "path": "src/routes/portal.tsx",
+      "bytes": 46583,
+      "sha256": "ff12286d4fdf3bc94d6cb5256fdc59c619a0e092f0d364cbfb794f45bf899133"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "bytes": 3258,
+      "sha256": "98f62ef7b6962627b29f37b88d6c6be5a2e7014392c4c4ec4ee8a4263f254b61"
+    }
+  ],
+  "source_freeze": "source-final-verified.json",
+  "source_files_verified": 648,
+  "all_final_checked_source_bytes_equal_committed": true,
+  "production_changes": [
+    "src/features/documents/repository.ts",
+    "src/features/documents/server-fns.ts",
+    "src/features/documents/upload-resume.ts",
+    "src/routes/portal.tsx"
+  ]
+}

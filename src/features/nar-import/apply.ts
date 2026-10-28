@@ -12,6 +12,7 @@ import {
 export type { NarRowInputs, NarPreviewItem } from "./apply-contracts";
 import { getSqlClient, type SqlClient } from "@/server/db/client";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import { lockStaffLifecycleShared } from "@/features/auth/staff-lifecycle";
 import { createAnnualReturnRepository } from "@/features/annual-return/repository";
 import { calculateFilingDueDate } from "@/features/annual-return/workflow";
 import { hongKongBusinessDate } from "@/lib/hong-kong-time";
@@ -332,6 +333,7 @@ export async function applyNarRow(
   c: Context,
   item: NarPreviewItem,
 ) {
+  await lockStaffLifecycleShared(tx);
   await requireCurrentNarAdmin(tx, actor, true);
   const target = item.candidate;
   if (!target.companyId || !target.returnYear || !target.madeUpDate || !target.filingDueDate)
@@ -496,6 +498,8 @@ export function createNarApplyRepository({
       let attemptedRowId: string | undefined;
       try {
         return await sql.begin(async (tx) => {
+          // Admit before ownJob/context take actor, job and domain row locks.
+          await lockStaffLifecycleShared(tx);
           const job = await ownJob(tx, actor, jobId, true);
           if (job.state === "cancelled") return false;
           const [r] = await tx<

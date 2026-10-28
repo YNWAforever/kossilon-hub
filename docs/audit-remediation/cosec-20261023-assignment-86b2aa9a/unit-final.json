@@ -1,0 +1,39 @@
+{
+  "kind": "unit",
+  "attempt": "final",
+  "started": "2026-10-23T12:02:46.836Z",
+  "finished": "2026-10-23T12:07:41.748Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "--maxWorkers",
+    "1"
+  ],
+  "exit_code": 0,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ]
+}

@@ -88,6 +88,89 @@ async function fixture(
   }
 }
 describe.skipIf(!url)("actual PostgreSQL resumable bulk assignments", () => {
+  it("R18 draft snapshots intersect displayed case IDs with current actor scope", async () =>
+    fixture(4, async (f) => {
+      const foreignId = crypto.randomUUID();
+      f.caseIds.push(foreignId); // Include this test-owned row in the existing exact-ID cleanup.
+      await sql!`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,current_status,risk_level,owner_id) values(${foreignId},${f.foreignCompanyId},2026,'2026-10-01','2026-11-12','Upcoming','green',${f.assigneeId})`;
+      const repo = createBulkOperationsRepository({ sql: sql! });
+      const draftCaseIds = [f.caseIds[0], f.caseIds[2], foreignId, f.caseIds[0]];
+      const snapshot = await repo.createSnapshot(f.actor, {
+        resource: "annual_return_case",
+        filters: { draftCaseIds },
+      });
+      expect(snapshot.count).toBe(2);
+      const membership = await repo.snapshotMembership(f.actor, {
+        snapshotId: snapshot.snapshotId,
+        ids: f.caseIds,
+      });
+      expect(membership.ids.sort()).toEqual([f.caseIds[0], f.caseIds[2]].sort());
+      const [stored] =
+        await sql!`select actor_user_id,auth_user_id,filters,items,snapshot_hash,expires_at>created_at valid_expiry from bulk_selection_snapshots where id=${snapshot.snapshotId}`;
+      expect(stored.actor_user_id).toBe(f.actor.userId);
+      expect(stored.auth_user_id).toBe(f.actor.authUserId);
+      expect(stored.filters).toEqual({ draftCaseIds });
+      expect(stored.items.map((item: { id: string }) => item.id).sort()).toEqual(
+        [f.caseIds[0], f.caseIds[2]].sort(),
+      );
+      expect(stored.snapshot_hash).toBe(snapshot.snapshotHash);
+      expect(stored.valid_expiry).toBe(true);
+      const preview = await repo.preview(f.actor, {
+        resource: "annual_return_case",
+        selection: {
+          mode: "filtered_snapshot",
+          snapshotId: snapshot.snapshotId,
+          excludedIds: [f.caseIds[0]],
+        },
+        assignment: { target: "owner", assigneeId: f.assigneeId },
+      });
+      expect(preview.count).toBe(1);
+    }));
+  it("R18 empty draft restriction cannot expand to every annual-return case", async () =>
+    fixture(3, async (f) => {
+      const repo = createBulkOperationsRepository({ sql: sql! });
+      const snapshot = await repo.createSnapshot(f.actor, {
+        resource: "annual_return_case",
+        filters: { draftCaseIds: [] },
+      });
+      expect(snapshot.count).toBe(0);
+      expect(
+        await repo.snapshotMembership(f.actor, { snapshotId: snapshot.snapshotId, ids: f.caseIds }),
+      ).toEqual({ ids: [] });
+      const preview = await repo.preview(f.actor, {
+        resource: "annual_return_case",
+        selection: { mode: "filtered_snapshot", snapshotId: snapshot.snapshotId, excludedIds: [] },
+        assignment: { target: "owner", assigneeId: f.assigneeId },
+      });
+      expect(preview.count).toBe(0);
+      expect(preview.eligibleCount).toBe(0);
+    }));
+  it("R18 job metadata comes from the persisted approval and progress timestamps", async () =>
+    fixture(2, async (f) => {
+      const repo = createBulkOperationsRepository({ sql: sql! });
+      const preview = await repo.preview(f.actor, {
+        resource: "annual_return_case",
+        selection: { mode: "explicit_ids", ids: f.caseIds },
+        assignment: { target: "owner", assigneeId: f.assigneeId },
+      });
+      const job = await repo.execute(f.actor, {
+        previewId: preview.previewId,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      const result = await repo.getJob(f.actor, { jobId: job.jobId });
+      expect(result).toMatchObject({
+        resource: "annual_return_case",
+        operation: "assignment",
+        assignmentTarget: "owner",
+        createdBy: f.actor.userId,
+        payloadHash: preview.payloadHash,
+        state: "queued",
+        total: 2,
+        counts: { pending: 2 },
+      });
+      expect(Number.isFinite(Date.parse(result.createdAt))).toBe(true);
+      expect(Number.isFinite(Date.parse(result.updatedAt))).toBe(true);
+    }));
   it("rechecks single-case permission after an observed concurrent profile team move", async () =>
     fixture(1, async (f) => {
       const changing = createSqlClient(url!, { max: 1 }),

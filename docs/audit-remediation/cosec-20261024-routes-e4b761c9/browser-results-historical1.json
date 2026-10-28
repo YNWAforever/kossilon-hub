@@ -1,0 +1,69 @@
+{
+  "run_id": "cosec-20261024-routes-e4b761c9",
+  "attempt": "historical1",
+  "origin": "http://127.0.0.1:5173",
+  "sourceHashes": {
+    "src/routes/incorporation.tsx": "29541fdba3f474e9673b14e57c9cab9f81d5017fc31aaf05a6fb3c933a536e49",
+    "src/routes/incorporation.$id.tsx": "f82d3d046b155c2c990e73199540b4cf52afe288804cba82e1c9856d54782e2f",
+    "src/routes/corporate-changes.tsx": "2dcea7a6599b19646812895b8a181b746adc53a1bc43bc45184dffd617aec248",
+    "src/routes/corporate-changes.$id.tsx": "8a18469afd7d1b4f4b74ed913b027bb1f3392638492836851100fc0c12c7e3f1",
+    "src/features/incorporation/components/production-incorporation-list.tsx": "fd0c8030db35fe9db5b3f11733e6f3a61d1b53dc74b75294ebac5b270fb9932d",
+    "src/features/incorporation/components/production-incorporation-detail.tsx": "6694558aa3359b258a31dbff2eb8da87f07bb053f8772ba48c650ef46eb4c01d",
+    "src/features/corporate-changes/components/production-corporate-change-list.tsx": "f337f1abb2fa23be9c7cda111938b1007576ee908e54526d90d9c6579474d6a3",
+    "src/features/corporate-changes/components/production-corporate-change-detail.tsx": "8102208bae797c18dc0458aa1dad65ef45650e2c381d364d31660647cfc07282",
+    "src/test/case-route-fixtures.ts": "126098bde1768ed593a2bb12f210e3b946154c737db67302229f9456b578245d"
+  },
+  "historical_overlay": true,
+  "browser_version": "155.0.4283.62",
+  "results": [
+    {
+      "name": "UC160 /incorporation link -> detail -> Back -> Forward -> real reload",
+      "status": "failed",
+      "error": "expect(locator).toBeVisible() failed\n\nLocator: getByText('QA Office 1', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByText('QA Office 1', { exact: true }) with timeout 5000ms\n  - waiting for getByText('QA Office 1', { exact: true })\n",
+      "url": "http://127.0.0.1:5173/incorporation/e4b761c9-0160-4160-8160-000000000001?returnTo=%2Fincorporation%3Fq%3DQA%26sort%3Dcompany%26cursor%3DQA-page3",
+      "dom": "案件與客戶\n\n公司註冊\n\n新香港公司註冊受理，由開立案件至公司註冊處批核。\n\n開始公司註冊\n搜尋既有案件狀態\n全部狀態\n受理中\n待收文件\n可遞交\n已遞交公司註冊處\n已完成\n負責同事\n全部同事\n期限由期限至排序\n最新建立\n公司名稱\n最早期限\n搜尋案件清除篩選重新整理列表\nQA UC160 1受理中尚餘 38 日Staff A開啟\nQA UC160 2受理中尚餘 38 日Staff A開啟\n回到第一頁下一頁",
+      "reads": []
+    },
+    {
+      "name": "UC160 /corporate-changes link -> detail -> Back -> Forward -> real reload",
+      "status": "failed",
+      "error": "expect(locator).toHaveCount(expected) failed\n\nLocator:  getByRole('form', { name: '案件篩選' })\nExpected: 0\nReceived: 1\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveCount\" getByRole('form', { name: '案件篩選' }) with timeout 5000ms\n  - waiting for getByRole('form', { name: '案件篩選' })\n    14 × locator resolved to 1 element\n       - unexpected value \"1\"\n",
+      "url": "http://127.0.0.1:5173/corporate-changes/e4b761c9-0160-4160-8160-000000000001?returnTo=%2Fcorporate-changes%3Fq%3DQA%26sort%3Dcompany%26cursor%3DQA-page3",
+      "dom": "案件與客戶\n\n公司變更\n\n公司名稱變更、股份轉讓、高級人員變更及註冊辦事處變更。\n\n新增申請\n搜尋既有案件狀態\n全部狀態\n已提出\n待收文件\n可遞交\n已遞交公司註冊處\n已完成\n已取消\n負責同事\n全部同事\n期限由期限至排序\n最新建立\n公司名稱\n最早期限\n搜尋案件清除篩選重新整理列表\n公司\t類別\t狀態\t報價\t負責同事\t期限\nQA UC160 1\t更改註冊辦事處地址\t已提出\tHKD 1,601\t未設定\t未設定\nQA UC160 2\t更改註冊辦事處地址\t已提出\tHKD 1,602\t未設定\t未設定\n回到第一頁下一頁",
+      "reads": []
+    }
+  ],
+  "blocked_external_origins": [],
+  "page_errors": [],
+  "console_errors": [],
+  "http_errors": [],
+  "resolutions": [
+    {
+      "id": "../server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/incorporation/components/production-incorporation-list.tsx"
+    },
+    {
+      "id": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src/features/clients/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/incorporation/components/production-incorporation-list.tsx"
+    },
+    {
+      "id": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src/features/corporate-changes/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/corporate-changes/components/production-corporate-change-list.tsx"
+    },
+    {
+      "id": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src/features/clients/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/corporate-changes/components/production-corporate-change-list.tsx"
+    },
+    {
+      "id": "../server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/incorporation/components/production-incorporation-detail.tsx"
+    },
+    {
+      "id": "../server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/corporate-changes/components/production-corporate-change-detail.tsx"
+    }
+  ],
+  "outer_error": null,
+  "native_auth_http_db": false,
+  "cleanup": "fresh contexts closed; own server/browser closed; no database or shared resources"
+}

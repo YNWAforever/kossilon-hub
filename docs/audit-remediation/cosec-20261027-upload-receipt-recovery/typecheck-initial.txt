@@ -1,0 +1,2 @@
+src/features/documents/server-fns.test.ts(684,8): error TS2339: Property 'mockResolvedValueOnce' does not exist on type '(actor: AuthenticatedActor, subject: DocumentAccessSubject) => Promise<void>'.
+src/features/documents/server-fns.test.ts(697,25): error TS2339: Property 'mockRejectedValue' does not exist on type '(actor: AuthenticatedActor, subject: DocumentAccessSubject) => Promise<void>'.

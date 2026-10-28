@@ -1,0 +1,132 @@
+
+> test
+> vitest run --project unit --maxWorkers 1 src/features/incorporation/repository-read.test.ts
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/incorporation/repository-read.test.ts (8 tests | 8 failed) 12ms
+     × applies the team predicate in SQL before search, ordering, and page bounds 5ms
+     × makes Admin all-team scope explicit instead of accidentally dropping a missing team 1ms
+     × scopes detail in SQL and does not load checklist content for an invisible case 1ms
+     × rejects invalid page bounds {"limit":0} before emitting SQL 2ms
+     × rejects invalid page bounds {"limit":501} before emitting SQL 1ms
+     × rejects invalid page bounds {"limit":1.5} before emitting SQL 0ms
+     × rejects invalid page bounds {"offset":-1} before emitting SQL 0ms
+     × rejects invalid page bounds {"offset":0.5} before emitting SQL 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/incorporation/repository-read.test.ts > incorporation repository read query contracts (unit recorder) > applies the team predicate in SQL before search, ordering, and page bounds
+AssertionError: expected '\n      select\n        ic.id, ic.pro…' to match /where[\s\S]*ic\.team_id[\s\S]*ilike[\…/
+
+- Expected:
+/where[\s\S]*ic\.team_id[\s\S]*ilike[\s\S]*order by ic\.created_at desc, ic\.id desc[\s\S]*limit \?[\s\S]*offset \?/
+
++ Received:
+"
+      select
+        ic.id, ic.proposed_company_name_en, ic.proposed_company_name_zh,
+        ic.proposed_registered_office, ic.proposed_company_secretary, ic.registered_capital,
+        ic.business_nature, ic.status, u.id as owner_id, u.name as owner_name,
+        t.id as team_id, t.name as team_name, ic.target_completion_date, ic.company_id,
+        ic.completed_at, ic.created_at
+      from incorporation_cases ic
+      join users u on u.id = ic.owner_id
+      join teams t on t.id = ic.team_id
+      order by ic.created_at desc
+    "
+
+ ❯ src/features/incorporation/repository-read.test.ts:27:29
+     25|     });
+     26|     expect(queries).toHaveLength(1);
+     27|     expect(queries[0].text).toMatch(/where[\s\S]*ic\.team_id[\s\S]*ili…
+       |                             ^
+     28|     expect(queries[0].values).toContain("team-a");
+     29|     expect(queries[0].values).toContain("owner-a");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |unit| src/features/incorporation/repository-read.test.ts > incorporation repository read query contracts (unit recorder) > makes Admin all-team scope explicit instead of accidentally dropping a missing team
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/features/incorporation/repository-read.test.ts:37:34
+     35|     const { repository, queries } = recorder();
+     36|     await repository.listCases({ kind: "all" });
+     37|     expect(queries[0].values[0]).toBe(true);
+       |                                  ^
+     38|     expect(queries[0].values[1]).toBeNull();
+     39|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |unit| src/features/incorporation/repository-read.test.ts > incorporation repository read query contracts (unit recorder) > scopes detail in SQL and does not load checklist content for an invisible case
+AssertionError: expected '\n      select\n        ic.id, ic.pro…' to match /where ic\.id = \?[\s\S]*ic\.team_id/
+
+- Expected:
+/where ic\.id = \?[\s\S]*ic\.team_id/
+
++ Received:
+"
+      select
+        ic.id, ic.proposed_company_name_en, ic.proposed_company_name_zh,
+        ic.proposed_registered_office, ic.proposed_company_secretary, ic.registered_capital,
+        ic.business_nature, ic.status, u.id as owner_id, u.name as owner_name,
+        t.id as team_id, t.name as team_name, ic.target_completion_date, ic.company_id,
+        ic.completed_at, ic.created_at
+      from incorporation_cases ic
+      join users u on u.id = ic.owner_id
+      join teams t on t.id = ic.team_id
+      where ic.id = ?
+      limit 1
+    "
+
+ ❯ src/features/incorporation/repository-read.test.ts:45:29
+     43|     await expect(repository.getCase("case-b", { kind: "team", teamId: …
+     44|     expect(queries).toHaveLength(1);
+     45|     expect(queries[0].text).toMatch(/where ic\.id = \?[\s\S]*ic\.team_…
+       |                             ^
+     46|     expect(queries[0].values).toEqual(["case-b", false, "team-a"]);
+     47|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |unit| src/features/incorporation/repository-read.test.ts > incorporation repository read query contracts (unit recorder) > rejects invalid page bounds {"limit":0} before emitting SQL
+ FAIL  |unit| src/features/incorporation/repository-read.test.ts > incorporation repository read query contracts (unit recorder) > rejects invalid page bounds {"limit":501} before emitting SQL
+ FAIL  |unit| src/features/incorporation/repository-read.test.ts > incorporation repository read query contracts (unit recorder) > rejects invalid page bounds {"limit":1.5} before emitting SQL
+ FAIL  |unit| src/features/incorporation/repository-read.test.ts > incorporation repository read query contracts (unit recorder) > rejects invalid page bounds {"offset":-1} before emitting SQL
+ FAIL  |unit| src/features/incorporation/repository-read.test.ts > incorporation repository read query contracts (unit recorder) > rejects invalid page bounds {"offset":0.5} before emitting SQL
+AssertionError: promise resolved "[]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[]
+
+ ❯ src/features/incorporation/repository-read.test.ts:53:81
+     51|   ])("rejects invalid page bounds %j before emitting SQL", async (quer…
+     52|     const { repository, queries } = recorder();
+     53|     await expect(repository.listCases({ kind: "team", teamId: "team-a"…
+       |                                                                                 ^
+     54|     expect(queries).toHaveLength(0);
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  04:54:00
+   Duration  367ms (transform 93ms, setup 0ms, import 125ms, tests 12ms, environment 0ms)
+

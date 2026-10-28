@@ -6,7 +6,9 @@ import { caseScopeSql } from "@/features/annual-return/case-scope";
 import { caseAssignmentVersionSql } from "@/features/annual-return/assignment-version";
 import { createWorkItemRepository } from "@/features/work-items/repository";
 import { assignmentDecisionFor } from "@/features/work-items/repository";
+import { workItemSearchPatterns } from "@/features/work-items/queue-query";
 import { readActiveStaffUser } from "@/features/auth/staff-state";
+import { lockStaffLifecycleShared } from "@/features/auth/staff-lifecycle";
 import { assertBulkManager } from "./authorization";
 import { assertCaseAssignmentTarget } from "@/features/annual-return/assignment-target";
 import { applyAssignment } from "./assignment-adapter";
@@ -14,6 +16,7 @@ import { originFilterForActor } from "@/features/clients/data-origin";
 import { hongKongBusinessDate } from "@/lib/hong-kong-time";
 import { MAINTENANCE_ACTIONS, lockMaintenanceResource } from "./actions";
 import { isDocumentVisibleToStaffActor } from "@/features/documents/authorization";
+import { bindDocumentQuery, documentSearchPredicate } from "@/features/documents/list-filters";
 import {
   snapshotSchema,
   previewSchema,
@@ -56,6 +59,9 @@ type JobRow = {
   lease_token: string | null;
   valid_lease: boolean;
   cancel_requested: boolean;
+  created_at: string;
+  updated_at: string;
+  payload_hash: string;
 };
 type ItemRow = {
   ordinal: number;
@@ -109,7 +115,7 @@ export function createBulkOperationsRepository({
       const allowed = new Set(
         resource === "client_company"
           ? ["q", "teamId", "ownerId", "clientStatus", "includeFixtures"]
-          : ["q", "caseId", "includeFixtures"],
+          : ["q", "caseId", "includeFixtures", "category", "source", "reviewStatus"],
       );
       if (Object.keys(filters).some((key) => !allowed.has(key)))
         throw new Error("Unsupported filters for this resource.");
@@ -118,6 +124,7 @@ export function createBulkOperationsRepository({
         return db<
           ResourceRow[]
         >`select c.id,c.company_name label,c.assigned_owner_id owner_id,null::uuid reviewer_id,md5(to_jsonb(c)::text) version,(c.data_origin<>'client') locked from companies c where (${actor.role === "Admin"} or c.assigned_team_id=${actor.teamId}::uuid) and (${filters.includeFixtures === true && actor.role === "Admin"} or c.data_origin<>'fixture') and (${ids ? [...ids] : null}::uuid[] is null or c.id=any(${ids ? [...ids] : null}::uuid[])) and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id=${filters.teamId ?? null}::uuid) and (${filters.ownerId ?? null}::uuid is null or c.assigned_owner_id=${filters.ownerId ?? null}::uuid) and (${filters.clientStatus ?? null}::text is null or c.status=${filters.clientStatus ?? null}) and (${q}::text is null or (c.company_name||' '||c.cr_number||' '||c.br_number) ilike ${q} escape '\\') order by c.id limit 20001`;
+      const query = bindDocumentQuery`select d.id,d.file_name label,arc.owner_id,arc.reviewer_id,c.id company_id,c.assigned_team_id company_team_id,d.case_id,arc.owner_id case_owner_id,arc.reviewer_id case_reviewer_id,md5(jsonb_build_object('document',to_jsonb(d),'versions',(select jsonb_agg(to_jsonb(v) order by v.id) from document_versions v where v.document_id=d.id),'scope',jsonb_build_array(c.assigned_team_id,c.data_origin,arc.owner_id,arc.reviewer_id))::text) version,(c.data_origin<>'client' or arc.current_status in ('Filed','Completed') or arc.locked_at is not null) locked from documents d join companies c on c.id=d.company_id left join annual_return_cases arc on arc.id=d.case_id and arc.company_id=d.company_id where (${actor.role === "Admin"} or c.assigned_team_id=${actor.teamId}::uuid or arc.owner_id=${actor.userId!} or arc.reviewer_id=${actor.userId!}) and (${filters.includeFixtures === true && actor.role === "Admin"} or c.data_origin<>'fixture') and (${ids ? [...ids] : null}::uuid[] is null or d.id=any(${ids ? [...ids] : null}::uuid[])) and (${filters.caseId ?? null}::uuid is null or d.case_id=${filters.caseId ?? null}::uuid) and ${documentSearchPredicate(filters)} order by d.id limit 20001`;
       const rows = await db<
         (ResourceRow & {
           company_id: string;
@@ -126,7 +133,7 @@ export function createBulkOperationsRepository({
           case_owner_id: string | null;
           case_reviewer_id: string | null;
         })[]
-      >`select d.id,d.file_name label,arc.owner_id,arc.reviewer_id,c.id company_id,c.assigned_team_id company_team_id,d.case_id,arc.owner_id case_owner_id,arc.reviewer_id case_reviewer_id,md5(jsonb_build_object('document',to_jsonb(d),'versions',(select jsonb_agg(to_jsonb(v) order by v.id) from document_versions v where v.document_id=d.id),'scope',jsonb_build_array(c.assigned_team_id,c.data_origin,arc.owner_id,arc.reviewer_id))::text) version,(c.data_origin<>'client' or arc.current_status in ('Filed','Completed') or arc.locked_at is not null) locked from documents d join companies c on c.id=d.company_id left join annual_return_cases arc on arc.id=d.case_id and arc.company_id=d.company_id where (${actor.role === "Admin"} or c.assigned_team_id=${actor.teamId}::uuid or arc.owner_id=${actor.userId!} or arc.reviewer_id=${actor.userId!}) and (${filters.includeFixtures === true && actor.role === "Admin"} or c.data_origin<>'fixture') and (${ids ? [...ids] : null}::uuid[] is null or d.id=any(${ids ? [...ids] : null}::uuid[])) and (${filters.caseId ?? null}::uuid is null or d.case_id=${filters.caseId ?? null}::uuid) and (${q}::text is null or d.file_name ilike ${q} escape '\\') order by d.id limit 20001`;
+      >(query.strings, ...(query.values as never[]));
       return rows.filter((r) =>
         isDocumentVisibleToStaffActor(actor, {
           companyId: r.company_id,
@@ -151,6 +158,7 @@ export function createBulkOperationsRepository({
             "paymentStatus",
             "overdueOnly",
             "includeFixtures",
+            "draftCaseIds",
           ])
         : new Set([
             "q",
@@ -179,8 +187,8 @@ export function createBulkOperationsRepository({
     if (resource === "annual_return_case")
       return db<
         ResourceRow[]
-      >`select arc.id,c.company_name label,arc.owner_id,arc.reviewer_id,array(select wi.owner_id from work_items wi where wi.annual_return_case_id=arc.id and wi.status in ('open','in_progress','blocked')) child_owner_ids,array(select wi.reviewer_id from work_items wi where wi.annual_return_case_id=arc.id and wi.status in ('open','in_progress','blocked')) child_reviewer_ids,${caseAssignmentVersionSql(db)} version,(arc.locked_at is not null or arc.completed_at is not null or arc.current_status='Completed' or c.data_origin='fixture') locked from annual_return_cases arc join companies c on c.id=arc.company_id where ${caseScopeSql(db, { ...filters, ...origin }, today)} and ${caseScopeSql(db, { ...scoped, ...origin }, today)} and (${ids ? [...ids] : null}::uuid[] is null or arc.id=any(${ids ? [...ids] : null}::uuid[])) order by arc.id limit 20001 ${lock ? db`for update of arc for share of c` : db``}`;
-    const q = filters.q ? `%${filters.q.replace(/[\\%_]/g, (v) => `\\${v}`)}%` : null;
+      >`select arc.id,c.company_name label,arc.owner_id,arc.reviewer_id,array(select wi.owner_id from work_items wi where wi.annual_return_case_id=arc.id and wi.status in ('open','in_progress','blocked')) child_owner_ids,array(select wi.reviewer_id from work_items wi where wi.annual_return_case_id=arc.id and wi.status in ('open','in_progress','blocked')) child_reviewer_ids,${caseAssignmentVersionSql(db)} version,(arc.locked_at is not null or arc.completed_at is not null or arc.current_status='Completed' or c.data_origin='fixture') locked from annual_return_cases arc join companies c on c.id=arc.company_id where ${caseScopeSql(db, { ...filters, ...origin, caseIds: filters.draftCaseIds }, today)} and ${caseScopeSql(db, { ...scoped, ...origin }, today)} and (${ids ? [...ids] : null}::uuid[] is null or arc.id=any(${ids ? [...ids] : null}::uuid[])) order by arc.id limit 20001 ${lock ? db`for update of arc for share of c` : db``}`;
+    const patterns = workItemSearchPatterns(filters.q);
     return db<
       ResourceRow[]
     >`select w.id,w.title||' · '||c.company_name label,w.owner_id,w.reviewer_id,w.version::text version,(w.status in ('completed','cancelled') or arc.current_status='Completed' or arc.locked_at is not null or c.data_origin='fixture') locked from work_items w join companies c on c.id=w.company_id left join annual_return_cases arc on arc.id=w.annual_return_case_id
@@ -192,7 +200,7 @@ export function createBulkOperationsRepository({
    and (${filters.activeOnly !== true} or w.status in ('open','in_progress','blocked'))
    and (${filters.workType ?? null}::text is null or w.work_type=${filters.workType ?? null}) and (${filters.workStatus ?? null}::text is null or w.status=${filters.workStatus ?? null})
    and (${filters.escalationState ?? null}::text is null or w.escalation_state=${filters.escalationState ?? null}) and (${filters.priority ?? null}::text is null or (${filters.priority === "high"} and w.priority>=70) or (${filters.priority === "normal"} and w.priority<70))
-   and (${q}::text is null or (w.title||' '||w.work_type||' '||c.company_name) ilike ${q} escape '\\') order by w.id limit 20001 ${lock ? db`for update of w for share of c` : db``}`;
+   and (${patterns.length === 0} or exists (select 1 from unnest(${patterns}::text[]) needle(pattern) where (w.title||' '||w.work_type||' '||coalesce(c.company_name,'')) ilike needle.pattern escape '\\')) order by w.id limit 20001 ${lock ? db`for update of w for share of c` : db``}`;
   }
   const snapshotItems = (rows: ResourceRow[]): SnapshotItem[] =>
     rows.map((r) => ({ id: r.id, version: r.version, reason: r.locked ? "locked" : null }));
@@ -465,7 +473,7 @@ export function createBulkOperationsRepository({
     const verified = await currentActor(db, actor);
     const [j] = await db<
       JobRow[]
-    >`select *,lease_until>now() valid_lease from bulk_operation_jobs where id=${jobId} and actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} ${lock ? db`for update` : db``}`;
+    >`select *,created_at::text created_at,updated_at::text updated_at,lease_until>now() valid_lease from bulk_operation_jobs where id=${jobId} and actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} ${lock ? db`for update` : db``}`;
     if (!j) throw new Error("Forbidden: own job required.");
     return { job: j, actor: verified };
   }
@@ -503,6 +511,12 @@ export function createBulkOperationsRepository({
       resource: j.resource,
       state: j.state,
       total: j.total,
+      operation: j.action_key,
+      assignmentTarget: j.action_key === "assignment" ? j.assignment.target : null,
+      createdBy: j.actor_user_id,
+      createdAt: j.created_at,
+      updatedAt: j.updated_at,
+      payloadHash: j.payload_hash,
       counts: Object.fromEntries(counts.map((c) => [c.state, c.n])),
       retryableFailedCount: retryable.n,
       items: rows.slice(0, limit).map((r) => ({
@@ -559,6 +573,8 @@ export function createBulkOperationsRepository({
     let selected: ItemRow | undefined;
     try {
       return await sql.begin(async (tx) => {
+        // Nested assignments/maintenance must already be admitted before job locks.
+        await lockStaffLifecycleShared(tx);
         const j = await lockedLease(tx, lease);
         if (j.cancel_requested) return false;
         const [item] = await tx<

@@ -1,0 +1,43 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/features/auth/auth-router-recovery.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+ ❯ |unit| src/features/auth/auth-router-recovery.test.tsx (9 tests | 1 failed | 8 skipped) 100ms
+     × waits for the actual auth provider before automatic denied sign-out on a direct login entry 98ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/auth/auth-router-recovery.test.tsx > REVIEW-3 actual router auth recovery > waits for the actual auth provider before automatic denied sign-out on a direct login entry
+AssertionError: expected null to be '1' // Object.is equality
+
+- Expected:
+"1"
+
++ Received:
+null
+
+ ❯ src/features/auth/auth-router-recovery.test.tsx:310:71
+    308|     await act(async () => undefined);
+    309|     expect(screen.queryByText("Private account staff-A")).toBeNull();
+    310|     expect(new URLSearchParams(window.location.search).get("denied")).…
+       |                                                                       ^
+    311|     expect(rpc.client.signOut).not.toHaveBeenCalled();
+    312|     fireEvent.click(screen.getByRole("button", { name: "重試登入狀態" }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  06:07:24
+   Duration  3.07s (transform 443ms, setup 0ms, import 1.20s, tests 100ms, environment 1.51s)
+

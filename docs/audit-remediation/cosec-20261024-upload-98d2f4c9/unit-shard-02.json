@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-02",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "scripts/local-browser-evidence.test.ts",
+    "scripts/validate-firm-runtime.test.ts",
+    "scripts/validate-neon-auth-demo.test.ts",
+    "scripts/verify-dev-server-imports.test.ts",
+    "scripts/verify-firm-deployment.test.ts",
+    "src/components/bulk-export.interaction.test.tsx",
+    "src/components/bulk-selection-toolbar.test.tsx",
+    "src/components/clients/client-form-dialog.test.tsx",
+    "src/components/clients/controller-form-dialog.test.tsx",
+    "src/components/clients/inspection-request-form-dialog.test.tsx",
+    "src/components/clients/officer-form-dialog.test.tsx",
+    "src/components/clients/resolve-inspection-request-dialog.test.tsx",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "scripts/local-browser-evidence.test.ts",
+    "scripts/validate-firm-runtime.test.ts",
+    "scripts/validate-neon-auth-demo.test.ts",
+    "scripts/verify-dev-server-imports.test.ts",
+    "scripts/verify-firm-deployment.test.ts",
+    "src/components/bulk-export.interaction.test.tsx",
+    "src/components/bulk-selection-toolbar.test.tsx",
+    "src/components/clients/client-form-dialog.test.tsx",
+    "src/components/clients/controller-form-dialog.test.tsx",
+    "src/components/clients/inspection-request-form-dialog.test.tsx",
+    "src/components/clients/officer-form-dialog.test.tsx",
+    "src/components/clients/resolve-inspection-request-dialog.test.tsx"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/components/clients/client-form-dialog.test.tsx",
+      "tests": 25
+    },
+    {
+      "path": "src/components/bulk-selection-toolbar.test.tsx",
+      "tests": 20
+    },
+    {
+      "path": "src/components/bulk-export.interaction.test.tsx",
+      "tests": 5
+    },
+    {
+      "path": "scripts/validate-firm-runtime.test.ts",
+      "tests": 5
+    },
+    {
+      "path": "src/components/clients/controller-form-dialog.test.tsx",
+      "tests": 6
+    },
+    {
+      "path": "src/components/clients/officer-form-dialog.test.tsx",
+      "tests": 3
+    },
+    {
+      "path": "src/components/clients/inspection-request-form-dialog.test.tsx",
+      "tests": 2
+    },
+    {
+      "path": "scripts/validate-neon-auth-demo.test.ts",
+      "tests": 22
+    },
+    {
+      "path": "src/components/clients/resolve-inspection-request-dialog.test.tsx",
+      "tests": 2
+    },
+    {
+      "path": "scripts/local-browser-evidence.test.ts",
+      "tests": 6
+    },
+    {
+      "path": "scripts/verify-firm-deployment.test.ts",
+      "tests": 16
+    },
+    {
+      "path": "scripts/verify-dev-server-imports.test.ts",
+      "tests": 2
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "run_id": "cosec-20261023-xlsx-db68ab95",
+  "checked_utc": "2026-10-23T04:54:47.5683058Z",
+  "container_id": "e2be557db01f093a83078e4eae7c7f90ee29c556ffd8fa33244c631d773aedaa",
+  "container_absent": true,
+  "credentials_absent": true,
+  "verified_paths": [
+    "node_modules/.cache/cosec-20261023-xlsx-db68ab95-db/owned-target.json",
+    "node_modules/.cache/cosec-20261023-xlsx-db68ab95-db/container.env"
+  ],
+  "daemon_lifecycle_changed": false,
+  "unrelated_resources_modified": false
+}

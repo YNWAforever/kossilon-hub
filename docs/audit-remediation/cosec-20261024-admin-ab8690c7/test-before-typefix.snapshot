@@ -1,0 +1,389 @@
+// Same-version synthetic SQL acceptance. No native Auth/HTTP/RLS or real accounts.
+import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
+import { appendFileSync, closeSync, openSync, realpathSync } from "node:fs";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { getCurrentTest } from "@vitest/runner";
+import { expect, it, onTestFinished, vi } from "vitest";
+import type { SqlClient } from "@/server/db/client";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import type { UpdateStaffInput } from "./types";
+
+const RUN = "cosec-20261024-admin-ab8690c7";
+const ROOT = "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023";
+type Target = {
+  uri: string;
+  containerId: string;
+  database: string;
+  identity: { systemId: string };
+};
+type Gate = {
+  verifyEmptyTarget(): Promise<Target>;
+  verifyOwnedTarget(): Promise<Target>;
+  publicTarget(target: Target): object;
+  sealForDisposal(succeeded: boolean, ids: object): Promise<void>;
+};
+const id = () => `ab8690c7-0185-4185-8185-${randomBytes(6).toString("hex")}`;
+
+it.skipIf(process.env.COSEC_UC185_RUN_ID !== RUN)(
+  "UC185 refuses sole-Admin removal and serializes opposite removals with exact audit readback",
+  async () => {
+    assert.equal(realpathSync(process.cwd()), ROOT);
+    const signal = getCurrentTest()?.context.signal;
+    assert(signal);
+    const pending = rehearse(signal);
+    onTestFinished(async () => {
+      await pending.catch(() => undefined);
+    });
+    await pending;
+  },
+  120_000,
+);
+
+async function rehearse(signal: AbortSignal) {
+  const attempt = process.env.COSEC_UC185_ATTEMPT!;
+  assert.match(attempt, /^[a-z0-9-]+$/);
+  const folder = resolve(ROOT, "docs/audit-remediation", RUN, "db");
+  assert.equal(folder, process.env.COSEC_UC185_EVENTS_DIR);
+  const fd = openSync(resolve(folder, `UC185-journey-${attempt}.jsonl`), "wx");
+  const record = (phase: string, data: object = {}) =>
+    appendFileSync(
+      fd,
+      JSON.stringify({ run: RUN, attempt, phase, utc: new Date().toISOString(), ...data }) + "\n",
+    );
+  const ids = { team: id(), users: [id(), id()], profiles: [id(), id()] };
+  const raw: SqlClient[] = [],
+    failures: unknown[] = [];
+  let gate: Gate | undefined,
+    succeeded = false;
+  const external = vi.fn(() => {
+    throw new Error("External HTTP/provider forbidden in UC185");
+  });
+  try {
+    signal.throwIfAborted();
+    record("planned-ids", { ids, nativeAuth: false, nativeHttp: false, dbRls: false });
+    gate = (await import(
+      /* @vite-ignore */ pathToFileURL(resolve(folder, "../isolated-db-runner.mjs")).href
+    )) as Gate;
+    const target = await gate.verifyEmptyTarget();
+    assert.equal(target.containerId, process.env.COSEC_UC185_TARGET_ID);
+    assert.equal(target.identity.systemId, process.env.COSEC_UC185_SYSTEM_ID);
+    assert(process.env.TEST_DATABASE_URL === target.uri, "Injected target binding drift");
+    record("before-application-import-or-client", gate.publicTarget(target));
+    vi.stubGlobal("fetch", external);
+    const [
+      { createSqlClient },
+      { guardSqlTestLifetime },
+      { requireActor },
+      { createAdminRepository },
+      { updateStaffForActor },
+    ] = await Promise.all([
+      import("@/server/db/client"),
+      import("@/test/sql-test-lifetime"),
+      import("@/features/auth/neon-auth-server"),
+      import("./repository"),
+      import("./server-fns"),
+    ]);
+    async function client() {
+      const checked = await gate!.verifyOwnedTarget();
+      assert.equal(checked.containerId, target.containerId);
+      assert.equal(checked.identity.systemId, target.identity.systemId);
+      const connection = createSqlClient(checked.uri, { max: 1, ssl: false });
+      raw.push(connection);
+      const sql = guardSqlTestLifetime(connection, () => signal);
+      const [identity] = await sql`select current_database() database,pg_backend_pid() pid,
+        (select system_identifier::text from pg_control_system()) system_id`;
+      assert.equal(identity.database, target.database);
+      assert.equal(identity.system_id, target.identity.systemId);
+      await sql`set statement_timeout='12000'`;
+      record("client-identity", { ...identity, containerId: target.containerId });
+      return { sql, pid: Number(identity.pid) };
+    }
+    const { sql: writer } = await client();
+    const { sql: observer, pid: observerPid } = await client();
+    const a = await client(),
+      b = await client();
+    expect(new Set([observerPid, a.pid, b.pid]).size).toBe(3);
+    const actors: AuthenticatedActor[] = ids.users.map((userId) => ({
+      userId,
+      authUserId: RUN + ":auth:" + userId,
+      role: "Admin",
+      teamId: ids.team,
+      active: true,
+    }));
+    async function insertAdmin(index: number) {
+      const actor = actors[index];
+      await writer.begin(async (tx) => {
+        await tx`insert into users(id,name,email,role,team_id,active) values(${actor.userId!},${RUN + ":Admin:" + index},${actor.userId + "@example.test"},'Admin',${ids.team},true)`;
+        await tx`insert into staff_profiles(id,user_id,auth_user_id,role,team_id,active) values(${ids.profiles[index]},${actor.userId!},${actor.authUserId},'Admin',${ids.team},true)`;
+      });
+    }
+    await writer`insert into teams(id,name) values(${ids.team},${RUN})`;
+    await insertAdmin(0);
+    const input = (
+      index: number,
+      expectedVersion: number,
+      role: UpdateStaffInput["role"],
+      active: boolean,
+    ): UpdateStaffInput => ({
+      userId: ids.users[index],
+      expectedVersion,
+      role,
+      active,
+      teamId: ids.team,
+    });
+    async function actorAt(index: number, sql = observer) {
+      const auth = {
+        getSession: async () => ({
+          user: { id: actors[index].authUserId, email: "same-synthetic@example.test" },
+        }),
+        signOut: async () => new Response(null, { status: 204 }),
+      };
+      return requireActor(new Request("https://example.test/admin"), { auth, sql });
+    }
+    const command = (sql: SqlClient, actor: AuthenticatedActor, data: UpdateStaffInput) =>
+      updateStaffForActor(actor, data, createAdminRepository({ sql }));
+    async function snapshot() {
+      const rows = await observer`select to_jsonb(u) user_data,u.xmin::text user_xmin,
+        to_jsonb(sp) profile_data,sp.xmin::text profile_xmin from users u join staff_profiles sp on sp.user_id=u.id
+        where u.id=any(${ids.users}::uuid[]) order by u.id`;
+      const audit =
+        await observer`select to_jsonb(e) event_data,e.xmin::text event_xmin from staff_access_events e
+        where target_user_id=any(${ids.users}::uuid[]) or actor_user_id=any(${ids.users}::uuid[]) order by e.id`;
+      const [count] =
+        await observer`select count(*)::int n from staff_profiles sp join users u on u.id=sp.user_id
+        where sp.role='Admin' and u.role='Admin' and sp.active and u.active and sp.team_id is not distinct from u.team_id`;
+      return { rows: [...rows], audit: [...audit], activeAdmins: count.n as number };
+    }
+    const firstActor = await actorAt(0);
+    const initial = await snapshot();
+    expect(initial.activeAdmins).toBe(1);
+    expect(initial.audit).toEqual([]);
+    for (const data of [input(0, 1, "Admin", false), input(0, 1, "Staff", true)]) {
+      for (let retry = 0; retry < 2; retry++) {
+        await expect(command(a.sql, firstActor, data)).rejects.toThrow(
+          "Cannot remove the last active Admin.",
+        );
+        expect(await snapshot()).toEqual(initial);
+      }
+    }
+    record("sole-admin-disable-demote-retries-refused-no-write", initial);
+    for (const role of ["Manager", "Staff", "Client"] as const) {
+      await expect(
+        command(a.sql, { ...firstActor, role }, input(0, 1, "Admin", false)),
+      ).rejects.toThrow(/Admin|Forbidden/);
+    }
+    await expect(
+      command(a.sql, { ...firstActor, active: false }, input(0, 1, "Admin", false)),
+    ).rejects.toThrow(/Forbidden/);
+    await expect(
+      command(a.sql, { ...firstActor, authUserId: RUN + ":unmapped" }, input(0, 1, "Admin", false)),
+    ).rejects.toThrow(/Forbidden/);
+    expect(await snapshot()).toEqual(initial);
+    expect(await command(a.sql, firstActor, input(0, 1, "Admin", true))).toEqual({
+      userId: ids.users[0],
+      expectedVersion: 1,
+    });
+    expect(await snapshot()).toEqual(initial);
+    record("roles-identity-denied-and-current-noop-preserved", { activeAdmins: 1, auditEvents: 0 });
+
+    await insertAdmin(1);
+    const secondActor = await actorAt(1);
+    async function race(
+      firstInput: UpdateStaffInput,
+      secondInput: UpdateStaffInput,
+      label: string,
+    ) {
+      const before = await snapshot();
+      expect(before.activeAdmins).toBe(2);
+      let release!: () => void, ready!: () => void;
+      const hold = new Promise<void>((r) => {
+        release = r;
+      });
+      const atInvariant = new Promise<void>((r) => {
+        ready = r;
+      });
+      signal.addEventListener("abort", release, { once: true });
+      const first = a.sql.begin(async (tx) => {
+        await tx`set local idle_in_transaction_session_timeout='10000'`;
+        const result = await command(tx as unknown as SqlClient, firstActor, firstInput);
+        ready();
+        await hold;
+        signal.throwIfAborted();
+        return result;
+      });
+      // Attach rejection handlers immediately, including failures before the barrier.
+      let settled = Promise.allSettled([first]);
+      let waited = false;
+      try {
+        await Promise.race([atInvariant, first]);
+        expect(await snapshot()).toEqual(before); // Independent reader sees no partial commit.
+        const second = command(b.sql, secondActor, secondInput);
+        settled = Promise.allSettled([first, second]);
+        const deadline = Date.now() + 4_000;
+        while (Date.now() < deadline) {
+          signal.throwIfAborted();
+          const [lock] =
+            await observer`select wait_event_type,wait_event,pg_blocking_pids(pid) blockers
+            from pg_stat_activity where pid=${b.pid}`;
+          if (
+            lock?.wait_event_type === "Lock" &&
+            lock.wait_event === "advisory" &&
+            lock.blockers.includes(a.pid)
+          ) {
+            waited = true;
+            record("observed-advisory-wait", {
+              label,
+              waitingPid: b.pid,
+              blockingPid: a.pid,
+              lock,
+            });
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 20));
+        }
+      } finally {
+        release();
+        signal.removeEventListener("abort", release);
+        await settled;
+      }
+      const results = await settled;
+      expect(waited).toBe(true);
+      expect(results).toHaveLength(2);
+      expect(results[0]).toMatchObject({
+        status: "fulfilled",
+        value: { userId: ids.users[0], expectedVersion: firstInput.expectedVersion + 1 },
+      });
+      expect(results[1]).toMatchObject({
+        status: "rejected",
+        reason: expect.objectContaining({ message: "Cannot remove the last active Admin." }),
+      });
+      expect((await snapshot()).activeAdmins).toBe(1);
+      record("opposite-removals-one-commit-one-refusal", { label, snapshot: await snapshot() });
+    }
+    await race(input(0, 1, "Admin", false), input(1, 1, "Staff", true), "disable-before-demote");
+    const disabled = await snapshot();
+    expect(disabled.audit).toHaveLength(1);
+    await expect(actorAt(0)).rejects.toThrow(/inactive|Forbidden/);
+    await expect(command(a.sql, firstActor, input(1, 1, "Admin", false))).rejects.toThrow(
+      /Forbidden/,
+    );
+    await expect(command(b.sql, secondActor, input(0, 1, "Admin", false))).rejects.toMatchObject({
+      statusCode: 409,
+    });
+    expect(await snapshot()).toEqual(disabled);
+    expect(await command(b.sql, secondActor, input(0, 2, "Admin", false))).toEqual({
+      userId: ids.users[0],
+      expectedVersion: 2,
+    });
+    expect(await snapshot()).toEqual(disabled);
+    record("disabled-session-stale-retry-and-fresh-noop", disabled);
+
+    expect(await command(b.sql, secondActor, input(0, 2, "Admin", true))).toEqual({
+      userId: ids.users[0],
+      expectedVersion: 3,
+    });
+    expect(await actorAt(0)).toMatchObject({ active: true, role: "Admin" });
+    await race(input(0, 3, "Staff", true), input(1, 1, "Admin", false), "demote-before-disable");
+    const final = await snapshot();
+    expect(final.audit).toHaveLength(3);
+    for (const data of [input(1, 1, "Admin", false), input(1, 1, "Staff", true)]) {
+      for (let retry = 0; retry < 2; retry++) {
+        await expect(command(b.sql, secondActor, data)).rejects.toThrow(
+          "Cannot remove the last active Admin.",
+        );
+        expect(await snapshot()).toEqual(final);
+      }
+    }
+    const demoted = await actorAt(0);
+    expect(demoted).toMatchObject({ active: true, role: "Staff" });
+    await expect(command(a.sql, demoted, input(1, 1, "Admin", false))).rejects.toThrow(
+      /Admin|Forbidden/,
+    );
+    await expect(command(a.sql, firstActor, input(1, 1, "Admin", false))).rejects.toThrow(
+      /Forbidden/,
+    );
+    expect(await snapshot()).toEqual(final);
+    const audit =
+      await observer`select actor_user_id,target_user_id,event_type,old_role,new_role,metadata
+      from staff_access_events where target_user_id=${ids.users[0]} order by (metadata->'after'->>'version')::int`;
+    expect([...audit]).toEqual([
+      {
+        actor_user_id: ids.users[0],
+        target_user_id: ids.users[0],
+        event_type: "disabled",
+        old_role: "Admin",
+        new_role: "Admin",
+        metadata: {
+          before: { role: "Admin", teamId: ids.team, active: true, version: 1 },
+          after: { role: "Admin", teamId: ids.team, active: false, version: 2 },
+        },
+      },
+      {
+        actor_user_id: ids.users[1],
+        target_user_id: ids.users[0],
+        event_type: "access_changed",
+        old_role: "Admin",
+        new_role: "Admin",
+        metadata: {
+          before: { role: "Admin", teamId: ids.team, active: false, version: 2 },
+          after: { role: "Admin", teamId: ids.team, active: true, version: 3 },
+        },
+      },
+      {
+        actor_user_id: ids.users[0],
+        target_user_id: ids.users[0],
+        event_type: "access_changed",
+        old_role: "Admin",
+        new_role: "Staff",
+        metadata: {
+          before: { role: "Admin", teamId: ids.team, active: true, version: 3 },
+          after: { role: "Staff", teamId: ids.team, active: true, version: 4 },
+        },
+      },
+    ]);
+    const readRepo = createAdminRepository({ sql: observer });
+    expect((await readRepo.listStaff(await actorAt(1), { q: ids.users[0] })).staff).toEqual([
+      expect.objectContaining({
+        userId: ids.users[0],
+        role: "Staff",
+        active: true,
+        expectedVersion: 4,
+        stateMismatch: false,
+      }),
+    ]);
+    expect(await readRepo.listAudit(await actorAt(1), ids.users[0])).toHaveLength(3);
+    record("independent-actor-row-revision-and-audit-readback", {
+      snapshot: final,
+      audit: [...audit],
+    });
+    expect(external).not.toHaveBeenCalled();
+    record("journey-passed", {
+      ids,
+      externalHttpCalls: external.mock.calls.length,
+      nativeAuth: false,
+      nativeHttp: false,
+      dbRls: false,
+    });
+    succeeded = true;
+  } catch (error) {
+    failures.push(error);
+    record("journey-failed-preserved", {
+      message: error instanceof Error ? error.message : String(error),
+    });
+  } finally {
+    for (const ended of await Promise.allSettled(raw.map((sql) => sql.end()))) {
+      if (ended.status === "rejected") failures.push(ended.reason);
+    }
+    try {
+      if (gate) await gate.sealForDisposal(succeeded, ids);
+    } catch (error) {
+      failures.push(error);
+    }
+    vi.unstubAllGlobals();
+    closeSync(fd);
+  }
+  if (failures.length)
+    throw new AggregateError(failures, "UC185 journey/cleanup failed; evidence preserved");
+}

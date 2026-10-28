@@ -1,0 +1,566 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/features/annual-return/components/case-parties.interaction.test.tsx (5 tests | 5 failed) 4121ms
+   × does not infer zero confirmed people or an empty officer register from a failed read 72ms
+   × deduplicates list recovery while pending and restores fresh candidates without confirming them 1010ms
+   × hides cached names, completeness warnings and confirmation controls during a denied refresh and failed retry 1022ms
+   × shows an empty officer register only after successful empty recovery 1009ms
+   × keeps recovered candidates read only when the case is locked 1006ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/case-parties.interaction.test.tsx > does not infer zero confirmed people or an empty officer register from a failed read
+AssertionError: expected <span …(1)></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="text-sm text-muted-foreground"
+>
+  0
+  /
+  0
+   已確認
+</span>
+
+ ❯ src/features/annual-return/components/case-parties.interaction.test.tsx:25:41
+     23|   view();
+     24|   await screen.findByText(/無法載入相關人士名單/);
+     25|   expect(screen.queryByText("0/0 已確認")).toBeNull();
+       |                                         ^
+     26|   expect(screen.queryByText(/公司董事名冊沒有在任人士/)).toBeNull();
+     27|   expect(screen.getByRole("button", { name: "重新載入相關人士" })).toBeTruthy(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |unit| src/features/annual-return/components/case-parties.interaction.test.tsx > deduplicates list recovery while pending and restores fresh candidates without confirming them
+TestingLibraryElementError: Unable to find role="button" and name "重新載入相關人士"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"border-b pb-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-base font-semibold"[39m
+        [36m>[39m
+          [0m申報相關人士[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m/[0m
+          [0m0[0m
+          [0m 已確認[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0m無法載入相關人士名單。在確認之前，個人層面的要求不會出現。[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m公司董事名冊沒有在任人士，因此沒有可確認的對象。個人層面的要求不會建立。[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"border-b pb-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-base font-semibold"[39m
+        [36m>[39m
+          [0m申報相關人士[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m/[0m
+          [0m0[0m
+          [0m 已確認[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0m無法載入相關人士名單。在確認之前，個人層面的要求不會出現。[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m公司董事名冊沒有在任人士，因此沒有可確認的對象。個人層面的要求不會建立。[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/case-parties.interaction.test.tsx:36:30
+     34|     .mockImplementationOnce(() => new Promise(resolve => { finish = re…
+     35|   view();
+     36|   const retry = await screen.findByRole("button", { name: "重新載入相關人士" }…
+       |                              ^
+     37|   act(() => { retry.click(); retry.click(); });
+     38|   await waitFor(() => expect(api.list).toHaveBeenCalledTimes(2));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |unit| src/features/annual-return/components/case-parties.interaction.test.tsx > hides cached names, completeness warnings and confirmation controls during a denied refresh and failed retry
+TestingLibraryElementError: Unable to find role="status"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"border-b pb-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-base font-semibold"[39m
+        [36m>[39m
+          [0m申報相關人士[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m/[0m
+          [0m1[0m
+          [0m 已確認[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0m尚有 [0m
+        [0m1[0m
+        [0m [0m
+        [0m位人士未經確認。在確認之前，他們的身分證明及地址證明要求不會建立， 因此本案件的要求清單並不完整。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-3 divide-y border-y"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3 py-3 text-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex min-w-0 items-center gap-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-users h-4 w-4 text-muted-foreground"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 3.128a4 4 0 0 1 0 7.744"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"9"[39m
+                [33mcy[39m=[32m"7"[39m
+                [33mr[39m=[32m"4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate font-medium"[39m
+              [36m>[39m
+                [0mOfficer A[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0m董事[0m
+                [0m · 來自董事名冊[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-user-check h-3.5 w-3.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m16 11 2 2 4-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"9"[39m
+                [33mcy[39m=[32m"7"[39m
+                [33mr[39m=[32m"4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m確認為相關人士[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"border-b pb-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-base font-semibold"[39m
+        [36m>[39m
+          [0m申報相關人士[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m/[0m
+          [0m1[0m
+          [0m 已確認[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0m尚有 [0m
+        [0m1[0m
+        [0m [0m
+        [0m位人士未經確認。在確認之前，他們的身分證明及地址證明要求不會建立， 因此本案件的要求清單並不完整。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-3 divide-y border-y"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3 py-3 text-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex min-w-0 items-center gap-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-users h-4 w-4 text-muted-foreground"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 3.128a4 4 0 0 1 0 7.744"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"9"[39m
+                [33mcy[39m=[32m"7"[39m
+                [33mr[39m=[32m"4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate font-medium"[39m
+              [36m>[39m
+                [0mOfficer A[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0m董事[0m
+                [0m · 來自董事名冊[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-user-check h-3.5 w-3.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m16 11 2 2 4-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"9"[39m
+                [33mcy[39m=[32m"7"[39m
+                [33mr[39m=[32m"4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m確認為相關人士[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/case-parties.interaction.test.tsx:57:16
+     55|   api.list.mockImplementationOnce(() => new Promise((_, fail) => { rej…
+     56|   act(() => { void client.invalidateQueries({ queryKey: ["annual-retur…
+     57|   await screen.findByRole("status");
+       |                ^
+     58|   expect(screen.queryByText("Officer A")).toBeNull();
+     59|   expect(screen.queryByText("0/1 已確認")).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |unit| src/features/annual-return/components/case-parties.interaction.test.tsx > shows an empty officer register only after successful empty recovery
+TestingLibraryElementError: Unable to find role="button" and name "重新載入相關人士"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"border-b pb-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-base font-semibold"[39m
+        [36m>[39m
+          [0m申報相關人士[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m/[0m
+          [0m0[0m
+          [0m 已確認[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0m無法載入相關人士名單。在確認之前，個人層面的要求不會出現。[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m公司董事名冊沒有在任人士，因此沒有可確認的對象。個人層面的要求不會建立。[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"border-b pb-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-base font-semibold"[39m
+        [36m>[39m
+          [0m申報相關人士[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m/[0m
+          [0m0[0m
+          [0m 已確認[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0m無法載入相關人士名單。在確認之前，個人層面的要求不會出現。[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m公司董事名冊沒有在任人士，因此沒有可確認的對象。個人層面的要求不會建立。[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/case-parties.interaction.test.tsx:76:32
+     74|   api.list.mockRejectedValueOnce(new Error("Unavailable")).mockResolve…
+     75|   view();
+     76|   fireEvent.click(await screen.findByRole("button", { name: "重新載入相關人士"…
+       |                                ^
+     77|   expect(await screen.findByText(/公司董事名冊沒有在任人士/)).toBeTruthy();
+     78|   expect(screen.getByText("0/0 已確認")).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |unit| src/features/annual-return/components/case-parties.interaction.test.tsx > keeps recovered candidates read only when the case is locked
+TestingLibraryElementError: Unable to find role="button" and name "重新載入相關人士"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"border-b pb-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-base font-semibold"[39m
+        [36m>[39m
+          [0m申報相關人士[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m/[0m
+          [0m0[0m
+          [0m 已確認[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0m無法載入相關人士名單。在確認之前，個人層面的要求不會出現。[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m公司董事名冊沒有在任人士，因此沒有可確認的對象。個人層面的要求不會建立。[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"border-b pb-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-base font-semibold"[39m
+        [36m>[39m
+          [0m申報相關人士[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m/[0m
+          [0m0[0m
+          [0m 已確認[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0m無法載入相關人士名單。在確認之前，個人層面的要求不會出現。[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m公司董事名冊沒有在任人士，因此沒有可確認的對象。個人層面的要求不會建立。[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/case-parties.interaction.test.tsx:86:32
+     84|   api.list.mockRejectedValueOnce(new Error("Temporary failure"));
+     85|   view(true);
+     86|   fireEvent.click(await screen.findByRole("button", { name: "重新載入相關人士"…
+       |                                ^
+     87|   expect((await screen.findByRole("button", { name: "確認為相關人士" }) as HT…
+     88|   expect(api.confirm).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  03:59:43
+   Duration  5.80s (transform 155ms, setup 0ms, import 451ms, tests 4.12s, environment 952ms)

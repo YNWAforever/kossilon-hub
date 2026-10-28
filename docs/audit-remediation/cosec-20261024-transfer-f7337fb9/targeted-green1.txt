@@ -1,0 +1,200 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/components/corporate-changes/share-transfer-validation.test.tsx (10 tests | 1 failed) 2439ms
+     ✓ missing new holder "" is linked to field and never sent 279ms
+     ✓ missing new holder "   " is linked to field and never sent 110ms
+     ✓ quantity 0 has a field error and no RPC 115ms
+     ✓ quantity -1 has a field error and no RPC 126ms
+     ✓ quantity 1.5 has a field error and no RPC 122ms
+     ✓ quantity 2147483648 has a field error and no RPC 110ms
+     × blur gives a missing existing-holder field explanation despite disabled submit 1098ms
+     ✓ switching modes sends only the active transferee and correction allows retry 144ms
+     ✓ hides raw server details, retains inputs, then retries once 115ms
+     ✓ deduplicates two pending submits and cancel never submits 219ms
+ ✓ |unit| src/features/corporate-changes/create-input.test.ts (15 tests) 9ms
+ ✓ |unit| src/routes/-case-subroutes.interaction.test.tsx (22 tests) 1533ms
+     ✓ opens the linked detail, changes DOM and URL, and restores page3 on Back/Forward  547ms
+ ✓ |unit| src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx (5 tests) 636ms
+ ✓ |unit| src/routes/-missing-record.interaction.test.tsx (13 tests) 787ms
+     ✓ keeps the filtered return path for malformed invalid-id without any read  311ms
+ ✓ |unit| src/features/corporate-changes/read.test.ts (8 tests) 7ms
+ ✓ |unit| src/features/corporate-changes/server-fns.test.ts (6 tests) 5ms
+ ✓ |unit| src/features/corporate-changes/authorization.test.ts (9 tests) 5ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 5ms
+ ✓ |unit| src/features/corporate-changes/workflow.test.ts (9 tests) 5ms
+
+ Test Files  1 failed | 9 passed (10)
+      Tests  1 failed | 98 passed (99)
+   Start at  14:06:09
+   Duration  16.05s (transform 1.00s, setup 0ms, import 3.59s, tests 5.43s, environment 4.89s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/components/corporate-changes/share-transfer-validation.test.tsx > UC166 share transfer dialog rejection > blur gives a missing existing-holder field explanation despite disabled submit
+AssertionError: expected 'Invalid uuid' to match /請|股|數量/
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_k_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_j_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_i_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_j_"[39m
+        [36m>[39m
+          [0m新增公司變更申請[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_k_"[39m
+        [36m>[39m
+          [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-company"[39m
+          [36m>[39m
+            [0m公司[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-company"[39m
+            [33mname[39m=[32m"companyId"[39m
+            [33mrequired[39m=[32m""[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0m選擇公司[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+            [36m>[39m
+              [0mQA UC166[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [0m變更類別[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"name_change"[39m
+            [36m>[39m
+              [0m更改公司名稱[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"share_transfer"[39m
+            [36m>[39m
+              [0m股份轉讓[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"officer_change"[39m
+            [36m>[39m
+              [0m高級人員委任／辭任／資料變更[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"address_change"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+          [36m>[39m
+            [0m報價（HKD）[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-quoted-fee"[39m
+            [33mmin[39m=[32m"0"[39m
+            [33mname[39m=[32m"quotedFee"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mstep[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m"2500"[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-transferor-shareholding"[39m
+          [36m>[39m
+            [0m轉讓人股權[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-v...
+
+- Expected:
+/請|股|數量/
+
++ Received:
+"Invalid uuid"
+
+ ❯ expectFieldError src/components/corporate-changes/share-transfer-validation.test.tsx:46:60
+     44|   const described = field.getAttribute("aria-describedby");
+     45|   expect(described).toBeTruthy();
+     46|   expect(document.getElementById(described!)?.textContent).toMatch(/請|…
+       |                                                            ^
+     47| }
+     48| beforeEach(() => {
+ ❯ src/components/corporate-changes/share-transfer-validation.test.tsx:87:25
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

@@ -1,0 +1,29 @@
+{
+  "original_review": "independent-review.json",
+  "reproduced_failures": 2,
+  "red": "resume-review-red.txt",
+  "green": "targeted-review-green.txt",
+  "resolved": [
+    {
+      "id": "UC150-RV-01",
+      "repair": "Authoritative status created or expired plus no document and past expiry can explicitly restart; committed receipt preserved."
+    },
+    {
+      "id": "UC150-RV-02",
+      "repair": "Explicit selected resume ID takes priority over per-file retry cache; mismatching A is refused before RPC; correct B retains request/category."
+    }
+  ],
+  "remaining": 0,
+  "source_files": [
+    {
+      "path": "src/routes/portal.tsx",
+      "sha256": "ff12286d4fdf3bc94d6cb5256fdc59c619a0e092f0d364cbfb794f45bf899133"
+    },
+    {
+      "path": "src/routes/-upload-resume.interaction.test.tsx",
+      "sha256": "1a0593256939695a8aa70e29cd844286bc80a2bafd6e5f8210a15eb58712b13b"
+    }
+  ],
+  "independently_rereviewed": false,
+  "verification": "parent reproduction and regression; final browser/full-unit receipts separately linked"
+}

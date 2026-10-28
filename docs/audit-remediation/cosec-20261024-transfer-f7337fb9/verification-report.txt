@@ -1,0 +1,16 @@
+{
+  "source_sha": "b367ee3eac2c09ee468c010bcfffab69b022adb9",
+  "verified_source_git_blobs": 655,
+  "verified_prior_runs": 13,
+  "verified_prior_files": 2029,
+  "verified_current_manifest_files": 130,
+  "related_unit_tests": 116,
+  "test_files": 11,
+  "sql_tests": 9,
+  "edge_tests": 9,
+  "baseline_edge_failed": 6,
+  "baseline_edge_passed": 3,
+  "native_pass": 0,
+  "release_gate": "NO_GO",
+  "push_merge_deploy": false
+}

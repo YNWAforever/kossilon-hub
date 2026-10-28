@@ -1,6 +1,6 @@
 import { LoadingRows } from "@/components/ui/skeleton";
-import { useState } from "react";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRef, useState } from "react";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { SafeDocumentPreview } from "@/features/documents/safe-preview";
 import { canApproveDocument, documentSafetyOf } from "@/features/documents/safety";
 import type { DocumentSummary } from "@/features/documents/repository";
 import {
+  getAnnualReturnCase,
   listAnnualReturnCasePage,
   recordAnnualReturnPaymentEvidence,
   reviewAnnualReturnPaymentEvidence,
@@ -43,6 +44,9 @@ export function ProductionPaymentReview({
   canBulk?: boolean;
 }) {
   const client = useQueryClient();
+  const recoveryInFlight = useRef(false);
+  const [reconciling, setReconciling] = useState(false);
+  const [uncertainCases, setUncertainCases] = useState<Set<string>>(() => new Set());
   const casesQuery = useInfiniteQuery({
     queryKey: [...annualReturnQueryKeys.list({ paymentEvidence: true }), actorScope],
     initialPageParam: undefined as string | undefined,
@@ -61,7 +65,10 @@ export function ProductionPaymentReview({
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     retry: false,
   });
-  const cases = casesQuery.data?.pages.flatMap((page) => page.cases) ?? [],
+  const cases =
+      casesQuery.isError && !casesQuery.isFetchNextPageError
+        ? []
+        : (casesQuery.data?.pages.flatMap((page) => page.cases) ?? []),
     documents = (documentsQuery.data?.pages.flatMap((p) => p.documents) ?? []).filter(
       (d) => d.caseId,
     );
@@ -90,27 +97,63 @@ export function ProductionPaymentReview({
         />
       ) : null}
       {casesQuery.isError || documentsQuery.isError ? (
-        <p role="alert">暫時無法載入付款憑證。</p>
+        <div role="alert" className="space-y-2">
+          <p>暫時無法載入付款憑證。</p>
+          <Button
+            className="min-h-11"
+            disabled={casesQuery.isFetching || documentsQuery.isFetching}
+            onClick={() => {
+              // Retry failed reads only; never replay a payment command.
+              if (casesQuery.isError) void casesQuery.refetch({ cancelRefetch: false });
+              if (documentsQuery.isError) void documentsQuery.refetch({ cancelRefetch: false });
+            }}
+          >
+            重新載入付款資料
+          </Button>
+        </div>
       ) : null}
       {casesQuery.isPending || documentsQuery.isPending ? (
         <LoadingRows label="正在載入付款憑證…" rows={4} />
       ) : null}
-      <section className="divide-y border-y">
-        {documents.map((document) => {
-          const case_ = cases.find((c) => c.id === document.caseId);
-          return case_ ? (
-            <PaymentEvidenceRow
-              key={`${document.id}:${case_.readiness?.sourceVersion ?? "unknown"}`}
-              document={document}
-              case_={case_}
-              onUpdated={updated}
-            />
-          ) : (
-            <div key={document.id} className="p-4">
-              <p>{document.fileName}：先載入所屬案件資料；暫不可審核。</p>
-            </div>
-          );
-        })}
+      <section aria-label="付款憑證覆核" className="divide-y border-y">
+        <h2 className="py-3 font-semibold">付款憑證覆核</h2>
+        {documents.map((document) => (
+          <PaymentEvidenceContextRow
+            key={`${actorScope}:${document.id}`}
+            actorScope={actorScope}
+            document={document}
+            readBlocked={documentsQuery.isError && !documentsQuery.isFetchNextPageError}
+            onUpdated={updated}
+            recovery={{
+              pending: reconciling,
+              start: () => {
+                if (recoveryInFlight.current) return false;
+                recoveryInFlight.current = true;
+                setReconciling(true);
+                return true;
+              },
+              finish: () => {
+                recoveryInFlight.current = false;
+                setReconciling(false);
+              },
+            }}
+            needsReconciliation={uncertainCases.has(`${actorScope}:${document.caseId}`)}
+            setNeedsReconciliation={(required) => {
+              setUncertainCases((previous) => {
+                const next = new Set(previous);
+                const key = `${actorScope}:${document.caseId}`;
+                if (required) next.add(key);
+                else next.delete(key);
+                return next;
+              });
+            }}
+            refreshDocuments={async () => {
+              // Start a fresh read; joining fetchNextPage would leave old proofs stale.
+              const result = await documentsQuery.refetch({ cancelRefetch: true });
+              return !result.isError;
+            }}
+          />
+        ))}
       </section>
       {!casesQuery.isPending &&
       !documentsQuery.isPending &&
@@ -139,21 +182,155 @@ export function ProductionPaymentReview({
       {documentsQuery.isFetchNextPageError ? (
         <p role="alert">下一頁付款憑證未能載入，請重試。</p>
       ) : null}
+      <section aria-label="待收款案件" className="divide-y border-y">
+        <h2 className="py-3 font-semibold">待收款案件</h2>
+        <p className="py-2 text-sm">未有憑證亦可開啟案件跟進付款及補傳文件。</p>
+        {cases
+          .filter(
+            (case_) =>
+              case_.payment &&
+              ((case_.payment.balance ?? 0) > 0 ||
+                ["Not invoiced", "Payment pending", "Overdue"].includes(case_.payment.status)),
+          )
+          .map((case_) => (
+            <article key={case_.id} className="space-y-1 py-3">
+              <Link
+                to="/annual-returns/$id"
+                params={{ id: case_.id }}
+                className="font-semibold underline"
+              >
+                {case_.companyName}
+              </Link>
+              <p>
+                {case_.payment!.status === "Overdue"
+                  ? "逾期"
+                  : (case_.payment!.receivedAmount ?? 0) > 0 && (case_.payment!.balance ?? 0) > 0
+                    ? "部分收款"
+                    : "未收款"}
+              </p>
+              <p>
+                應收：{money(case_.payment!.amount)} · 已核對：
+                {money(case_.payment!.receivedAmount)} · 餘額：{money(case_.payment!.balance)}
+              </p>
+              <p className="text-sm">開啟案件跟進付款／補傳憑證</p>
+            </article>
+          ))}
+      </section>
       {casesQuery.isFetchNextPageError ? (
         <p role="alert">下一頁未能載入，已讀取案件仍可查閱，請重試。</p>
       ) : null}
     </main>
   );
 }
+function PaymentEvidenceContextRow({
+  actorScope,
+  document,
+  readBlocked,
+  refreshDocuments,
+  recovery,
+  needsReconciliation,
+  setNeedsReconciliation,
+  onUpdated,
+}: {
+  actorScope: string;
+  document: DocumentSummary;
+  readBlocked: boolean;
+  refreshDocuments: () => Promise<boolean>;
+  recovery: { pending: boolean; start: () => boolean; finish: () => void };
+  needsReconciliation: boolean;
+  setNeedsReconciliation: (required: boolean) => void;
+  onUpdated: (case_: AnnualReturnCase) => void;
+}) {
+  // A proof's review context must not depend on paging the unrelated case list.
+  // Separate actor-scoped cache entries also prevent a previous actor's case
+  // from being reused when this actor cannot read it.
+  const caseQuery = useQuery({
+    queryKey: [...annualReturnQueryKeys.detail(document.caseId!), "payment-review", actorScope],
+    queryFn: () => getAnnualReturnCase({ data: { id: document.caseId! } }),
+    retry: false,
+  });
+  // The actor/case latch covers every proof, including when one disappears.
+  // A background refresh must not unlock writes before explicit reconciliation.
+  if (needsReconciliation) {
+    return (
+      <div role="alert" className="space-y-2 p-4">
+        <p>
+          {document.fileName}：未能確認付款覆核結果。請先重新核對案件及憑證；沒有自動重試付款操作。
+        </p>
+        <Button
+          className="min-h-11"
+          aria-label={`重新核對 ${document.fileName} 的付款結果`}
+          disabled={recovery.pending}
+          onClick={async () => {
+            // All rows share the document query. Serialize fresh recovery reads
+            // so a second row cannot cancel the first row's reconciliation.
+            if (!recovery.start()) return;
+            try {
+              const [caseResult, documentsOk] = await Promise.all([
+                caseQuery.refetch({ cancelRefetch: true }),
+                refreshDocuments(),
+              ]);
+              if (!caseResult.isError && caseResult.data?.id === document.caseId && documentsOk)
+                setNeedsReconciliation(false);
+            } finally {
+              recovery.finish();
+            }
+          }}
+        >
+          重新核對付款結果
+        </Button>
+      </div>
+    );
+  }
+  if (caseQuery.isPending)
+    return <LoadingRows label={`${document.fileName}：正在載入案件資料…`} rows={1} />;
+  if (
+    readBlocked ||
+    caseQuery.isError ||
+    !caseQuery.data ||
+    caseQuery.data.id !== document.caseId
+  ) {
+    return (
+      <div role="alert" className="space-y-2 p-4">
+        <p>{document.fileName}：案件資料不可用或沒有權限，暫不可審核。</p>
+        {!readBlocked ? (
+          <Button
+            className="min-h-11"
+            aria-label={`重新載入 ${document.fileName} 的案件資料`}
+            disabled={caseQuery.isFetching}
+            onClick={() => void caseQuery.refetch({ cancelRefetch: false })}
+          >
+            重新載入案件資料
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+  return (
+    <PaymentEvidenceRow
+      key={`${document.currentVersionId}:${caseQuery.data.readiness?.sourceVersion ?? "unknown"}`}
+      document={document}
+      case_={caseQuery.data}
+      refreshing={caseQuery.isFetching}
+      onUpdated={onUpdated}
+      onMutationError={() => setNeedsReconciliation(true)}
+    />
+  );
+}
 function PaymentEvidenceRow({
   document,
   case_,
+  refreshing,
   onUpdated,
+  onMutationError,
 }: {
   document: DocumentSummary;
   case_: AnnualReturnCase;
+  refreshing: boolean;
+  onMutationError: () => void;
   onUpdated: (case_: AnnualReturnCase) => void;
 }) {
+  const submitting = useRef(false);
   const [amount, setAmount] = useState(""),
     [date, setDate] = useState(""),
     [reference, setReference] = useState(""),
@@ -196,7 +373,11 @@ function PaymentEvidenceRow({
         },
       });
     },
+    onError: onMutationError,
     onSuccess: onUpdated,
+    onSettled: () => {
+      submitting.current = false;
+    },
     retry: false,
   });
   const review = useMutation({
@@ -210,10 +391,23 @@ function PaymentEvidenceRow({
         },
       });
     },
+    onError: onMutationError,
     onSuccess: onUpdated,
+    onSettled: () => {
+      submitting.current = false;
+    },
     retry: false,
   });
-  const disabled = !source || !safe || !writable || record.isPending || review.isPending;
+  const disabled =
+    !source || !safe || !writable || refreshing || record.isPending || review.isPending;
+  const submit = (command: "record" | "verified" | "rejected") => {
+    // React's pending render cannot guard two clicks in the same event turn.
+    if (disabled || submitting.current) return;
+    if (command === "record" ? !amount || !date : command === "rejected" && !reason.trim()) return;
+    submitting.current = true;
+    if (command === "record") record.mutate();
+    else review.mutate(command);
+  };
   return (
     <article className="grid gap-4 p-4 lg:grid-cols-2">
       <div>
@@ -287,7 +481,7 @@ function PaymentEvidenceRow({
                 className="ml-2"
               />
             </label>
-            <Button disabled={disabled || !amount || !date} onClick={() => record.mutate()}>
+            <Button disabled={disabled || !amount || !date} onClick={() => submit("record")}>
               儲存憑證資料
             </Button>
           </>
@@ -295,11 +489,7 @@ function PaymentEvidenceRow({
         {!returned && (!entry || entry.status === "pending") ? (
           <>
             {entry ? (
-              <Button
-                variant="primary"
-                disabled={disabled}
-                onClick={() => review.mutate("verified")}
-              >
+              <Button variant="primary" disabled={disabled} onClick={() => submit("verified")}>
                 批准此筆憑證金額
               </Button>
             ) : null}
@@ -324,7 +514,7 @@ function PaymentEvidenceRow({
               placeholder="指出需要補回或修正的內容"
               className="block w-full"
             />
-            <Button disabled={disabled || !reason.trim()} onClick={() => review.mutate("rejected")}>
+            <Button disabled={disabled || !reason.trim()} onClick={() => submit("rejected")}>
               退回補傳
             </Button>
           </>
@@ -338,9 +528,6 @@ function PaymentEvidenceRow({
             </p>
           ))}
         {!safe ? <p>付款證據待安全掃描或版本核對，暫不可批准。</p> : null}
-        {record.isError || review.isError ? (
-          <p role="alert">未能保存付款覆核；可能版本或授權已更新，請重新載入案件。沒有自動重試。</p>
-        ) : null}
       </div>
     </article>
   );

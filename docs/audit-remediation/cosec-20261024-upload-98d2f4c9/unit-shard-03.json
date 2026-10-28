@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-03",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/components/clients/shareholding-form-dialog.test.tsx",
+    "src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx",
+    "src/components/demo-unavailable.test.tsx",
+    "src/components/incorporation/create-incorporation-case-dialog.test.tsx",
+    "src/components/kpi-card.test.tsx",
+    "src/components/navigation.test.tsx",
+    "src/components/page-header.convention.test.ts",
+    "src/components/page-header.test.tsx",
+    "src/components/record-unavailable.test.tsx",
+    "src/components/status-text-contrast.convention.test.ts",
+    "src/components/ui/button.convention.test.ts",
+    "src/components/ui/button.test.tsx",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/components/clients/shareholding-form-dialog.test.tsx",
+    "src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx",
+    "src/components/demo-unavailable.test.tsx",
+    "src/components/incorporation/create-incorporation-case-dialog.test.tsx",
+    "src/components/kpi-card.test.tsx",
+    "src/components/navigation.test.tsx",
+    "src/components/page-header.convention.test.ts",
+    "src/components/page-header.test.tsx",
+    "src/components/record-unavailable.test.tsx",
+    "src/components/status-text-contrast.convention.test.ts",
+    "src/components/ui/button.convention.test.ts",
+    "src/components/ui/button.test.tsx"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx",
+      "tests": 5
+    },
+    {
+      "path": "src/components/navigation.test.tsx",
+      "tests": 5
+    },
+    {
+      "path": "src/components/incorporation/create-incorporation-case-dialog.test.tsx",
+      "tests": 3
+    },
+    {
+      "path": "src/components/clients/shareholding-form-dialog.test.tsx",
+      "tests": 3
+    },
+    {
+      "path": "src/components/status-text-contrast.convention.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "src/components/record-unavailable.test.tsx",
+      "tests": 2
+    },
+    {
+      "path": "src/components/ui/button.test.tsx",
+      "tests": 4
+    },
+    {
+      "path": "src/components/demo-unavailable.test.tsx",
+      "tests": 1
+    },
+    {
+      "path": "src/components/page-header.convention.test.ts",
+      "tests": 4
+    },
+    {
+      "path": "src/components/page-header.test.tsx",
+      "tests": 3
+    },
+    {
+      "path": "src/components/ui/button.convention.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "src/components/kpi-card.test.tsx",
+      "tests": 2
+    }
+  ]
+}

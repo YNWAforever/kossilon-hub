@@ -36,6 +36,47 @@ const input: AssignmentInput = {
 };
 
 describe("assignment recommendations", () => {
+  it("UC186 permits a qualified team colleague when the work has no required skill, retaining duty separation", () => {
+    const plain = { ...baseCandidate, skills: [] };
+    expect(
+      rankAssignmentCandidates({ ...input, requiredSkillKey: null, candidates: [plain] }).map(
+        (r) => r.userId,
+      ),
+    ).toEqual([plain.userId]);
+    expect(
+      rankAssignmentCandidates({
+        ...input,
+        requiredSkillKey: null,
+        reviewerId: plain.userId,
+        candidates: [plain],
+      }),
+    ).toEqual([]);
+    expect(
+      rankAssignmentCandidates({
+        ...input,
+        requiredSkillKey: null,
+        assignmentTarget: "reviewer",
+        ownerId: plain.userId,
+        candidates: [plain],
+      }),
+    ).toEqual([]);
+    expect(
+      rankAssignmentCandidates({
+        ...input,
+        requiredSkillKey: null,
+        candidates: [
+          { ...plain, active: false },
+          { ...plain, available: false },
+          { ...plain, role: "Client" },
+          { ...plain, teamIds: ["other-team"] },
+        ],
+      }),
+    ).toEqual([]);
+    expect(
+      rankAssignmentCandidates({ ...input, requiredSkillKey: null, candidates: [plain] })[0].factors
+        .skillProficiency,
+    ).toBe(0);
+  });
   it("ranks eligible staff and explains score factors", () => {
     const recommendations = rankAssignmentCandidates(input);
 

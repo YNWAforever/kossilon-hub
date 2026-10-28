@@ -1,0 +1,337 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/server/maintenance-trigger-runtime.test.ts (21 tests | 10 failed) 62ms
+     × blocks no-ledger and repeated attempts without a success receipt 13ms
+     × blocks empty and repeated attempts without a success receipt 2ms
+     × blocks missing and repeated attempts without a success receipt 1ms
+     × blocks unknown and repeated attempts without a success receipt 1ms
+     × blocks same-count-diverged and repeated attempts without a success receipt 1ms
+     × blocks a false physical contract even with all ledger IDs 1ms
+     × blocks a null physical contract even with all ledger IDs 1ms
+     × does not treat an empty catalog as verified 1ms
+     × sanitizes failed schema reads and closes the reader without writing failure ticks 2ms
+     × recovers on a fresh read after refusal and keeps the scheduled-slot replay guard 1ms
+     ✓ persists a non-success replay heartbeat without inventing failed jobs or successful execution 3ms
+     ✓ labels an authenticated HTTP cron candidate unverified and performs only the five safe jobs 29ms
+     ✓ does not mark undefined input as a verified platform trigger 1ms
+     ✓ does not mark http-candidate input as a verified platform trigger 0ms
+     ✓ does not mark manual input as a verified platform trigger 0ms
+     ✓ retains unknown finish acknowledgement and refuses to re-execute its durable started jobs 1ms
+     ✓ rejects out-of-scope provider work before constructing job or receipt repositories 0ms
+     ✓ does not execute the HTTP candidate when scheduler owner is paused 0ms
+     ✓ does not execute the HTTP candidate when scheduler owner is cloudflare 0ms
+     ✓ does not execute the HTTP candidate when scheduler owner is invalid-owner 0ms
+     ✓ cannot promote a manual trigger to native evidence by supplying native-hook text 0ms
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 11 passed (21)
+   Start at  14:52:35
+   Duration  1.00s (transform 111ms, setup 0ms, import 148ms, tests 62ms, environment 0ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/server/maintenance-trigger-runtime.test.ts > UC189 scheduler refuses incompatible schema before any durable write > blocks no-ledger and repeated attempts without a success receipt
+ FAIL  |unit| src/server/maintenance-trigger-runtime.test.ts > UC189 scheduler refuses incompatible schema before any durable write > blocks empty and repeated attempts without a success receipt
+ FAIL  |unit| src/server/maintenance-trigger-runtime.test.ts > UC189 scheduler refuses incompatible schema before any durable write > blocks missing and repeated attempts without a success receipt
+ FAIL  |unit| src/server/maintenance-trigger-runtime.test.ts > UC189 scheduler refuses incompatible schema before any durable write > blocks unknown and repeated attempts without a success receipt
+ FAIL  |unit| src/server/maintenance-trigger-runtime.test.ts > UC189 scheduler refuses incompatible schema before any durable write > blocks same-count-diverged and repeated attempts without a success receipt
+AssertionError: promise resolved "{ trigger: 'scheduled', …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "counts": {
++     "claimed": 5,
++     "completed": 5,
++     "failed": 0,
++     "skipped": 0,
++     "unknown": 0,
++   },
++   "jobs": [
++     {
++       "job": "evaluateEscalations",
++       "result": {
++         "breaches": 0,
++         "warnings": 1,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "settleNotificationAttempts",
++       "result": {
++         "failed": 0,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "redactNotifications",
++       "result": {
++         "redacted": 1,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "escalateStalledQuarantine",
++       "result": {
++         "stalled": 0,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "runBulkAssignments",
++       "result": {
++         "jobs": 0,
++         "processed": 0,
++       },
++       "state": "succeeded",
++     },
++   ],
++   "outcome": "succeeded",
++   "runId": "refused",
++   "scheduledAt": "2026-10-23T00:00:00.000Z",
++   "trigger": "scheduled",
+  }
+
+ ❯ src/server/maintenance-trigger-runtime.test.ts:163:59
+    161|     fixture.ledger = ledger;
+    162|     for (const runId of ["refused", "retry"]) {
+    163|       await expect(runRuntimeMaintenanceTick(input(runId))).rejects.to…
+       |                                                           ^
+    164|     }
+    165|     expect(fixture.jobRepositories).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  |unit| src/server/maintenance-trigger-runtime.test.ts > UC189 scheduler refuses incompatible schema before any durable write > blocks a false physical contract even with all ledger IDs
+ FAIL  |unit| src/server/maintenance-trigger-runtime.test.ts > UC189 scheduler refuses incompatible schema before any durable write > blocks a null physical contract even with all ledger IDs
+AssertionError: promise resolved "{ trigger: 'scheduled', …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "counts": {
++     "claimed": 5,
++     "completed": 5,
++     "failed": 0,
++     "skipped": 0,
++     "unknown": 0,
++   },
++   "jobs": [
++     {
++       "job": "evaluateEscalations",
++       "result": {
++         "breaches": 0,
++         "warnings": 1,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "settleNotificationAttempts",
++       "result": {
++         "failed": 0,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "redactNotifications",
++       "result": {
++         "redacted": 1,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "escalateStalledQuarantine",
++       "result": {
++         "stalled": 0,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "runBulkAssignments",
++       "result": {
++         "jobs": 0,
++         "processed": 0,
++       },
++       "state": "succeeded",
++     },
++   ],
++   "outcome": "succeeded",
++   "runId": "physical",
++   "scheduledAt": "2026-10-23T00:00:00.000Z",
++   "trigger": "scheduled",
+  }
+
+ ❯ src/server/maintenance-trigger-runtime.test.ts:173:62
+    171|   it.each([false, null])("blocks a %s physical contract even with all …
+    172|     fixture.facts[0].present = present;
+    173|     await expect(runRuntimeMaintenanceTick(input("physical"))).rejects…
+       |                                                              ^
+    174|     expect(fixture.jobRepositories).toBe(0);
+    175|     expect(fixture.effects).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  |unit| src/server/maintenance-trigger-runtime.test.ts > UC189 scheduler refuses incompatible schema before any durable write > does not treat an empty catalog as verified
+AssertionError: promise resolved "{ trigger: 'scheduled', …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "counts": {
++     "claimed": 5,
++     "completed": 5,
++     "failed": 0,
++     "skipped": 0,
++     "unknown": 0,
++   },
++   "jobs": [
++     {
++       "job": "evaluateEscalations",
++       "result": {
++         "breaches": 0,
++         "warnings": 1,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "settleNotificationAttempts",
++       "result": {
++         "failed": 0,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "redactNotifications",
++       "result": {
++         "redacted": 1,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "escalateStalledQuarantine",
++       "result": {
++         "stalled": 0,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "runBulkAssignments",
++       "result": {
++         "jobs": 0,
++         "processed": 0,
++       },
++       "state": "succeeded",
++     },
++   ],
++   "outcome": "succeeded",
++   "runId": "empty-catalog",
++   "scheduledAt": "2026-10-23T00:00:00.000Z",
++   "trigger": "scheduled",
+  }
+
+ ❯ src/server/maintenance-trigger-runtime.test.ts:181:67
+    179|   it("does not treat an empty catalog as verified", async () => {
+    180|     fixture.facts = [];
+    181|     await expect(runRuntimeMaintenanceTick(input("empty-catalog"))).re…
+       |                                                                   ^
+    182|     expect(fixture.jobRepositories).toBe(0);
+    183|     expect(fixture.drafts).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  |unit| src/server/maintenance-trigger-runtime.test.ts > UC189 scheduler refuses incompatible schema before any durable write > sanitizes failed schema reads and closes the reader without writing failure ticks
+AssertionError: expected { trigger: 'scheduled', …(5) } to be an instance of Error
+ ❯ src/server/maintenance-trigger-runtime.test.ts:189:19
+    187|     fixture.readFailure = true;
+    188|     const error: unknown = await runRuntimeMaintenanceTick(input("unav…
+    189|     expect(error).toBeInstanceOf(Error);
+       |                   ^
+    190|     expect(String(error)).toMatch(/schema/i);
+    191|     expect(String(error)).not.toContain("private database identity");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  |unit| src/server/maintenance-trigger-runtime.test.ts > UC189 scheduler refuses incompatible schema before any durable write > recovers on a fresh read after refusal and keeps the scheduled-slot replay guard
+AssertionError: promise resolved "{ trigger: 'scheduled', …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "counts": {
++     "claimed": 5,
++     "completed": 5,
++     "failed": 0,
++     "skipped": 0,
++     "unknown": 0,
++   },
++   "jobs": [
++     {
++       "job": "evaluateEscalations",
++       "result": {
++         "breaches": 0,
++         "warnings": 1,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "settleNotificationAttempts",
++       "result": {
++         "failed": 0,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "redactNotifications",
++       "result": {
++         "redacted": 1,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "escalateStalledQuarantine",
++       "result": {
++         "stalled": 0,
++       },
++       "state": "succeeded",
++     },
++     {
++       "job": "runBulkAssignments",
++       "result": {
++         "jobs": 0,
++         "processed": 0,
++       },
++       "state": "succeeded",
++     },
++   ],
++   "outcome": "succeeded",
++   "runId": "before-repair",
++   "scheduledAt": "2026-10-23T00:00:00.000Z",
++   "trigger": "scheduled",
+  }
+
+ ❯ src/server/maintenance-trigger-runtime.test.ts:199:67
+    197|   it("recovers on a fresh read after refusal and keeps the scheduled-s…
+    198|     fixture.ledger = { present: true, applied: [] };
+    199|     await expect(runRuntimeMaintenanceTick(input("before-repair"))).re…
+       |                                                                   ^
+    200|     fixture.ledger = { present: true, applied: [...EXPECTED_MIGRATIONS…
+    201|     const first = await runRuntimeMaintenanceTick(input("after-repair"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+

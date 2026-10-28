@@ -1,0 +1,434 @@
+import type postgres from "postgres";
+import type { SqlClient } from "@/server/db/client";
+import { assertStaffAccess } from "@/features/auth/authorization";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import { lockStaffLifecycleExclusive } from "@/features/auth/staff-lifecycle";
+import { createWorkItemRepository } from "@/features/work-items/repository";
+import { assertApplicationWriteSchema } from "@/server/application-schema";
+import {
+  handoverSelectionSchema,
+  handoverPageSchema,
+  handoverCommandSchema,
+  handoverReceiptSchema,
+  type HandoverSelection,
+  type HandoverCommand,
+  type HandoverEntry,
+  type HandoverPage,
+  type HandoverReceipt,
+  type HandoverCancellation,
+} from "./types";
+type Query = SqlClient | postgres.TransactionSql;
+type Person = {
+  id: string;
+  role: string;
+  team_id: string | null;
+  active: boolean;
+  access_revision: number;
+  team_active: boolean | null;
+};
+type Case = {
+  kind: Exclude<HandoverEntry["kind"], "work_item">;
+  id: string;
+  title: string;
+  status: string;
+  owner_id: string;
+  reviewer_id: string | null;
+  team_id: string | null;
+  company_id: string | null;
+  row_version: string;
+  company_version: string | null;
+  writable: boolean;
+};
+type Work = {
+  id: string;
+  title: string;
+  status: string;
+  owner_id: string | null;
+  reviewer_id: string | null;
+  team_id: string | null;
+  business_team_id: string | null;
+  company_id: string;
+  annual_return_case_id: string | null;
+  corporate_change_request_id: string | null;
+  version: number;
+  row_version: string;
+};
+const conflict = () =>
+  Object.assign(new Error("責任或員工版本已改變，請重新預覽。"), {
+    statusCode: 409,
+    code: "HANDOVER_CONFLICT",
+  });
+const hash = async (value: unknown) =>
+  Array.from(
+    new Uint8Array(
+      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(value))),
+    ),
+  )
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+const needs = (row: { owner_id: string | null; reviewer_id: string | null }, source: string) =>
+  row.owner_id === source || row.reviewer_id === source;
+
+export function createStaffHandoverRepository({ sql }: { sql: Query }) {
+  async function admin(tx: Query, actor: AuthenticatedActor) {
+    assertStaffAccess(actor);
+    if (actor.role !== "Admin" || !actor.userId)
+      throw new Error("Forbidden: Admin access required.");
+    const [row] =
+      await tx`select sp.user_id from staff_profiles sp join users u on u.id=sp.user_id where sp.user_id=${actor.userId} and sp.auth_user_id=${actor.authUserId} and sp.active and u.active and sp.role='Admin' and u.role='Admin' and sp.team_id is not distinct from u.team_id`;
+    if (!row) throw new Error("Forbidden: current verified active Admin profile required.");
+  }
+  async function transaction<T>(
+    actor: AuthenticatedActor,
+    run: (tx: postgres.TransactionSql) => Promise<T>,
+  ) {
+    if (!("begin" in sql)) throw new Error("Handover must own the outer transaction.");
+    return sql.begin(async (tx) => {
+      await lockStaffLifecycleExclusive(tx);
+      await admin(tx, actor);
+      return run(tx);
+    }) as Promise<T>;
+  }
+  async function person(
+    tx: Query,
+    ref: { userId: string; expectedVersion: number },
+    receiver: boolean,
+  ): Promise<Person> {
+    const [row] = await tx<
+      Person[]
+    >`select u.id,sp.role,sp.team_id,sp.active,sp.access_revision,t.active team_active from staff_profiles sp join users u on u.id=sp.user_id left join teams t on t.id=sp.team_id where u.id=${ref.userId} and u.role=sp.role and u.active=sp.active and u.team_id is not distinct from sp.team_id for share of u,sp`;
+    if (!row || !["Admin", "Manager", "Staff"].includes(row.role))
+      throw new Error("需要狀態一致的員工身份。");
+    if (row.access_revision !== ref.expectedVersion) throw conflict();
+    if (receiver && (!row.active || !row.team_active))
+      throw new Error("接手人及所屬團隊必須有效。");
+    if (receiver) {
+      const [team] = await tx`select id from teams where id=${row.team_id} and active for share`;
+      if (!team) throw new Error("接手人團隊已改變，請重新預覽。");
+    }
+    return row;
+  }
+  async function scope(tx: Query, source: string) {
+    const cases = await tx<Case[]>`
+      with source_work as (select annual_return_case_id,corporate_change_request_id from work_items where (owner_id=${source} or reviewer_id=${source}) and status not in ('completed','cancelled'))
+      select 'annual_return'::text kind,a.id,c.company_name title,a.current_status status,a.owner_id,a.reviewer_id,c.assigned_team_id team_id,c.id company_id,a.xmin::text row_version,c.xmin::text company_version,(a.locked_at is null and a.completed_at is null and a.current_status<>'Completed') writable
+      from annual_return_cases a join companies c on c.id=a.company_id where ((a.owner_id=${source} or a.reviewer_id=${source}) and a.current_status<>'Completed') or a.id in (select annual_return_case_id from source_work)
+      union all
+      select 'incorporation',i.id,i.proposed_company_name_en,i.status,i.owner_id,null::uuid,i.team_id,i.company_id,i.xmin::text,null::text,i.status<>'Completed' from incorporation_cases i where i.owner_id=${source} and i.status<>'Completed'
+      union all
+      select 'corporate_change',r.id,c.company_name,r.status,r.owner_id,null::uuid,c.assigned_team_id,c.id,r.xmin::text,c.xmin::text,r.status not in ('Completed','Cancelled') from corporate_change_requests r join companies c on c.id=r.company_id where (r.owner_id=${source} and r.status not in ('Completed','Cancelled')) or r.id in (select corporate_change_request_id from source_work)
+      order by kind,id`;
+    const annual = cases
+      .filter((c) => c.kind === "annual_return" && needs(c, source))
+      .map((c) => c.id);
+    const corporate = cases
+      .filter((c) => c.kind === "corporate_change" && needs(c, source))
+      .map((c) => c.id);
+    const work = await tx<
+      Work[]
+    >`select w.id,w.title,w.status,w.owner_id,w.reviewer_id,w.team_id,c.assigned_team_id business_team_id,w.company_id,w.annual_return_case_id,w.corporate_change_request_id,w.version,w.xmin::text row_version from work_items w join companies c on c.id=w.company_id where w.status not in ('completed','cancelled') and (w.owner_id=${source} or w.reviewer_id=${source} or w.annual_return_case_id=any(${annual}::uuid[]) or w.corporate_change_request_id=any(${corporate}::uuid[])) order by w.id`;
+    return { cases, work };
+  }
+  async function snapshot(tx: Query, input: HandoverSelection) {
+    const source = await person(tx, input, false);
+    const owner = input.owner ? await person(tx, input.owner, true) : null;
+    const reviewer = input.reviewer ? await person(tx, input.reviewer, true) : null;
+    for (const target of [owner, reviewer])
+      if (target?.id === source.id) throw new Error("接手人不能是來源員工。");
+    if (owner && reviewer && owner.id === reviewer.id)
+      throw new Error("負責及覆核接手人必須分開。");
+    const { cases, work } = await scope(tx, source.id);
+    const targetFor = (
+      row: { owner_id: string | null; reviewer_id: string | null },
+      role: "owner" | "reviewer",
+    ) =>
+      row[role === "owner" ? "owner_id" : "reviewer_id"] === source.id
+        ? ((role === "owner" ? owner : reviewer)?.id ?? null)
+        : row[role === "owner" ? "owner_id" : "reviewer_id"];
+    for (const row of [...cases, ...work]) {
+      if (!needs(row, source.id)) continue;
+      if ((row.owner_id === source.id && !owner) || (row.reviewer_id === source.id && !reviewer))
+        throw new Error("請選擇所有所需的負責及覆核接手人。");
+      for (const [role, target] of [
+        ["owner", owner],
+        ["reviewer", reviewer],
+      ] as const)
+        if (
+          row[role === "owner" ? "owner_id" : "reviewer_id"] === source.id &&
+          target?.team_id !== row.team_id
+        )
+          throw new Error("接手人必須屬於案件的業務團隊。");
+      if (targetFor(row, "owner") && targetFor(row, "owner") === targetFor(row, "reviewer"))
+        throw new Error("負責與覆核職責衝突。");
+    }
+    for (const c of cases) {
+      if (!c.writable) throw new Error("已鎖定或完成的案件不可交接。");
+      for (const w of work.filter(
+        (w) => w.annual_return_case_id === c.id || w.corporate_change_request_id === c.id,
+      )) {
+        if (w.business_team_id !== w.team_id || w.team_id !== c.team_id)
+          throw new Error("案件與工作團隊不一致，請先核對。");
+        if (
+          targetFor(c, "owner") === targetFor(w, "reviewer") ||
+          (targetFor(c, "reviewer") && targetFor(c, "reviewer") === targetFor(w, "owner"))
+        )
+          throw new Error("案件與工作的負責／覆核職責衝突。");
+      }
+    }
+    const repo = createWorkItemRepository({ sql: tx });
+    for (const w of work.filter((w) => needs(w, source.id))) {
+      if (w.team_id !== w.business_team_id) throw new Error("工作與業務團隊不一致，請先核對。");
+      for (const role of ["owner", "reviewer"] as const)
+        if (w[role === "owner" ? "owner_id" : "reviewer_id"] === source.id) {
+          const options = await repo.recommendAssignees(w.id, { assignmentTarget: role });
+          if (!options.some((r) => r.userId === (role === "owner" ? owner : reviewer)?.id))
+            throw new Error("接手人不符合此工作的角色、技能或分工要求。");
+        }
+    }
+    const entries: HandoverEntry[] = [
+      ...cases
+        .filter((c) => needs(c, source.id))
+        .map((c) => ({
+          kind: c.kind,
+          id: c.id,
+          title: c.title,
+          status: c.status,
+          owner: c.owner_id === source.id,
+          reviewer: c.reviewer_id === source.id,
+        })),
+      ...work
+        .filter((w) => needs(w, source.id))
+        .map((w) => ({
+          kind: "work_item" as const,
+          id: w.id,
+          title: w.title,
+          status: w.status,
+          owner: w.owner_id === source.id,
+          reviewer: w.reviewer_id === source.id,
+        })),
+    ];
+    return {
+      source,
+      owner,
+      reviewer,
+      cases,
+      work,
+      entries,
+      fingerprint: await hash({ input, source, owner, reviewer, cases, work }),
+    };
+  }
+  async function lockScope(tx: postgres.TransactionSql, s: Awaited<ReturnType<typeof scope>>) {
+    const companies = [
+      ...new Set(
+        [...s.cases.map((c) => c.company_id), ...s.work.map((w) => w.company_id)].filter(
+          (id): id is string => id !== null,
+        ),
+      ),
+    ].sort();
+    await tx`select id from companies where id=any(${companies}::uuid[]) order by id for update`;
+    await tx`select id from annual_return_cases where id=any(${s.cases.filter((c) => c.kind === "annual_return").map((c) => c.id)}::uuid[]) order by id for update`;
+    await tx`select id from incorporation_cases where id=any(${s.cases.filter((c) => c.kind === "incorporation").map((c) => c.id)}::uuid[]) order by id for update`;
+    await tx`select id from corporate_change_requests where id=any(${s.cases.filter((c) => c.kind === "corporate_change").map((c) => c.id)}::uuid[]) order by id for update`;
+    await tx`select id from work_items where id=any(${s.work.map((w) => w.id)}::uuid[]) order by id for update`;
+  }
+  return {
+    async previewHandover(
+      actor: AuthenticatedActor,
+      value: ReturnType<typeof handoverPageSchema.parse>,
+    ): Promise<HandoverPage> {
+      const input = handoverPageSchema.parse(value),
+        selection = handoverSelectionSchema.parse({
+          userId: input.userId,
+          expectedVersion: input.expectedVersion,
+          owner: input.owner,
+          reviewer: input.reviewer,
+          reason: input.reason,
+        });
+      return transaction(actor, async (tx) => {
+        const s = await snapshot(tx, selection),
+          cursor = input.cursor ?? 0;
+        if (
+          (cursor > 0 && !input.fingerprint) ||
+          (input.fingerprint && input.fingerprint !== s.fingerprint)
+        )
+          throw conflict();
+        if (cursor > s.entries.length) throw conflict();
+        return {
+          fingerprint: s.fingerprint,
+          caseCount: s.entries.filter((e) => e.kind !== "work_item").length,
+          workItemCount: s.entries.filter((e) => e.kind === "work_item").length,
+          entries: s.entries.slice(cursor, cursor + 100),
+          nextCursor: cursor + 100 < s.entries.length ? cursor + 100 : null,
+        };
+      });
+    },
+    async executeHandover(
+      actor: AuthenticatedActor,
+      value: HandoverCommand,
+    ): Promise<HandoverReceipt> {
+      const input = handoverCommandSchema.parse(value),
+        selection = handoverSelectionSchema.parse({
+          userId: input.userId,
+          expectedVersion: input.expectedVersion,
+          owner: input.owner,
+          reviewer: input.reviewer,
+          reason: input.reason,
+        }),
+        requestHash = await hash(input);
+      return transaction(actor, async (tx) => {
+        await assertApplicationWriteSchema(tx);
+        const [old] = await tx<
+          {
+            actor_user_id: string;
+            metadata: { command?: string; requestHash?: string; result?: HandoverReceipt };
+          }[]
+        >`select actor_user_id,metadata from staff_access_events where id=${input.operationId}`;
+        if (old) {
+          if (
+            old.actor_user_id !== actor.userId ||
+            old.metadata.command !== "staff_handover" ||
+            old.metadata.requestHash !== requestHash ||
+            !old.metadata.result
+          )
+            throw conflict();
+          const result = handoverReceiptSchema.safeParse(old.metadata.result);
+          if (
+            !result.success ||
+            result.data.operationId !== input.operationId ||
+            result.data.userId !== input.userId ||
+            result.data.actorId !== actor.userId
+          )
+            throw conflict();
+          return { ...result.data, replayed: true };
+        }
+        await lockScope(tx, await scope(tx, input.userId));
+        const s = await snapshot(tx, selection);
+        if (s.fingerprint !== input.fingerprint) throw conflict();
+        if (!s.entries.length) throw new Error("沒有未交責任，沒有執行交接。");
+        const moves: {
+          kind: HandoverEntry["kind"];
+          id: string;
+          role: "owner" | "reviewer";
+          from: string;
+          to: string;
+        }[] = [];
+        for (const c of s.cases.filter((c) => needs(c, s.source.id))) {
+          for (const role of ["owner", "reviewer"] as const)
+            if (c[role === "owner" ? "owner_id" : "reviewer_id"] === s.source.id) {
+              const target = (role === "owner" ? s.owner : s.reviewer)!;
+              if (c.kind === "annual_return")
+                await tx`update annual_return_cases set ${role === "owner" ? tx`owner_id` : tx`reviewer_id`}=${target.id},updated_at=now() where id=${c.id}`;
+              else if (c.kind === "incorporation")
+                await tx`update incorporation_cases set owner_id=${target.id},updated_at=now() where id=${c.id}`;
+              else
+                await tx`update corporate_change_requests set owner_id=${target.id},updated_at=now() where id=${c.id}`;
+              const move = { kind: c.kind, id: c.id, role, from: s.source.id, to: target.id };
+              moves.push(move);
+              if (c.kind === "annual_return")
+                await tx`insert into annual_return_audit_events(case_id,company_id,actor_id,actor_role,action,result,summary,metadata) values(${c.id},${c.company_id},${actor.userId!},'Admin','assign_owner','succeeded',${`Staff handover: ${role}`},${tx.json({ ...move, operationId: input.operationId, reason: input.reason })})`;
+              if (c.company_id)
+                await tx`insert into timeline_events(company_id,case_id,event_type,actor_type,actor_id,description,metadata) values(${c.company_id},${c.kind === "annual_return" ? c.id : null},'staff_responsibility_transferred','user',${actor.userId!},'Staff responsibility transferred.',${tx.json({ ...move, operationId: input.operationId, reason: input.reason })})`;
+            }
+        }
+        const workRepo = createWorkItemRepository({ sql: tx });
+        for (const w of s.work.filter((w) => needs(w, s.source.id))) {
+          let version = w.version;
+          for (const role of ["owner", "reviewer"] as const)
+            if (w[role === "owner" ? "owner_id" : "reviewer_id"] === s.source.id) {
+              const target = (role === "owner" ? s.owner : s.reviewer)!;
+              const result = await workRepo.assign({
+                workItemId: w.id,
+                expectedVersion: version,
+                selectedUserId: target.id,
+                assignedById: actor.userId!,
+                assignmentTarget: role,
+                overrideReason: input.reason,
+                handoverOperationId: input.operationId,
+              });
+              version = result.version;
+              moves.push({ kind: "work_item", id: w.id, role, from: s.source.id, to: target.id });
+            }
+        }
+        const remaining = await scope(tx, s.source.id);
+        const remainingCases = remaining.cases.filter((c) => needs(c, s.source.id)).length,
+          remainingWorkItems = remaining.work.filter((w) => needs(w, s.source.id)).length;
+        if (remainingCases || remainingWorkItems) throw conflict();
+        const receipt: HandoverReceipt = {
+          operationId: input.operationId,
+          userId: s.source.id,
+          actorId: actor.userId!,
+          expectedVersion: s.source.access_revision + 1,
+          caseCount: s.entries.filter((e) => e.kind !== "work_item").length,
+          workItemCount: s.entries.filter((e) => e.kind === "work_item").length,
+          remainingCases,
+          remainingWorkItems,
+          replayed: false,
+        };
+        await tx`update staff_profiles set access_revision=access_revision+1,updated_at=now() where user_id=${s.source.id}`;
+        // Existing immutable access journal: command metadata explicitly identifies
+        // responsibility handover; no invented provider/approval success or new schema.
+        await tx`insert into staff_access_events(id,target_user_id,actor_user_id,event_type,old_role,new_role,old_team_id,new_team_id,metadata) values(${input.operationId},${s.source.id},${actor.userId!},'access_changed',${s.source.role},${s.source.role},${s.source.team_id},${s.source.team_id},${tx.json({ command: "staff_handover", requestHash, selection, fingerprint: input.fingerprint, moves, result: receipt })})`;
+        return receipt;
+      });
+    },
+    async cancelHandover(
+      actor: AuthenticatedActor,
+      value: HandoverCommand,
+    ): Promise<HandoverCancellation> {
+      const input = handoverCommandSchema.parse(value),
+        requestHash = await hash(input);
+      return transaction(actor, async (tx) => {
+        await assertApplicationWriteSchema(tx);
+        const [old] = await tx<
+          {
+            actor_user_id: string;
+            metadata: { command?: string; requestHash?: string; result?: HandoverReceipt };
+          }[]
+        >`select actor_user_id,metadata from staff_access_events where id=${input.operationId}`;
+        if (old) {
+          if (old.actor_user_id !== actor.userId || old.metadata.requestHash !== requestHash)
+            throw conflict();
+          if (old.metadata.command === "staff_handover_cancelled")
+            return { status: "cancelled", operationId: input.operationId };
+          if (old.metadata.command !== "staff_handover") throw conflict();
+          const result = handoverReceiptSchema.parse(old.metadata.result);
+          if (
+            result.operationId !== input.operationId ||
+            result.userId !== input.userId ||
+            result.actorId !== actor.userId
+          )
+            throw conflict();
+          return { status: "committed", receipt: { ...result, replayed: true } };
+        }
+        const [source] = await tx<
+          { role: string; team_id: string | null }[]
+        >`select role,team_id from users where id=${input.userId} for share`;
+        if (!source) throw new Error("來源員工不存在，沒有執行取消。");
+        // The immutable marker uses the same lock as execution. A delayed
+        // original request cannot commit after cancellation was confirmed.
+        await tx`insert into staff_access_events(id,target_user_id,actor_user_id,event_type,old_role,new_role,old_team_id,new_team_id,metadata) values(${input.operationId},${input.userId},${actor.userId!},'access_changed',${source.role},${source.role},${source.team_id},${source.team_id},${tx.json({ command: "staff_handover_cancelled", requestHash, operationId: input.operationId })})`;
+        return { status: "cancelled", operationId: input.operationId };
+      });
+    },
+    async readHandoverReceipt(
+      actor: AuthenticatedActor,
+      operationId: string,
+    ): Promise<HandoverReceipt | null> {
+      handoverCommandSchema.shape.operationId.parse(operationId);
+      return transaction(actor, async (tx) => {
+        const [row] = await tx<
+          { target_user_id: string; actor_user_id: string; metadata: { result: HandoverReceipt } }[]
+        >`select target_user_id,actor_user_id,metadata from staff_access_events where id=${operationId} and metadata->>'command'='staff_handover'`;
+        if (!row) return null;
+        const result = handoverReceiptSchema.parse(row.metadata.result);
+        if (
+          result.operationId !== operationId ||
+          result.userId !== row.target_user_id ||
+          result.actorId !== row.actor_user_id
+        )
+          throw conflict();
+        return { ...result, replayed: true };
+      });
+    },
+  };
+}

@@ -1,0 +1,80 @@
+
+> test
+> vitest run --project unit src/components/bulk-selection-toolbar.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/components/bulk-selection-toolbar.test.tsx (20 tests | 2 failed) 3966ms
+     × stops polling at completed without treating it as a retry request 121ms
+     × does not offer retry or reconciliation of a cancelled job 186ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/components/bulk-selection-toolbar.test.tsx > explicit scope and durable bulk toolbar > stops polling at completed without treating it as a retry request
+AssertionError: expected <p></p> to be null
+
+- Expected:
+null
+
++ Received:
+<p>
+  工作狀態：
+  已完成
+  ；共
+  2
+  ；成功
+  0
+  ；待處理
+  0
+  ；鎖定
+  0
+  ；無權
+  0
+  ；衝突
+  0
+  ；失敗
+  0
+  ；結果未知
+  2
+  ；取消
+  0
+</p>
+
+ ❯ src/components/bulk-selection-toolbar.test.tsx:173:44
+    171|     expect(api.resume).not.toHaveBeenCalled();
+    172|     expect(api.retry).not.toHaveBeenCalled();
+    173|     expect(screen.queryByText(/工作狀態：已完成/)).toBeNull();
+       |                                            ^
+    174|   });
+    175|   it("stops after a failed progress read and retains unknown rather th…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| src/components/bulk-selection-toolbar.test.tsx > explicit scope and durable bulk toolbar > does not offer retry or reconciliation of a cancelled job
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/components/bulk-selection-toolbar.test.tsx:213:74
+    211|     fireEvent.change(screen.getByLabelText("已保存工作"), { target: { value…
+    212|     await screen.findByText(/結果未知1/);
+    213|     expect((screen.getByText("只重試可重試失敗") as HTMLButtonElement).disable…
+       |                                                                          ^
+    214|     expect((screen.getByText("先核對未知結果") as HTMLButtonElement).disabled…
+    215|     expect(api.retry).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+   Start at  05:00:18
+   Duration  9.93s (transform 572ms, setup 0ms, import 1.84s, tests 3.97s, environment 3.69s)
+

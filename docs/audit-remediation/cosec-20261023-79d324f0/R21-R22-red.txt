@@ -1,0 +1,5171 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/whatsapp/components/production-inbox.pagination.test.tsx (5 tests | 5 failed) 2720ms
+     × reaches conversation 101 without changing the selected conversation 1356ms
+     × reaches message 201, deduplicates overlaps, and preserves scroll on prepend and new arrivals 985ms
+     × keeps successful history on page failure and retries the failed page 158ms
+     × sends search to the server and resets old actor selection/history 113ms
+     × does not switch the initial conversation when new activity reorders the rail 100ms
+ ❯ |unit| src/features/whatsapp/history-pagination.test.ts (7 tests | 7 failed) 16ms
+     × reaches conversation 101 with a bounded lookahead and a stable tie-break cursor 7ms
+     × reaches older message 201 and ties the cursor to the contact and actor 1ms
+     × rejects cursors from a different search and malformed or excessive requests 1ms
+     × refuses forbidden actor before querying { role: 'Client' } 1ms
+     × refuses forbidden actor before querying { active: false } 0ms
+     × refuses forbidden actor before querying { teamId: null } 0ms
+     × binds search, scope and both cursor tuple directions in actual repository reads 4ms
+ ❯ |unit| src/components/navigation.test.tsx (5 tests | 1 failed) 1112ms
+     × hides Admin-only links from Manager without removing deep routes 118ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/components/navigation.test.tsx > daily role navigation > hides Admin-only links from Manager without removing deep routes
+AssertionError: expected <a href="/imports" …(1)>…(2)</a> to be null
+
+- Expected:
+null
+
++ Received:
+<a
+  class="group flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+  href="/imports"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-upload h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M12 3v12"
+    />
+    <path
+      d="m17 8-5-5-5 5"
+    />
+    <path
+      d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+    />
+  </svg>
+  <span>
+    月表匯入
+  </span>
+</a>
+
+ ❯ src/components/navigation.test.tsx:57:60
+     55|       expect(screen.queryByRole("link", { name: "用戶管理" })).toBeNull();
+     56|       expect(screen.queryByRole("link", { name: "設定" })).toBeNull();
+     57|       expect(screen.queryByRole("link", { name: "月表匯入" })).toBeNull();
+       |                                                            ^
+     58|       expect(screen.getByRole("link", { name: "系統運作" })).toBeTruthy();
+     59|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  |unit| src/features/whatsapp/history-pagination.test.ts > scoped WhatsApp history pages (unit) > reaches conversation 101 with a bounded lookahead and a stable tie-break cursor
+TypeError: listWhatsAppConversationPageForActor is not a function
+ ❯ src/features/whatsapp/history-pagination.test.ts:26:32
+     24|     const repository = { listConversations: vi.fn().mockResolvedValueO…
+     25|       .mockResolvedValueOnce([conversation(101)]), listConversationMes…
+     26|     const first = await server.listWhatsAppConversationPageForActor(ac…
+       |                                ^
+     27|     expect(first.items).toHaveLength(100);
+     28|     expect(first.nextCursor).toMatchObject({ at, id: id(100) });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  |unit| src/features/whatsapp/history-pagination.test.ts > scoped WhatsApp history pages (unit) > reaches older message 201 and ties the cursor to the contact and actor
+TypeError: listWhatsAppConversationMessagePageForActor is not a function
+ ❯ src/features/whatsapp/history-pagination.test.ts:38:32
+     36|       .mockResolvedValueOnce(Array.from({length:201}, (_,n)=>message(2…
+     37|       .mockResolvedValueOnce([message(1)]) };
+     38|     const first = await server.listWhatsAppConversationMessagePageForA…
+       |                                ^
+     39|     expect(first.items).toHaveLength(200);
+     40|     expect(first.nextCursor).toMatchObject({ at, id:id(2) });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  |unit| src/features/whatsapp/history-pagination.test.ts > scoped WhatsApp history pages (unit) > rejects cursors from a different search and malformed or excessive requests
+TypeError: listWhatsAppConversationPageForActor is not a function
+ ❯ src/features/whatsapp/history-pagination.test.ts:49:30
+     47|   it("rejects cursors from a different search and malformed or excessi…
+     48|     const repository = { listConversations:vi.fn().mockResolvedValue([…
+     49|     const first=await server.listWhatsAppConversationPageForActor(acto…
+       |                              ^
+     50|     await expect(server.listWhatsAppConversationPageForActor(actor,{se…
+     51|     expect(()=>server.listWhatsAppConversationsInputSchema.parse({curs…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  |unit| src/features/whatsapp/history-pagination.test.ts > scoped WhatsApp history pages (unit) > refuses forbidden actor before querying { role: 'Client' }
+ FAIL  |unit| src/features/whatsapp/history-pagination.test.ts > scoped WhatsApp history pages (unit) > refuses forbidden actor before querying { active: false }
+ FAIL  |unit| src/features/whatsapp/history-pagination.test.ts > scoped WhatsApp history pages (unit) > refuses forbidden actor before querying { teamId: null }
+TypeError: listWhatsAppConversationPageForActor is not a function
+ ❯ src/features/whatsapp/history-pagination.test.ts:57:25
+     55|   it.each([{role:"Client" as const},{active:false},{teamId:null}])("re…
+     56|     const repository={listConversations:vi.fn(),listConversationMessag…
+     57|     await expect(server.listWhatsAppConversationPageForActor({...actor…
+       |                         ^
+     58|     expect(repository.listConversations).not.toHaveBeenCalled();
+     59|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  |unit| src/features/whatsapp/history-pagination.test.ts > scoped WhatsApp history pages (unit) > binds search, scope and both cursor tuple directions in actual repository reads
+AssertionError: expected '\n      -- One pass over whatsapp_mes…' to match /occurred_at\s*<[^]*contact\.id\s*>/
+
+- Expected:
+/occurred_at\s*<[^]*contact\.id\s*>/
+
++ Received:
+"
+      -- One pass over whatsapp_messages. Two distinct-on CTEs read the same rows
+      -- twice, and the ordering expression is not cheap.
+      with ranked as (
+        select
+          m.contact_id,
+          m.body,
+          m.direction,
+          m.company_id,
+          coalesce(m.sent_at, m.received_at, m.created_at) as occurred_at,
+          row_number() over (
+            partition by m.contact_id
+            order by coalesce(m.sent_at, m.received_at, m.created_at) desc, m.id desc
+          ) as recency,
+          -- The case of the most recent message that HAS one, so a single
+          -- unmatched inbound reply cannot make the annual-return link vanish
+          -- from a thread that is plainly about it. A null case sorts last, so
+          -- rows carrying a case win the window regardless of recency.
+          first_value(m.case_id) over (
+            partition by m.contact_id
+            order by
+              (m.case_id is null),
+              coalesce(m.sent_at, m.received_at, m.created_at) desc,
+              m.id desc
+          ) as case_id,
+          -- Taken from that same row, so the company shown never belongs to a
+          -- different case than the one the link points at.
+          first_value(m.company_id) over (
+            partition by m.contact_id
+            order by
+              (m.case_id is null),
+              coalesce(m.sent_at, m.received_at, m.created_at) desc,
+              m.id desc
+          ) as case_company_id
+        from whatsapp_messages m
+        left join companies scoped_company on scoped_company.id=m.company_id
+        left join annual_return_cases scoped_case on scoped_case.id=m.case_id and scoped_case.company_id=m.company_id
+        where m.contact_id is not null
+          and (? or scoped_company.assigned_team_id=?::uuid
+            or (m.case_id is not null and (scoped_case.owner_id=?::uuid or scoped_case.reviewer_id=?::uuid)))
+      ),
+      latest as (
+        select
+          contact_id,
+          body,
+          direction,
+          occurred_at,
+          case_id,
+          coalesce(
+            case when case_id is not null then case_company_id end,
+            company_id
+          ) as company_id
+        from ranked
+        where recency = 1
+      )
+      select
+        contact.id as contact_id,
+        contact.display_name,
+        contact.phone_e164,
+        coalesce(latest.company_id, contact.company_id) as company_id,
+        company.company_name,
+        latest.case_id,
+        latest.body as last_message_body,
+        latest.direction as last_message_direction,
+        latest.occurred_at::text as last_message_at
+      from latest
+      join whatsapp_contacts contact on contact.id = latest.contact_id
+      left join companies company on company.id = coalesce(latest.company_id, contact.company_id)
+      order by latest.occurred_at desc, contact.id asc
+      limit ?
+    "
+
+ ❯ src/features/whatsapp/history-pagination.test.ts:66:27
+     64|     const cursor={at,id:id(50),scope:"unit"};
+     65|     await repo.listConversations({actor,search:"50%_中文",cursor,limit:1…
+     66|     expect(calls[0]!.sql).toMatch(/occurred_at\s*<[^]*contact\.id\s*>/…
+       |                           ^
+     67|     expect(calls[0]!.values).toContain("%50\\%\\_中文%");
+     68|     expect(calls[0]!.values).toContain(actor.teamId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  |unit| src/features/whatsapp/components/production-inbox.pagination.test.tsx > WhatsApp complete history UI (unit) > reaches conversation 101 without changing the selected conversation
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "載入更多對話"
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  <main
+    class="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="text-sm font-medium text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="text-sm text-muted-foreground"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "WhatsApp 收件箱":
+  <h1
+    class="font-display text-2xl font-semibold text-foreground"
+  />
+
+  Name "Contact 1":
+  <h2
+    class="truncate text-xl font-semibold"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Contact 1 2026-10-01 08:00 Preview 1":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted bg-muted"
+    type="button"
+  />
+
+  Name "Contact 2 2026-10-01 08:00 Preview 2":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 3 2026-10-01 08:00 Preview 3":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 4 2026-10-01 08:00 Preview 4":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 5 2026-10-01 08:00 Preview 5":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 6 2026-10-01 08:00 Preview 6":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 7 2026-10-01 08:00 Preview 7":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 8 2026-10-01 08:00 Preview 8":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 9 2026-10-01 08:00 Preview 9":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 10 2026-10-01 08:00 Preview 10":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 11 2026-10-01 08:00 Preview 11":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 12 2026-10-01 08:00 Preview 12":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 13 2026-10-01 08:00 Preview 13":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 14 2026-10-01 08:00 Preview 14":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 15 2026-10-01 08:00 Preview 15":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 16 2026-10-01 08:00 Preview 16":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 17 2026-10-01 08:00 Preview 17":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 18 2026-10-01 08:00 Preview 18":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 19 2026-10-01 08:00 Preview 19":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 20 2026-10-01 08:00 Preview 20":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 21 2026-10-01 08:00 Preview 21":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 22 2026-10-01 08:00 Preview 22":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 23 2026-10-01 08:00 Preview 23":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 24 2026-10-01 08:00 Preview 24":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 25 2026-10-01 08:00 Preview 25":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 26 2026-10-01 08:00 Preview 26":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 27 2026-10-01 08:00 Preview 27":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 28 2026-10-01 08:00 Preview 28":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 29 2026-10-01 08:00 Preview 29":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 30 2026-10-01 08:00 Preview 30":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 31 2026-10-01 08:00 Preview 31":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 32 2026-10-01 08:00 Preview 32":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 33 2026-10-01 08:00 Preview 33":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 34 2026-10-01 08:00 Preview 34":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 35 2026-10-01 08:00 Preview 35":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 36 2026-10-01 08:00 Preview 36":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 37 2026-10-01 08:00 Preview 37":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 38 2026-10-01 08:00 Preview 38":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 39 2026-10-01 08:00 Preview 39":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 40 2026-10-01 08:00 Preview 40":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 41 2026-10-01 08:00 Preview 41":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 42 2026-10-01 08:00 Preview 42":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 43 2026-10-01 08:00 Preview 43":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 44 2026-10-01 08:00 Preview 44":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 45 2026-10-01 08:00 Preview 45":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 46 2026-10-01 08:00 Preview 46":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 47 2026-10-01 08:00 Preview 47":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 48 2026-10-01 08:00 Preview 48":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 49 2026-10-01 08:00 Preview 49":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 50 2026-10-01 08:00 Preview 50":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 51 2026-10-01 08:00 Preview 51":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 52 2026-10-01 08:00 Preview 52":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 53 2026-10-01 08:00 Preview 53":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 54 2026-10-01 08:00 Preview 54":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 55 2026-10-01 08:00 Preview 55":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 56 2026-10-01 08:00 Preview 56":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 57 2026-10-01 08:00 Preview 57":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 58 2026-10-01 08:00 Preview 58":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 59 2026-10-01 08:00 Preview 59":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 60 2026-10-01 08:00 Preview 60":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 61 2026-10-01 08:00 Preview 61":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 62 2026-10-01 08:00 Preview 62":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 63 2026-10-01 08:00 Preview 63":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 64 2026-10-01 08:00 Preview 64":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 65 2026-10-01 08:00 Preview 65":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 66 2026-10-01 08:00 Preview 66":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 67 2026-10-01 08:00 Preview 67":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 68 2026-10-01 08:00 Preview 68":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 69 2026-10-01 08:00 Preview 69":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 70 2026-10-01 08:00 Preview 70":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 71 2026-10-01 08:00 Preview 71":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 72 2026-10-01 08:00 Preview 72":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 73 2026-10-01 08:00 Preview 73":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 74 2026-10-01 08:00 Preview 74":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 75 2026-10-01 08:00 Preview 75":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 76 2026-10-01 08:00 Preview 76":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 77 2026-10-01 08:00 Preview 77":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 78 2026-10-01 08:00 Preview 78":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 79 2026-10-01 08:00 Preview 79":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 80 2026-10-01 08:00 Preview 80":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 81 2026-10-01 08:00 Preview 81":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 82 2026-10-01 08:00 Preview 82":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 83 2026-10-01 08:00 Preview 83":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 84 2026-10-01 08:00 Preview 84":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 85 2026-10-01 08:00 Preview 85":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 86 2026-10-01 08:00 Preview 86":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 87 2026-10-01 08:00 Preview 87":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 88 2026-10-01 08:00 Preview 88":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 89 2026-10-01 08:00 Preview 89":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 90 2026-10-01 08:00 Preview 90":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 91 2026-10-01 08:00 Preview 91":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 92 2026-10-01 08:00 Preview 92":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 93 2026-10-01 08:00 Preview 93":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 94 2026-10-01 08:00 Preview 94":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 95 2026-10-01 08:00 Preview 95":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 96 2026-10-01 08:00 Preview 96":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 97 2026-10-01 08:00 Preview 97":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 98 2026-10-01 08:00 Preview 98":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 99 2026-10-01 08:00 Preview 99":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  Name "Contact 100 2026-10-01 08:00 Preview 100":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="space-y-3 p-0"
+    role="status"
+  />
+
+  --------------------------------------------------
+  link:
+
+  Name "WhatsApp 追件":
+  <a
+    href="/"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]"
+    >
+      <section
+        class="border-r bg-card"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <div
+            class="flex flex-wrap items-start justify-between gap-3"
+          >
+            <div
+              class="min-w-0 space-y-1"
+            >
+              <p
+                class="text-sm font-medium text-muted-foreground"
+              >
+                通訊
+              </p>
+              <h1
+                class="font-display text-2xl font-semibold text-foreground"
+              >
+                WhatsApp 收件箱
+              </h1>
+            </div>
+          </div>
+          <p
+            class="mt-2 text-xs text-muted-foreground"
+          >
+            設定狀態只顯示伺服器綁定是否存在，連線健康及實際收訊尚未核實。
+          </p>
+        </div>
+        <div
+          class="divide-y"
+        >
+          <button
+            class="w-full px-4 py-3 text-left hover:bg-muted bg-muted"
+            type="button"
+          >
+            <div
+              class="flex items-center justify-between gap-3"
+            >
+              <p
+                class="min-w-0 truncate font-medium"
+              >
+                Contact 1
+              </p>
+              <span
+                class="shrink-0 text-xs text-muted-foreground"
+              >
+                2026-10-01 08:00
+              </span>
+            </div>
+            <p
+              class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+            >
+              Preview 1
+            </p>
+          </button>
+          <button
+            class="w-full px-4 py-3 text-left hover:bg-muted "
+            type="button"
+          >
+            <div
+              class="flex items-center justify-between gap-3"
+            >
+              <p
+                class="min-w-0 truncate font-medium"
+              >
+                Contact 2
+              </p>
+              <span
+                class="shrink-0 text-xs text-muted-foreground"
+              >
+                2026-10-01 08:00
+              </span>
+            </div>
+            <p
+              class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+            >
+              Preview 2
+            </p>
+          </button>
+          <button
+            class="w-full px-4 py-3 text-left hover:bg-muted "
+            type="button"
+          >
+            <div
+              class="flex items-center justify-between gap-3"
+            >
+              <p
+                class="min-w-0 truncate font-medium"
+              >
+                Contact 3
+              </p>
+              <span
+                class="shrink-0 text-xs text-muted-foreground"
+              >
+                2026-10-01 08:00
+              </span>
+            </div>
+            <p
+              class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+            >
+              Preview 3
+            </p>
+          </button>
+          <button
+            class="w-full px-4 py-3 text-left hover:bg-muted "
+            type="button"
+          >
+            <div
+              class="flex items-center justify-between gap-3"
+            >
+              <p
+                class="min-w-0 truncate font-medium"
+              >
+                Contact 4
+              </p>
+              <span
+                class="shrink-0 text-xs text-muted-foreground"
+              >
+                2026-10-01 08:00
+              </span>
+            </div>
+            <p
+              class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+            >
+              Preview 4
+            </p>
+          </button>
+          <button
+            class="w-full px-4 py-3 text-left hover:bg-muted "
+            type="button"
+          >
+            <div
+              class="flex items-center justify-between gap-3"
+            >
+              <p
+                class="min-w-0 truncate font-medium"
+              >
+                Contact 5
+              </p>
+              <span
+                class="shrink-0 text-xs text-muted-foreground"
+              >
+                2026-10-01 08:00
+              </span>
+            </div>
+            <p
+              class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+            >
+              Preview 5
+            </p>
+          </button>
+          <button
+            class="w-full px-4 py-3 text-left hover:bg-muted "
+            type="button"
+          >
+            <div
+              class="flex items-center justify-between gap-3"
+            >
+              <p
+                class="min-w-0 truncate font-medium"
+              >
+                Contact 6
+              </p>
+              <span
+                class="shrink-0 text-xs text-muted-foreground"
+              >
+                2026-10-01 08:00
+              </span>...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/whatsapp/components/production-inbox.pagination.test.tsx:28:28
+     26|       .mockResolvedValueOnce({items:[conversation(100),conversation(10…
+     27|     mount();await screen.findByRole("heading",{name:"Contact 1"});
+     28|     fireEvent.click(screen.getByRole("button",{name:"載入更多對話"}));
+       |                            ^
+     29|     expect(await screen.findByRole("button",{name:/Contact 101/})).toB…
+     30|     expect(screen.getAllByRole("button",{name:/Contact 100 /})).toHave…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  |unit| src/features/whatsapp/components/production-inbox.pagination.test.tsx > WhatsApp complete history UI (unit) > reaches message 201, deduplicates overlaps, and preserves scroll on prepend and new arrivals
+TestingLibraryElementError: Unable to find an accessible element with the role "region" and name "對話訊息"
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  <main
+    class="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="text-sm font-medium text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "WhatsApp 收件箱":
+  <h1
+    class="font-display text-2xl font-semibold text-foreground"
+  />
+
+  Name "Contact 1":
+  <h2
+    class="truncate text-xl font-semibold"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Contact 1 2026-10-01 08:00 Preview 1":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted bg-muted"
+    type="button"
+  />
+
+  --------------------------------------------------
+  link:
+
+  Name "WhatsApp 追件":
+  <a
+    href="/"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]"
+    >
+      <section
+        class="border-r bg-card"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <div
+            class="flex flex-wrap items-start justify-between gap-3"
+          >
+            <div
+              class="min-w-0 space-y-1"
+            >
+              <p
+                class="text-sm font-medium text-muted-foreground"
+              >
+                通訊
+              </p>
+              <h1
+                class="font-display text-2xl font-semibold text-foreground"
+              >
+                WhatsApp 收件箱
+              </h1>
+            </div>
+          </div>
+          <p
+            class="mt-2 text-xs text-muted-foreground"
+          >
+            設定狀態只顯示伺服器綁定是否存在，連線健康及實際收訊尚未核實。
+          </p>
+        </div>
+        <div
+          class="divide-y"
+        >
+          <button
+            class="w-full px-4 py-3 text-left hover:bg-muted bg-muted"
+            type="button"
+          >
+            <div
+              class="flex items-center justify-between gap-3"
+            >
+              <p
+                class="min-w-0 truncate font-medium"
+              >
+                Contact 1
+              </p>
+              <span
+                class="shrink-0 text-xs text-muted-foreground"
+              >
+                2026-10-01 08:00
+              </span>
+            </div>
+            <p
+              class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+            >
+              Preview 1
+            </p>
+          </button>
+        </div>
+      </section>
+      <section
+        class="flex min-h-screen flex-col"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <div
+            class="flex items-start justify-between gap-3"
+          >
+            <div
+              class="min-w-0"
+            >
+              <h2
+                class="truncate text-xl font-semibold"
+              >
+                Contact 1
+              </h2>
+              <p
+                class="text-sm text-muted-foreground"
+              >
+                未有電話號碼記錄
+              </p>
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex-1 space-y-3 p-6"
+        >
+          <div
+            class="max-w-xl rounded-lg p-4 text-sm ml-auto bg-secondary"
+          >
+            <p
+              class="whitespace-pre-wrap"
+            >
+              Message 2
+            </p>
+            <p
+              class="mt-2 text-xs text-muted-foreground"
+            >
+              2026-10-01 08:00
+               -
+               
+              排隊中
+            </p>
+          </div>
+          <div
+            class="max-w-xl rounded-lg p-4 text-sm ml-auto bg-secondary"
+          >
+            <p
+              class="whitespace-pre-wrap"
+            >
+              Message 3
+            </p>
+            <p
+              class="mt-2 text-xs text-muted-foreground"
+            >
+              2026-10-01 08:00
+               -
+               
+              排隊中
+            </p>
+          </div>
+          <div
+            class="max-w-xl rounded-lg p-4 text-sm ml-auto bg-secondary"
+          >
+            <p
+              class="whitespace-pre-wrap"
+            >
+              Message 4
+            </p>
+            <p
+              class="mt-2 text-xs text-muted-foreground"
+            >
+              2026-10-01 08:00
+               -
+               
+              排隊中
+            </p>
+          </div>
+          <div
+            class="max-w-xl rounded-lg p-4 text-sm ml-auto bg-secondary"
+          >
+            <p
+              class="whitespace-pre-wrap"
+            >
+              Message 5
+            </p>
+            <p
+              class="mt-2 text-xs text-muted-foreground"
+            >
+              2026-10-01 08:00
+               -
+               
+              排隊中
+            </p>
+          </div>
+          <div
+            class="max-w-xl rounded-lg p-4 text-sm ml-auto bg-secondary"
+          >
+            <p
+              class="whitespace-pre-wrap"
+            >
+              Message 6
+            </p>
+            <p
+              class="mt-2 text-xs text-muted-foreground"
+            >
+              2026-10-01 08:00
+               -
+               
+              排隊中
+            </p>
+          </div>
+          <div
+            class="max-w-xl rounded-lg p-4 text-sm ml-auto bg-secondary"
+          >
+            <p
+              class="whitespace-pre-wrap"
+            >
+              Message 7
+            </p>
+            <p
+              class="mt-2 text-xs text-muted-foreground"
+            >
+              2026-10-01 08:00
+               -
+               
+              排隊中
+            </p>...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/whatsapp/components/production-inbox.pagination.test.tsx:38:25
+     36|       .mockResolvedValueOnce({items:[message(2),message(1)],nextCursor…
+     37|     const {client}=mount();await screen.findByText("Message 201");
+     38|     const region=screen.getByRole("region",{name:"對話訊息"});let height=1…
+       |                         ^
+     39|     Object.defineProperty(region,"scrollHeight",{configurable:true,get…
+     40|     mocks.messages.mockImplementationOnce(async()=>{height=1080;return…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  |unit| src/features/whatsapp/components/production-inbox.pagination.test.tsx > WhatsApp complete history UI (unit) > keeps successful history on page failure and retries the failed page
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "載入較舊訊息"
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  <main
+    class="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="text-sm font-medium text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="whitespace-pre-wrap"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "WhatsApp 收件箱":
+  <h1
+    class="font-display text-2xl font-semibold text-foreground"
+  />
+
+  Name "Contact 1":
+  <h2
+    class="truncate text-xl font-semibold"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Contact 1 2026-10-01 08:00 Preview 1":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted bg-muted"
+    type="button"
+  />
+
+  --------------------------------------------------
+  link:
+
+  Name "WhatsApp 追件":
+  <a
+    href="/"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]"
+    >
+      <section
+        class="border-r bg-card"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <div
+            class="flex flex-wrap items-start justify-between gap-3"
+          >
+            <div
+              class="min-w-0 space-y-1"
+            >
+              <p
+                class="text-sm font-medium text-muted-foreground"
+              >
+                通訊
+              </p>
+              <h1
+                class="font-display text-2xl font-semibold text-foreground"
+              >
+                WhatsApp 收件箱
+              </h1>
+            </div>
+          </div>
+          <p
+            class="mt-2 text-xs text-muted-foreground"
+          >
+            設定狀態只顯示伺服器綁定是否存在，連線健康及實際收訊尚未核實。
+          </p>
+        </div>
+        <div
+          class="divide-y"
+        >
+          <button
+            class="w-full px-4 py-3 text-left hover:bg-muted bg-muted"
+            type="button"
+          >
+            <div
+              class="flex items-center justify-between gap-3"
+            >
+              <p
+                class="min-w-0 truncate font-medium"
+              >
+                Contact 1
+              </p>
+              <span
+                class="shrink-0 text-xs text-muted-foreground"
+              >
+                2026-10-01 08:00
+              </span>
+            </div>
+            <p
+              class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+            >
+              Preview 1
+            </p>
+          </button>
+        </div>
+      </section>
+      <section
+        class="flex min-h-screen flex-col"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <div
+            class="flex items-start justify-between gap-3"
+          >
+            <div
+              class="min-w-0"
+            >
+              <h2
+                class="truncate text-xl font-semibold"
+              >
+                Contact 1
+              </h2>
+              <p
+                class="text-sm text-muted-foreground"
+              >
+                未有電話號碼記錄
+              </p>
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex-1 space-y-3 p-6"
+        >
+          <div
+            class="max-w-xl rounded-lg p-4 text-sm ml-auto bg-secondary"
+          >
+            <p
+              class="whitespace-pre-wrap"
+            >
+              Message 201
+            </p>
+            <p
+              class="mt-2 text-xs text-muted-foreground"
+            >
+              2026-10-01 08:03
+               -
+               
+              排隊中
+            </p>
+          </div>
+        </div>
+        <div
+          class="border-t bg-card p-4 text-sm text-muted-foreground"
+        >
+          回覆須以已核准的範本經
+           
+          <a
+            href="/"
+          >
+            WhatsApp 追件
+          </a>
+          發送。
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/whatsapp/components/production-inbox.pagination.test.tsx:56:75
+     54|     mocks.messages.mockResolvedValueOnce({items:[message(201)],nextCur…
+     55|       .mockResolvedValueOnce({items:[message(1)],nextCursor:null});
+     56|     mount();await screen.findByText("Message 201");fireEvent.click(scr…
+       |                                                                           ^
+     57|     await screen.findByRole("alert");expect(screen.getByText("Message …
+     58|     fireEvent.click(screen.getByRole("button",{name:"重試較舊訊息"}));expect…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  |unit| src/features/whatsapp/components/production-inbox.pagination.test.tsx > WhatsApp complete history UI (unit) > sends search to the server and resets old actor selection/history
+TestingLibraryElementError: Unable to find an accessible element with the role "searchbox" and name "搜尋對話"
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  <main
+    class="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="text-sm font-medium text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="text-sm text-muted-foreground"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "WhatsApp 收件箱":
+  <h1
+    class="font-display text-2xl font-semibold text-foreground"
+  />
+
+  Name "Contact 1":
+  <h2
+    class="truncate text-xl font-semibold"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Contact 1 2026-10-01 08:00 Preview 1":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted bg-muted"
+    type="button"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="space-y-3 p-0"
+    role="status"
+  />
+
+  --------------------------------------------------
+  link:
+
+  Name "WhatsApp 追件":
+  <a
+    href="/"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]"
+    >
+      <section
+        class="border-r bg-card"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <div
+            class="flex flex-wrap items-start justify-between gap-3"
+          >
+            <div
+              class="min-w-0 space-y-1"
+            >
+              <p
+                class="text-sm font-medium text-muted-foreground"
+              >
+                通訊
+              </p>
+              <h1
+                class="font-display text-2xl font-semibold text-foreground"
+              >
+                WhatsApp 收件箱
+              </h1>
+            </div>
+          </div>
+          <p
+            class="mt-2 text-xs text-muted-foreground"
+          >
+            設定狀態只顯示伺服器綁定是否存在，連線健康及實際收訊尚未核實。
+          </p>
+        </div>
+        <div
+          class="divide-y"
+        >
+          <button
+            class="w-full px-4 py-3 text-left hover:bg-muted bg-muted"
+            type="button"
+          >
+            <div
+              class="flex items-center justify-between gap-3"
+            >
+              <p
+                class="min-w-0 truncate font-medium"
+              >
+                Contact 1
+              </p>
+              <span
+                class="shrink-0 text-xs text-muted-foreground"
+              >
+                2026-10-01 08:00
+              </span>
+            </div>
+            <p
+              class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+            >
+              Preview 1
+            </p>
+          </button>
+        </div>
+      </section>
+      <section
+        class="flex min-h-screen flex-col"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <div
+            class="flex items-start justify-between gap-3"
+          >
+            <div
+              class="min-w-0"
+            >
+              <h2
+                class="truncate text-xl font-semibold"
+              >
+                Contact 1
+              </h2>
+              <p
+                class="text-sm text-muted-foreground"
+              >
+                未有電話號碼記錄
+              </p>
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex-1 space-y-3 p-6"
+        >
+          <div
+            aria-live="polite"
+            class="space-y-3 p-0"
+            role="status"
+          >
+            <span
+              class="sr-only"
+            >
+              對話載入中…
+            </span>
+            <div
+              class="flex items-center gap-3"
+            >
+              <div
+                aria-hidden="true"
+                class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+              />
+              <div
+                class="min-w-0 flex-1 space-y-2"
+              >
+                <div
+                  aria-hidden="true"
+                  class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-2/5"
+                />
+                <div
+                  aria-hidden="true"
+                  class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-3/4"
+                />
+              </div>
+            </div>
+            <div
+              class="flex items-center gap-3"
+            >
+              <div
+                aria-hidden="true"
+                class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+              />
+              <div
+                class="min-w-0 flex-1 space-y-2"
+              >
+                <div
+                  aria-hidden="true"
+                  class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-1/3"
+                />
+                <div
+                  aria-hidden="true"
+                  class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-2/3"
+                />
+              </div>
+            </div>
+            <div
+              class="flex items-center gap-3"
+            >
+              <div
+                aria-hidden="true"
+                class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+              />
+              <div
+                class="min-w-0 flex-1 space-y-2"
+              >
+                <div
+                  aria-hidden="true"
+                  class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-2/5"
+                />
+                <div
+                  aria-hidden="true"
+                  class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-3/4"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="border-t bg-card p-4 text-sm text-muted-foreground"
+        >
+          回覆須以已核准的範本經
+           
+          <a
+            href="/"
+          >
+            WhatsApp 追件
+          </a>
+          發送。
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/whatsapp/components/production-inbox.pagination.test.tsx:62:29
+     60|   it("sends search to the server and resets old actor selection/histor…
+     61|     const view=mount();await screen.findByRole("heading",{name:"Contac…
+     62|     fireEvent.change(screen.getByRole("searchbox",{name:"搜尋對話"}),{targ…
+       |                             ^
+     63|     await waitFor(()=>expect(mocks.conversations).toHaveBeenLastCalled…
+     64|     mocks.actor="B";mocks.conversations.mockResolvedValue({items:[conv…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  |unit| src/features/whatsapp/components/production-inbox.pagination.test.tsx > WhatsApp complete history UI (unit) > does not switch the initial conversation when new activity reorders the rail
+TestingLibraryElementError: Unable to find an accessible element with the role "heading" and name "Contact 1"
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  <main
+    class="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="text-sm font-medium text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-xs text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="min-w-0 truncate font-medium"
+  />
+
+  Name "":
+  <p
+    class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="text-sm text-muted-foreground"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "WhatsApp 收件箱":
+  <h1
+    class="font-display text-2xl font-semibold text-foreground"
+  />
+
+  Name "Contact 9":
+  <h2
+    class="truncate text-xl font-semibold"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Contact 9 2026-10-01 08:00 Preview 9":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted bg-muted"
+    type="button"
+  />
+
+  Name "Contact 1 2026-10-01 08:00 Preview 1":
+  <button
+    class="w-full px-4 py-3 text-left hover:bg-muted "
+    type="button"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="space-y-3 p-0"
+    role="status"
+  />
+
+  --------------------------------------------------
+  link:
+
+  Name "WhatsApp 追件":
+  <a
+    href="/"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]"
+    >
+      <section
+        class="border-r bg-card"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <div
+            class="flex flex-wrap items-start justify-between gap-3"
+          >
+            <div
+              class="min-w-0 space-y-1"
+            >
+              <p
+                class="text-sm font-medium text-muted-foreground"
+              >
+                通訊
+              </p>
+              <h1
+                class="font-display text-2xl font-semibold text-foreground"
+              >
+                WhatsApp 收件箱
+              </h1>
+            </div>
+          </div>
+          <p
+            class="mt-2 text-xs text-muted-foreground"
+          >
+            設定狀態只顯示伺服器綁定是否存在，連線健康及實際收訊尚未核實。
+          </p>
+        </div>
+        <div
+          class="divide-y"
+        >
+          <button
+            class="w-full px-4 py-3 text-left hover:bg-muted bg-muted"
+            type="button"
+          >
+            <div
+              class="flex items-center justify-between gap-3"
+            >
+              <p
+                class="min-w-0 truncate font-medium"
+              >
+                Contact 9
+              </p>
+              <span
+                class="shrink-0 text-xs text-muted-foreground"
+              >
+                2026-10-01 08:00
+              </span>
+            </div>
+            <p
+              class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+            >
+              Preview 9
+            </p>
+          </button>
+          <button
+            class="w-full px-4 py-3 text-left hover:bg-muted "
+            type="button"
+          >
+            <div
+              class="flex items-center justify-between gap-3"
+            >
+              <p
+                class="min-w-0 truncate font-medium"
+              >
+                Contact 1
+              </p>
+              <span
+                class="shrink-0 text-xs text-muted-foreground"
+              >
+                2026-10-01 08:00
+              </span>
+            </div>
+            <p
+              class="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground"
+            >
+              Preview 1
+            </p>
+          </button>
+        </div>
+      </section>
+      <section
+        class="flex min-h-screen flex-col"
+      >
+        <div
+          class="border-b p-4"
+        >
+          <div
+            class="flex items-start justify-between gap-3"
+          >
+            <div
+              class="min-w-0"
+            >
+              <h2
+                class="truncate text-xl font-semibold"
+              >
+                Contact 9
+              </h2>
+              <p
+                class="text-sm text-muted-foreground"
+              >
+                未有電話號碼記錄
+              </p>
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex-1 space-y-3 p-6"
+        >
+          <div
+            aria-live="polite"
+            class="space-y-3 p-0"
+            role="status"
+          >
+            <span
+              class="sr-only"
+            >
+              對話載入中…
+            </span>
+            <div
+              class="flex items-center gap-3"
+            >
+              <div
+                aria-hidden="true"
+                class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+              />
+              <div
+                class="min-w-0 flex-1 space-y-2"
+              >
+                <div
+                  aria-hidden="true"
+                  class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-2/5"
+                />
+                <div
+                  aria-hidden="true"
+                  class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-3/4"
+                />
+              </div>
+            </div>
+            <div
+              class="flex items-center gap-3"
+            >
+              <div
+                aria-hidden="true"
+                class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+              />
+              <div
+                class="min-w-0 flex-1 space-y-2"
+              >
+                <div
+                  aria-hidden="true"
+                  class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-1/3"
+                />
+                <div
+                  aria-hidden="true"
+                  class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-2/3"
+                />
+              </div>
+            </div>
+            <div
+              class="flex items-center gap-3"
+            >
+              <div
+                aria-hidden="true"
+                class="animate-pulse bg-muted motion-reduce:animate-none h-9 w-9 shrink-0 rounded-full"
+              />
+              <div
+                class="min-w-0 flex-1 space-y-2"
+              >
+                <div
+                  aria-hidden="true"
+                  class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3.5 w-2/5"
+                />
+                <div
+                  aria-hidden="true"
+                  class="animate-pulse rounded-md bg-muted motion-reduce:animate-none h-3 w-3/4"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="border-t bg-card p-4 text-sm text-muted-foreground"
+        >
+          回覆須以已核准的範本經
+           
+          <a
+            href="/"
+          >
+            WhatsApp 追件
+          </a>
+          發送。
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/whatsapp/components/production-inbox.pagination.test.tsx:75:19
+     73|     mocks.conversations.mockResolvedValue({items:[conversation(9),conv…
+     74|     await act(()=>client.refetchQueries({queryKey:["whatsapp-conversat…
+     75|     expect(screen.getByRole("heading",{name:"Contact 1"})).toBeTruthy(…
+       |                   ^
+     76|   });
+     77| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  13 failed | 4 passed (17)
+   Start at  05:03:20
+   Duration  13.73s (transform 903ms, setup 0ms, import 2.43s, tests 3.85s, environment 5.43s)
+

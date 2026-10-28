@@ -1,0 +1,31 @@
+{
+  "run_id": "cosec-20261025-ap00-07447c43",
+  "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "evidence_base": "2edfc24d37bc5325c23fa8ea29a76876fd034176",
+  "phase": "AP00_LOCAL_PREFILL_AND_MINIMUM_INPUT_ONLY",
+  "release_gate": "NO_GO",
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "original_uc186": "PARTIAL_SCOPED",
+  "product_changes": 0,
+  "source_files_verified": 674,
+  "original_acceptance_csv": "../cosec-20261025-native-plan-fccb7c22/acceptance-results.csv",
+  "original_acceptance_csv_sha256": "287bafceb836b4e42b96cfbc006ee83dd9ac65900100d1ba199f93631537e6fb",
+  "original_acceptance_csv_evidence_base": "../cosec-20261025-build-d29cd5ec/",
+  "original_scenario_map": "../cosec-20261025-native-plan-fccb7c22/native-scenario-map.csv",
+  "approval_request": "approval-request.json",
+  "prefill": "ap00-prefilled.json",
+  "minimum_input": "MINIMUM-INPUT.md",
+  "approved_packet_ids": [],
+  "execution_enabled": false,
+  "auth_runtime_verified": false,
+  "native_http_db_rls_verified": false,
+  "deployed": false,
+  "external_accesses": 0,
+  "native_actions": 0,
+  "resources_created": 0,
+  "evidence_manifest": "evidence-manifest.json"
+}

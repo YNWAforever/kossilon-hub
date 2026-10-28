@@ -1,0 +1,148 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/auth/write-admission.test.ts (11 tests | 7 failed) 27ms
+     × refuses Staff before business writes for every schema fault and retry 17ms
+     × refuses Client before business writes for every schema fault and retry 1ms
+     × checks POST without caching a previous successful admission 2ms
+     × checks PUT without caching a previous successful admission 1ms
+     × checks PATCH without caching a previous successful admission 1ms
+     × checks DELETE without caching a previous successful admission 1ms
+     ✓ keeps GET diagnostics available without schema admission 1ms
+     ✓ keeps HEAD diagnostics available without schema admission 0ms
+     ✓ keeps OPTIONS diagnostics available without schema admission 0ms
+     ✓ preserves unauthorized, inactive and unprovisioned denials before catalog access 1ms
+     × recovers after refusal, and retains Staff-only role denial 1ms
+ ❯ |unit| src/features/whatsapp/webhook-schema.test.ts (2 tests | 1 failed) 59ms
+     × returns retryable 503 without constructing a writer or acknowledging incompatible schema 53ms
+     ✓ rejects bad HMAC before any schema query 4ms
+ ❯ |unit| src/server/non-scheduled-schema.test.ts (1 test | 1 failed) 858ms
+     × refuses before recorder/provider factory assembly 857ms
+
+ Test Files  3 failed (3)
+      Tests  9 failed | 5 passed (14)
+   Start at  15:35:06
+   Duration  7.67s (transform 3.64s, setup 0ms, import 4.69s, tests 943ms, environment 0ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+stderr | src/features/whatsapp/webhook-schema.test.ts > UC189 HMAC write admission before repository > rejects bad HMAC before any schema query
+whatsapp webhook rejected: signature did not verify { hadSignatureHeader: true, bodyBytes: 191 }
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/server/non-scheduled-schema.test.ts > UC189 manual maintenance production entry > refuses before recorder/provider factory assembly
+AssertionError: expected Error: Manual recorder reached before sch… to match object { statusCode: 503, …(1) }
+
+- Expected
++ Received
+
+- {
+-   "code": "SCHEMA_WRITE_BLOCKED",
+-   "statusCode": 503,
++ Error {
++   "message": "Manual recorder reached before schema admission",
+  }
+
+ ❯ src/server/non-scheduled-schema.test.ts:11:70
+      9|   it("refuses before recorder/provider factory assembly",async()=>{
+     10|     const {state,sql}=schemaCatalogDouble();state.marker=false;fixture…
+     11|     await expect(runFirmMaintenance({now:"2026-10-24T07:00:00.000Z"}))…
+       |                                                                      ^
+     12|     expect(fixture.factories).toBe(0);
+     13|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  |unit| src/features/auth/write-admission.test.ts > UC189 authenticated non-scheduled write admission (unit transport) > refuses Staff before business writes for every schema fault and retry
+ FAIL  |unit| src/features/auth/write-admission.test.ts > UC189 authenticated non-scheduled write admission (unit transport) > refuses Client before business writes for every schema fault and retry
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/features/auth/write-admission.test.ts:23:78
+     21|       let writes=0;
+     22|       for(let n=0;n<2;n++){
+     23|         await expect(requireActor(request(),{auth,sql}).then(()=>{writ…
+       |                                                                              ^
+     24|       }
+     25|       expect(writes).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  |unit| src/features/auth/write-admission.test.ts > UC189 authenticated non-scheduled write admission (unit transport) > checks POST without caching a previous successful admission
+ FAIL  |unit| src/features/auth/write-admission.test.ts > UC189 authenticated non-scheduled write admission (unit transport) > checks PUT without caching a previous successful admission
+ FAIL  |unit| src/features/auth/write-admission.test.ts > UC189 authenticated non-scheduled write admission (unit transport) > checks PATCH without caching a previous successful admission
+ FAIL  |unit| src/features/auth/write-admission.test.ts > UC189 authenticated non-scheduled write admission (unit transport) > checks DELETE without caching a previous successful admission
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "active": true,
++   "authUserId": "synthetic-session",
++   "role": "Staff",
++   "teamId": "ac7d801e-0189-4189-8189-000000000002",
++   "userId": "ac7d801e-0189-4189-8189-000000000001",
+  }
+
+ ❯ src/features/auth/write-admission.test.ts:33:58
+     31|     expect((await requireActor(request(method),{auth,sql})).role).toBe…
+     32|     state.marker=false;
+     33|     await expect(requireActor(request(method),{auth,sql})).rejects.toM…
+       |                                                          ^
+     34|   });
+     35|   it.each(["GET","HEAD","OPTIONS"])("keeps %s diagnostics available wi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  |unit| src/features/auth/write-admission.test.ts > UC189 authenticated non-scheduled write admission (unit transport) > recovers after refusal, and retains Staff-only role denial
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "active": true,
++   "authUserId": "synthetic-session",
++   "role": "Client",
++   "teamId": null,
++   "userId": null,
+  }
+
+ ❯ src/features/auth/write-admission.test.ts:51:52
+     49|   it("recovers after refusal, and retains Staff-only role denial",asyn…
+     50|     const {state,sql}=schemaCatalogDouble("Client");state.marker=false;
+     51|     await expect(requireActor(request(),{auth,sql})).rejects.toMatchOb…
+       |                                                    ^
+     52|     state.marker=true;
+     53|     expect((await requireActor(request(),{auth,sql})).role).toBe("Clie…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  |unit| src/features/whatsapp/webhook-schema.test.ts > UC189 HMAC write admission before repository > returns retryable 503 without constructing a writer or acknowledging incompatible schema
+Error: business writer reached
+ ❯ Object.<anonymous> src/features/whatsapp/webhook-schema.test.ts:14:36
+     12|   it("returns retryable 503 without constructing a writer or acknowled…
+     13|     const admission=vi.fn(async()=>{throw new Error("private schema de…
+     14|     const factory=vi.fn(()=>{throw new Error("business writer reached"…
+       |                                    ^
+     15|     const handler=createWhatsAppWebhookHandler({webhookSecret:secret,c…
+     16|     for(let n=0;n<2;n++){
+ ❯ handleWhatsAppWebhook src/features/whatsapp/webhook.ts:132:31
+ ❯ src/features/whatsapp/webhook-schema.test.ts:17:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+

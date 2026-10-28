@@ -1,0 +1,63 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Users/laich/Documents/kossilon-hub/cosec-20261023[39m
+
+ [31m❯[39m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[33m 1979[2mms[22m[39m
+[31m     [31m×[31m empty-full: verified commits before the opposite decision[39m[33m 513[2mms[22m[39m
+[31m     [31m×[31m empty-full: rejected commits before the opposite decision[39m[33m 425[2mms[22m[39m
+[31m     [31m×[31m partial-full: verified commits before the opposite decision[39m[32m 252[2mms[22m[39m
+[31m     [31m×[31m partial-full: rejected commits before the opposite decision[39m[32m 255[2mms[22m[39m
+[31m     [31m×[31m partial-open: verified commits before the opposite decision[39m[32m 252[2mms[22m[39m
+[31m     [31m×[31m partial-open: rejected commits before the opposite decision[39m[32m 280[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m6 failed[39m[22m[90m (6)[39m
+[2m   Start at [22m 20:34:43
+[2m   Duration [22m 3.40s[2m (transform 814ms, setup 0ms, import 1.12s, tests 1.98s, environment 0ms)[22m
+
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 6 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mempty-full: verified commits before the opposite decision
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mempty-full: rejected commits before the opposite decision
+[31m[1mError[22m: Forbidden: current verified staff identity is required.[39m
+[36m [2m❯[22m src/features/documents/repository.ts:[2m1006:27[22m[39m
+    [90m1004|[39m             and (${input.reviewerAuthUserId ?? null}::text is null or …
+    [90m1005|[39m           for share of u,sp`[39m[33m;[39m
+    [90m1006|[39m         if (!staff) throw new Error("Forbidden: current verified staff…
+    [90m   |[39m                           [31m^[39m
+    [90m1007|[39m         [35mif[39m (initial[33m.[39mcase_id)
+    [90m1008|[39m           await tx`select a.id from annual_return_cases a join compani…
+[90m [2m❯[22m run src/features/annual-return/payment-evidence.ts:[2m76:11[22m[39m
+[90m [2m❯[22m withPaymentVersionConflict src/features/annual-return/server-fns.ts:[2m1139:12[22m[39m
+[90m [2m❯[22m args.<computed> src/test/sql-test-lifetime.ts:[2m58:32[22m[39m
+[90m [2m❯[22m scope node_modules/postgres/src/index.js:[2m260:18[22m[39m
+[90m [2m❯[22m sql.begin node_modules/postgres/src/index.js:[2m243:14[22m[39m
+[90m [2m❯[22m scenario src/features/annual-return/payment-conflict.integration.test.ts:[2m281:25[22m[39m
+[90m [2m❯[22m src/features/annual-return/payment-conflict.integration.test.ts:[2m82:11[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mpartial-full: verified commits before the opposite decision
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mpartial-full: rejected commits before the opposite decision
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mpartial-open: verified commits before the opposite decision
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mpartial-open: rejected commits before the opposite decision
+[31m[1mError[22m: Forbidden: current verified staff identity is required.[39m
+[36m [2m❯[22m src/features/documents/repository.ts:[2m1006:27[22m[39m
+    [90m1004|[39m             and (${input.reviewerAuthUserId ?? null}::text is null or …
+    [90m1005|[39m           for share of u,sp`[39m[33m;[39m
+    [90m1006|[39m         if (!staff) throw new Error("Forbidden: current verified staff…
+    [90m   |[39m                           [31m^[39m
+    [90m1007|[39m         [35mif[39m (initial[33m.[39mcase_id)
+    [90m1008|[39m           await tx`select a.id from annual_return_cases a join compani…
+[90m [2m❯[22m run src/features/annual-return/payment-evidence.ts:[2m76:11[22m[39m
+[90m [2m❯[22m args.<computed> src/test/sql-test-lifetime.ts:[2m58:32[22m[39m
+[90m [2m❯[22m scope node_modules/postgres/src/index.js:[2m260:18[22m[39m
+[90m [2m❯[22m sql.begin node_modules/postgres/src/index.js:[2m243:14[22m[39m
+[90m [2m❯[22m withPaymentVersionConflict src/features/annual-return/server-fns.ts:[2m1139:12[22m[39m
+[90m [2m❯[22m scenario src/features/annual-return/payment-conflict.integration.test.ts:[2m207:7[22m[39m
+[90m [2m❯[22m src/features/annual-return/payment-conflict.integration.test.ts:[2m82:11[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯[22m[39m
+

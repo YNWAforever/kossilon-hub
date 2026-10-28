@@ -1,0 +1,35 @@
+{
+  "kind": "lintTest",
+  "attempt": "hardened",
+  "started": "2026-10-24T11:03:04.021Z",
+  "finished": "2026-10-24T11:03:06.047Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/eslint/bin/eslint.js",
+    "src/features/admin/handover-scope.integration.test.ts"
+  ],
+  "exit_code": 0,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ]
+}

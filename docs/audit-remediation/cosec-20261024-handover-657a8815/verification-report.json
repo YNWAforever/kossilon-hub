@@ -1,0 +1,13 @@
+{
+  "source_sha": "4e5b4532091d125d79ca19244a0699f26832166a",
+  "source_git_blobs": 669,
+  "prior_runs": 18,
+  "prior_manifested_files": 2534,
+  "current_manifested_files": 121,
+  "unit": 28,
+  "sql": 1,
+  "full_unit": "NOT_RUN",
+  "native_pass": 0,
+  "release_gate": "NO_GO",
+  "push_merge_deploy": false
+}

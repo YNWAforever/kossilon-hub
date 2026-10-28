@@ -1,0 +1,12 @@
+{
+  "db_provider_env_cleared": true,
+  "command": "npm run build",
+  "demo_server_stopped_before_build": true,
+  "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+  "free_memory_kib_before": 6235896,
+  "finished_utc": "2026-10-22T22:21:47.1742835Z",
+  "deployment": false,
+  "exit_code": 0,
+  "started_utc": "2026-10-22T22:21:30.3819491Z",
+  "demo_auth": false
+}

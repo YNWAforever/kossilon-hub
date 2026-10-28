@@ -1,0 +1,25 @@
+$ErrorActionPreference='Stop'
+$root='C:\Users\laich\Documents\kossilon-hub\cosec-20261023'
+$prefix='docs/audit-remediation/cosec-20261024-routes-e4b761c9/'
+if((Get-Location).Path -ne $root){throw 'Wrong root'}
+$source=(Get-Content -LiteralPath (Join-Path $PSScriptRoot 'source-candidate.json') -Raw|ConvertFrom-Json).source_sha
+if((& git rev-parse HEAD) -ne $source){throw 'Source version drift'}
+if(@(& git diff --cached --name-only).Count -ne 0){throw 'Existing staged work'}
+foreach($line in @(& git status --porcelain=v1 --untracked-files=all)){if(!$line.Substring(3).StartsWith($prefix)){throw ('Unowned change: '+$line)}}
+if(!(Test-Path -LiteralPath (Join-Path $PSScriptRoot 'verification-report.txt'))){throw 'Final verifier not completed'}
+$manifest=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'evidence-manifest.json') -Raw|ConvertFrom-Json
+$expected=@($manifest.files).Count+2
+$physical=@(Get-ChildItem -LiteralPath $PSScriptRoot -Recurse -File).Count
+if($physical -ne $expected){throw 'Evidence file count drift'}
+& git add -- $prefix
+if($LASTEXITCODE -ne 0){throw 'Evidence stage failed'}
+$staged=@(& git diff --cached --name-only)
+if($staged.Count -ne $expected -or @($staged|Where-Object {!$_.StartsWith($prefix)}).Count -ne 0){throw 'Evidence stage scope drift'}
+# Raw evidence keeps its CRLF, captured spaces and final blank lines byte-for-byte.
+# Whitespace policy applies to authored documentation/scripts, not captured bytes.
+$authored=@(":(glob)$prefix*.md",":(glob)$prefix*.mjs",":(glob)$prefix*.ps1")
+& git -c core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol diff --cached --check -- @authored
+if($LASTEXITCODE -ne 0){throw 'Evidence whitespace error'}
+& git commit -m 'docs(audit): record UC160 local routing acceptance and blockers'
+if($LASTEXITCODE -ne 0){throw 'Local evidence commit failed'}
+& git rev-parse HEAD

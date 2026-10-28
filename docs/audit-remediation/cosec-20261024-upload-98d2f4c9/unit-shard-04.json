@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-04",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/components/ui/field.convention.test.ts",
+    "src/components/ui/field.test.tsx",
+    "src/components/ui/skeleton.test.tsx",
+    "src/features/admin/production-staff-admin.interaction.test.tsx",
+    "src/features/admin/server-fns.test.ts",
+    "src/features/annual-return/board-filters.test.ts",
+    "src/features/annual-return/board-metrics.test.ts",
+    "src/features/annual-return/case-history.test.ts",
+    "src/features/annual-return/client-portal-server-fns.test.ts",
+    "src/features/annual-return/components/case-findings.interaction.test.tsx",
+    "src/features/annual-return/components/case-handoff.interaction.test.tsx",
+    "src/features/annual-return/components/demo-case-detail.interaction.test.tsx",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/components/ui/field.convention.test.ts",
+    "src/components/ui/field.test.tsx",
+    "src/components/ui/skeleton.test.tsx",
+    "src/features/admin/production-staff-admin.interaction.test.tsx",
+    "src/features/admin/server-fns.test.ts",
+    "src/features/annual-return/board-filters.test.ts",
+    "src/features/annual-return/board-metrics.test.ts",
+    "src/features/annual-return/case-history.test.ts",
+    "src/features/annual-return/client-portal-server-fns.test.ts",
+    "src/features/annual-return/components/case-findings.interaction.test.tsx",
+    "src/features/annual-return/components/case-handoff.interaction.test.tsx",
+    "src/features/annual-return/components/demo-case-detail.interaction.test.tsx"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/features/annual-return/components/case-findings.interaction.test.tsx",
+      "tests": 3
+    },
+    {
+      "path": "src/features/annual-return/components/demo-case-detail.interaction.test.tsx",
+      "tests": 6
+    },
+    {
+      "path": "src/features/admin/production-staff-admin.interaction.test.tsx",
+      "tests": 3
+    },
+    {
+      "path": "src/features/annual-return/components/case-handoff.interaction.test.tsx",
+      "tests": 3
+    },
+    {
+      "path": "src/components/ui/field.test.tsx",
+      "tests": 3
+    },
+    {
+      "path": "src/components/ui/skeleton.test.tsx",
+      "tests": 2
+    },
+    {
+      "path": "src/components/ui/field.convention.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "src/features/annual-return/case-history.test.ts",
+      "tests": 32
+    },
+    {
+      "path": "src/features/annual-return/client-portal-server-fns.test.ts",
+      "tests": 10
+    },
+    {
+      "path": "src/features/admin/server-fns.test.ts",
+      "tests": 4
+    },
+    {
+      "path": "src/features/annual-return/board-filters.test.ts",
+      "tests": 13
+    },
+    {
+      "path": "src/features/annual-return/board-metrics.test.ts",
+      "tests": 8
+    }
+  ]
+}

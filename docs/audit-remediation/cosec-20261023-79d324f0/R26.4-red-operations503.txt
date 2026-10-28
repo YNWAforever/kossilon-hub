@@ -1,0 +1,149 @@
+
+> test
+> vitest run --project unit src/routes/-operations.interaction.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/routes/-operations.interaction.test.tsx (9 tests | 2 failed) 1609ms
+     × retains stale numerical observations after a 503 (status) and replaces them on retry 73ms
+     × retains stale numerical observations after a 503 (statusCode) and replaces them on retry 58ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-operations.interaction.test.tsx > Operations trustworthy observation > retains stale numerical observations after a 503 (status) and replaces them on retry
+ FAIL  |unit| src/routes/-operations.interaction.test.tsx > Operations trustworthy observation > retains stale numerical observations after a 503 (statusCode) and replaces them on retry
+TestingLibraryElementError: Unable to find an accessible element with the role "region" and name "上次成功讀取（已過期）"
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  <main
+    class="flex-1 space-y-6 p-6"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="text-sm font-medium text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="text-sm text-muted-foreground"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "系統運作":
+  <h1
+    class="font-display text-2xl font-semibold text-foreground"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "重新載入":
+  <button
+    class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+    type="button"
+  />
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  <p
+    class="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
+    role="alert"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            管理
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            系統運作
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            所有時間均為香港時間（UTC+8）；此頁開啟時每分鐘更新。
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+            type="button"
+          >
+            重新載入
+          </button>
+        </div>
+      </div>
+      <p
+        class="text-sm text-muted-foreground"
+      >
+        最近成功讀取：
+        2026-10-08 00:05
+        。讀取成功不代表排程或供應商操作成功。
+      </p>
+      <p
+        class="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
+        role="alert"
+      >
+        無法載入系統運作狀態，現時狀態未知。請重新載入；若仍失敗，請核對登入及存取權限。
+      </p>
+    </main>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/routes/-operations.interaction.test.tsx:174:29
+    172|     await flush(60_000);
+    173|     await flush();
+    174|     const previous = screen.getByRole("region", { name: "上次成功讀取（已過期）" …
+       |                             ^
+    175|     expect(previous.textContent).toContain("待處理1");
+    176|     expect(previous.textContent).toContain("50個遷移");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  05:07:33
+   Duration  4.71s (transform 837ms, setup 0ms, import 1.48s, tests 1.61s, environment 1.37s)
+

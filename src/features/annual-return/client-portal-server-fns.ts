@@ -178,7 +178,7 @@ export const listClientPortalCases = createServerFn({ method: "GET" })
   .handler(() => withClientPortalDependencies(listClientPortalCasesForActor));
 
 export const getClientPortalCase = createServerFn({ method: "GET" })
-  .validator(z.object({ caseId: z.string().uuid() }).strict())
+  .validator(z.object({ caseId: z.string().guid() }).strict())
   .handler(({ data }) =>
     withClientPortalDependencies((dependencies) => getClientPortalCaseForActor(data, dependencies)),
   );

@@ -1,0 +1,56 @@
+{
+  "source_sha": "fc87ad44cc1408174ad91bf74d0c382138e55256",
+  "parent_sha": "7862c9ba9deb6a61ed181696bf087d23c6ae089c",
+  "branch": "codex/cosec-20261023",
+  "test_started_head": "7862c9ba9deb6a61ed181696bf087d23c6ae089c",
+  "tested_dirty_candidate": true,
+  "source_files_unchanged_since_tests": true,
+  "paths": [
+    "src/test/xlsx-fixture.ts",
+    "src/features/nar-import/xlsx/workbook.test.ts",
+    "src/features/nar-import/mixed-xlsx-fixture.ts",
+    "src/features/nar-import/mixed-xlsx-fixture.test.ts",
+    "src/features/nar-import/mixed-xlsx.integration.test.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "files": [
+    {
+      "path": "src/test/xlsx-fixture.ts",
+      "sha256": "c4a6c0194fd361350368facf48948c828b0047259d49aa412a5cd247493b2a22",
+      "bytes": 3181,
+      "git_blob": "255b76cfeeb53a6af76a40c98b4417f5534bf3f8"
+    },
+    {
+      "path": "src/features/nar-import/xlsx/workbook.test.ts",
+      "sha256": "3d0b5f4ce2646533707c1ce75f3fdf214865123d8f1fe3ede209f35ab30351bf",
+      "bytes": 11019,
+      "git_blob": "30a1f6fea2ec533ed3561af92199a4229ad03169"
+    },
+    {
+      "path": "src/features/nar-import/mixed-xlsx-fixture.ts",
+      "sha256": "ca43e65eea9aa53d7a18dd34c3f80d7e24fde808f8c754d70b9dfaca2ebe1ed0",
+      "bytes": 5309,
+      "git_blob": "8ba19108992e75fa9fc80d2bdd51fe584f2121c0"
+    },
+    {
+      "path": "src/features/nar-import/mixed-xlsx-fixture.test.ts",
+      "sha256": "d1a655e2d6694a9af06619504723a422d242cb45b76a3e64ed4beee2299a9a54",
+      "bytes": 8388,
+      "git_blob": "14140ac306dc5d9e4e948b990eca5e75d1797e52"
+    },
+    {
+      "path": "src/features/nar-import/mixed-xlsx.integration.test.ts",
+      "sha256": "b91233087a9b6e0fccb32715fd519c992b223362b3af4d529eb27b616896f09b",
+      "bytes": 20623,
+      "git_blob": "8683a158d4cb813e994ed956aa07b83f0cf425f4"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "sha256": "d58547229dbf1262ba6ff66dfc5101df8fbdc94774f14ee376819d816104412f",
+      "bytes": 2789,
+      "git_blob": "ec2dee7ec079960a7f1f6083f4d04d962ebfdfca"
+    }
+  ],
+  "patch": "source.patch",
+  "patch_sha256": "4becf45ac110c8be395882b7137fa24a73dc51c373d962c8e45e0a38757381ce"
+}

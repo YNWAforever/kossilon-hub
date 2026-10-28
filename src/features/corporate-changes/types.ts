@@ -82,6 +82,8 @@ export type CorporateChangeRequestSummary = Pick<
   "id" | "companyId" | "changeType" | "status" | "ownerId" | "quotedFee" | "createdAt"
 > & {
   companyName: string;
+  ownerName?: string;
+  dueDate?: string | null;
 };
 
 export type CreateNameChangeInput = {

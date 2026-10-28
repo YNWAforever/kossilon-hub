@@ -20,6 +20,7 @@ import {
   consumeRedirectPath,
   getSafeRedirectPath,
   isDemoAuthEnabled,
+  rememberRedirectPath,
 } from "@/features/auth/route-guard";
 
 export const Route = createFileRoute("/login")({
@@ -49,6 +50,9 @@ export function LoginPage() {
     loginDemo,
     demoUsers,
     signOut,
+    authIssue,
+    signOutState,
+    retrySession,
   } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -58,9 +62,23 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [denied, setDenied] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
+  const [callbackError] = useState(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).has("error")
+      ? "登入連結已過期或無效，請重新要求登入連結。"
+      : null,
+  );
+
+  useEffect(() => {
+    if (session) return;
+    const redirect = new URLSearchParams(window.location.search).get("redirect");
+    if (redirect && getSafeRedirectPath(redirect) === redirect) rememberRedirectPath(redirect);
+  }, [session]);
 
   useEffect(() => {
     if (!isHydrated || !session) return;
+    // The actor-keyed provider may remount while navigation is committing.
+    // A departed login page must not replace the chosen destination again.
+    if (window.location.pathname !== "/login") return;
     // A Forbidden rejection (the only way to reach ?denied=1) implies a session
     // that authenticates but isn't provisioned — so `session` here can be the
     // same stale, still-truthy value carried over from immediately before the
@@ -74,10 +92,9 @@ export function LoginPage() {
     // 今日工作 reads production work views only, so in the read-only demo it is an
     // empty state; demo staff start on the fixture-backed dashboard instead.
     const fallback = session.role === "Client" ? "/portal" : magicLinkEnabled ? "/today" : "/";
+    const storedRedirect = consumeRedirectPath(undefined, fallback);
     const redirectPath =
-      searchRedirect && safeSearchRedirect === searchRedirect
-        ? safeSearchRedirect
-        : consumeRedirectPath(undefined, fallback);
+      searchRedirect && safeSearchRedirect === searchRedirect ? safeSearchRedirect : storedRedirect;
     void navigate({ href: redirectPath, replace: true });
   }, [isHydrated, magicLinkEnabled, navigate, session]);
 
@@ -85,18 +102,32 @@ export function LoginPage() {
     if (new URLSearchParams(window.location.search).get("denied") !== "1") return;
 
     setDenied(true);
+    if (signOutState === "signed-out") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("denied");
+      history.replaceState(history.state, "", url.href);
+      setDenied(false);
+      return;
+    }
+    // Bootstrap has no real sign-out adapter. An unresolved/failed attempt must
+    // wait for explicit recovery instead of automatically starting another one.
+    if (!isHydrated || signOutState === "pending" || signOutState === "failed") return;
     // Clear the marker once sign-out actually completes so the redirect
     // effect's guard above stops blocking if the user then successfully signs
     // in again as a different, properly-provisioned account. Until this
     // resolves, `denied=1` staying in the URL is exactly what keeps that guard
     // correctly blocking a still-stale session. Follows the same
     // history.replaceState shape as clearSessionVerifier() in neon-auth-client.ts.
-    void signOut().then(() => {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("denied");
-      history.replaceState(history.state, "", url.href);
-    });
-  }, [signOut]);
+    void signOut()
+      .then(() => {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("denied");
+        history.replaceState(history.state, "", url.href);
+      })
+      .catch(() => {
+        setError("未能完成登出，請重試或重新整理頁面。");
+      });
+  }, [isHydrated, signOut, signOutState]);
 
   function changeMode(nextMode: LoginMode) {
     if (nextMode === "magic-link" && !magicLinkEnabled) return;
@@ -139,13 +170,28 @@ export function LoginPage() {
   async function submitGoogleLogin() {
     setGoogleSubmitting(true);
     setError(null);
-    const result = await loginWithGoogle();
-    if (!result.ok) {
+    try {
+      const result = await loginWithGoogle();
+      if (result.ok) return;
       setError(result.error);
-      setGoogleSubmitting(false);
+    } catch {
+      setError("未能完成登入要求，請再試一次。");
     }
+    setGoogleSubmitting(false);
     // On success the browser is already navigating to Google; no further state
     // update is meaningful before the page unloads.
+  }
+
+  async function retryLoginSession() {
+    setIsSubmitting(true);
+    try {
+      const result = await retrySession();
+      setError(result.ok ? null : result.error);
+    } catch {
+      setError("登入服務暫時無法使用，請重試。");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -273,13 +319,13 @@ export function LoginPage() {
               </label>
             )}
 
-            {error && (
+            {(error || (!denied && (authIssue?.message || callbackError))) && (
               <div
                 className="flex items-start gap-2 rounded-md border border-status-red/30 bg-status-red-soft px-3 py-2 text-xs text-status-red-text"
                 role="alert"
               >
                 <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                <span>{error}</span>
+                <span>{error || authIssue?.message || callbackError}</span>
               </div>
             )}
 
@@ -311,6 +357,17 @@ export function LoginPage() {
               )}
             </Button>
           </form>
+
+          {authIssue?.kind === "service" && (
+            <Button
+              className="mt-4 w-full"
+              variant="outline"
+              disabled={!isHydrated || isSubmitting}
+              onClick={() => void retryLoginSession()}
+            >
+              重試登入狀態
+            </Button>
+          )}
 
           {magicLinkEnabled && (
             <Button

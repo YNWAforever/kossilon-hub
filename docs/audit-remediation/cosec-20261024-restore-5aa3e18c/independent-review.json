@@ -1,0 +1,19 @@
+{
+  "agent_id": "01a16d11-705a-7c40-a184-a3adec7c4c4e",
+  "scope": "Static code/harness/runbook review only; no tests/runtime performed by reviewer",
+  "original_findings": [
+    {
+      "severity": "P2",
+      "finding": "projectionSql lacked projection alias; comparison could pass because undefined differed",
+      "resolution": "Explicit AS projection; positive same-query baseline equality, key equality and actual corruption mismatch verified by SQL rehearsal"
+    },
+    {
+      "severity": "P2",
+      "finding": "Teardown only visited sealed DBs; newly added DB could escape inventory check",
+      "resolution": "Re-enumerate current non-system DB names immediately before disposal, exact-match sealed inventory, then recheck every projection; same/extra-name classifier countercontrol included"
+    }
+  ],
+  "followup": "No findings in the two repairs; both original P2 findings addressed statically",
+  "remaining_findings": 0,
+  "full_native_acceptance": false
+}

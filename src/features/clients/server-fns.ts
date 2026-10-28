@@ -89,42 +89,42 @@ const contactSchema = z
     path: ["email"],
   });
 
-const createClientSchema = z.object({
-  companyName: z.string().min(1),
+export const createClientSchema = z.object({
+  companyName: z.string().trim().min(1, "請輸入公司名稱。"),
   crNumber: z.string().transform(normalizeCrNumber).refine(isValidCrNumber, CR_NUMBER_MESSAGE),
   brNumber: z.string().transform(normalizeBrNumber).refine(isValidBrNumber, BR_NUMBER_MESSAGE),
   incorporationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   annualReturnBasisDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  registeredOffice: z.string().min(1),
-  companySecretary: z.string().min(1),
-  ownerId: z.string().uuid(),
-  teamId: z.string().uuid(),
+  registeredOffice: z.string().trim().min(1, "請輸入註冊辦事處。"),
+  companySecretary: z.string().trim().min(1, "請輸入公司秘書。"),
+  ownerId: z.string().guid(),
+  teamId: z.string().guid(),
   contacts: z.array(contactSchema).default([]),
 });
 
 const updateClientSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().guid(),
   companyName: z.string().min(1),
   registeredOffice: z.string().min(1),
   status: z.enum(["active", "inactive"]),
-  ownerId: z.string().uuid(),
-  teamId: z.string().uuid(),
+  ownerId: z.string().guid(),
+  teamId: z.string().guid(),
 });
 
-const addContactSchema = z.object({ companyId: z.string().uuid() }).and(contactSchema);
+const addContactSchema = z.object({ companyId: z.string().guid() }).and(contactSchema);
 
 const updateContactSchema = z
-  .object({ companyId: z.string().uuid(), contactId: z.string().uuid() })
+  .object({ companyId: z.string().guid(), contactId: z.string().guid() })
   .and(contactSchema);
 
 const removeContactSchema = z.object({
-  companyId: z.string().uuid(),
-  contactId: z.string().uuid(),
+  companyId: z.string().guid(),
+  contactId: z.string().guid(),
 });
 
 const appointOfficerSchema = z
   .object({
-    companyId: z.string().uuid(),
+    companyId: z.string().guid(),
     officerType: z.enum(["director", "secretary", "designated_representative"]),
     name: z.string().min(1),
     identificationType: z.enum(["hkid", "passport", "br_number"]).nullable(),
@@ -141,13 +141,13 @@ const appointOfficerSchema = z
   );
 
 const ceaseOfficerSchema = z.object({
-  companyId: z.string().uuid(),
-  officerId: z.string().uuid(),
+  companyId: z.string().guid(),
+  officerId: z.string().guid(),
   cessationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 const recordShareholdingSchema = z.object({
-  companyId: z.string().uuid(),
+  companyId: z.string().guid(),
   shareholderName: z.string().min(1),
   shareholderAddress: z.string().nullable(),
   shareClass: z.string().min(1),
@@ -156,8 +156,8 @@ const recordShareholdingSchema = z.object({
 });
 
 const ceaseShareholdingSchema = z.object({
-  companyId: z.string().uuid(),
-  shareholdingId: z.string().uuid(),
+  companyId: z.string().guid(),
+  shareholdingId: z.string().guid(),
   cessationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
@@ -170,7 +170,7 @@ const controlBasisSchema = z.enum([
 
 const recordControllerSchema = z
   .object({
-    companyId: z.string().uuid(),
+    companyId: z.string().guid(),
     controllerName: z.string().min(1),
     identificationType: z.enum(["hkid", "passport", "br_number"]).nullable(),
     identificationNumber: z.string().nullable(),
@@ -201,8 +201,8 @@ const recordControllerSchema = z
   );
 
 const updateControllerParticularsSchema = z.object({
-  companyId: z.string().uuid(),
-  controllerId: z.string().uuid(),
+  companyId: z.string().guid(),
+  controllerId: z.string().guid(),
   address: z.string().nullable(),
   controlBases: z.array(controlBasisSchema).min(1),
   registerUpdateDueDate: z
@@ -212,21 +212,21 @@ const updateControllerParticularsSchema = z.object({
 });
 
 const ceaseControllerSchema = z.object({
-  companyId: z.string().uuid(),
-  controllerId: z.string().uuid(),
+  companyId: z.string().guid(),
+  controllerId: z.string().guid(),
   cessationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 const recordInspectionRequestSchema = z.object({
-  companyId: z.string().uuid(),
+  companyId: z.string().guid(),
   requesterName: z.string().min(1),
   requesterAuthority: z.string().min(1),
   requestDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 const resolveInspectionRequestSchema = z.object({
-  companyId: z.string().uuid(),
-  inspectionRequestId: z.string().uuid(),
+  companyId: z.string().guid(),
+  inspectionRequestId: z.string().guid(),
   resolutionNote: z.string().min(1),
 });
 
@@ -264,7 +264,7 @@ const clientPageSchema = z
     includeFixtures: z.boolean().optional(),
     q: z.string().max(200).optional(),
     status: z.enum(["active", "inactive"]).optional(),
-    teamId: z.string().uuid().optional(),
+    teamId: z.string().guid().optional(),
     cursor: z.string().max(2048).optional(),
     limit: z.number().int().min(1).max(200).optional(),
   })
@@ -297,20 +297,30 @@ export const listClientAssignmentOptions = createServerFn({ method: "GET" }).han
 });
 
 export const getClient = createServerFn({ method: "GET" })
-  .validator(z.object({ id: z.string().uuid() }))
+  .validator(z.object({ id: z.string().guid() }))
   .handler(async ({ data }) => {
     const { getRequest, requireStaffActor } = await loadDefaultClientContext();
     await requireStaffActor(getRequest());
     return withClientRepository((repository) => repository.getClient(data.id));
   });
 
+/** The same command used by the authenticated handler and isolated SQL checks. */
+export async function createClientForActor(
+  actor: AuthenticatedActor,
+  input: z.input<typeof createClientSchema>,
+  repository: Pick<ClientRepository, "createClient">,
+) {
+  if (!actor.userId) throw new Error("Forbidden: a staff database identity is required.");
+  assertClientCompanyCreatable(actor, { teamId: input.teamId });
+  return repository.createClient({ ...createClientSchema.parse(input), actorId: actor.userId });
+}
+
 export const createClient = createServerFn({ method: "POST" })
   .validator(createClientSchema)
   .handler(async ({ data }) =>
     withClientRepository(async (repository) => {
       const actor = await getCurrentClientActor();
-      assertClientCompanyCreatable(actor, { teamId: data.teamId });
-      return repository.createClient({ ...data, actorId: actor.userId });
+      return createClientForActor(actor, data, repository);
     }),
   );
 

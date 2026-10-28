@@ -1,0 +1,17 @@
+{
+  "status": "PASS_STATIC_ONLY",
+  "syntaxDiagnostics": 0,
+  "sqlTemplates": 11,
+  "insertStatements": 7,
+  "literalColumnBuilders": 4,
+  "destructiveCleanupStatements": 0,
+  "clientConstructionInsideTestOnly": true,
+  "transactionInjectedRepository": true,
+  "exactIdPostReadTables": 6,
+  "intentionalRollbackThrows": 1,
+  "timeoutMs": 120000,
+  "registryEntriesForNewFile": 1,
+  "testModuleImported": false,
+  "databaseClientCreated": false,
+  "sqlExecuted": false
+}

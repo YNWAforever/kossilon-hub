@@ -1,0 +1,13 @@
+{
+  "source_sha": "c8b905a33b20dc933b98fd3e5ec593b78f64c3eb",
+  "parent_sha": "6f29c4068fcbbaa2197efdf0b8969777b78f47c5",
+  "paths": [
+    "src/features/documents/repository.ts",
+    "src/routes/portal.tsx",
+    "src/test/db-integration-files.ts",
+    "src/features/documents/rejection-projection.test.ts",
+    "src/features/documents/rejection-readback.integration.test.ts",
+    "src/routes/-document-rejection.interaction.test.tsx"
+  ],
+  "operation": "ordinary local commit only; no push/merge/deploy"
+}

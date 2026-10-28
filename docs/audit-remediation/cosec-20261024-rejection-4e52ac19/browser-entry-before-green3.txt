@@ -1,0 +1,48 @@
+// UC149 local browser transport. No native Auth, HTTP RPC, DB, storage or scanner.
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
+import {createRootRouteWithContext,createRouter,createBrowserHistory,Outlet,RouterProvider} from '@tanstack/react-router';
+import {Route as DocumentsRoute} from '/src/routes/documents.tsx';
+import {Route as PortalRoute} from '/src/routes/portal.tsx';
+const run='cosec-20261024-rejection-4e52ac19';
+const gate=await fetch('/__uc149_identity');
+if(!gate.ok)throw Error('Local target identity unavailable');
+const identity=await gate.json();
+if(identity.run_id!==run||identity.root!=='C:/Users/laich/Documents/kossilon-hub/cosec-20261023')throw Error('Wrong local target');
+// Fixture construction happens only after the owned loopback target answers.
+const uuid=n=>'4e52ac19-0149-4149-8149-'+String(n).padStart(12,'0');
+const ids={document:uuid(2),company:uuid(3),case:uuid(4),version:uuid(5),item:uuid(7),staff:uuid(10),team:uuid(20)};
+const key=run+'-browser-records',logKey=run+'-browser-reads';
+const initial={documents:[{id:ids.document,companyId:ids.company,companyName:'QA UC149 Company',caseId:ids.case,category:'signature',fileName:'QA-original.pdf',uploadStatus:'available',reviewStatus:'pending',rejectionReason:null,currentVersionId:ids.version,reviewedVersionId:null,scanVerdictSource:'provider',availability:'available',objectAvailability:'not_checked',uploadSource:'client',uploadedAt:'2026-10-24T00:00:00.000Z'}],checklistStatus:'Received',linkedDocumentId:ids.document,audit:[],intents:[],intentCounter:0,documentCounter:0,finalizeFailures:0,mode:'normal'};
+const saved=JSON.parse(sessionStorage.getItem(key)||'null')||initial;
+const role=new URL(location.href).searchParams.get('qaRole')||'Client';
+if(!['Staff','Client','ClientB'].includes(role))throw Error('Unsupported local actor');
+const actor={authUserId:'QA-UC149-'+role,role:role==='Staff'?'Staff':'Client',userId:role==='Staff'?ids.staff:null,teamId:role==='Staff'?ids.team:null,active:true};
+const clone=value=>structuredClone(value);
+const persist=()=>sessionStorage.setItem(key,JSON.stringify(saved));
+persist();
+let w;
+function read(name,data){const row={name,data:clone(data??{}),actor:actor.authUserId,at:new Date().toISOString()};w.reads.push(row);sessionStorage.setItem(logKey,JSON.stringify(w.reads));return row}
+function clientAccess(){if(role==='ClientB'||saved.mode==='denied')throw Error('403 local transport scope denied')}
+function caseValue(){return {id:ids.case,companyId:ids.company,companyTeamId:ids.team,companyName:'QA UC149 Company',returnYear:2026,madeUpDate:'2026-11-01',filingDueDate:'2026-12-01',currentStatus:saved.checklistStatus==='Received'?'Documents received':'Documents pending',riskLevel:'yellow',ownerId:ids.staff,ownerName:'QA Staff',reviewerId:null,reviewerName:null,remindersSent:0,filingReference:null,confirmationDocumentId:null,lockedAt:null,completedAt:null,payment:null,checklist:[{id:ids.item,caseId:ids.case,itemLabel:'NAR1 form',required:true,status:saved.checklistStatus,dueDate:'2026-12-01',receivedAt:null,verifiedAt:null,documentId:saved.linkedDocumentId}]}}
+function clientCaseValue(){const row=caseValue();return {id:row.id,companyId:row.companyId,companyName:row.companyName,returnYear:row.returnYear,filingDueDate:row.filingDueDate,currentStatus:row.currentStatus,payment:null,filingReference:null,checklist:row.checklist}}
+w=window.__uc149={ids,actor,saved,reads:JSON.parse(sessionStorage.getItem(logKey)||'[]'),holdIntent:false,pendingIntents:[],
+  persist,setMode(mode){saved.mode=mode;persist()},
+  seedRejected(reason='missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。'){saved.documents[0].reviewStatus='rejected';saved.documents[0].reviewedVersionId=ids.version;saved.documents[0].rejectionReason=reason;saved.checklistStatus='Rejected';persist()},
+  releaseIntents(){w.holdIntent=false;w.pendingIntents.splice(0).forEach(resolve=>resolve())},
+  async listDocuments(data){read('listDocumentPage',data);clientAccess();if(saved.mode==='document-error')throw Error('503 local document read failure');if(data.caseId!==ids.case||data.companyId&&data.companyId!==ids.company)throw Error('Out of UC149 scope');return {documents:saved.mode==='empty'?[]:clone(saved.documents),nextCursor:null}},
+  async staffCase(data){read('getAnnualReturnCase',data);if(role!=='Staff')throw Error('403 staff read denied');if(data.id!==ids.case)throw Error('Out of UC149 case scope');return caseValue()},
+  async staffCases(data){read('listAnnualReturnCases',data);if(role!=='Staff')throw Error('403 staff list denied');return [caseValue()]},
+  async clientCase(data){read('getClientPortalCase',data);clientAccess();if(saved.mode==='case-error')throw Error('503 local case read failure');return data.caseId===ids.case?clientCaseValue():null},
+  async clientCases(data){read('listClientPortalCases',data);clientAccess();if(saved.mode==='list-error')throw Error('503 local list read failure');return saved.mode==='empty'?[]:[{...clientCaseValue(),outstandingRequiredItems:saved.checklistStatus==='Rejected'?1:0}]},
+  async review(data){read('reviewAnnualReturnEvidenceAction',data);if(role!=='Staff')throw Error('403 review denied');if(data.caseId!==ids.case||data.documentId!==ids.document||data.expectedDocumentVersionId!==ids.version||data.checklistItemId!==ids.item||data.decision!=='rejected'||!data.reason)throw Error('Unexpected UC149 review payload');const row=saved.documents[0];if(row.reviewStatus!=='pending')throw Error('409 already reviewed');row.reviewStatus='rejected';row.reviewedVersionId=ids.version;row.rejectionReason=data.reason;saved.checklistStatus='Rejected';saved.audit.push({id:uuid(100),documentId:row.id,documentVersionId:row.currentVersionId,decision:data.decision,reason:data.reason});persist();return {caseItem:caseValue()}},
+  async intent(data){read('createDocumentUploadIntent',data);clientAccess();if(data.companyId!==ids.company||data.caseId!==ids.case||data.checklistItemId!==ids.item)throw Error('Upload scope mismatch');if(data.contentType!=='application/pdf'||data.sizeBytes<=0||!/^[a-f0-9]{64}$/.test(data.checksum))throw Error('Upload body metadata mismatch');const row={...clone(data),id:uuid(200+saved.intentCounter++),status:'created'};saved.intents.push(row);persist();if(w.holdIntent)await new Promise(resolve=>w.pendingIntents.push(resolve));return {id:row.id}},
+  async finalize(data){read('finalizeDocumentUpload',{intentId:data.intentId,body_present:typeof data.bodyBase64==='string'&&data.bodyBase64.length>0});clientAccess();const intent=saved.intents.find(row=>row.id===data.intentId);if(!intent||intent.status!=='created')throw Error('Unknown or reused local intent');if(saved.finalizeFailures>0){saved.finalizeFailures--;persist();throw Error('Local known pre-commit finalize failure')}const count=++saved.documentCounter;const document={id:uuid(300+count),companyId:ids.company,companyName:'QA UC149 Company',caseId:ids.case,category:intent.category,fileName:intent.fileName,uploadStatus:'quarantined',reviewStatus:'pending',rejectionReason:null,currentVersionId:uuid(400+count),reviewedVersionId:null,scanVerdictSource:null,availability:'unscanned',objectAvailability:'not_checked',uploadSource:'client',uploadedAt:'2026-10-24T00:01:00.000Z'};saved.documents.push(document);saved.checklistStatus='Received';saved.linkedDocumentId=document.id;intent.status='received';persist();return {document:clone(document)}},
+};
+const client=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0,refetchOnWindowFocus:false}}});
+const root=createRootRouteWithContext()({component:()=>React.createElement(QueryClientProvider,{client},React.createElement(Outlet))});
+const documents=DocumentsRoute.update({getParentRoute:()=>root,id:'/documents',path:'/documents'});
+const portal=PortalRoute.update({getParentRoute:()=>root,id:'/portal',path:'/portal'});
+w.router=createRouter({routeTree:root.addChildren([documents,portal]),history:createBrowserHistory(),context:{queryClient:client,actor,dataMode:'production'},defaultPreload:false});
+createRoot(document.getElementById('app')).render(React.createElement(RouterProvider,{router:w.router}));

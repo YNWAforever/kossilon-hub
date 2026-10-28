@@ -1,0 +1,35 @@
+{
+  "kind": "browser",
+  "attempt": "current1",
+  "started": "2026-10-24T00:40:21.149Z",
+  "finished": "2026-10-24T00:44:21.189Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "docs/audit-remediation/cosec-20261024-routes-e4b761c9/browser-routes.mjs",
+    "current1"
+  ],
+  "exit_code": null,
+  "signal": "SIGTERM",
+  "error": "spawnSync C:\\Program Files\\nodejs\\node.exe ETIMEDOUT",
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ]
+}

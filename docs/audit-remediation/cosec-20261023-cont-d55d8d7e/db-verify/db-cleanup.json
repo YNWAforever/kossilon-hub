@@ -1,0 +1,15 @@
+{
+  "run_id": "cosec-20261023-cont-d55d8d7e-verify",
+  "container_id": "4f451922c0b848f5d8db0cae0900430b9143a4ccb5a27448d871ada6842af937",
+  "own_row_counts_before_removal": {
+    "companies": 0,
+    "cases": 0,
+    "jobs": 0,
+    "batches": 0,
+    "users": 1,
+    "teams": 0
+  },
+  "container_absent_after": true,
+  "credentials_removed": true,
+  "daemon_stopped": false
+}

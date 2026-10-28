@@ -1,0 +1,64 @@
+{
+  "recorded_at": "2026-10-23T18:48:19.439Z",
+  "free_ram_bytes": 2344112128,
+  "free_ram_gib": 2.183124542236328,
+  "total_ram_bytes": 34033348608,
+  "minimum_free_ram_bytes": 1610612736,
+  "root_env_files": [],
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR",
+    "TEMP",
+    "TMP"
+  ],
+  "max_workers": 1,
+  "config_loads_repo_env": false,
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\vitest\\vitest.mjs",
+    "run",
+    "--config",
+    "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\sidecar-uc157-9dd9e445-green-52a3e8\\vitest.config.mjs",
+    "src/components/bulk-export.interaction.test.tsx",
+    "--maxWorkers",
+    "1",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261024-export-9dd9e445\\sidecar-green-report.json"
+  ],
+  "frozen_files": [
+    {
+      "path": "src/components/bulk-selection-toolbar.tsx",
+      "sha256": "a568d87dc63f3c0d712dcb21c3a8f1e33b35a9be4e3049682cfd81c2d8da0f44",
+      "bytes": 29137,
+      "lines": 786
+    },
+    {
+      "path": "src/components/bulk-export.interaction.test.tsx",
+      "sha256": "b8ce663646107a89ae5257b136ba4448abfc5368bbc6fe612f6f5af88c7652f7",
+      "bytes": 9940,
+      "lines": 261
+    },
+    {
+      "path": "src/components/bulk-selection-toolbar.test.tsx",
+      "sha256": "8a271fafc87d5fee4374a834145e93fd3d83b1d8111690c771fc35d92f50f581",
+      "bytes": 22610,
+      "lines": 580
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "run_id": "cosec-20261025-native-plan-fccb7c22",
+  "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "evidence_base": "531887acce5468f7321a3a2919a7afaa20dedac1",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "branch": "codex/cosec-20261023",
+  "phase": "NATIVE_ACCEPTANCE_APPROVAL_PLAN_ONLY",
+  "release_gate": "NO_GO",
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "original_uc186": "PARTIAL_SCOPED",
+  "local_checks": {
+    "summary": "../cosec-20261025-build-d29cd5ec/check-summary.json",
+    "execution": "PREVIOUS_RUNS_ONLY_NOT_RERUN_THIS_RUN"
+  },
+  "original_csv": "acceptance-results.csv",
+  "approval_plan": "APPROVAL-CHECKLIST.md",
+  "approval_request": "approval-request.json",
+  "scenario_map": "native-scenario-map.csv",
+  "deployed": false,
+  "auth_runtime_verified": false,
+  "native_http_db_rls_verified": false,
+  "resources_created": 0,
+  "external_accesses": 0,
+  "product_changes": 0,
+  "evidence_manifest": "evidence-manifest.json",
+  "acceptance_csv_evidence_base": "../cosec-20261025-build-d29cd5ec/"
+}

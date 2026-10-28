@@ -1,0 +1,42 @@
+[
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\whatsapp\\conversations.ts",
+    "Hash": "656E8B699FA6FC57BFC11AD89B6D7848CA696D8F393C28218A7B2286D1E9B2AD"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\whatsapp\\repository.ts",
+    "Hash": "44EBECB4AFC7BA61EEA845E3C0D596FA0B88DBB6C8BCC0C770D0A2327B4AA681"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\whatsapp\\server-fns.ts",
+    "Hash": "E48F62E7D309B9D58B900BF250DEA0113BD861BDF209BF45E7D8386A183D4AC2"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\whatsapp\\history-pagination.test.ts",
+    "Hash": "909641AC47C16356D65DF1D9B8A376726D557E3D27A11FC0BF0198D9EFFAF507"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\whatsapp\\components\\production-inbox.tsx",
+    "Hash": "20F4FA26033E27E4478DD0BB2F6C1ADB186FE18491C66A0DE5B309B8192B58C4"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\whatsapp\\components\\production-inbox.interaction.test.tsx",
+    "Hash": "A3F6CF9F6155713A5D517C8F98E0B0123A07BB125F9784632B61AC5AD3E4C64D"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\whatsapp\\components\\production-inbox.pagination.test.tsx",
+    "Hash": "4586250E74997C004DC2DFC9901CD6F897FC1F901A52F5A85CDC0A6AA03461F8"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\components\\navigation.ts",
+    "Hash": "E0C70FD660ABC6FE6E3ECC519A664ADB4F284C4E6817C5773EBE5C052CD01C8C"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\components\\navigation.test.tsx",
+    "Hash": "9407999665D9CA1B6C8999C34C52A970CC56EBF35AD45D94D097AC2FAA4E6F6B"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\routes\\-imports-access.test.tsx",
+    "Hash": "5F3FD9F55EBF1DA684144615F72BFB16EC3847863803D1961440BD6FB4C03A85"
+  }
+]

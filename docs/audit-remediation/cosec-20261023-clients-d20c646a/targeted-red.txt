@@ -1,0 +1,63 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/clients/components/production-client-register.interaction.test.tsx (6 tests) 300ms
+ ❯ |unit| src/features/clients/create-command.test.ts (18 tests | 3 failed) 17ms
+     × UC135 rejects whitespace-only required companyName before repository calls 6ms
+     × UC135 rejects whitespace-only required registeredOffice before repository calls 1ms
+     × UC135 rejects whitespace-only required companySecretary before repository calls 1ms
+     ✓ UC135 rejects empty companyName at its field 1ms
+     ✓ UC135 rejects empty registeredOffice at its field 0ms
+     ✓ UC135 rejects empty companySecretary at its field 0ms
+     ✓ UC135 rejects empty crNumber at its field 0ms
+     ✓ UC135 rejects empty brNumber at its field 0ms
+     ✓ UC135 rejects empty incorporationDate at its field 0ms
+     ✓ UC135 rejects empty annualReturnBasisDate at its field 0ms
+     ✓ UC135 rejects empty ownerId at its field 0ms
+     ✓ UC135 rejects empty teamId at its field 0ms
+     ✓ UC137 normalizes full certificate and CR before writing, with trusted actor attribution 4ms
+     ✓ rejects an unauthorized supplied actor before writing: {"userId":"20000000-0000-4000-8000-000000000001","authUserId":"synthetic-client-create-admin","role":"Admin","teamId":"10000000-0000-4000-8000-000000000001","active":false} 1ms
+     ✓ rejects an unauthorized supplied actor before writing: {"userId":"20000000-0000-4000-8000-000000000001","authUserId":"synthetic-client-create-admin","role":"Client","teamId":"10000000-0000-4000-8000-000000000001","active":true} 0ms
+     ✓ rejects an unauthorized supplied actor before writing: {"userId":null,"authUserId":"synthetic-client-create-admin","role":"Admin","teamId":"10000000-0000-4000-8000-000000000001","active":true} 0ms
+     ✓ rejects an unauthorized supplied actor before writing: {"userId":"20000000-0000-4000-8000-000000000001","authUserId":"synthetic-client-create-admin","role":"Staff","teamId":null,"active":true} 0ms
+     ✓ rejects an unauthorized supplied actor before writing: {"userId":"20000000-0000-4000-8000-000000000001","authUserId":"synthetic-client-create-admin","role":"Manager","teamId":"10000000-0000-4000-8000-000000000002","active":true} 0ms
+ ✓ |unit| src/components/clients/client-form-dialog.test.tsx (2 tests) 436ms
+     ✓ stops a malformed CR number at the field instead of saving it  329ms
+ ✓ |unit| src/features/clients/identifiers.test.ts (21 tests) 5ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 3ms
+ ✓ |unit| src/features/clients/authorization.test.ts (10 tests) 7ms
+ ✓ |unit| src/features/clients/errors.test.ts (8 tests) 4ms
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  3 failed | 64 passed (67)
+   Start at  21:02:03
+   Duration  7.93s (transform 764ms, setup 0ms, import 3.46s, tests 773ms, environment 2.22s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/clients/create-command.test.ts > UC135–137 client creation command > UC135 rejects whitespace-only required companyName before repository calls
+ FAIL  |unit| src/features/clients/create-command.test.ts > UC135–137 client creation command > UC135 rejects whitespace-only required registeredOffice before repository calls
+ FAIL  |unit| src/features/clients/create-command.test.ts > UC135–137 client creation command > UC135 rejects whitespace-only required companySecretary before repository calls
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/features/clients/create-command.test.ts:29:90
+     27|     async (field) => {
+     28|       const repository = { createClient: vi.fn() };
+     29|       await expect(createClientForActor(actor, { ...valid, [field]: " …
+       |                                                                                          ^
+     30|         issues: expect.arrayContaining([expect.objectContaining({ path…
+     31|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+

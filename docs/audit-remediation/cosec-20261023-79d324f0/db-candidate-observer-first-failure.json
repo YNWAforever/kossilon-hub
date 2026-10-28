@@ -1,0 +1,8 @@
+{
+  "source_sha": "8bc1e0dea88c5796c37b2f32a781fac7aab31774",
+  "result": "STOPPED_BEFORE_TEST_IMPORT",
+  "cause": "Parent observation query used non-existent bulk_operations; verified repository/migration table is bulk_operation_jobs",
+  "test_files_executed": 0,
+  "product_regression": false,
+  "container_id": "4f5c362905d14782f4bc2c4bf74af3fc8f2b4e76259342e873bfd1ea78424580"
+}

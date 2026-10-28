@@ -1,0 +1,13 @@
+{
+  "run_id": "cosec-20261024-rejection-4e52ac19",
+  "checked_utc": "2026-10-24T02:49:27.017Z",
+  "identity": {
+    "db": "cosec_rejection_4e52ac19",
+    "username": "cosec_runner",
+    "server_address": "172.17.0.2/32",
+    "server_port": 5432,
+    "system_id": "7700060938157912103"
+  },
+  "tcp_and_container_system_id_equal": true,
+  "public_tables": []
+}

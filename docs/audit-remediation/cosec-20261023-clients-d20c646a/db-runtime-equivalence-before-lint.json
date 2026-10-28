@@ -1,0 +1,10 @@
+{
+  "path": "src/features/clients/create-recovery.integration.test.ts",
+  "before_snapshot": "db-contract-before-type-fix.ts.snapshot",
+  "before_sha256": "be74c9a68b2e09e91f241eca3e9ed882be0afb9b1bd059e785d87686776a3b41",
+  "after_sha256": "73fb7981050541e228c33da196e2fc0c95812ad191efa92c5b53396f8e8cef4e",
+  "emitted_javascript_sha256": "ce555e93f1a187379310e1aff5f7fc03df0327749dee91d1a25f3ac0abe04f62",
+  "runtime_equal": true,
+  "reason": "Typecheck TS2345/TS2339 in regression only; two annotations, no runtime changes",
+  "db_not_repeated_after_type_only_change": true
+}

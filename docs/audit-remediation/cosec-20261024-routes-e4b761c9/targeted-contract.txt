@@ -1,0 +1,65 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/routes/-case-subroutes.interaction.test.tsx (22 tests | 1 failed) 1778ms
+     ✓ opens the linked detail, changes DOM and URL, and restores page3 on Back/Forward  670ms
+     ✓ renders a copied detail URL and a fresh query client reads the same exact record 98ms
+     ✓ changes record identity without retaining the previous detail 52ms
+     ✓ renders the trailing-slash list URL rather than an empty outlet 18ms
+     ✓ shows the empty list without a detail read 30ms
+     ✓ rejects a malformed detail before invoking the transport 17ms
+     ✓ shows an absent record without exposing the list or retrying 35ms
+     ✓ keeps 403 role denied closed and recovers only on explicit retry 66ms
+     ✓ keeps 503 temporary unavailable closed and recovers only on explicit retry 66ms
+     ✓ leaving a pending detail prevents its late read from replacing the list 35ms
+     ✓ keeps an unsafe returnTo inside the allowed work list 49ms
+     ✓ opens the linked detail, changes DOM and URL, and restores page3 on Back/Forward 197ms
+     ✓ renders a copied detail URL and a fresh query client reads the same exact record 68ms
+     ✓ changes record identity without retaining the previous detail 51ms
+     ✓ renders the trailing-slash list URL rather than an empty outlet 19ms
+     ✓ shows the empty list without a detail read 30ms
+     ✓ rejects a malformed detail before invoking the transport 15ms
+     ✓ shows an absent record without exposing the list or retrying 33ms
+     ✓ keeps 403 role denied closed and recovers only on explicit retry 60ms
+     ✓ keeps 503 temporary unavailable closed and recovers only on explicit retry 58ms
+     × leaving a pending detail prevents its late read from replacing the list 65ms
+     ✓ keeps an unsafe returnTo inside the allowed work list 43ms
+ ✓ |unit| src/features/corporate-changes/components/production-corporate-change-detail.test.tsx (15 tests) 1172ms
+ ✓ |unit| src/features/incorporation/components/case-lists.test.tsx (8 tests) 452ms
+ ✓ |unit| src/features/incorporation/components/production-incorporation-detail.test.tsx (4 tests) 246ms
+ ✓ |unit| src/routes/-nested-route-outlet.convention.test.ts (2 tests) 5ms
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 50 passed (51)
+   Start at  08:38:24
+   Duration  11.90s (transform 666ms, setup 0ms, import 2.18s, tests 3.65s, environment 4.75s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-case-subroutes.interaction.test.tsx > UC160 /corporate-changes real router > leaving a pending detail prevents its late read from replacing the list
+AssertionError: expected <td class="p-3"></td> to be null
+
+- Expected:
+null
+
++ Received:
+<td
+  class="p-3"
+>
+  HKD 
+  1,601
+</td>
+
+ ❯ src/routes/-case-subroutes.interaction.test.tsx:155:40
+    153|     await act(async () => { release(path === "/incorporation" ? incorp…
+    154|     expect(router.state.location.pathname).toBe(path);
+    155|     expect(screen.queryByText(marker)).toBeNull();
+       |                                        ^
+    156|     expect(screen.getByRole("form", { name: "案件篩選" })).toBeTruthy();
+    157|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

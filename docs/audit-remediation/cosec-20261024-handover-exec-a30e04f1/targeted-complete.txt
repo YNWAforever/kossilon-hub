@@ -1,0 +1,24 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/admin/staff-handover-panel.interaction.test.tsx (5 tests) 2377ms
+     ✓ requires all pages, cancellation writes nothing, then confirms once and independently reads current scope  647ms
+     ✓ retains the exact operation on lost response and remount; only explicit retry sends it again  414ms
+     ✓ reads a committed receipt after unknown response without issuing another command; scope read failure stays unresolved  688ms
+     ✓ preserves cancellation intent on lost response and remount; never re-executes the handover  551ms
+ ✓ |unit| src/features/admin/production-staff-admin.interaction.test.tsx (7 tests) 591ms
+ ✓ |unit| src/routes/-admin-guard.test.tsx (3 tests) 312ms
+ ✓ |unit| src/features/auth/authorization.test.ts (7 tests) 19ms
+ ✓ |unit| src/features/auth/neon-auth-server.test.ts (2 tests) 19ms
+ ✓ |unit| src/features/admin/server-fns.test.ts (5 tests) 13ms
+ ✓ |unit| src/features/work-items/assignment.test.ts (8 tests) 6ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 8ms
+ ✓ |unit| src/features/auth/staff-state.test.ts (4 tests) 5ms
+
+ Test Files  9 passed (9)
+      Tests  43 passed (43)
+   Start at  23:39:20
+   Duration  31.72s (transform 3.75s, setup 0ms, import 11.00s, tests 3.35s, environment 14.87s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

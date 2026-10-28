@@ -1,0 +1,64 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/whatsapp/components/production-inbox.pagination.test.tsx (5 tests | 1 failed) 1889ms
+     × reaches message 201, deduplicates overlaps, and preserves scroll on prepend and new arrivals 295ms
+ ❯ |unit| src/routes/-imports-access.test.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-imports-access.test.tsx [ src/routes/-imports-access.test.tsx ]
+Error: [vitest] No "lazyRouteComponent" export is defined on the "@tanstack/react-router" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@tanstack/react-router"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ src/routes/imports.tsx:24:1
+     22| import { formatDate } from "@/lib/format-date";
+     23|
+     24| /**
+       | ^
+     25|  * The monthly workbook import.
+     26|  *
+ ❯ src/routes/imports.tsx:24:1
+ ❯ src/routes/-imports-access.test.tsx:37:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/whatsapp/components/production-inbox.pagination.test.tsx > WhatsApp complete history UI (unit) > reaches message 201, deduplicates overlaps, and preserves scroll on prepend and new arrivals
+TypeError: Cannot read properties of undefined (reading 'pages')
+ ❯ src/features/whatsapp/components/production-inbox.pagination.test.tsx:124:23
+
+    122|           ...data,
+    123|           pages: [
+    124|             { ...data.pages[0], items: [message(202), ...data.pages[0]…
+       |                       ^
+    125|             ...data.pages.slice(1),
+    126|           ],
+ Test Files  2 failed | 2 passed (4)
+      Tests  1 failed | 22 passed (23)
+   Start at  05:06:04
+   Duration  12.66s (transform 509ms, setup 0ms, import 1.76s, tests 4.43s, environment 4.99s)
+
+ ❯ functionalUpdate node_modules/@tanstack/query-core/src/utils.ts:103:7
+ ❯ QueryClient.setQueryData node_modules/@tanstack/query-core/src/queryClient.ts:198:17
+ ❯ node_modules/@tanstack/query-core/src/queryClient.ts:225:15
+ ❯ node_modules/@tanstack/query-core/src/queryClient.ts:223:9
+ ❯ Object.batch node_modules/@tanstack/query-core/src/notifyManager.ts:56:17
+ ❯ QueryClient.setQueriesData node_modules/@tanstack/query-core/src/queryClient.ts:220:25
+ ❯ src/features/whatsapp/components/production-inbox.pagination.test.tsx:117:14
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+

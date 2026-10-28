@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-23",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/server/dependency-security-f25.test.ts",
+    "src/server/handoff-export-http.test.ts",
+    "src/server/maintenance-http.test.ts",
+    "src/server/maintenance-trigger-runtime.test.ts",
+    "src/server/maintenance-trigger.test.ts",
+    "src/server/maintenance.test.ts",
+    "src/server/provider-mode.test.ts",
+    "src/server/r2-s3-bucket.test.ts",
+    "src/server/runtime-env.test.ts",
+    "src/server/tanstack-transport-security.test.ts",
+    "src/test/db-integration-files.convention.test.ts",
+    "src/test/dev-worktree-watch.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/server/dependency-security-f25.test.ts",
+    "src/server/handoff-export-http.test.ts",
+    "src/server/maintenance-http.test.ts",
+    "src/server/maintenance-trigger-runtime.test.ts",
+    "src/server/maintenance-trigger.test.ts",
+    "src/server/maintenance.test.ts",
+    "src/server/provider-mode.test.ts",
+    "src/server/r2-s3-bucket.test.ts",
+    "src/server/runtime-env.test.ts",
+    "src/server/tanstack-transport-security.test.ts",
+    "src/test/db-integration-files.convention.test.ts",
+    "src/test/dev-worktree-watch.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/test/dev-worktree-watch.test.ts",
+      "tests": 3
+    },
+    {
+      "path": "src/server/dependency-security-f25.test.ts",
+      "tests": 10
+    },
+    {
+      "path": "src/server/r2-s3-bucket.test.ts",
+      "tests": 10
+    },
+    {
+      "path": "src/server/maintenance-trigger-runtime.test.ts",
+      "tests": 11
+    },
+    {
+      "path": "src/server/maintenance-http.test.ts",
+      "tests": 6
+    },
+    {
+      "path": "src/server/maintenance.test.ts",
+      "tests": 18
+    },
+    {
+      "path": "src/server/tanstack-transport-security.test.ts",
+      "tests": 6
+    },
+    {
+      "path": "src/server/handoff-export-http.test.ts",
+      "tests": 3
+    },
+    {
+      "path": "src/server/maintenance-trigger.test.ts",
+      "tests": 7
+    },
+    {
+      "path": "src/server/runtime-env.test.ts",
+      "tests": 20
+    },
+    {
+      "path": "src/test/db-integration-files.convention.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "src/server/provider-mode.test.ts",
+      "tests": 7
+    }
+  ]
+}

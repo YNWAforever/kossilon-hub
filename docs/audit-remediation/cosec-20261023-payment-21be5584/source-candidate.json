@@ -1,0 +1,22 @@
+{
+  "source_sha": "3f2eeb3a4eb4ccb05535f19ac2136a2bafc6a093",
+  "parent_sha": "a6d5d89d0bf9c020ec9b98e0eed8749e13de5b24",
+  "paths": [
+    "src/features/annual-return/payment-conflict.integration.test.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "files": [
+    {
+      "path": "src/features/annual-return/payment-conflict.integration.test.ts",
+      "sha256": "c132f5262145cb82cef0f0fe409b8ebbc4793120053dca6bf50c12bbbca6a9df",
+      "git_blob_equal": true
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "sha256": "7c0c3b439697f2d53de25e35b9bc6bd01395df75a2f83a9018bdd1690b29838c",
+      "git_blob_equal": true
+    }
+  ],
+  "tested_head": "a6d5d89d0bf9c020ec9b98e0eed8749e13de5b24",
+  "scope": "test and serialized DB registry only; application code unchanged"
+}

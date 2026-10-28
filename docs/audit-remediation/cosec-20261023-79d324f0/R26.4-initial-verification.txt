@@ -1,0 +1,108 @@
+
+> test
+> vitest run --project unit src/routes/-operations.interaction.test.tsx src/routes/-operations-dispatch-labels.test.ts src/features/operations/server-fns.test.ts src/features/operations/health.test.ts src/features/operations/capabilities.test.ts src/features/admin/server-fns.test.ts src/features/admin/production-staff-admin.interaction.test.tsx src/routes/-settings.interaction.test.tsx src/routes/-settings-admin-guard.test.tsx src/routes/-settings-templates.test.tsx src/routes/-settings-sections.test.ts src/routes/-settings-save.interaction.test.tsx src/features/nar-import/apply-server.test.ts src/features/nar-import/server-fns.test.ts src/features/nar-import/apply-panel.test.tsx src/features/nar-import/normalize.test.ts src/features/nar-import/mapping.test.ts src/features/nar-import/xlsx/workbook.test.ts src/features/nar-import/xlsx/zip.test.ts --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/routes/-operations.interaction.test.tsx (9 tests | 2 failed) 1871ms
+     × retains stale numerical observations after a 503 (status) and replaces them on retry 100ms
+     × retains stale numerical observations after a 503 (statusCode) and replaces them on retry 195ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-operations.interaction.test.tsx > Operations trustworthy observation > retains stale numerical observations after a 503 (status) and replaces them on retry
+ FAIL  |unit| src/routes/-operations.interaction.test.tsx > Operations trustworthy observation > retains stale numerical observations after a 503 (statusCode) and replaces them on retry
+TestingLibraryElementError: Unable to find an element with the text: 2026-10-08 00:05. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<section
+  aria-label="上次成功讀取（已過期）"
+  class="rounded-lg border bg-muted/50 p-4 text-sm"
+>
+  <h2
+    class="font-semibold"
+  >
+    上次成功讀取（已過期）
+  </h2>
+  <p>
+    以下是上次讀取的舊值，不能代表現時排程或供應商狀態。請重新載入核對。
+  </p>
+  <p>
+    已記錄：
+    50
+    個遷移
+  </p>
+  <p>
+    上次排程觀察：
+    2026-10-08 00:05
+  </p>
+  <p>
+    當時記錄的最後成功：
+    2026-10-08 00:05
+  </p>
+  <p>
+    文件掃描
+    ：待處理
+    1
+    ；到期
+    1
+    ；處理中
+    0
+    ；重試中
+    0
+    ；失敗
+    0
+  </p>
+  <p>
+    文件分析
+    ：待處理
+    1
+    ；到期
+    1
+    ；處理中
+    0
+    ；重試中
+    0
+    ；失敗
+    0
+  </p>
+  <p>
+    通知
+    ：待處理
+    1
+    ；到期
+    1
+    ；處理中
+    0
+    ；重試中
+    0
+    ；失敗
+    0
+  </p>
+  <p>
+    交件待傳送：
+    0
+  </p>
+</section>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ src/routes/-operations.interaction.test.tsx:181:31
+    179|       expect(previous.textContent).toContain("待處理1");
+    180|       expect(previous.textContent).toContain("50個遷移");
+    181|       expect(within(previous).getAllByText("2026-10-08 00:05").length)…
+       |                               ^
+    182|       expect(screen.getByRole("alert").textContent).toContain("現時狀態未知"…
+    183|       expect(screen.queryByText("正常", { exact: true })).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed | 18 passed (19)
+      Tests  2 failed | 183 passed (185)
+   Start at  05:08:33
+   Duration  45.74s (transform 5.62s, setup 0ms, import 15.51s, tests 8.05s, environment 14.45s)
+

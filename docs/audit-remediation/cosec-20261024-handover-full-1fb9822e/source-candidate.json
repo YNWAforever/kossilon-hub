@@ -1,0 +1,18 @@
+{
+  "source_sha": "209aef6c78fe1ded6ad3a68eba4eaa9bd7304243",
+  "parent_sha": "7a70e3be143cf771b6693f4ec2bb491817f74ca9",
+  "tested_head": "7a70e3be143cf771b6693f4ec2bb491817f74ca9",
+  "tested_worktree_content_equal": true,
+  "source_freeze": "source-post-checks.json",
+  "source_files_verified": 669,
+  "paths": [
+    "src/features/work-items/assignment.test.ts",
+    "src/features/work-items/assignment.ts",
+    "src/features/work-items/repository.ts",
+    "src/features/work-items/types.ts"
+  ],
+  "scope": "null-required-skill eligibility prerequisite only",
+  "build": "NOT_RUN_RESOURCE",
+  "sql": "NOT_RUN_RESOURCE",
+  "red_source_provenance": "base product with initial new regression tests; no atomic pre-RED whole-source manifest; retained logs/snapshots, not final SHA RED"
+}

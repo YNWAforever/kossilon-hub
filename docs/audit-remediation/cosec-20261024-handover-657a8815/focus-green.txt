@@ -1,0 +1,12 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/admin/production-staff-admin.interaction.test.tsx (5 tests) 480ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  18:31:44
+   Duration  4.23s (transform 241ms, setup 0ms, import 970ms, tests 480ms, environment 2.48s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

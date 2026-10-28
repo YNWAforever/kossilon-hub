@@ -1,0 +1,30 @@
+[
+  {
+    "path": "src/features/annual-return/daily-view-state.ts",
+    "sha256": "7e9ab06bdb0833a360e4b5761128f46ab627a5a5f6ae33ac51e21941e842e6af"
+  },
+  {
+    "path": "src/features/clients/client-return-context.ts",
+    "sha256": "fde64198a77e797e1d58ac78204221a17da48b066bf1c4837910838e4bd93d1a"
+  },
+  {
+    "path": "src/features/clients/client-return-context.test.ts",
+    "sha256": "c887fc375b28472de3ea8b42e54bd84db456949e7fcae5814d192a473bb28024"
+  },
+  {
+    "path": "src/features/clients/components/client-case-return-context.test.tsx",
+    "sha256": "b4f6d1d38de92600de59e0ab19a485a064c85f7d63fb37162717fb11e8e91a12"
+  },
+  {
+    "path": "src/features/clients/components/client-work-overview.tsx",
+    "sha256": "893d640a6595c344dddcb6506dfb15cae48bc204ae0b7b9b9d7cf03830410d6a"
+  },
+  {
+    "path": "src/features/clients/components/production-client-detail.tsx",
+    "sha256": "a7882b5b042abed828f6c4d243f3d8fdd09243160eb9c54212058bfe9634a236"
+  },
+  {
+    "path": "src/features/clients/components/production-client-detail.interaction.test.tsx",
+    "sha256": "3f00df9bc79112de6c1e33303f6c954a5b938bc5db9370984efa3d7b82668623"
+  }
+]

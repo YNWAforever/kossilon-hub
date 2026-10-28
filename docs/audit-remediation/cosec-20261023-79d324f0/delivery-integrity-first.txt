@@ -1,0 +1,13 @@
+{
+  "original": {
+    "F": 35,
+    "R": 15,
+    "UC": 100,
+    "LA": 34
+  },
+  "rows": 184,
+  "nativePasses": 0,
+  "releaseGate": "NO_GO",
+  "source_sha": "8bc1e0dea88c5796c37b2f32a781fac7aab31774",
+  "authority": "Offline local delivery integrity only; no deployment, DB, provider or native acceptance authority."
+}

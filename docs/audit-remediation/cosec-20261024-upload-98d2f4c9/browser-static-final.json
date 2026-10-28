@@ -1,0 +1,17 @@
+{
+  "run_id": "cosec-20261024-upload-98d2f4c9",
+  "checked_utc": "2026-10-24T04:02:55.366Z",
+  "checks": [
+    {
+      "file": "browser-upload.mjs",
+      "sha256": "dadb53736e90ab0c742f39aee03d51ecd689265b2c7b682659d86ef2df926512",
+      "syntax_exit": 0
+    },
+    {
+      "file": "browser-entry.tsx.snapshot",
+      "sha256": "17cd6367558f60ef80d5ad97c2a81343bc6a398cdcbc2d029b098160ac7afbe1",
+      "syntax_exit": 0
+    }
+  ],
+  "source_matches_executed_harness": true
+}

@@ -1,0 +1,183 @@
+import { expect, type Locator, type Page } from "@playwright/test";
+
+// Existing fixture-backed demo only. 640 CSS px models the reflow space of a
+// 1280px layout at 200%; it is NOT browser zoom, native Auth or backend UAT.
+export const COMPANY = "Delta Bloom Ventures Limited";
+export const CASE_PATH = "/annual-returns/ar-delta";
+export const PERSONAS = [
+  { name: "Amy Chan", role: "Admin", label: "管理員" },
+  { name: "Mei Lam", role: "Staff", label: "同事" },
+] as const;
+
+export async function assertKeyboardFocus(target: Locator) {
+  await expect(target).toBeFocused();
+  await expect(target).toBeInViewport();
+  // Radix's drawer can be visible/focused during its 500ms entrance animation.
+  // Wait for the same geometry/focus contract, rather than sampling mid-slide.
+  await expect
+    .poll(() =>
+      target.evaluate((element) => {
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        return {
+          visible: element.matches(":focus-visible"),
+          cue:
+            (style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0) ||
+            style.boxShadow !== "none",
+          contained: rect.left >= -1 && rect.right <= document.documentElement.clientWidth + 1,
+        };
+      }),
+    )
+    .toEqual({ visible: true, cue: true, contained: true });
+  const appearance = () =>
+    target.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        outline: [style.outlineStyle, style.outlineWidth, style.outlineColor].join(" "),
+        outlineVisible:
+          style.outlineStyle !== "none" &&
+          parseFloat(style.outlineWidth) > 0 &&
+          !["transparent", "rgba(0, 0, 0, 0)"].includes(style.outlineColor),
+        shadow: style.boxShadow,
+      };
+    });
+  const focused = await appearance();
+  // Compare the actual same control after a real Tab away; a permanent card
+  // shadow/outline cannot be mistaken for a keyboard-specific indicator.
+  await target.page().keyboard.press("Tab");
+  await expect(target).not.toBeFocused();
+  const unfocused = await appearance();
+  await target.page().keyboard.press("Shift+Tab");
+  await expect(target).toBeFocused();
+  expect(
+    (focused.outlineVisible && focused.outline !== unfocused.outline) ||
+      (focused.shadow !== "none" && focused.shadow !== unfocused.shadow),
+    "keyboard focus must change the outline/ring, not merely retain a decorative shadow",
+  ).toBe(true);
+}
+
+/** Read-only fields/actions must remain readable, including inside clipped panels. */
+export async function assertReadable(target: Locator) {
+  await target.scrollIntoViewIfNeeded();
+  await expect(target).toBeInViewport();
+  const geometry = await target.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const clipping: string[] = [];
+    for (
+      let parent = element.parentElement;
+      parent && parent !== document.body;
+      parent = parent.parentElement
+    ) {
+      const style = getComputedStyle(parent);
+      const box = parent.getBoundingClientRect();
+      if (style.overflowX !== "visible" && (rect.left < box.left - 1 || rect.right > box.right + 1))
+        clipping.push("horizontal");
+      if (style.overflowY !== "visible" && (rect.top < box.top - 1 || rect.bottom > box.bottom + 1))
+        clipping.push("vertical");
+    }
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    return {
+      clipping,
+      viewport: rect.left >= -1 && rect.right <= innerWidth + 1,
+      // Disabled Button deliberately uses pointer-events:none. In that exact
+      // case hit testing returns its containing panel, not the visible button.
+      // A sibling overlay still fails; no style or disabled state is changed.
+      unobscured:
+        hit === element ||
+        (!!hit && element.contains(hit)) ||
+        (element.matches(":disabled") &&
+          getComputedStyle(element).pointerEvents === "none" &&
+          !!hit &&
+          hit.contains(element)),
+      ownTextFits: element.scrollWidth <= element.clientWidth + 1,
+    };
+  });
+  expect(geometry).toEqual({ clipping: [], viewport: true, unobscured: true, ownTextFits: true });
+}
+
+// Find the real sequential tab stop, rather than using locator.focus() to make
+// an otherwise unreachable control look keyboard accessible.
+export async function tabTo(page: Page, target: Locator) {
+  await expect(target).toBeVisible();
+  for (let count = 0; count < 80; count++) {
+    if (await target.evaluate((element) => element === document.activeElement)) {
+      await assertKeyboardFocus(target);
+      return;
+    }
+    await page.keyboard.press("Tab");
+  }
+  throw new Error(`Target was not reached within 80 Tab presses: ${target.toString()}`);
+}
+
+export async function activate(page: Page, target: Locator) {
+  await tabTo(page, target);
+  await page.keyboard.press("Enter");
+}
+
+export async function openNavigation(page: Page) {
+  const trigger = page.getByRole("button", { name: "開啟導覽選單", exact: true });
+  if (await trigger.isVisible()) {
+    await activate(page, trigger);
+    await expect(page.getByRole("dialog", { name: "導覽", exact: true })).toBeVisible();
+  }
+  const nav = page.getByRole("navigation", { name: "主要導覽", exact: true });
+  await expect(nav).toBeVisible();
+  return nav;
+}
+
+export async function assertReflow(page: Page, width: number) {
+  await expect(page.getByRole("main")).toBeVisible();
+  const geometry = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    document: document.documentElement.scrollWidth,
+    body: document.body.scrollWidth,
+  }));
+  expect(geometry.viewport).toBe(width);
+  expect(geometry.document, "document must not scroll horizontally").toBeLessThanOrEqual(width + 1);
+  expect(geometry.body, "body must not scroll horizontally").toBeLessThanOrEqual(width + 1);
+  const heading = await page.getByRole("heading", { level: 1 }).boundingBox();
+  expect(heading).not.toBeNull();
+  expect(heading!.x).toBeGreaterThanOrEqual(-1);
+  expect(heading!.x + heading!.width).toBeLessThanOrEqual(width + 1);
+}
+
+export async function assertReadonlyDelta(page: Page) {
+  await expect(page).toHaveURL(new RegExp(`${CASE_PATH}$`));
+  const main = page.getByRole("main");
+  await expect(main.getByRole("heading", { level: 1, name: COMPANY, exact: true })).toBeVisible();
+  await expect(main).toContainText("Joanna Poon · +852 9333 2211");
+  await expect(main).toContainText("等待文件");
+  await expect(main.getByRole("combobox", { name: "分配負責同事" })).toHaveValue("Iris Wong");
+  for (const [label, value] of [
+    ["付款", "pending"],
+    ["簽署", "requested"],
+    ["覆核", "not-started"],
+  ]) {
+    const control = main.getByRole("combobox", { name: label, exact: true });
+    await expect(control).toBeDisabled();
+    await expect(control).toHaveValue(value);
+  }
+  const blockers = main.locator("section").filter({
+    has: page.getByRole("heading", { name: "阻礙事項", exact: true }),
+  });
+  await expect(blockers).toContainText("Signed NAR1");
+  await expect(blockers).toContainText("Updated significant controller register");
+  await expect(blockers.getByRole("button", { name: "標記為已收到", exact: true })).toHaveCount(2);
+  expect(await main.locator("button, select").count()).toBeGreaterThan(10);
+  await expect(main.locator("button:enabled, select:enabled")).toHaveCount(0);
+  await expect(main.getByRole("button", { name: "遞交交件套件", exact: true })).toBeDisabled();
+  await expect(main.getByRole("button", { name: "接納回條", exact: true })).toBeDisabled();
+  await expect(main.getByRole("button", { name: "加入備註", exact: true })).toBeDisabled();
+  const note = main.getByRole("textbox", { name: "新增備註", exact: true });
+  await expect(note).toHaveAttribute("readonly", "");
+  await expect(note).toHaveValue("");
+  await expect(main.getByText("暫時沒有備註。", { exact: true })).toBeVisible();
+  await expect(main.getByText("Case seeded", { exact: true })).toBeVisible();
+  await expect(main.getByRole("status")).toContainText("唯讀示範。案件狀態只可在正式環境");
+  return main.locator("select, textarea").evaluateAll((elements) =>
+    elements.map((element) => {
+      const control = element as HTMLSelectElement | HTMLTextAreaElement;
+      return { value: control.value, disabled: control.disabled };
+    }),
+  );
+}

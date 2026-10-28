@@ -1,0 +1,23 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx (5 tests) 756ms
+ ✓ |unit| src/components/navigation.test.tsx (5 tests) 318ms
+ ✓ |unit| src/components/incorporation/create-incorporation-case-dialog.test.tsx (3 tests) 326ms
+ ✓ |unit| src/components/clients/shareholding-form-dialog.test.tsx (3 tests) 316ms
+ ✓ |unit| src/components/status-text-contrast.convention.test.ts (2 tests) 175ms
+ ✓ |unit| src/components/record-unavailable.test.tsx (2 tests) 116ms
+ ✓ |unit| src/components/ui/button.test.tsx (4 tests) 231ms
+ ✓ |unit| src/components/demo-unavailable.test.tsx (1 test) 165ms
+ ✓ |unit| src/components/page-header.convention.test.ts (4 tests) 116ms
+ ✓ |unit| src/components/page-header.test.tsx (3 tests) 111ms
+ ✓ |unit| src/components/ui/button.convention.test.ts (2 tests) 42ms
+ ✓ |unit| src/components/kpi-card.test.tsx (2 tests) 24ms
+
+ Test Files  12 passed (12)
+      Tests  36 passed (36)
+   Start at  12:16:13
+   Duration  21.00s (transform 817ms, setup 0ms, import 4.35s, tests 2.70s, environment 11.51s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

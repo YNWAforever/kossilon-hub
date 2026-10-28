@@ -1,0 +1,39 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/auth/auth-router-recovery.test.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/auth/auth-router-recovery.test.tsx [ src/features/auth/auth-router-recovery.test.tsx ]
+Error: Transform failed with 1 error:
+
+[PARSE_ERROR] Expected `,` or `}` but found `?.`
+     ╭─[ src/features/auth/auth-context-neon.tsx:449:13 ]
+     │
+ 439 │     () => ({
+     │            ┬  
+     │            ╰── Opened here
+     │ 
+ 449 │       marker?.state,
+     │             ─┬  
+     │              ╰── `,` or `}` expected
+─────╯
+
+  Plugin: vite:oxc
+  File: C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/auth/auth-context-neon.tsx
+ ❯ transformWithOxc node_modules/vite/dist/node/chunks/node.js:3344:19
+ ❯ TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:3415:26
+ ❯ EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:30387:51
+ ❯ loadAndTransform node_modules/vite/dist/node/chunks/node.js:24646:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  05:54:44
+   Duration  2.34s (transform 79ms, setup 0ms, import 0ms, tests 0ms, environment 1.32s)
+

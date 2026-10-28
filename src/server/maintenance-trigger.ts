@@ -180,7 +180,10 @@ export function createMaintenanceTrigger(input: {
         },
         jobs,
       };
-      if (ran) await input.recordRun?.(result);
+      // A skipped invocation is still heartbeat evidence. In particular, it can
+      // recover visibility after job commits outlived a failed summary write;
+      // its zero performed-work counts must not become a new success.
+      await input.recordRun?.(result);
       return result;
     },
   };

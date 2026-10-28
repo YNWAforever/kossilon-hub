@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-11",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/dashboard/dashboard-data.test.ts",
+    "src/features/dashboard/demo-dashboard-data.test.ts",
+    "src/features/documents/ai-provider.test.ts",
+    "src/features/documents/analysis-checks.test.ts",
+    "src/features/documents/analysis-golden.test.ts",
+    "src/features/documents/analysis-worker.test.ts",
+    "src/features/documents/authorization.test.ts",
+    "src/features/documents/document-list.unit.test.ts",
+    "src/features/documents/document-recovery-panel.test.tsx",
+    "src/features/documents/findings-review.test.ts",
+    "src/features/documents/findings.test.ts",
+    "src/features/documents/lazy-storage.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/features/dashboard/dashboard-data.test.ts",
+    "src/features/dashboard/demo-dashboard-data.test.ts",
+    "src/features/documents/ai-provider.test.ts",
+    "src/features/documents/analysis-checks.test.ts",
+    "src/features/documents/analysis-golden.test.ts",
+    "src/features/documents/analysis-worker.test.ts",
+    "src/features/documents/authorization.test.ts",
+    "src/features/documents/document-list.unit.test.ts",
+    "src/features/documents/document-recovery-panel.test.tsx",
+    "src/features/documents/findings-review.test.ts",
+    "src/features/documents/findings.test.ts",
+    "src/features/documents/lazy-storage.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/features/documents/document-recovery-panel.test.tsx",
+      "tests": 4
+    },
+    {
+      "path": "src/features/documents/analysis-golden.test.ts",
+      "tests": 10
+    },
+    {
+      "path": "src/features/documents/ai-provider.test.ts",
+      "tests": 25
+    },
+    {
+      "path": "src/features/dashboard/demo-dashboard-data.test.ts",
+      "tests": 10
+    },
+    {
+      "path": "src/features/dashboard/dashboard-data.test.ts",
+      "tests": 6
+    },
+    {
+      "path": "src/features/documents/analysis-worker.test.ts",
+      "tests": 26
+    },
+    {
+      "path": "src/features/documents/document-list.unit.test.ts",
+      "tests": 11
+    },
+    {
+      "path": "src/features/documents/findings-review.test.ts",
+      "tests": 18
+    },
+    {
+      "path": "src/features/documents/analysis-checks.test.ts",
+      "tests": 19
+    },
+    {
+      "path": "src/features/documents/authorization.test.ts",
+      "tests": 19
+    },
+    {
+      "path": "src/features/documents/lazy-storage.test.ts",
+      "tests": 3
+    },
+    {
+      "path": "src/features/documents/findings.test.ts",
+      "tests": 16
+    }
+  ]
+}

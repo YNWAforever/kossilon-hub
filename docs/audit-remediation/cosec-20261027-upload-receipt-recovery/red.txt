@@ -1,0 +1,213 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/features/documents/server-fns.test.ts (35 tests | 9 failed) 49ms
+     × returns only a receipt after matching committed lineage and rechecking access 4ms
+     × does not infer receipt from an uncommitted intent 1ms
+     × rejects inconsistent committed lineage: missing 0ms
+     × rejects inconsistent committed lineage: wrong-version 0ms
+     × rejects inconsistent committed lineage: wrong-checksum 0ms
+     × refuses non-staff, inactive or non-owning actors: {"authUserId":"client-auth","userId":null,"role":"Client","teamId":null,"active":true} 0ms
+     × refuses non-staff, inactive or non-owning actors: {"authUserId":"staff-auth","userId":"20000000-0000-0000-0000-000000000002","role":"Staff","teamId":"10000000-0000-0000-0000-000000000001","active":false} 0ms
+     × refuses non-staff, inactive or non-owning actors: {"authUserId":"other","userId":"20000000-0000-0000-0000-000000000002","role":"Staff","teamId":"10000000-0000-0000-0000-000000000001","active":true} 0ms
+     × refuses revoked access after the asynchronous document read 1ms
+ ❯ |unit| src/features/documents/document-recovery-panel.test.tsx (13 tests | 6 failed) 6613ms
+     × checks a saved upload receipt without replaying either write 1023ms
+     × keeps unconfirmed or mismatched receipt closed: null 1051ms
+     × keeps unconfirmed or mismatched receipt closed: {"intentId":"other","state":"received","documentId":"new-document"} 1042ms
+     × keeps unconfirmed or mismatched receipt closed: {"intentId":"new-intent","state":"unconfirmed"} 1044ms
+     × keeps unconfirmed or mismatched receipt closed: {"intentId":"new-intent","state":"received"} 1064ms
+     × deduplicates receipt reads and allows a read retry after denial 1046ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/documents/document-recovery-panel.test.tsx > controlled document recovery > checks a saved upload receipt without replaying either write
+TestingLibraryElementError: Unable to find role="button" and name "核對補傳結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-status-orange-text"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0m補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。[0m
+      [0m 上載 ID：new-intent[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-status-orange-text"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0m補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。[0m
+      [0m 上載 ID：new-intent[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/documents/document-recovery-panel.test.tsx:177:34
+    175|     await chooseFile();
+    176|     fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    177|     fireEvent.click(await screen.findByRole("button", { name: "核對補傳結果"…
+       |                                  ^
+    178|     await screen.findByText("已核實補傳登記。請在文件庫查看目前掃描及覆核狀態。");
+    179|     expect(rpc.readDocumentUploadReceipt.mock.calls[0][0]).toEqual({da…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  |unit| src/features/documents/document-recovery-panel.test.tsx > controlled document recovery > keeps unconfirmed or mismatched receipt closed: null
+ FAIL  |unit| src/features/documents/document-recovery-panel.test.tsx > controlled document recovery > keeps unconfirmed or mismatched receipt closed: {"intentId":"other","state":"received","documentId":"new-document"}
+ FAIL  |unit| src/features/documents/document-recovery-panel.test.tsx > controlled document recovery > keeps unconfirmed or mismatched receipt closed: {"intentId":"new-intent","state":"unconfirmed"}
+ FAIL  |unit| src/features/documents/document-recovery-panel.test.tsx > controlled document recovery > keeps unconfirmed or mismatched receipt closed: {"intentId":"new-intent","state":"received"}
+TestingLibraryElementError: Unable to find role="button" and name "核對補傳結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-status-orange-text"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0m補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。[0m
+      [0m 上載 ID：new-intent[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-status-orange-text"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0m補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。[0m
+      [0m 上載 ID：new-intent[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/documents/document-recovery-panel.test.tsx:193:34
+    191|     await chooseFile();
+    192|     fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    193|     fireEvent.click(await screen.findByRole("button", { name: "核對補傳結果"…
+       |                                  ^
+    194|     await screen.findByText("尚未核實補傳登記。請勿重複補傳；可稍後再次核對。");
+    195|     expect(onRecovered).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  |unit| src/features/documents/document-recovery-panel.test.tsx > controlled document recovery > deduplicates receipt reads and allows a read retry after denial
+TestingLibraryElementError: Unable to find role="button" and name "核對補傳結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-status-orange-text"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0m補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。[0m
+      [0m 上載 ID：new-intent[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-status-orange-text"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0m補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。[0m
+      [0m 上載 ID：new-intent[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/documents/document-recovery-panel.test.tsx:208:32
+    206|     await chooseFile();
+    207|     fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
+    208|     const check = await screen.findByRole("button", { name: "核對補傳結果" }…
+       |                                ^
+    209|     act(() => { check.click(); check.click(); });
+    210|     await waitFor(() => expect(rpc.readDocumentUploadReceipt).toHaveBe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  |unit| src/features/documents/server-fns.test.ts > staff upload receipt readback > returns only a receipt after matching committed lineage and rechecking access
+TypeError: readDocumentUploadReceiptForActor is not a function
+ ❯ src/features/documents/server-fns.test.ts:627:18
+    625|   it("returns only a receipt after matching committed lineage and rech…
+    626|     const d = received();
+    627|     await expect(readDocumentUploadReceiptForActor(staffActor, intent.…
+       |                  ^
+    628|     expect(d.authorizeDocument).toHaveBeenCalledTimes(2);
+    629|     expect(d.repository.createUploadIntent).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  |unit| src/features/documents/server-fns.test.ts > staff upload receipt readback > does not infer receipt from an uncommitted intent
+TypeError: readDocumentUploadReceiptForActor is not a function
+ ❯ src/features/documents/server-fns.test.ts:637:18
+    635|     const d = received();
+    636|     vi.mocked(d.repository.getUploadIntent).mockResolvedValue({...inte…
+    637|     await expect(readDocumentUploadReceiptForActor(staffActor, intent.…
+       |                  ^
+    638|     expect(d.repository.getDocument).not.toHaveBeenCalled();
+    639|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  |unit| src/features/documents/server-fns.test.ts > staff upload receipt readback > rejects inconsistent committed lineage: missing
+ FAIL  |unit| src/features/documents/server-fns.test.ts > staff upload receipt readback > rejects inconsistent committed lineage: wrong-version
+ FAIL  |unit| src/features/documents/server-fns.test.ts > staff upload receipt readback > rejects inconsistent committed lineage: wrong-checksum
+TypeError: readDocumentUploadReceiptForActor is not a function
+ ❯ src/features/documents/server-fns.test.ts:643:18
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  |unit| src/features/documents/server-fns.test.ts > staff upload receipt readback > refuses non-staff, inactive or non-owning actors: {"authUserId":"client-auth","userId":null,"role":"Client","teamId":null,"active":true}
+ FAIL  |unit| src/features/documents/server-fns.test.ts > staff upload receipt readback > refuses non-staff, inactive or non-owning actors: {"authUserId":"staff-auth","userId":"20000000-0000-0000-0000-000000000002","role":"Staff","teamId":"10000000-0000-0000-0000-000000000001","active":false}
+ FAIL  |unit| src/features/documents/server-fns.test.ts > staff upload receipt readback > refuses non-staff, inactive or non-owning actors: {"authUserId":"other","userId":"20000000-0000-0000-0000-000000000002","role":"Staff","teamId":"10000000-0000-0000-0000-000000000001","active":true}
+TypeError: readDocumentUploadReceiptForActor is not a function
+ ❯ src/features/documents/server-fns.test.ts:647:18
+    645|   it.each([actor, {...staffActor, active: false}, {...staffActor, auth…
+    646|     const d = received();
+    647|     await expect(readDocumentUploadReceiptForActor(candidate, intent.i…
+       |                  ^
+    648|     expect(d.repository.getDocument).not.toHaveBeenCalled();
+    649|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  |unit| src/features/documents/server-fns.test.ts > staff upload receipt readback > refuses revoked access after the asynchronous document read
+TypeError: readDocumentUploadReceiptForActor is not a function
+ ❯ src/features/documents/server-fns.test.ts:653:18
+    651|     const d = received();
+    652|     d.authorizeDocument.mockResolvedValueOnce(undefined).mockRejectedV…
+    653|     await expect(readDocumentUploadReceiptForActor(staffActor, intent.…
+       |                  ^
+    654|   });
+    655| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  15 failed | 33 passed (48)
+   Start at  05:24:54
+   Duration  8.09s (transform 519ms, setup 0ms, import 903ms, tests 6.66s, environment 1.01s)

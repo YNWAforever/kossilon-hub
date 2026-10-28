@@ -1,0 +1,30 @@
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
+import {createRootRouteWithContext,createRouter,createBrowserHistory,Outlet,RouterProvider} from '@tanstack/react-router';
+import {Route as IncRoute} from '/src/routes/incorporation.tsx';
+import {Route as IncDetail} from '/src/routes/incorporation.$id.tsx';
+import {Route as ChangeRoute} from '/src/routes/corporate-changes.tsx';
+import {Route as ChangeDetail} from '/src/routes/corporate-changes.$id.tsx';
+import {incorporationRouteFixture,changeRouteFixture,routeCaseIds} from '/src/test/case-route-fixtures.ts';
+const gate=await fetch('/__uc160_identity');
+const identity=await gate.json();
+if(identity.run_id!=='cosec-20261024-routes-e4b761c9'||identity.root!=='C:/Users/laich/Documents/kossilon-hub/cosec-20261023')throw Error('Wrong local target');
+const saved=JSON.parse(sessionStorage.getItem('uc160-records')||'null')||{
+  incorporation:Object.fromEntries(routeCaseIds.map(id=>[id,incorporationRouteFixture(id)])),
+  changes:Object.fromEntries(routeCaseIds.map(id=>[id,changeRouteFixture(id)])),
+};
+const w=window.__uc160={saved,ids:routeCaseIds,reads:JSON.parse(sessionStorage.getItem('uc160-reads')||'[]'),mode:'normal',hold:false,pending:[],
+  release(){w.hold=false;w.pending.splice(0).forEach(f=>f())},
+  bump(domain,id){const row=saved[domain][id];if(domain==='incorporation')row.proposedRegisteredOffice='QA reload readback';else row.quotedFee=9160;sessionStorage.setItem('uc160-records',JSON.stringify(saved))},
+  async get(domain,id){const mode=w.mode;w.reads.push({domain,id,mode});sessionStorage.setItem('uc160-reads',JSON.stringify(w.reads));if(w.hold)await new Promise(resolve=>w.pending.push(resolve));if(mode==='denied'||mode==='error')throw Error(mode==='denied'?'403 role denied':'503 read failed');return mode==='missing'?null:structuredClone(saved[domain][id]??null)},
+};
+const client=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0,refetchOnWindowFocus:false}}});
+const root=createRootRouteWithContext()({component:()=> <QueryClientProvider client={client}><Outlet/></QueryClientProvider>});
+const inc=IncRoute.update({getParentRoute:()=>root,id:'/incorporation',path:'/incorporation'});
+const incDetail=IncDetail.update({getParentRoute:()=>inc,id:'/$id',path:'/$id'});
+const changes=ChangeRoute.update({getParentRoute:()=>root,id:'/corporate-changes',path:'/corporate-changes'});
+const changeDetail=ChangeDetail.update({getParentRoute:()=>changes,id:'/$id',path:'/$id'});
+const actor={authUserId:'QA-UC160-Staff-A',userId:'e4b761c9-0160-4160-8160-000000000010',role:'Staff',teamId:'e4b761c9-0160-4160-8160-000000000020',active:true};
+w.router=createRouter({routeTree:root.addChildren([inc.addChildren([incDetail]),changes.addChildren([changeDetail])]),history:createBrowserHistory(),context:{queryClient:client,actor,dataMode:'production'},defaultPreload:false});
+createRoot(document.getElementById('app')).render(<RouterProvider router={w.router}/>);

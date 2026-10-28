@@ -1,0 +1,378 @@
+// Real pg_dump/pg_restore on one freshly verified disposable container only.
+// Injected sessions/actor services are local acceptance, not native Auth/HTTP/RLS.
+import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
+import { appendFileSync, closeSync, openSync, realpathSync } from "node:fs";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { getCurrentTest } from "@vitest/runner";
+import { expect, it, onTestFinished, vi } from "vitest";
+import type { SqlClient } from "./db/client";
+import type { ApplicationSchemaSql } from "./application-schema";
+const RUN = "cosec-20261024-restore-5aa3e18c",
+  ROOT = "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023";
+type Target = {
+  uri: string;
+  containerId: string;
+  database: string;
+  identity: { systemId: string };
+  projection: Record<string, string>;
+  projectionSha256: string;
+  counts: Record<string, number>;
+};
+type Archive = {
+  archivePath: string;
+  sha256: string;
+  bytes: number;
+  started: string;
+  finished: string;
+  sourceProjectionSha256: string;
+  sourceContainerId: string;
+  sourceSystemId: string;
+};
+type Gate = {
+  DATABASES: { source: string; restored: string; broken: string };
+  projectionSql: string;
+  verifyEmptyTarget(db?: string): Promise<Target>;
+  verifyOwnedTarget(db?: string): Promise<Target>;
+  publicTarget(t: Target): object;
+  createRestoreDatabase(db: string): Promise<Target>;
+  dumpSource(): Promise<Archive>;
+  corruptArchive(archive: Archive): Promise<unknown>;
+  restoreArchive(
+    db: string,
+    archive: Archive,
+    corrupt?: boolean,
+  ): Promise<{ elapsedMs: number; exitCode: number }>;
+  sealForDisposal(succeeded: boolean, ids: object): Promise<void>;
+};
+const id = () => `5aa3e18c-0193-4193-8193-${randomBytes(6).toString("hex")}`;
+it.skipIf(process.env.COSEC_UC193_RUN_ID !== RUN)(
+  "UC193 current-version backup, atomic restore, case readback and refusal countercontrols",
+  async () => {
+    assert.equal(realpathSync(process.cwd()), ROOT);
+    const signal = getCurrentTest()?.context.signal;
+    assert(signal);
+    const pending = rehearse(signal);
+    onTestFinished(async () => {
+      await pending.catch(() => undefined);
+    });
+    await pending;
+  },
+  180_000,
+);
+async function rehearse(signal: AbortSignal) {
+  const attempt = process.env.COSEC_UC193_ATTEMPT!;
+  assert.match(attempt, /^[a-z0-9-]+$/);
+  const folder = resolve(ROOT, "docs/audit-remediation", RUN, "db");
+  assert.equal(folder, process.env.COSEC_UC193_EVENTS_DIR);
+  const fd = openSync(resolve(folder, `UC193-rehearsal-${attempt}.jsonl`), "wx");
+  const record = (phase: string, data: object = {}) =>
+    appendFileSync(
+      fd,
+      JSON.stringify({ run: RUN, attempt, phase, utc: new Date().toISOString(), ...data }) + "\n",
+    );
+  const ids = {
+    teams: [id(), id()],
+    users: [id(), id()],
+    profiles: [id(), id()],
+    case: id(),
+    checklist: id(),
+    payment: id(),
+    extraOfficer: id(),
+    company: "",
+  };
+  const failures: unknown[] = [],
+    raw: SqlClient[] = [];
+  let gate: Gate | undefined,
+    succeeded = false;
+  const external = vi.fn(() => {
+    throw new Error("External HTTP/provider forbidden during local restore");
+  });
+  try {
+    signal.throwIfAborted();
+    record("planned-ids", { ids, nativeAuth: false, nativeHttp: false, dbRls: false });
+    gate = (await import(
+      /* @vite-ignore */ pathToFileURL(
+        resolve(ROOT, "docs/audit-remediation", RUN, "isolated-db-runner.mjs"),
+      ).href
+    )) as Gate;
+    const source = await gate.verifyEmptyTarget();
+    assert.equal(source.containerId, process.env.COSEC_UC193_TARGET_ID);
+    assert.equal(source.identity.systemId, process.env.COSEC_UC193_SYSTEM_ID);
+    assert(process.env.TEST_DATABASE_URL === source.uri, "Injected target binding drift");
+    record("before-application-import-or-client", gate.publicTarget(source));
+    vi.stubGlobal("fetch", external);
+    const [
+      { createSqlClient },
+      { guardSqlTestLifetime },
+      { createClientForActor },
+      { createClientRepository },
+      { createAnnualReturnRepository },
+      { getAnnualReturnCaseForActor, listAnnualReturnCasePartiesForActor },
+      { requireStaffActor },
+      { readReleaseCatalog },
+      { assertApplicationWriteSchema },
+    ] = await Promise.all([
+      import("./db/client"),
+      import("@/test/sql-test-lifetime"),
+      import("@/features/clients/server-fns"),
+      import("@/features/clients/repository"),
+      import("@/features/annual-return/repository"),
+      import("@/features/annual-return/server-fns"),
+      import("@/features/auth/neon-auth-server"),
+      import("@/features/operations/release-catalog"),
+      import("./application-schema"),
+    ]);
+    async function client(database: string) {
+      const checked = await gate!.verifyOwnedTarget(database);
+      assert.equal(checked.containerId, source.containerId);
+      assert.equal(checked.identity.systemId, source.identity.systemId);
+      const connection = createSqlClient(checked.uri, { max: 1, ssl: false });
+      raw.push(connection);
+      const sql = guardSqlTestLifetime(connection, () => signal);
+      const [row] =
+        await sql`select current_database() database,pg_backend_pid() pid,(select system_identifier::text from pg_control_system()) system_id`;
+      assert.equal(row.database, database);
+      assert.equal(row.system_id, source.identity.systemId);
+      record("client-identity", { ...row, containerId: checked.containerId });
+      return sql;
+    }
+    const writer = await client(gate.DATABASES.source);
+    await writer.begin(async (tx) => {
+      for (const [i, team] of ids.teams.entries()) {
+        await tx`insert into teams(id,name) values(${team},${RUN + ":team:" + i})`;
+        await tx`insert into users(id,name,email,role,team_id) values(${ids.users[i]},${"Synthetic restore staff " + i},${ids.users[i] + "@example.test"},'Staff',${team})`;
+        await tx`insert into staff_profiles(id,user_id,auth_user_id,role,team_id) values(${ids.profiles[i]},${ids.users[i]},${RUN + ":staff:" + i},'Staff',${team})`;
+      }
+    });
+    const auth = (i = 0) => ({
+      getSession: async () => ({
+        user: { id: RUN + ":staff:" + i, email: "synthetic@example.test" },
+      }),
+      signOut: async () => new Response(),
+    });
+    const actor = await requireStaffActor(
+      new Request("https://local.invalid/clients", { method: "POST" }),
+      { auth: auth(), sql: writer },
+    );
+    const company = await createClientForActor(
+      actor,
+      {
+        companyName: RUN,
+        crNumber: "89193001",
+        brNumber: "89193001-000",
+        incorporationDate: "2020-01-01",
+        annualReturnBasisDate: "2026-10-01",
+        registeredOffice: "Synthetic backup checkpoint",
+        companySecretary: "Synthetic restore secretary",
+        ownerId: ids.users[0],
+        teamId: ids.teams[0],
+        contacts: [],
+      },
+      createClientRepository({ sql: writer }),
+    );
+    ids.company = company.id;
+    await writer.begin(async (tx) => {
+      await tx`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,current_status,owner_id) values(${ids.case},${ids.company},2026,'2026-10-01','2026-11-12','Upcoming',${ids.users[0]})`;
+      await tx`insert into annual_return_checklist_items(id,case_id,item_label,required,status,due_date) values(${ids.checklist},${ids.case},'Synthetic required document',true,'Missing','2026-11-01')`;
+      await tx`insert into payments(id,company_id,case_id,invoice_number,amount,status,due_date) values(${ids.payment},${ids.company},${ids.case},${RUN},34500,'Payment pending','2026-11-01')`;
+    });
+    const repository = (sql: ApplicationSchemaSql) =>
+      createAnnualReturnRepository({ sql, today: "2026-10-24" });
+    const beforeCase = await getAnnualReturnCaseForActor(
+      actor,
+      { id: ids.case },
+      { repository: repository(writer) },
+    );
+    expect(beforeCase?.id).toBe(ids.case);
+    const parties = await listAnnualReturnCasePartiesForActor(
+      actor,
+      { caseId: ids.case },
+      { repository: repository(writer) },
+    );
+    expect(parties).toHaveLength(1);
+    record("synthetic-case-ready-for-backup", {
+      ids,
+      case: beforeCase,
+      parties,
+      scope:
+        "real company creation + explicit synthetic case/checklist/pending-payment rows; no provider or completion claim",
+    });
+    const before = await gate.verifyOwnedTarget(),
+      catalog = await readReleaseCatalog(writer);
+    const archive = await gate.dumpSource();
+    expect(archive.sourceProjectionSha256).toBe(before.projectionSha256);
+    record("backup-checkpoint", {
+      archive,
+      catalog,
+      counts: before.counts,
+      projection: before.projection,
+    });
+    // A later source write must not appear in the earlier dump. This observes a
+    // recovery point, not a production RPO objective or a zero-loss guarantee.
+    await writer`update companies set registered_office='Synthetic post-backup marker' where id=${ids.company}`;
+    const canaryAt = new Date().toISOString();
+    record("post-backup-source-marker", {
+      company_id: ids.company,
+      committedAt: canaryAt,
+      backupFinished: archive.finished,
+      sourceProjectionSha256: (await gate.verifyOwnedTarget()).projectionSha256,
+    });
+    await gate.createRestoreDatabase(gate.DATABASES.broken);
+    await gate.corruptArchive(archive);
+    const broken = await gate.restoreArchive(gate.DATABASES.broken, archive, true);
+    expect(broken.exitCode).not.toBe(0);
+    expect((await gate.verifyOwnedTarget(gate.DATABASES.broken)).counts).toEqual({});
+    record("corrupt-archive-refused-atomic-no-partial-schema", broken);
+    await gate.createRestoreDatabase(gate.DATABASES.restored);
+    const started = performance.now(),
+      restoration = await gate.restoreArchive(gate.DATABASES.restored, archive);
+    const restored = await client(gate.DATABASES.restored),
+      observer = await client(gate.DATABASES.restored);
+    const restoredTarget = await gate.verifyOwnedTarget(gate.DATABASES.restored);
+    expect(restoredTarget.projection).toEqual(before.projection);
+    expect(restoredTarget.counts).toEqual(before.counts);
+    const restoredCatalog = await readReleaseCatalog(observer);
+    expect(restoredCatalog).toEqual(catalog);
+    await assertApplicationWriteSchema(observer);
+    const restoredActor = await requireStaffActor(new Request("https://local.invalid/case"), {
+      auth: auth(),
+      sql: observer,
+    });
+    expect(
+      await getAnnualReturnCaseForActor(
+        restoredActor,
+        { id: ids.case },
+        { repository: repository(observer) },
+      ),
+    ).toEqual(beforeCase);
+    expect(
+      await listAnnualReturnCasePartiesForActor(
+        restoredActor,
+        { caseId: ids.case },
+        { repository: repository(observer) },
+      ),
+    ).toEqual(parties);
+    const other = await requireStaffActor(new Request("https://local.invalid/case"), {
+      auth: auth(1),
+      sql: observer,
+    });
+    expect(
+      await getAnnualReturnCaseForActor(
+        other,
+        { id: ids.case },
+        { repository: repository(observer) },
+      ),
+    ).toBeNull();
+    await expect(
+      listAnnualReturnCasePartiesForActor(
+        other,
+        { caseId: ids.case },
+        { repository: repository(observer) },
+      ),
+    ).rejects.toThrow(/^Forbidden:/);
+    const restoredCompany = await createClientRepository({ sql: observer }).getClient(ids.company);
+    expect(restoredCompany?.registeredOffice).toBe("Synthetic backup checkpoint");
+    const localRtoMs = performance.now() - started;
+    record("complete-restored-data-catalog-and-case-readback", {
+      restoration,
+      localRtoMs,
+      projectionSha256: restoredTarget.projectionSha256,
+      public_tables: Object.keys(restoredTarget.counts).length,
+      case: beforeCase,
+      parties,
+      catalogSha256: restoredCatalog.catalogSha256,
+      roleDenialVerified: true,
+      recoveryPoint: {
+        dumpStarted: archive.started,
+        dumpFinished: archive.finished,
+        laterSourceWrite: canaryAt,
+        laterMarkerAbsent: true,
+        scope: "local synthetic logical backup only; no production RTO/RPO SLA",
+      },
+    });
+    const rollback = new Error("Controlled restore verification rollback");
+    await restored
+      .begin(async (tx) => {
+        await tx`update companies set registered_office='Synthetic same-count corruption' where id=${ids.company}`;
+        const [changed] = await tx.unsafe(gate!.projectionSql);
+        expect((await tx`select count(*)::int n from companies`)[0].n).toBe(
+          before.counts.companies,
+        );
+        expect(() => assert.deepEqual(changed.projection, before.projection)).toThrow();
+        record("same-count-data-corruption-refused", {
+          same_company_count: true,
+          full_projection_mismatch: true,
+        });
+        throw rollback;
+      })
+      .catch((error) => {
+        assert.equal(error, rollback);
+      });
+    await restored
+      .begin(async (tx) => {
+        await tx`insert into officers(id,company_id,officer_type,name,appointment_date) values(${ids.extraOfficer},${ids.company},'director','Synthetic candidate after restore','2026-10-01')`;
+        const rowsBefore =
+          await tx`select to_jsonb(p) data,xmin::text version from case_parties p where case_id=${ids.case} order by id`;
+        await tx`drop index notification_outbox_dispatch_marker_idx`;
+        const brokenCatalog = await readReleaseCatalog(tx);
+        expect(brokenCatalog.catalogSha256).not.toBe(catalog.catalogSha256);
+        await expect(
+          listAnnualReturnCasePartiesForActor(
+            restoredActor,
+            { caseId: ids.case },
+            { repository: repository(tx) },
+          ),
+        ).rejects.toMatchObject({ statusCode: 503, code: "SCHEMA_WRITE_BLOCKED" });
+        expect([
+          ...(await tx`select to_jsonb(p) data,xmin::text version from case_parties p where case_id=${ids.case} order by id`),
+        ]).toEqual([...rowsBefore]);
+        record("UC189-restored-GET-seed-refused-no-partial-party", {
+          catalog_mismatch: true,
+          party_rows_unchanged: true,
+          extraOfficer: ids.extraOfficer,
+        });
+        throw rollback;
+      })
+      .catch((error) => {
+        assert.equal(error, rollback);
+      });
+    expect((await gate.verifyOwnedTarget(gate.DATABASES.restored)).projection).toEqual(
+      before.projection,
+    );
+    expect(await readReleaseCatalog(observer)).toEqual(catalog);
+    expect(external).not.toHaveBeenCalled();
+    succeeded = true;
+    record("rehearsal-passed", {
+      externalHttpCalls: 0,
+      nativeAuth: false,
+      nativeHttp: false,
+      dbRls: false,
+      localRtoMs,
+      ids,
+    });
+  } catch (error) {
+    failures.push(error);
+    record("rehearsal-failed", {
+      name: error instanceof Error ? error.name : "unknown",
+      message: error instanceof Error ? error.message : "unknown",
+    });
+  } finally {
+    const ends = await Promise.allSettled(raw.map((sql) => sql.end()));
+    for (const end of ends) if (end.status === "rejected") failures.push(end.reason);
+    try {
+      if (gate) await gate.sealForDisposal(succeeded, ids);
+    } catch (error) {
+      failures.push(error);
+      record("disposal-seal-failed", {});
+    }
+    vi.unstubAllGlobals();
+    closeSync(fd);
+  }
+  if (failures.length)
+    throw new AggregateError(
+      failures,
+      "UC193 failed; preserve journal and exact target for review",
+    );
+}

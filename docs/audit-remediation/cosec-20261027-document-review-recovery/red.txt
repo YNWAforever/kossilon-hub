@@ -1,0 +1,2244 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/routes/-documents-search.interaction.test.tsx (16 tests | 10 failed) 11984ms
+   × reads back saved verified review state without replaying its write 1036ms
+   × reads back saved rejected review state without replaying its write 1040ms
+   × keeps every document blocked after failed review recovery and background success until explicit fresh recovery 1048ms
+   × guards same-turn cross-document reviews and disables configured automatic write retries 1040ms
+   × requires successful readback of every previously loaded archive page before unlocking reviews 1053ms
+   × does not unlock from cancelled queries or manual cache updates while independent review readback is pending 1024ms
+   × keeps reviews blocked on invalid archive readback: null 1026ms
+   × keeps reviews blocked on invalid archive readback: undefined 1034ms
+   × keeps reviews blocked on invalid archive readback: { documents: [], nextCursor: 42 } 1051ms
+   × keeps uncertainty through filter changes and does not publish a late recovery into another archive scope 1037ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-documents-search.interaction.test.tsx > reads back saved verified review state without replaying its write
+ FAIL  |unit| src/routes/-documents-search.interaction.test.tsx > reads back saved rejected review state without replaying its write
+TestingLibraryElementError: Unable to find role="button" and name "重新核對文件覆核結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m文件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0mReview response lost[0m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+      [36m>[39m
+        [0m搜尋全範圍案件[0m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m最多顯示200項；搜尋在授權範圍執行。[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"正式文件篩選"[39m
+        [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mplaceholder[39m=[32m"搜尋檔案或公司名稱"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按類別篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部類別[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"identity"[39m
+          [36m>[39m
+            [0m身分證明[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"registry"[39m
+          [36m>[39m
+            [0m登記冊[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"signature"[39m
+          [36m>[39m
+            [0m簽署[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"payment"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"packet"[39m
+          [36m>[39m
+            [0m交件套件[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"submission"[39m
+          [36m>[39m
+            [0m遞交記錄[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"receipt"[39m
+          [36m>[39m
+            [0m回條[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"other"[39m
+          [36m>[39m
+            [0m其他[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按來源篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部來源[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"client"[39m
+          [36m>[39m
+            [0m客戶上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"staff"[39m
+          [36m>[39m
+            [0m同事上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"system"[39m
+          [36m>[39m
+            [0m系統產生[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按覆核狀態篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部覆核狀態[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"pending"[39m
+          [36m>[39m
+            [0m待覆核[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"verified"[39m
+          [36m>[39m
+            [0m已核實[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"rejected"[39m
+          [36m>[39m
+            [0m已退回[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground sm:col-span-2 lg:col-span-4"[39m
+        [36m>[39m
+          [0m搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m文件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0mReview response lost[0m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+      [36m>[39m
+        [0m搜尋全範圍案件[0m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m最多顯示200項；搜尋在授權範圍執行。[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"正式文件篩選"[39m
+        [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mplaceholder[39m=[32m"搜尋檔案或公司名稱"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按類別篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部類別[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"identity"[39m
+          [36m>[39m
+            [0m身分證明[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"registry"[39m
+          [36m>[39m
+            [0m登記冊[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"signature"[39m
+          [36m>[39m
+            [0m簽署[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"payment"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"packet"[39m
+          [36m>[39m
+            [0m交件套件[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"submission"[39m
+          [36m>[39m
+            [0m遞交記錄[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"receipt"[39m
+          [36m>[39m
+            [0m回條[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"other"[39m
+          [36m>[39m
+            [0m其他[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按來源篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部來源[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"client"[39m
+          [36m>[39m
+            [0m客戶上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"staff"[39m
+          [36m>[39m
+            [0m同事上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"system"[39m
+          [36m>[39m
+            [0m系統產生[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按覆核狀態篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部覆核狀態[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"pending"[39m
+          [36m>[39m
+            [0m待覆核[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"verified"[39m
+          [36m>[39m
+            [0m已核實[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"rejected"[39m
+          [36m>[39m
+            [0m已退回[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground sm:col-span-2 lg:col-span-4"[39m
+        [36m>[39m
+          [0m搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ uncertainReview src/routes/-documents-search.interaction.test.tsx:305:16
+    303|     fireEvent.click(screen.getByRole("button", { name: "確認退回" }));
+    304|   }
+    305|   await screen.findByRole("button", { name: "重新核對文件覆核結果" });
+       |                ^
+    306|   return client;
+    307| }
+ ❯ src/routes/-documents-search.interaction.test.tsx:310:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  |unit| src/routes/-documents-search.interaction.test.tsx > keeps every document blocked after failed review recovery and background success until explicit fresh recovery
+TestingLibraryElementError: Unable to find role="button" and name "重新核對文件覆核結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m文件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0mReview response lost[0m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+      [36m>[39m
+        [0m搜尋全範圍案件[0m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m最多顯示200項；搜尋在授權範圍執行。[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"正式文件篩選"[39m
+        [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mplaceholder[39m=[32m"搜尋檔案或公司名稱"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按類別篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部類別[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"identity"[39m
+          [36m>[39m
+            [0m身分證明[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"registry"[39m
+          [36m>[39m
+            [0m登記冊[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"signature"[39m
+          [36m>[39m
+            [0m簽署[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"payment"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"packet"[39m
+          [36m>[39m
+            [0m交件套件[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"submission"[39m
+          [36m>[39m
+            [0m遞交記錄[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"receipt"[39m
+          [36m>[39m
+            [0m回條[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"other"[39m
+          [36m>[39m
+            [0m其他[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按來源篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部來源[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"client"[39m
+          [36m>[39m
+            [0m客戶上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"staff"[39m
+          [36m>[39m
+            [0m同事上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"system"[39m
+          [36m>[39m
+            [0m系統產生[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按覆核狀態篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部覆核狀態[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"pending"[39m
+          [36m>[39m
+            [0m待覆核[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"verified"[39m
+          [36m>[39m
+            [0m已核實[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"rejected"[39m
+          [36m>[39m
+            [0m已退回[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground sm:col-span-2 lg:col-span-4"[39m
+        [36m>[39m
+          [0m搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m文件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0mReview response lost[0m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+      [36m>[39m
+        [0m搜尋全範圍案件[0m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m最多顯示200項；搜尋在授權範圍執行。[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"正式文件篩選"[39m
+        [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mplaceholder[39m=[32m"搜尋檔案或公司名稱"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按類別篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部類別[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"identity"[39m
+          [36m>[39m
+            [0m身分證明[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"registry"[39m
+          [36m>[39m
+            [0m登記冊[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"signature"[39m
+          [36m>[39m
+            [0m簽署[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"payment"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"packet"[39m
+          [36m>[39m
+            [0m交件套件[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"submission"[39m
+          [36m>[39m
+            [0m遞交記錄[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"receipt"[39m
+          [36m>[39m
+            [0m回條[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"other"[39m
+          [36m>[39m
+            [0m其他[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按來源篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部來源[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"client"[39m
+          [36m>[39m
+            [0m客戶上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"staff"[39m
+          [36m>[39m
+            [0m同事上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"system"[39m
+          [36m>[39m
+            [0m系統產生[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按覆核狀態篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部覆核狀態[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"pending"[39m
+          [36m>[39m
+            [0m待覆核[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"verified"[39m
+          [36m>[39m
+            [0m已核實[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"rejected"[39m
+          [36m>[39m
+            [0m已退回[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground sm:col-span-2 lg:col-span-4"[39m
+        [36m>[39m
+          [0m搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ uncertainReview src/routes/-documents-search.interaction.test.tsx:305:16
+    303|     fireEvent.click(screen.getByRole("button", { name: "確認退回" }));
+    304|   }
+    305|   await screen.findByRole("button", { name: "重新核對文件覆核結果" });
+       |                ^
+    306|   return client;
+    307| }
+ ❯ src/routes/-documents-search.interaction.test.tsx:334:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  |unit| src/routes/-documents-search.interaction.test.tsx > guards same-turn cross-document reviews and disables configured automatic write retries
+AssertionError: expected "vi.fn()" to be called 1 times, but got 3 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m文件與付款[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0m文件[0m
+            [36m</h1>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"block text-sm"[39m
+        [36m>[39m
+          [0m搜尋全範圍案件[0m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"block text-xs text-muted-foreground"[39m
+          [36m>[39m
+            [0m最多顯示200項；搜尋在授權範圍執行。[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<section[39m
+          [33maria-label[39m=[32m"正式文件篩選"[39m
+          [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33maria-label[39m=[32m"搜尋正式文件"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+            [33mmaxlength[39m=[32m"120"[39m
+            [33mplaceholder[39m=[32m"搜尋檔案或公司名稱"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"按類別篩選正式文件"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"all"[39m
+            [36m>[39m
+              [0m全部類別[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"identity"[39m
+            [36m>[39m
+              [0m身分證明[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"registry"[39m
+            [36m>[39m
+              [0m登記冊[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"signature"[39m
+            [36m>[39m
+              [0m簽署[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"payment"[39m
+            [36m>[39m
+              [0m付款[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"packet"[39m
+            [36m>[39m
+              [0m交件套件[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"submission"[39m
+            [36m>[39m
+              [0m遞交記錄[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"receipt"[39m
+            [36m>[39m
+              [0m回條[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"other"[39m
+            [36m>[39m
+              [0m其他[0m
+            [36m</option>[39m
+          [36m</select>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"按來源篩選正式文件"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"all"[39m
+            [36m>[39m
+              [0m全部來源[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"client"[39m
+            [36m>[39m
+              [0m客戶上載[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"staff"[39m
+            [36m>[39m
+              [0m同事上載[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"system"[39m
+            [36m>[39m
+              [0m系統產生[0m
+            [36m</option>[39m
+          [36m</select>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"按覆核狀態篩選正式文件"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"all"[39m
+            [36m>[39m
+              [0m全部覆核狀態[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"pending"[39m
+            [36m>[39m
+              [0m待覆核[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"verified"[39m
+            [36m>[39m
+              [0m已核實[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"rejected"[39m
+            [36m>[39m
+              [0m已退回[0m
+            [36m</option>[39m
+          [36m</select>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs text-muted-foreground sm:col-span-2 lg:col-span-4"[39m
+          [36m>[39m
+            [0m搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取...
+ ❯ src/routes/-documents-search.interaction.test.tsx:361:42
+    359|   const buttons = await screen.findAllByRole("button", { name: "核對" });
+    360|   act(() => { buttons[0].click(); buttons[0].click(); buttons[1].click…
+    361|   await waitFor(() => expect(rpc.review).toHaveBeenCalledTimes(1));
+       |                                          ^
+    362|   rpc.review.mockRejectedValue(new Error("Unknown result"));
+    363|   await act(async () => { reject(new Error("Response lost")); });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  |unit| src/routes/-documents-search.interaction.test.tsx > requires successful readback of every previously loaded archive page before unlocking reviews
+TestingLibraryElementError: Unable to find role="button" and name "重新核對文件覆核結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m文件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0mUnknown result[0m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+      [36m>[39m
+        [0m搜尋全範圍案件[0m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m最多顯示200項；搜尋在授權範圍執行。[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"正式文件篩選"[39m
+        [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mplaceholder[39m=[32m"搜尋檔案或公司名稱"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按類別篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部類別[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"identity"[39m
+          [36m>[39m
+            [0m身分證明[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"registry"[39m
+          [36m>[39m
+            [0m登記冊[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"signature"[39m
+          [36m>[39m
+            [0m簽署[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"payment"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"packet"[39m
+          [36m>[39m
+            [0m交件套件[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"submission"[39m
+          [36m>[39m
+            [0m遞交記錄[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"receipt"[39m
+          [36m>[39m
+            [0m回條[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"other"[39m
+          [36m>[39m
+            [0m其他[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按來源篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部來源[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"client"[39m
+          [36m>[39m
+            [0m客戶上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"staff"[39m
+          [36m>[39m
+            [0m同事上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"system"[39m
+          [36m>[39m
+            [0m系統產生[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按覆核狀態篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部覆核狀態[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"pending"[39m
+          [36m>[39m
+            [0m待覆核[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"verified"[39m
+          [36m>[39m
+            [0m已核實[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"rejected"[39m
+          [36m>[39m
+            [0m已退回[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground sm:col-span-2 lg:col-span-4"[39m
+        [36m>[39m
+          [0m搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m文件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0mUnknown result[0m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+      [36m>[39m
+        [0m搜尋全範圍案件[0m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m最多顯示200項；搜尋在授權範圍執行。[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"正式文件篩選"[39m
+        [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mplaceholder[39m=[32m"搜尋檔案或公司名稱"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按類別篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部類別[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"identity"[39m
+          [36m>[39m
+            [0m身分證明[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"registry"[39m
+          [36m>[39m
+            [0m登記冊[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"signature"[39m
+          [36m>[39m
+            [0m簽署[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"payment"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"packet"[39m
+          [36m>[39m
+            [0m交件套件[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"submission"[39m
+          [36m>[39m
+            [0m遞交記錄[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"receipt"[39m
+          [36m>[39m
+            [0m回條[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"other"[39m
+          [36m>[39m
+            [0m其他[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按來源篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部來源[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"client"[39m
+          [36m>[39m
+            [0m客戶上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"staff"[39m
+          [36m>[39m
+            [0m同事上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"system"[39m
+          [36m>[39m
+            [0m系統產生[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按覆核狀態篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部覆核狀態[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"pending"[39m
+          [36m>[39m
+            [0m待覆核[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"verified"[39m
+          [36m>[39m
+            [0m已核實[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"rejected"[39m
+          [36m>[39m
+            [0m已退回[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground sm:col-span-2 lg:col-span-4"[39m
+        [36m>[39m
+          [0m搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/routes/-documents-search.interaction.test.tsx:378:30
+    376|   await screen.findByText("second.pdf");
+    377|   fireEvent.click(screen.getAllByRole("button", { name: "核對" })[1]);
+    378|   const retry = await screen.findByRole("button", { name: "重新核對文件覆核結果"…
+       |                              ^
+    379|   rpc.page.mockResolvedValueOnce({ documents: [staffDocument], nextCur…
+    380|   fireEvent.click(retry);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  |unit| src/routes/-documents-search.interaction.test.tsx > does not unlock from cancelled queries or manual cache updates while independent review readback is pending
+TestingLibraryElementError: Unable to find role="button" and name "重新核對文件覆核結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m文件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0mReview response lost[0m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+      [36m>[39m
+        [0m搜尋全範圍案件[0m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m最多顯示200項；搜尋在授權範圍執行。[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"正式文件篩選"[39m
+        [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mplaceholder[39m=[32m"搜尋檔案或公司名稱"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按類別篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部類別[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"identity"[39m
+          [36m>[39m
+            [0m身分證明[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"registry"[39m
+          [36m>[39m
+            [0m登記冊[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"signature"[39m
+          [36m>[39m
+            [0m簽署[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"payment"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"packet"[39m
+          [36m>[39m
+            [0m交件套件[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"submission"[39m
+          [36m>[39m
+            [0m遞交記錄[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"receipt"[39m
+          [36m>[39m
+            [0m回條[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"other"[39m
+          [36m>[39m
+            [0m其他[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按來源篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部來源[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"client"[39m
+          [36m>[39m
+            [0m客戶上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"staff"[39m
+          [36m>[39m
+            [0m同事上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"system"[39m
+          [36m>[39m
+            [0m系統產生[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按覆核狀態篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部覆核狀態[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"pending"[39m
+          [36m>[39m
+            [0m待覆核[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"verified"[39m
+          [36m>[39m
+            [0m已核實[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"rejected"[39m
+          [36m>[39m
+            [0m已退回[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground sm:col-span-2 lg:col-span-4"[39m
+        [36m>[39m
+          [0m搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m文件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0mReview response lost[0m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+      [36m>[39m
+        [0m搜尋全範圍案件[0m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m最多顯示200項；搜尋在授權範圍執行。[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"正式文件篩選"[39m
+        [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mplaceholder[39m=[32m"搜尋檔案或公司名稱"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按類別篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部類別[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"identity"[39m
+          [36m>[39m
+            [0m身分證明[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"registry"[39m
+          [36m>[39m
+            [0m登記冊[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"signature"[39m
+          [36m>[39m
+            [0m簽署[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"payment"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"packet"[39m
+          [36m>[39m
+            [0m交件套件[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"submission"[39m
+          [36m>[39m
+            [0m遞交記錄[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"receipt"[39m
+          [36m>[39m
+            [0m回條[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"other"[39m
+          [36m>[39m
+            [0m其他[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按來源篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部來源[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"client"[39m
+          [36m>[39m
+            [0m客戶上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"staff"[39m
+          [36m>[39m
+            [0m同事上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"system"[39m
+          [36m>[39m
+            [0m系統產生[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按覆核狀態篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部覆核狀態[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"pending"[39m
+          [36m>[39m
+            [0m待覆核[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"verified"[39m
+          [36m>[39m
+            [0m已核實[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"rejected"[39m
+          [36m>[39m
+            [0m已退回[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground sm:col-span-2 lg:col-span-4"[39m
+        [36m>[39m
+          [0m搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ uncertainReview src/routes/-documents-search.interaction.test.tsx:305:16
+    303|     fireEvent.click(screen.getByRole("button", { name: "確認退回" }));
+    304|   }
+    305|   await screen.findByRole("button", { name: "重新核對文件覆核結果" });
+       |                ^
+    306|   return client;
+    307| }
+ ❯ src/routes/-documents-search.interaction.test.tsx:396:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  |unit| src/routes/-documents-search.interaction.test.tsx > keeps reviews blocked on invalid archive readback: null
+ FAIL  |unit| src/routes/-documents-search.interaction.test.tsx > keeps reviews blocked on invalid archive readback: undefined
+ FAIL  |unit| src/routes/-documents-search.interaction.test.tsx > keeps reviews blocked on invalid archive readback: { documents: [], nextCursor: 42 }
+TestingLibraryElementError: Unable to find role="button" and name "重新核對文件覆核結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m文件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0mReview response lost[0m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+      [36m>[39m
+        [0m搜尋全範圍案件[0m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m最多顯示200項；搜尋在授權範圍執行。[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"正式文件篩選"[39m
+        [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mplaceholder[39m=[32m"搜尋檔案或公司名稱"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按類別篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部類別[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"identity"[39m
+          [36m>[39m
+            [0m身分證明[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"registry"[39m
+          [36m>[39m
+            [0m登記冊[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"signature"[39m
+          [36m>[39m
+            [0m簽署[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"payment"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"packet"[39m
+          [36m>[39m
+            [0m交件套件[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"submission"[39m
+          [36m>[39m
+            [0m遞交記錄[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"receipt"[39m
+          [36m>[39m
+            [0m回條[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"other"[39m
+          [36m>[39m
+            [0m其他[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按來源篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部來源[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"client"[39m
+          [36m>[39m
+            [0m客戶上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"staff"[39m
+          [36m>[39m
+            [0m同事上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"system"[39m
+          [36m>[39m
+            [0m系統產生[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按覆核狀態篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部覆核狀態[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"pending"[39m
+          [36m>[39m
+            [0m待覆核[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"verified"[39m
+          [36m>[39m
+            [0m已核實[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"rejected"[39m
+          [36m>[39m
+            [0m已退回[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground sm:col-span-2 lg:col-span-4"[39m
+        [36m>[39m
+          [0m搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m文件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0mReview response lost[0m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+      [36m>[39m
+        [0m搜尋全範圍案件[0m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m最多顯示200項；搜尋在授權範圍執行。[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"正式文件篩選"[39m
+        [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mplaceholder[39m=[32m"搜尋檔案或公司名稱"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按類別篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部類別[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"identity"[39m
+          [36m>[39m
+            [0m身分證明[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"registry"[39m
+          [36m>[39m
+            [0m登記冊[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"signature"[39m
+          [36m>[39m
+            [0m簽署[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"payment"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"packet"[39m
+          [36m>[39m
+            [0m交件套件[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"submission"[39m
+          [36m>[39m
+            [0m遞交記錄[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"receipt"[39m
+          [36m>[39m
+            [0m回條[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"other"[39m
+          [36m>[39m
+            [0m其他[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按來源篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部來源[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"client"[39m
+          [36m>[39m
+            [0m客戶上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"staff"[39m
+          [36m>[39m
+            [0m同事上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"system"[39m
+          [36m>[39m
+            [0m系統產生[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按覆核狀態篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部覆核狀態[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"pending"[39m
+          [36m>[39m
+            [0m待覆核[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"verified"[39m
+          [36m>[39m
+            [0m已核實[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"rejected"[39m
+          [36m>[39m
+            [0m已退回[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground sm:col-span-2 lg:col-span-4"[39m
+        [36m>[39m
+          [0m搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ uncertainReview src/routes/-documents-search.interaction.test.tsx:305:16
+    303|     fireEvent.click(screen.getByRole("button", { name: "確認退回" }));
+    304|   }
+    305|   await screen.findByRole("button", { name: "重新核對文件覆核結果" });
+       |                ^
+    306|   return client;
+    307| }
+ ❯ src/routes/-documents-search.interaction.test.tsx:413:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  |unit| src/routes/-documents-search.interaction.test.tsx > keeps uncertainty through filter changes and does not publish a late recovery into another archive scope
+TestingLibraryElementError: Unable to find role="button" and name "重新核對文件覆核結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m文件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0mReview response lost[0m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+      [36m>[39m
+        [0m搜尋全範圍案件[0m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m最多顯示200項；搜尋在授權範圍執行。[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"正式文件篩選"[39m
+        [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mplaceholder[39m=[32m"搜尋檔案或公司名稱"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按類別篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部類別[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"identity"[39m
+          [36m>[39m
+            [0m身分證明[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"registry"[39m
+          [36m>[39m
+            [0m登記冊[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"signature"[39m
+          [36m>[39m
+            [0m簽署[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"payment"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"packet"[39m
+          [36m>[39m
+            [0m交件套件[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"submission"[39m
+          [36m>[39m
+            [0m遞交記錄[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"receipt"[39m
+          [36m>[39m
+            [0m回條[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"other"[39m
+          [36m>[39m
+            [0m其他[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按來源篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部來源[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"client"[39m
+          [36m>[39m
+            [0m客戶上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"staff"[39m
+          [36m>[39m
+            [0m同事上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"system"[39m
+          [36m>[39m
+            [0m系統產生[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按覆核狀態篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部覆核狀態[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"pending"[39m
+          [36m>[39m
+            [0m待覆核[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"verified"[39m
+          [36m>[39m
+            [0m已核實[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"rejected"[39m
+          [36m>[39m
+            [0m已退回[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground sm:col-span-2 lg:col-span-4"[39m
+        [36m>[39m
+          [0m搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m文件與付款[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m文件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"[39m
+      [36m>[39m
+        [0mReview response lost[0m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+      [36m>[39m
+        [0m搜尋全範圍案件[0m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm min-h-11 ml-2"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"block text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0m最多顯示200項；搜尋在授權範圍執行。[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"正式文件篩選"[39m
+        [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"120"[39m
+          [33mplaceholder[39m=[32m"搜尋檔案或公司名稱"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按類別篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部類別[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"identity"[39m
+          [36m>[39m
+            [0m身分證明[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"registry"[39m
+          [36m>[39m
+            [0m登記冊[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"signature"[39m
+          [36m>[39m
+            [0m簽署[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"payment"[39m
+          [36m>[39m
+            [0m付款[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"packet"[39m
+          [36m>[39m
+            [0m交件套件[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"submission"[39m
+          [36m>[39m
+            [0m遞交記錄[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"receipt"[39m
+          [36m>[39m
+            [0m回條[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"other"[39m
+          [36m>[39m
+            [0m其他[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按來源篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部來源[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"client"[39m
+          [36m>[39m
+            [0m客戶上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"staff"[39m
+          [36m>[39m
+            [0m同事上載[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"system"[39m
+          [36m>[39m
+            [0m系統產生[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"按覆核狀態篩選正式文件"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0m全部覆核狀態[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"pending"[39m
+          [36m>[39m
+            [0m待覆核[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"verified"[39m
+          [36m>[39m
+            [0m已核實[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"rejected"[39m
+          [36m>[39m
+            [0m已退回[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground sm:col-span-2 lg:col-span-4"[39m
+        [36m>[39m
+          [0m搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ uncertainReview src/routes/-documents-search.interaction.test.tsx:305:16
+    303|     fireEvent.click(screen.getByRole("button", { name: "確認退回" }));
+    304|   }
+    305|   await screen.findByRole("button", { name: "重新核對文件覆核結果" });
+       |                ^
+    306|   return client;
+    307| }
+ ❯ src/routes/-documents-search.interaction.test.tsx:425:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 6 passed (16)
+   Start at  05:01:19
+   Duration  13.61s (transform 934ms, setup 0ms, import 573ms, tests 11.98s, environment 871ms)

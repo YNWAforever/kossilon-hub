@@ -1,0 +1,5 @@
+{
+  "result": "STOPPED_BEFORE_DB_CLIENT",
+  "container_id": "4f5c362905d14782f4bc2c4bf74af3fc8f2b4e76259342e873bfd1ea78424580",
+  "cause": "Guard compared Docker Config.Image short creation reference against full image digest; actual Image and RepoDigests independently matched."
+}

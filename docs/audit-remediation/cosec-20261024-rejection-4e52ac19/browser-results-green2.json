@@ -1,0 +1,555 @@
+{
+  "run_id": "cosec-20261024-rejection-4e52ac19",
+  "attempt": "green2",
+  "origin": "http://127.0.0.1:5173",
+  "sourceHashes": {
+    "src/routes/documents.tsx": "83d4b971546514d281f4124a1083925f90328d53b99f91cef3c72e9a031d7c5e",
+    "src/routes/portal.tsx": "36efebf7a5f0e748ce2a75b3b84626570e6b0c6cecd361385a7e90d3d49bc924",
+    "src/features/documents/rejection-reasons.ts": "fdcce02dafc66ea9be15699bc1dd6e6795315095230278972d9cd52419ef3963",
+    "src/features/documents/safety.ts": "86635eb2a75d55a7002d203e0c272245bc230f01e804b3004eae7bd37cc09a7c",
+    "src/features/annual-return/outstanding.ts": "cfe826f1afc0712fd4a5dfb8fc2473681e811e29b8f60cbb291635d4e521988f"
+  },
+  "historical_overlay": false,
+  "browser_version": "155.0.4283.62",
+  "results": [
+    {
+      "name": "UC149 reviewer reason/text -> client -> known precommit failure/retry -> readback/reload/return",
+      "status": "failed",
+      "error": "locator.selectOption: Timeout 7000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('類別', { exact: true })\u001b[22m\n",
+      "url": "http://127.0.0.1:5173/portal?caseId=4e52ac19-0149-4149-8149-000000000004",
+      "dom": "客戶入口\n\nQA UC149 Company\n\n2026 年度周年申報 · 到期日 2026年12月1日\n\n進度\n待收文件\n\n我們仍在等待您提供 1 份文件。\n\nNAR1 form\n上載文件\n\n檔案會上載至私人儲存空間，並在完成安全掃描前保持隔離。\n\n私人上載\n類別\n身分證明\n登記冊\n簽署\n付款\n交件套件\n遞交記錄\n回條\n其他\n回應哪一項要求\n未指定（由我們的同事配對）\nNAR1 form\n檔案安全上載\n\nQA-original.pdf\n\nAvailable / 已退回\n\n退回原因：missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。\n\n返回您的周年申報",
+      "reads": [
+        {
+          "name": "listDocumentPage",
+          "data": {
+            "caseId": "4e52ac19-0149-4149-8149-000000000004",
+            "limit": 100
+          },
+          "actor": "QA-UC149-Staff",
+          "at": "2026-10-24T03:01:42.558Z"
+        },
+        {
+          "name": "listAnnualReturnCases",
+          "data": {
+            "q": "",
+            "limit": 200
+          },
+          "actor": "QA-UC149-Staff",
+          "at": "2026-10-24T03:01:42.558Z"
+        },
+        {
+          "name": "getAnnualReturnCase",
+          "data": {
+            "id": "4e52ac19-0149-4149-8149-000000000004"
+          },
+          "actor": "QA-UC149-Staff",
+          "at": "2026-10-24T03:01:42.558Z"
+        },
+        {
+          "name": "reviewAnnualReturnEvidenceAction",
+          "data": {
+            "caseId": "4e52ac19-0149-4149-8149-000000000004",
+            "documentId": "4e52ac19-0149-4149-8149-000000000002",
+            "expectedDocumentVersionId": "4e52ac19-0149-4149-8149-000000000005",
+            "checklistItemId": "4e52ac19-0149-4149-8149-000000000007",
+            "decision": "rejected",
+            "reason": "missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。"
+          },
+          "actor": "QA-UC149-Staff",
+          "at": "2026-10-24T03:01:42.841Z"
+        },
+        {
+          "name": "listDocumentPage",
+          "data": {
+            "caseId": "4e52ac19-0149-4149-8149-000000000004",
+            "limit": 100
+          },
+          "actor": "QA-UC149-Staff",
+          "at": "2026-10-24T03:01:42.843Z"
+        },
+        {
+          "name": "listClientPortalCases",
+          "data": {},
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:43.069Z"
+        },
+        {
+          "name": "getClientPortalCase",
+          "data": {
+            "caseId": "4e52ac19-0149-4149-8149-000000000004"
+          },
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:43.069Z"
+        },
+        {
+          "name": "listDocumentPage",
+          "data": {
+            "companyId": "4e52ac19-0149-4149-8149-000000000003",
+            "caseId": "4e52ac19-0149-4149-8149-000000000004",
+            "limit": 100
+          },
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:43.078Z"
+        }
+      ],
+      "saved": {
+        "documents": [
+          {
+            "id": "4e52ac19-0149-4149-8149-000000000002",
+            "companyId": "4e52ac19-0149-4149-8149-000000000003",
+            "companyName": "QA UC149 Company",
+            "caseId": "4e52ac19-0149-4149-8149-000000000004",
+            "category": "signature",
+            "fileName": "QA-original.pdf",
+            "uploadStatus": "available",
+            "reviewStatus": "rejected",
+            "rejectionReason": "missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。",
+            "currentVersionId": "4e52ac19-0149-4149-8149-000000000005",
+            "reviewedVersionId": "4e52ac19-0149-4149-8149-000000000005",
+            "scanVerdictSource": "provider",
+            "availability": "available",
+            "objectAvailability": "not_checked",
+            "uploadSource": "client",
+            "uploadedAt": "2026-10-24T00:00:00.000Z"
+          }
+        ],
+        "checklistStatus": "Rejected",
+        "linkedDocumentId": "4e52ac19-0149-4149-8149-000000000002",
+        "audit": [
+          {
+            "id": "4e52ac19-0149-4149-8149-000000000100",
+            "documentId": "4e52ac19-0149-4149-8149-000000000002",
+            "documentVersionId": "4e52ac19-0149-4149-8149-000000000005",
+            "decision": "rejected",
+            "reason": "missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。"
+          }
+        ],
+        "intents": [],
+        "intentCounter": 0,
+        "documentCounter": 0,
+        "finalizeFailures": 1,
+        "mode": "normal"
+      }
+    },
+    {
+      "name": "UC149 repeated same-tick submission shares one held intent",
+      "status": "failed",
+      "error": "page.evaluate: TypeError: Cannot set properties of undefined (setting 'holdIntent')\n    at eval (eval at evaluate (:311:30), <anonymous>:1:30)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
+      "url": "http://127.0.0.1:5173/portal?caseId=4e52ac19-0149-4149-8149-000000000004",
+      "dom": "客戶入口\n\nQA UC149 Company\n\n2026 年度周年申報 · 到期日 2026年12月1日\n\n進度\n待收文件\n\n我們仍在等待您提供 1 份文件。\n\nNAR1 form\n上載文件\n\n檔案會上載至私人儲存空間，並在完成安全掃描前保持隔離。\n\n私人上載\n類別\n身分證明\n登記冊\n簽署\n付款\n交件套件\n遞交記錄\n回條\n其他\n回應哪一項要求\n未指定（由我們的同事配對）\nNAR1 form\n檔案安全上載\n\nQA-original.pdf\n\nAvailable / 已退回\n\n退回原因：missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。\n\n返回您的周年申報",
+      "reads": [
+        {
+          "name": "listClientPortalCases",
+          "data": {},
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:50.460Z"
+        },
+        {
+          "name": "getClientPortalCase",
+          "data": {
+            "caseId": "4e52ac19-0149-4149-8149-000000000004"
+          },
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:50.461Z"
+        },
+        {
+          "name": "listDocumentPage",
+          "data": {
+            "companyId": "4e52ac19-0149-4149-8149-000000000003",
+            "caseId": "4e52ac19-0149-4149-8149-000000000004",
+            "limit": 100
+          },
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:50.481Z"
+        },
+        {
+          "name": "listClientPortalCases",
+          "data": {},
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:50.672Z"
+        },
+        {
+          "name": "getClientPortalCase",
+          "data": {
+            "caseId": "4e52ac19-0149-4149-8149-000000000004"
+          },
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:50.672Z"
+        },
+        {
+          "name": "listDocumentPage",
+          "data": {
+            "companyId": "4e52ac19-0149-4149-8149-000000000003",
+            "caseId": "4e52ac19-0149-4149-8149-000000000004",
+            "limit": 100
+          },
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:50.683Z"
+        }
+      ],
+      "saved": {
+        "documents": [
+          {
+            "id": "4e52ac19-0149-4149-8149-000000000002",
+            "companyId": "4e52ac19-0149-4149-8149-000000000003",
+            "companyName": "QA UC149 Company",
+            "caseId": "4e52ac19-0149-4149-8149-000000000004",
+            "category": "signature",
+            "fileName": "QA-original.pdf",
+            "uploadStatus": "available",
+            "reviewStatus": "rejected",
+            "rejectionReason": "missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。",
+            "currentVersionId": "4e52ac19-0149-4149-8149-000000000005",
+            "reviewedVersionId": "4e52ac19-0149-4149-8149-000000000005",
+            "scanVerdictSource": "provider",
+            "availability": "available",
+            "objectAvailability": "not_checked",
+            "uploadSource": "client",
+            "uploadedAt": "2026-10-24T00:00:00.000Z"
+          }
+        ],
+        "checklistStatus": "Rejected",
+        "linkedDocumentId": "4e52ac19-0149-4149-8149-000000000002",
+        "audit": [],
+        "intents": [],
+        "intentCounter": 0,
+        "documentCounter": 0,
+        "finalizeFailures": 0,
+        "mode": "normal"
+      }
+    },
+    {
+      "name": "UC149 missing historical reason is explicit after reload",
+      "status": "passed",
+      "evidence": {
+        "missing_reason_explicit": true,
+        "saved": {
+          "documents": [
+            {
+              "id": "4e52ac19-0149-4149-8149-000000000002",
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "companyName": "QA UC149 Company",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "category": "signature",
+              "fileName": "QA-original.pdf",
+              "uploadStatus": "available",
+              "reviewStatus": "rejected",
+              "rejectionReason": null,
+              "currentVersionId": "4e52ac19-0149-4149-8149-000000000005",
+              "reviewedVersionId": "4e52ac19-0149-4149-8149-000000000005",
+              "scanVerdictSource": "provider",
+              "availability": "available",
+              "objectAvailability": "not_checked",
+              "uploadSource": "client",
+              "uploadedAt": "2026-10-24T00:00:00.000Z"
+            }
+          ],
+          "checklistStatus": "Rejected",
+          "linkedDocumentId": "4e52ac19-0149-4149-8149-000000000002",
+          "audit": [],
+          "intents": [],
+          "intentCounter": 0,
+          "documentCounter": 0,
+          "finalizeFailures": 0,
+          "mode": "normal"
+        }
+      }
+    },
+    {
+      "name": "UC149 stale reason on pending DTO is never rendered",
+      "status": "passed",
+      "evidence": {
+        "pending_reason_hidden": true
+      }
+    },
+    {
+      "name": "UC149 other client denied, cannot read document reason",
+      "status": "passed",
+      "evidence": {
+        "no_document_read": true,
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-ClientB",
+            "at": "2026-10-24T03:01:52.310Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-ClientB",
+            "at": "2026-10-24T03:01:52.312Z"
+          }
+        ],
+        "limitation": "Local transport role refusal; not native Auth/RLS"
+      }
+    },
+    {
+      "name": "UC149 document read error hides content, reload recovers",
+      "status": "passed",
+      "evidence": {
+        "error_content_hidden": true,
+        "actual_reload_recovers": true,
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:52.892Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:52.892Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:52.913Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:53.118Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:53.118Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:53.127Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:53.402Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:53.402Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:53.409Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC149 empty documents/list have explicit empty states",
+      "status": "passed",
+      "evidence": {
+        "documents_empty": true,
+        "list_empty": true
+      }
+    },
+    {
+      "name": "UC149 list read error explicit retry refetches",
+      "status": "passed",
+      "evidence": {
+        "retry_reads": 1,
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:54.485Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:54.486Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:54.514Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:54.693Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:01:54.743Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC149 cancel file selection and return without writes",
+      "status": "failed",
+      "error": "locator.selectOption: Timeout 7000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('類別', { exact: true })\u001b[22m\n",
+      "url": "http://127.0.0.1:5173/portal?caseId=4e52ac19-0149-4149-8149-000000000004",
+      "dom": "客戶入口\n\nQA UC149 Company\n\n2026 年度周年申報 · 到期日 2026年12月1日\n\n進度\n待收文件\n\n我們仍在等待您提供 1 份文件。\n\nNAR1 form\n上載文件\n\n檔案會上載至私人儲存空間，並在完成安全掃描前保持隔離。\n\n私人上載\n類別\n身分證明\n登記冊\n簽署\n付款\n交件套件\n遞交記錄\n回條\n其他\n回應哪一項要求\n未指定（由我們的同事配對）\nNAR1 form\n檔案安全上載\n\nQA-original.pdf\n\nAvailable / 已退回\n\n退回原因：missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。\n\n返回您的周年申報",
+      "reads": [
+        {
+          "name": "listClientPortalCases",
+          "data": {},
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:55.106Z"
+        },
+        {
+          "name": "getClientPortalCase",
+          "data": {
+            "caseId": "4e52ac19-0149-4149-8149-000000000004"
+          },
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:55.106Z"
+        },
+        {
+          "name": "listDocumentPage",
+          "data": {
+            "companyId": "4e52ac19-0149-4149-8149-000000000003",
+            "caseId": "4e52ac19-0149-4149-8149-000000000004",
+            "limit": 100
+          },
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:55.130Z"
+        },
+        {
+          "name": "listClientPortalCases",
+          "data": {},
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:55.305Z"
+        },
+        {
+          "name": "getClientPortalCase",
+          "data": {
+            "caseId": "4e52ac19-0149-4149-8149-000000000004"
+          },
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:55.305Z"
+        },
+        {
+          "name": "listDocumentPage",
+          "data": {
+            "companyId": "4e52ac19-0149-4149-8149-000000000003",
+            "caseId": "4e52ac19-0149-4149-8149-000000000004",
+            "limit": 100
+          },
+          "actor": "QA-UC149-Client",
+          "at": "2026-10-24T03:01:55.311Z"
+        }
+      ],
+      "saved": {
+        "documents": [
+          {
+            "id": "4e52ac19-0149-4149-8149-000000000002",
+            "companyId": "4e52ac19-0149-4149-8149-000000000003",
+            "companyName": "QA UC149 Company",
+            "caseId": "4e52ac19-0149-4149-8149-000000000004",
+            "category": "signature",
+            "fileName": "QA-original.pdf",
+            "uploadStatus": "available",
+            "reviewStatus": "rejected",
+            "rejectionReason": "missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。",
+            "currentVersionId": "4e52ac19-0149-4149-8149-000000000005",
+            "reviewedVersionId": "4e52ac19-0149-4149-8149-000000000005",
+            "scanVerdictSource": "provider",
+            "availability": "available",
+            "objectAvailability": "not_checked",
+            "uploadSource": "client",
+            "uploadedAt": "2026-10-24T00:00:00.000Z"
+          }
+        ],
+        "checklistStatus": "Rejected",
+        "linkedDocumentId": "4e52ac19-0149-4149-8149-000000000002",
+        "audit": [],
+        "intents": [],
+        "intentCounter": 0,
+        "documentCounter": 0,
+        "finalizeFailures": 0,
+        "mode": "normal"
+      }
+    }
+  ],
+  "blocked_external_origins": [],
+  "page_errors": [],
+  "console_errors": [],
+  "http_errors": [],
+  "resolutions": [
+    {
+      "id": "../features/documents/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/documents.tsx",
+      "boundary": "documents"
+    },
+    {
+      "id": "../features/annual-return/evidence-server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/documents.tsx",
+      "boundary": "evidence"
+    },
+    {
+      "id": "../features/annual-return/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/documents.tsx",
+      "boundary": "annual"
+    },
+    {
+      "id": "../features/annual-return/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/portal.tsx",
+      "boundary": "annual"
+    },
+    {
+      "id": "../features/annual-return/client-portal-server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/portal.tsx",
+      "boundary": "portal"
+    },
+    {
+      "id": "../features/documents/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/portal.tsx",
+      "boundary": "documents"
+    }
+  ],
+  "outer_error": null,
+  "native_auth_http_db_storage_scanner": false,
+  "stubbed_unrelated_components": [
+    "BulkSelectionToolbar",
+    "DocumentRecoveryPanel"
+  ],
+  "cleanup": "fresh contexts closed; own server/browser closed; no database or shared resources"
+}

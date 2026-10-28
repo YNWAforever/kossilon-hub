@@ -1,0 +1,77 @@
+
+> test
+> vitest run --project unit src/routes/-clients-url-context.test.tsx src/features/clients/components/production-client-register.interaction.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/routes/-clients-url-context.test.tsx (15 tests | 1 failed) 2888ms
+   × persists next page and carries a safe exact returnTo to detail 262ms
+ ❯ |unit| src/features/clients/components/production-client-register.interaction.test.tsx (6 tests | 6 failed) 55ms
+     × renders a row per client 30ms
+     × shows a fixed message on failure and never the raw server error 4ms
+     × shows the empty state when the query succeeds with no clients 3ms
+     × filters rows by the search box 8ms
+     × disables New client until assignment options resolve 3ms
+     × shows a status message and keeps New client disabled when options fail to load 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-clients-url-context.test.tsx > persists next page and carries a safe exact returnTo to detail
+AssertionError: expected '"[\"Beta\",\"11111111-1111-4111-8111-…' to be '["Beta","11111111-1111-4111-8111-1111…' // Object.is equality
+
+Expected: "["Beta","11111111-1111-4111-8111-111111111111"]"
+Received: ""[\"Beta\",\"11111111-1111-4111-8111-111111111111\"]""
+
+ ❯ src/routes/-clients-url-context.test.tsx:74:132
+     72|   const returnTo = url.searchParams.get("returnTo")!;
+     73|   const back = new URL(returnTo, "https://local.example");
+     74|   expect(back.pathname).toBe("/clients"); expect(back.searchParams.get…
+       |                                                                                                                                    ^
+     75|   await act(async () => { await router.navigate({ href: open.getAttrib…
+     76|   await screen.findByText("Client detail boundary");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |unit| src/features/clients/components/production-client-register.interaction.test.tsx > production client register > renders a row per client
+ FAIL  |unit| src/features/clients/components/production-client-register.interaction.test.tsx > production client register > shows a fixed message on failure and never the raw server error
+ FAIL  |unit| src/features/clients/components/production-client-register.interaction.test.tsx > production client register > shows the empty state when the query succeeds with no clients
+ FAIL  |unit| src/features/clients/components/production-client-register.interaction.test.tsx > production client register > filters rows by the search box
+ FAIL  |unit| src/features/clients/components/production-client-register.interaction.test.tsx > production client register > disables New client until assignment options resolve
+ FAIL  |unit| src/features/clients/components/production-client-register.interaction.test.tsx > production client register > shows a status message and keeps New client disabled when options fail to load
+Error: [vitest] No "defaultStringifySearch" export is defined on the "@tanstack/react-router" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@tanstack/react-router"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ clientRegisterReturnPath src/features/clients/register-view-state.ts:33:21
+     31|   // The router's serializer preserves JSON-shaped strings, including …
+     32|   // cursors and numeric company identifiers, when its parser reads th…
+     33|   return `/clients${defaultStringifySearch(clientRegisterSearch(search…
+       |                     ^
+     34| }
+     35| export function clientDetailSearch(input: Record<string, unknown>) {
+ ❯ ProductionClientRegister src/features/clients/components/production-client-register.tsx:72:20
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 14 passed (21)
+   Start at  05:09:12
+   Duration  13.66s (transform 1.34s, setup 0ms, import 3.86s, tests 2.94s, environment 5.15s)
+

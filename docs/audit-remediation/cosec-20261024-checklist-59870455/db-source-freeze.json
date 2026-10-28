@@ -1,0 +1,37 @@
+{
+  "captured_utc": "2026-10-23T20:15:10.183Z",
+  "parent_sha": "347fdbcb540456863d5a93a9cdb21a9471e9416c",
+  "files": [
+    {
+      "path": "src/features/incorporation/components/production-incorporation-detail.tsx",
+      "bytes": 16171,
+      "sha256": "6694558aa3359b258a31dbff2eb8da87f07bb053f8772ba48c650ef46eb4c01d"
+    },
+    {
+      "path": "src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx",
+      "bytes": 10961,
+      "sha256": "06db7e41a24ca907a9c228c5cd098cd367e219140c13d41be1b733c84f324f3b"
+    },
+    {
+      "path": "src/features/incorporation/server-fns.ts",
+      "bytes": 7308,
+      "sha256": "37dd21c9fed4619ddd75cbf83e31e7782d0ff103c725abe41e172d54657e3535"
+    },
+    {
+      "path": "src/features/incorporation/checklist-command.test.ts",
+      "bytes": 6203,
+      "sha256": "50939e63c0dcbbd5c774d08a54c090a2f2f5efbdd9cf92670b028abe50011b64"
+    },
+    {
+      "path": "src/features/incorporation/checklist-recovery.integration.test.ts",
+      "bytes": 17488,
+      "sha256": "b973fa2dbe7e8676b8ffe21beb8db141971089182f577a263af3daad02838a61"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "bytes": 3129,
+      "sha256": "169b3f640be34dc9b7488b81978bcf8e3911cfa9fd4b9f644a73374764c9bbdc"
+    }
+  ],
+  "purpose": "Reference to exact before-runtime freeze for initial SQL green"
+}

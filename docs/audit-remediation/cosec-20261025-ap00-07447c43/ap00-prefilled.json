@@ -1,0 +1,230 @@
+{
+  "run_id": "cosec-20261025-ap00-07447c43",
+  "status": "LOCAL_PREFILL_COMPLETE_NATIVE_BINDINGS_AND_PERMISSION_PENDING",
+  "execution_enabled": false,
+  "approved_packet_ids": [],
+  "verified_local": {
+    "repository": {
+      "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+      "origin": "https://github.com/YNWAforever/kossilon-hub.git",
+      "branch": "codex/cosec-20261023",
+      "evidence_head": "2edfc24d37bc5325c23fa8ea29a76876fd034176",
+      "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+      "source_parent_sha": "104af5c4875d2f10b595ec330fcb2e1d07e87201",
+      "product_files_verified": 674
+    },
+    "local_artifact": {
+      "manifest": "../cosec-20261025-build-d29cd5ec/artifact-manifest.json",
+      "manifest_sha256": "189606711dca25c7dbc522903f6657b002efab2edca33ee9bf4a7c22f74ca1b4",
+      "files": 433,
+      "bytes": 14269548,
+      "deployed": false
+    },
+    "historical_checks": {
+      "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+      "summary": "../cosec-20261025-build-d29cd5ec/check-summary.json",
+      "checks": {
+        "unit": {
+          "result": "PASS",
+          "receipt": "../cosec-20261024-handover-exec-a30e04f1/unit-final.json",
+          "log": "../cosec-20261024-handover-exec-a30e04f1/unit-final.txt",
+          "tests": 2780,
+          "files": 288,
+          "execution": "INHERITED_SAME_SOURCE_NOT_RERUN_THIS_RUN",
+          "evidence_run": "cosec-20261024-handover-exec-a30e04f1"
+        },
+        "sql": {
+          "result": "PASS_LOCAL_INJECTED_SESSION_SUPERUSER",
+          "tests": 1,
+          "files": 1,
+          "log": "../cosec-20261024-handover-exec-a30e04f1/db/test-green-r4.txt",
+          "journey": "../cosec-20261024-handover-exec-a30e04f1/db/UC186-green-r4.jsonl",
+          "execution": "INHERITED_SAME_SOURCE_NOT_RERUN_THIS_RUN",
+          "evidence_run": "cosec-20261024-handover-exec-a30e04f1"
+        },
+        "typecheck": {
+          "result": "PASS",
+          "receipt": "../cosec-20261024-handover-exec-a30e04f1/typecheck-accepted.json",
+          "log": "../cosec-20261024-handover-exec-a30e04f1/typecheck-accepted.txt",
+          "execution": "INHERITED_SAME_SOURCE_NOT_RERUN_THIS_RUN",
+          "evidence_run": "cosec-20261024-handover-exec-a30e04f1"
+        },
+        "lint": {
+          "result": "PASS",
+          "receipt": "../cosec-20261024-handover-exec-a30e04f1/lint-accepted.json",
+          "log": "../cosec-20261024-handover-exec-a30e04f1/lint-accepted.txt",
+          "execution": "INHERITED_SAME_SOURCE_NOT_RERUN_THIS_RUN",
+          "evidence_run": "cosec-20261024-handover-exec-a30e04f1"
+        },
+        "build": {
+          "result": "PASS",
+          "execution": "EXECUTED_THIS_RUN",
+          "receipt": "build.json",
+          "log": "build.txt",
+          "duration_ms": 34670
+        }
+      },
+      "execution": "PREVIOUS_RUNS_ONLY_NOT_RERUN_THIS_RUN",
+      "native_auth": false,
+      "native_http": false,
+      "native_rls": false,
+      "receipt_paths_resolve_from": "../cosec-20261025-build-d29cd5ec/"
+    },
+    "original_scope": {
+      "csv": "../cosec-20261025-native-plan-fccb7c22/acceptance-results.csv",
+      "csv_sha256": "287bafceb836b4e42b96cfbc006ee83dd9ac65900100d1ba199f93631537e6fb",
+      "F": 35,
+      "R": 15,
+      "UC": 100,
+      "LA": 34,
+      "total": 184,
+      "native": {
+        "BLOCKED": 70,
+        "NOT_RUN": 114,
+        "PASS": 0
+      },
+      "scenario_map": "../cosec-20261025-native-plan-fccb7c22/native-scenario-map.csv"
+    },
+    "local_resource_policy": {
+      "heavy_db_runtime_minimum_free_ram_gib": 3,
+      "previous_local_container": {
+        "memory_bytes": 536870912,
+        "cpu": 1,
+        "tmpfs_bytes": 1073741824,
+        "scope": "Historical disposable local resources only; does not identify or authorize a native target"
+      }
+    },
+    "historical_cleanup": {
+      "receipt": "../cosec-20261024-handover-exec-a30e04f1/owned-inventory.json",
+      "meaning": "Historical exact run resources disposed; not a current native target or permission to reuse IDs"
+    }
+  },
+  "proposed_not_approved": {
+    "status": "PROPOSAL_NOT_APPROVED",
+    "original_common_limits": {
+      "core_environments": 1,
+      "simultaneous_browser_contexts": 2,
+      "core_business_read_requests_total": 200,
+      "core_business_command_attempts_total": 50,
+      "core_auth_session_requests_total": 120,
+      "control_plane_metadata_read_requests_total": 20,
+      "core_asset_requests_total": 1000,
+      "core_download_bytes_total": 104857600,
+      "core_upload_put_attempts_total": 4,
+      "core_file_count": 4,
+      "max_file_bytes": 5242880,
+      "core_wall_time_minutes": 120,
+      "new_auth_accounts": 0,
+      "new_role_or_team_grants": 0,
+      "production_mutations": 0,
+      "push_merge_deploy": 0,
+      "main_auto_deploy_changes": 0,
+      "real_payment_transfers": 0,
+      "production_messages_and_filings": 0,
+      "provider_calls_without_separate_AP09_approval": 0,
+      "new_paid_service_spend_without_exact_approval": 0
+    },
+    "original_core_command_reservations": {
+      "normal_create_assign_complete_and_duplicate_replay": 8,
+      "invalid_role_duplicate_BR_or_stale_denials": 6,
+      "document_review_rejection_upload_retry_cancel": 8,
+      "internal_payment_review_and_conflict_attempts": 6,
+      "handover_preview_commit_retry_cancel_disable_attempts": 10,
+      "six_create_owner_reviewer_disable_race_orders_two_commands_each": 12
+    },
+    "first_scope": {
+      "name": "AP-01 metadata then authenticated identity/readonly preflight only; partial packet, not all roles/core",
+      "environments": 1,
+      "simultaneous_browser_contexts": 1,
+      "control_plane_metadata_reads": 20,
+      "business_read_operations_including_observer": 40,
+      "auth_session_requests": 20,
+      "asset_requests": 200,
+      "download_bytes": 104857600,
+      "wall_time_minutes": 60,
+      "business_command_attempts": 0,
+      "uploads": 0,
+      "new_accounts": 0,
+      "role_or_profile_mutations": 0,
+      "provider_calls": 0,
+      "new_paid_service_spend": 0,
+      "resource_creations": 0,
+      "default_cleanup": "Retain all data; close only own approved QA sessions/clients; no deletes or disposal"
+    },
+    "core_fixture_defaults": {
+      "currency": "HKD",
+      "fee": 1000,
+      "synthetic_internal_ledger": 300,
+      "payment_proof": 700,
+      "not_bank_transfer_evidence": true,
+      "core_setup_budget": {
+        "logical_setup_entities": 100,
+        "physical_rows_including_generated_children_audit": 2500,
+        "setup_requests": 100
+      },
+      "native_fixture_driver": null,
+      "native_ids": null
+    },
+    "role_template": "role-bindings-template.json",
+    "deferred_packets": [
+      "AP-02",
+      "AP-03",
+      "AP-04",
+      "AP-05",
+      "AP-06",
+      "AP-07",
+      "AP-08",
+      "AP-09",
+      "AP-10",
+      "AP-11",
+      "AP-12 deletion/disposal scope"
+    ]
+  },
+  "expected_native": {
+    "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+    "artifact_reference": "../cosec-20261025-build-d29cd5ec/artifact-manifest.json",
+    "artifact_reference_kind": "Local file-set SHA256 manifest only; not an observed deployed artifact checksum"
+  },
+  "observed_native_bindings": {
+    "environment_owner": null,
+    "existing_isolated_url": null,
+    "runtime_project_id": null,
+    "deployment_id": null,
+    "observed_source_sha": null,
+    "observed_artifact_checksum": null,
+    "required_ci_run_ids_and_results": null,
+    "artifact_sbom_and_dependency_disposition": null,
+    "db_provider_project_id": null,
+    "db_branch_id": null,
+    "database_name": null,
+    "app_role": null,
+    "readonly_observer_role": null,
+    "server_identity_binding": null,
+    "auth_tenant_id": null,
+    "role_identity_manifest": null,
+    "storage_account_and_bucket_id": null,
+    "approved_object_prefix": null,
+    "scanner_sandbox_id": null,
+    "network_allowlist": null,
+    "approved_calendar_version_hash_and_expected_dates": null,
+    "fixture_driver_diff_and_physical_row_budget": null,
+    "actual_fixture_ids_and_versions": null,
+    "cleanup_manifest_and_disposition": null,
+    "fault_clone_id": null,
+    "fault_runtime_url_and_artifact_binding": null,
+    "backup_id_and_restore_target": null,
+    "restore_runtime_url_and_artifact_binding": null,
+    "scheduler_owner_runtime_and_allowed_job_ids": null,
+    "provider_destinations_models_cost_and_receipt_contracts": null,
+    "physical_device_browser_and_network_profile": null
+  },
+  "native_binding_fields": 31,
+  "minimal_user_input_groups": [
+    "Existing non-production target/owner and authoritative metadata locator",
+    "Existing QA Admin and secure access references when authenticated/DB preflight is desired",
+    "Explicit future sub-scope/expiry/budget approval; current authorization remains preparation only"
+  ],
+  "data_needed_for_metadata_or_identity_only": false,
+  "no_native_binding_inferred_from_local_evidence": true,
+  "release_gate": "NO_GO"
+}

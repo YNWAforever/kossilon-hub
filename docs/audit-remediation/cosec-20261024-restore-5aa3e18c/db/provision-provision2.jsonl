@@ -1,0 +1,2 @@
+{"run":"cosec-20261024-restore-5aa3e18c","attempt":"provision2","action":"provision","phase":"resource-gate","utc":"2026-10-24T08:45:10.904Z","freeBytes":2750373888,"minimumBytes":3221225472}
+{"run":"cosec-20261024-restore-5aa3e18c","attempt":"provision2","action":"provision","phase":"failed-preserved","utc":"2026-10-24T08:45:10.906Z","name":"AssertionError","message":"Parent SQL resource gate requires 3 GiB free RAM"}

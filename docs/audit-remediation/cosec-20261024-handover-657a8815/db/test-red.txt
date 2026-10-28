@@ -1,0 +1,188 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |db| src/features/admin/handover-scope.integration.test.ts (1 test | 1 failed) 5865ms
+   × UC186 lists all business responsibilities and refuses unsafe staff removal without partial writes 5863ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  18:36:21
+   Duration  6.28s (transform 727ms, setup 0ms, import 120ms, tests 5.87s, environment 0ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |db| src/features/admin/handover-scope.integration.test.ts > UC186 lists all business responsibilities and refuses unsafe staff removal without partial writes
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ journey src/features/admin/handover-scope.integration.test.ts:172:36
+    170|     });
+    171|     const roster = (await repo.listStaff(actor, { q: ids.users[1] })).…
+    172|     expect.soft(preview.openCases).toBe(1);
+       |                                    ^
+    173|     expect
+    174|       .soft(preview.cases)
+ ❯ src/features/admin/handover-scope.integration.test.ts:39:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |db| src/features/admin/handover-scope.integration.test.ts > UC186 lists all business responsibilities and refuses unsafe staff removal without partial writes
+AssertionError: expected [] to deep equally contain ObjectContaining{…}
+
+- Expected:
+ObjectContaining {
+  "caseType": "incorporation",
+  "id": "1f366a19-6407-4ad9-9ef7-4de51aa08f39",
+}
+
++ Received:
+[]
+
+ ❯ journey src/features/admin/handover-scope.integration.test.ts:175:8
+    173|     expect
+    174|       .soft(preview.cases)
+    175|       .toContainEqual(
+       |        ^
+    176|         expect.objectContaining({ id: ids.incorporation, caseType: "in…
+    177|       );
+ ❯ src/features/admin/handover-scope.integration.test.ts:39:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |db| src/features/admin/handover-scope.integration.test.ts > UC186 lists all business responsibilities and refuses unsafe staff removal without partial writes
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ journey src/features/admin/handover-scope.integration.test.ts:178:35
+    176|         expect.objectContaining({ id: ids.incorporation, caseType: "in…
+    177|       );
+    178|     expect.soft(roster.openCases).toBe(1);
+       |                                   ^
+    179|     const effect = await updateStaffForActor(actor, input, repo).then(
+    180|       (value) => ({ value, error: undefined }),
+ ❯ src/features/admin/handover-scope.integration.test.ts:39:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |db| src/features/admin/handover-scope.integration.test.ts > UC186 lists all business responsibilities and refuses unsafe staff removal without partial writes
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ journey src/features/admin/handover-scope.integration.test.ts:193:40
+    191|       after,
+    192|     });
+    193|     expect.soft(effect.error?.message).toMatch(/handover/i);
+       |                                        ^
+    194|     expect.soft(after).toEqual(baseline);
+    195|     if (!effect.error || preview.openCases !== 1) {
+ ❯ src/features/admin/handover-scope.integration.test.ts:39:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |db| src/features/admin/handover-scope.integration.test.ts > UC186 lists all business responsibilities and refuses unsafe staff removal without partial writes
+AssertionError: expected { users: [ { …(4) }, { …(4) } ], …(2) } to deeply equal { users: [ { …(4) }, { …(4) } ], …(2) }
+
+- Expected
++ Received
+
+@@ -1,7 +1,37 @@
+  {
+-   "audits": [],
++   "audits": [
++     {
++       "data": {
++         "actor_user_id": "657a8815-0186-4186-8186-14719a611118",
++         "created_at": "2026-10-24T10:36:25.15347+00:00",
++         "event_type": "disabled",
++         "handover_operation_id": null,
++         "id": "fdbdb256-55d9-4113-81dd-4c030df84128",
++         "metadata": {
++           "after": {
++             "active": false,
++             "role": "Staff",
++             "teamId": "657a8815-0186-4186-8186-b28d337461af",
++             "version": 2,
++           },
++           "before": {
++             "active": true,
++             "role": "Staff",
++             "teamId": "657a8815-0186-4186-8186-b28d337461af",
++             "version": 1,
++           },
++         },
++         "new_role": "Staff",
++         "new_team_id": "657a8815-0186-4186-8186-b28d337461af",
++         "old_role": "Staff",
++         "old_team_id": "657a8815-0186-4186-8186-b28d337461af",
++         "target_user_id": "657a8815-0186-4186-8186-cbbc19d69817",
++       },
++       "version": "751",
++     },
++   ],
+    "cases": [
+      {
+        "data": {
+          "business_nature": "Synthetic",
+          "company_id": null,
+@@ -49,31 +79,31 @@
+        "profile_version": "749",
+        "version": "749",
+      },
+      {
+        "data": {
+-         "active": true,
++         "active": false,
+          "created_at": "2026-10-24T10:36:25.074606+00:00",
+          "email": "657a8815-0186-4186-8186-cbbc19d69817@example.test",
+          "id": "657a8815-0186-4186-8186-cbbc19d69817",
+          "name": "cosec-20261024-handover-657a8815:Staff",
+          "role": "Staff",
+          "team_id": "657a8815-0186-4186-8186-b28d337461af",
+-         "updated_at": "2026-10-24T10:36:25.074606+00:00",
++         "updated_at": "2026-10-24T10:36:25.15347+00:00",
+        },
+        "profile": {
+-         "access_revision": 1,
+-         "active": true,
++         "access_revision": 2,
++         "active": false,
+          "auth_user_id": "cosec-20261024-handover-657a8815:657a8815-0186-4186-8186-cbbc19d69817",
+          "capacity_points": 100,
+          "created_at": "2026-10-24T10:36:25.074606+00:00",
+          "id": "657a8815-0186-4186-8186-9b4fe1d78dc4",
+          "role": "Staff",
+          "team_id": "657a8815-0186-4186-8186-b28d337461af",
+-         "updated_at": "2026-10-24T10:36:25.074606+00:00",
++         "updated_at": "2026-10-24T10:36:25.15347+00:00",
+          "user_id": "657a8815-0186-4186-8186-cbbc19d69817",
+        },
+-       "profile_version": "749",
+-       "version": "749",
++       "profile_version": "751",
++       "version": "751",
+      },
+    ],
+  }
+
+ ❯ journey src/features/admin/handover-scope.integration.test.ts:194:24
+    192|     });
+    193|     expect.soft(effect.error?.message).toMatch(/handover/i);
+    194|     expect.soft(after).toEqual(baseline);
+       |                        ^
+    195|     if (!effect.error || preview.openCases !== 1) {
+    196|       record("unsafe-offboarding-reproduced", { staffMutationCommitted…
+ ❯ src/features/admin/handover-scope.integration.test.ts:39:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+

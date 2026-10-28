@@ -1,0 +1,66 @@
+{
+  "baseline": "2e9fa097e7585b231ef2cd39edace46f5bf7d3c4",
+  "product_commit": "504e0179d28dc17a3b9796fbb70b7a3d48d12317",
+  "files_sha256": {
+    "src/features/documents/document-recovery-panel.tsx": "ad5f0eeb88d82a4fb9906ed54f2fa939e10f1086be10293a81ad3b90b6492543",
+    "src/features/documents/document-recovery-panel.test.tsx": "99d50040c733cce826232a2e1bfc0b3de37a9a89dae08babfea2250483f7ac5c"
+  },
+  "checks": {
+    "red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/documents/document-recovery-panel.test.tsx",
+      "failed": 2,
+      "passed": 5,
+      "log": "red.txt"
+    },
+    "targeted": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/documents/document-recovery-panel.test.tsx src/routes/-documents-search.interaction.test.tsx src/routes/-documents-production-data.test.tsx",
+      "exit": 0,
+      "passed": 42,
+      "files": 3,
+      "log": "targeted.txt"
+    },
+    "unit": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "passed": 2873,
+      "files": 290,
+      "log": "unit.txt"
+    },
+    "typecheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    "lint": {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/documents/document-recovery-panel.tsx src/features/documents/document-recovery-panel.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    "format": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/documents/document-recovery-panel.tsx src/features/documents/document-recovery-panel.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  },
+  "review": "No important findings; read-only focused review",
+  "scope": "Mock RPC/JSDOM plus unit project only; 42 targeted tests included in total. Final checks ran on baseline with changes matching product file hashes; no source changes afterward. Evidence-only commit follows.",
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "not_performed": [
+    "build",
+    "DB integration",
+    "hosted CI acceptance",
+    "Native execution",
+    "deploy/promote",
+    "production Vercel/Neon changes"
+  ],
+  "remaining_upload_limit": "No receipt-read endpoint or durable attempt identity added. Unknown server outcomes remain blocked in mounted panel; reload lifetime and independent verification remain separate."
+}

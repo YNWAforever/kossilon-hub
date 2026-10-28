@@ -1,0 +1,10 @@
+{
+  "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "source_parent_sha": "104af5c4875d2f10b595ec330fcb2e1d07e87201",
+  "evidence_base": "561f1ee2e761ab2d1b8ee1bff44533ea610d7614",
+  "source_files_verified": 674,
+  "source_freeze": "source-post-build.json",
+  "product_changes_this_run": 0,
+  "build": "PASS",
+  "artifact_manifest": "artifact-manifest.json"
+}

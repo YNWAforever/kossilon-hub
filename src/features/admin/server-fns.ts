@@ -7,12 +7,43 @@ import {
   staffFiltersSchema,
   updateStaffSchema,
   reassignmentPreviewSchema,
+  handoverPageSchema,
+  handoverCommandSchema,
   type StaffFilters,
   type UpdateStaffInput,
+  type HandoverCommand,
 } from "./types";
 function adminActor(actor: AuthenticatedActor) {
   assertStaffAccess(actor);
-  if (actor.role !== "Admin") throw new Error("Forbidden: Admin access required.");
+  if (actor.role !== "Admin" || !actor.userId) throw new Error("Forbidden: Admin access required.");
+}
+async function handoverResponse<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    const status =
+      (error as { statusCode?: number })?.statusCode ??
+      (error instanceof Error && error.message.startsWith("Forbidden") ? 403 : 0);
+    if ([403, 409, 503].includes(status))
+      throw new Response(
+        JSON.stringify({
+          code:
+            status === 409
+              ? "HANDOVER_CONFLICT"
+              : status === 403
+                ? "FORBIDDEN"
+                : "SCHEMA_WRITE_BLOCKED",
+          message:
+            status === 409
+              ? "責任或員工版本已改變，請重新預覽。"
+              : status === 403
+                ? "沒有執行此操作的權限。"
+                : "資料庫結構未能核實，操作未執行。",
+        }),
+        { status, headers: { "content-type": "application/json" } },
+      );
+    throw error;
+  }
 }
 export async function updateStaffForActor(
   actor: AuthenticatedActor,
@@ -29,6 +60,30 @@ export async function listStaffForActor(
 ) {
   adminActor(actor);
   return repository.listStaff(actor, staffFiltersSchema.parse(input));
+}
+export async function previewHandoverForActor(
+  actor: AuthenticatedActor,
+  input: ReturnType<typeof handoverPageSchema.parse>,
+  repository: Pick<AdminRepository, "previewHandover">,
+) {
+  adminActor(actor);
+  return repository.previewHandover(actor, handoverPageSchema.parse(input));
+}
+export async function executeHandoverForActor(
+  actor: AuthenticatedActor,
+  input: HandoverCommand,
+  repository: Pick<AdminRepository, "executeHandover">,
+) {
+  adminActor(actor);
+  return repository.executeHandover(actor, handoverCommandSchema.parse(input));
+}
+export async function cancelHandoverForActor(
+  actor: AuthenticatedActor,
+  input: HandoverCommand,
+  repository: Pick<AdminRepository, "cancelHandover">,
+) {
+  adminActor(actor);
+  return repository.cancelHandover(actor, handoverCommandSchema.parse(input));
 }
 const context = createServerOnlyFn(async () => {
   const [
@@ -81,8 +136,40 @@ export const listAdminTeams = createServerFn({ method: "GET" })
     return repository.listTeams(actor);
   });
 export const listStaffAudit = createServerFn({ method: "GET" })
-  .validator(z.object({ userId: z.string().uuid() }).strict())
+  .validator(z.object({ userId: z.string().guid() }).strict())
   .handler(async ({ data }) => {
     const { actor, repository } = await context();
     return repository.listAudit(actor, data.userId);
   });
+export const previewStaffHandover = createServerFn({ method: "POST" })
+  .validator(handoverPageSchema)
+  .handler(async ({ data }) =>
+    handoverResponse(async () => {
+      const { actor, repository } = await context();
+      return previewHandoverForActor(actor, data, repository);
+    }),
+  );
+export const executeStaffHandover = createServerFn({ method: "POST" })
+  .validator(handoverCommandSchema)
+  .handler(async ({ data }) =>
+    handoverResponse(async () => {
+      const { actor, repository } = await context();
+      return executeHandoverForActor(actor, data, repository);
+    }),
+  );
+export const readStaffHandoverReceipt = createServerFn({ method: "GET" })
+  .validator(z.object({ operationId: z.string().guid() }).strict())
+  .handler(async ({ data }) =>
+    handoverResponse(async () => {
+      const { actor, repository } = await context();
+      return repository.readHandoverReceipt(actor, data.operationId);
+    }),
+  );
+export const cancelStaffHandover = createServerFn({ method: "POST" })
+  .validator(handoverCommandSchema)
+  .handler(async ({ data }) =>
+    handoverResponse(async () => {
+      const { actor, repository } = await context();
+      return cancelHandoverForActor(actor, data, repository);
+    }),
+  );

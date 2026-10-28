@@ -1,0 +1,22 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/routes/-work-queue.interaction.test.tsx (30 tests) 5110ms
+     ✓ UC130: rereads manager A's assignment before manager B can deliberately confirm again (0)  511ms
+     ✓ UC130: rereads manager A's assignment before manager B can deliberately confirm again (1)  447ms
+
+ Test Files  1 passed (1)
+      Tests  30 passed (30)
+   Start at  03:05:29
+   Duration  7.78s (transform 494ms, setup 0ms, import 1.23s, tests 5.11s, environment 1.20s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/routes/-work-queue.interaction.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+

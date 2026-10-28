@@ -1,0 +1,64 @@
+{
+  "status": "FROZEN_FOCUSED_COMPONENT_GREEN",
+  "frozenUtc": "2026-10-23T12:00:24.2117195Z",
+  "candidate": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+  "head": "8a0fbdcc860981d43fb9e12f794d7b549e331435",
+  "sourceHashes": [
+    {
+      "path": "src/routes/work-queue.tsx",
+      "sha256": "753f1dc9b20a9c5410403f9a0b633f509c9c3f6623ab35e13c8ba1ffb64c17e8"
+    },
+    {
+      "path": "src/routes/-work-queue.interaction.test.tsx",
+      "sha256": "8c3a008d50ca73bee1b22c623942b9e88d369c85b35d73108744f185b0a26b7b"
+    }
+  ],
+  "originalUiSha256": "e4ec3abb8b5d709c138328da6da2f54eeee60305961b19029ddbd8d4b8f086c2",
+  "focusedTests": {
+    "log": "sidecar-green2.log",
+    "receipt": "sidecar-green2.json",
+    "passed": 30,
+    "failed": 0,
+    "existingTestsRetained": 7,
+    "addedCases": 23,
+    "durationSeconds": 7.36
+  },
+  "originalRed": {
+    "log": "sidecar-red2.log",
+    "receipt": "sidecar-red2.json",
+    "failed": 16,
+    "passed": 9,
+    "uiSnapshot": "sidecar-red-work-queue.tsx.snapshot",
+    "testSnapshot": "sidecar-red2-interaction.tsx.snapshot"
+  },
+  "supplementalRed": [
+    "sidecar-red3.log",
+    "sidecar-red4.log"
+  ],
+  "lint": {
+    "log": "sidecar-lint.log",
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 1,
+    "warning": "Existing react-refresh/only-export-components warning for caseDetailLinkFor at work-queue.tsx:49"
+  },
+  "scope": {
+    "sourceWriteSet": [
+      "src/routes/work-queue.tsx",
+      "src/routes/-work-queue.interaction.test.tsx"
+    ],
+    "receipts": "sidecar-* only under this run",
+    "transientScratch": ".worktrees/sidecar-assignment-86b2aa9a",
+    "testEnvironment": "Cleared; only fixed Windows/runtime/PATH/TEMP/TMP/NODE_ENV/NO_COLOR whitelist. No inherited DB/provider variables. envDir points to per-run scratch.",
+    "graphUploadRetried": false,
+    "externalRequests": false,
+    "dbClients": false,
+    "browserHttp": false,
+    "commits": false
+  },
+  "remaining": [
+    "Parent review and final targeted/full unit/type/lint/build checks after this source freeze.",
+    "Native server error serialization and actual browser/HTTP acceptance not run by sidecar.",
+    "Real SQL concurrency, DB harness and backend contracts remain parent-owned; not evaluated by this sidecar."
+  ]
+}

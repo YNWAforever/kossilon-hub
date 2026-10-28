@@ -1,0 +1,85 @@
+{
+  "baseline": "8b69cc063cb2db882959f5d55bf96a34322a5789",
+  "product_commit": "24c9eb797b0e89b8134da2e11ef75c8a6868a189",
+  "files_sha256": {
+    "src/features/annual-return/components/production-case-detail.tsx": "288587aadceffac0c1bacb8986840b3a3a41b1bdcc735398e625a2209d578bce",
+    "src/features/annual-return/components/production-case-detail.interaction.test.tsx": "e0af851ea1deff12d4df27fef54b745c0a1934bce73c20b5fb8b0b9d1fd6254b"
+  },
+  "checks": {
+    "red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 1,
+      "log": "red.txt",
+      "failed": 8,
+      "passed": 48,
+      "files": 1
+    },
+    "targeted": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-case-detail.interaction.test.tsx src/features/annual-return/components/case-findings.interaction.test.tsx src/features/annual-return/components/case-parties.interaction.test.tsx",
+      "exit": 0,
+      "log": "targeted.txt",
+      "passed": 88,
+      "files": 3
+    },
+    "unit": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "log": "unit.txt",
+      "passed": 2935,
+      "files": 290
+    },
+    "typecheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    "lint": {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/production-case-detail.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    "format": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/production-case-detail.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  },
+  "new_test_cases": 9,
+  "review": "Focused read-only review including authoritative stored-pair display adjustment: no important findings.",
+  "server_semantics_reviewed": [
+    "src/features/annual-return/server-fns.ts:updateAnnualReturnFilingProofForActor validates input/derives staff identity",
+    "src/features/annual-return/repository.ts:updateFilingProof (2305-2419): writable-case and locked actor checks, same-case/company verified confirmation document, immutable atomic reference/document pair, audit/timeline/work item, hydrated readback; no Filed/Completed transition",
+    "Identical pair is no-op only while writable; no general replay guarantee or external filing acceptance inferred"
+  ],
+  "scope": "Unit/JSDOM mocked RPC only. Targeted tests included in full total. Final checks ran on files matching final product hashes before commit. No source changes afterward; evidence-only commit follows. No SQL/provider/registry operations executed.",
+  "readback_limit": "Existing case metadata read is current state, not original command receipt or proof of external filing. Null pair retains draft for explicit new action; stored pair read-only; invalid pair closed. No protocol/server/schema/config change.",
+  "further_local_passes_justified": true,
+  "remaining_local_candidates": [
+    {
+      "path": "src/features/annual-return/components/production-case-detail.tsx:reminderMutation",
+      "finding": "Reminder queueing inherits mutation retries and leaves retryable command after failure without independent queue-result reconciliation. Server idempotency/receipt semantics need separate review; no duplicate/delivered message claimed."
+    },
+    "Other mutation families/cross-tab semantics need scoped review, not an exhaustive local inventory.",
+    "Upload durable identity/reload recovery remains open; no protocol invented."
+  ],
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "not_performed": [
+    "server/schema/config changes",
+    "build",
+    "DB integration",
+    "hosted CI acceptance",
+    "Native execution or Native-only gates",
+    "deploy/promote",
+    "real message/filing",
+    "production Vercel/Neon changes"
+  ]
+}

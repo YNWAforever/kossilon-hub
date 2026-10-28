@@ -1,0 +1,19 @@
+{
+  "phase": "lint",
+  "startedUtc": "2026-10-23T11:59:25.9599428Z",
+  "finishedUtc": "2026-10-23T11:59:30.1120229Z",
+  "exitCode": 0,
+  "command": "C:\\Program Files\\nodejs\\node.exe node_modules/eslint/bin/eslint.js src/routes/work-queue.tsx src/routes/-work-queue.interaction.test.tsx",
+  "environment": "Cleared; only fixed Windows/runtime/PATH/TEMP/TMP/NODE_ENV/NO_COLOR whitelist. No inherited DB/provider variables. envDir points to per-run scratch.",
+  "temp": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\sidecar-assignment-86b2aa9a",
+  "hashes": [
+    {
+      "path": "src/routes/work-queue.tsx",
+      "sha256": "753f1dc9b20a9c5410403f9a0b633f509c9c3f6623ab35e13c8ba1ffb64c17e8"
+    },
+    {
+      "path": "src/routes/-work-queue.interaction.test.tsx",
+      "sha256": "8c3a008d50ca73bee1b22c623942b9e88d369c85b35d73108744f185b0a26b7b"
+    }
+  ]
+}

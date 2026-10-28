@@ -1,0 +1,40 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/features/auth/auth-router-recovery.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+ ❯ |unit| src/features/auth/auth-router-recovery.test.tsx (7 tests | 1 failed | 6 skipped) 419ms
+     × finishes denied recovery after rejected and reaches B's safe destination 417ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/auth/auth-router-recovery.test.tsx > REVIEW-3 actual router auth recovery > finishes denied recovery after rejected and reaches B's safe destination
+AssertionError: /documents?from=recovery -> /today: expected '/today' to be '/documents' // Object.is equality
+
+Expected: "/documents"
+Received: "/today"
+
+ ❯ src/features/auth/auth-router-recovery.test.tsx:166:70
+    164|     try {
+    165|       await screen.findByText("Private account staff-B");
+    166|       expect(router.state.location.pathname, locations.join(" -> ")).t…
+       |                                                                      ^
+    167|       expect(new URLSearchParams(window.location.search).get("from")).…
+    168|       expect(new URLSearchParams(window.location.search).has("denied")…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  05:55:46
+   Duration  3.30s (transform 413ms, setup 0ms, import 1.09s, tests 419ms, environment 1.53s)
+

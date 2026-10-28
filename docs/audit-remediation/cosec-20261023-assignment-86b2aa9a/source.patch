@@ -1,0 +1,1439 @@
+diff --git a/src/features/auth/staff-state.test.ts b/src/features/auth/staff-state.test.ts
+new file mode 100644
+index 0000000..0381370
+--- /dev/null
++++ b/src/features/auth/staff-state.test.ts
+@@ -0,0 +1,41 @@
++import { describe, expect, it, vi } from "vitest";
++import {
++  lockActiveStaffUser,
++  readActiveStaffUser,
++  StaffStateUnavailableError,
++} from "./staff-state";
++
++// Inert query boundary: these tests never construct a DB client.
++type Query = Parameters<typeof readActiveStaffUser>[0];
++describe("staff state failures stay distinguishable from storage failures", () => {
++  it("identifies a confirmed missing active consistent profile", async () => {
++    const query = vi.fn().mockResolvedValue([]) as unknown as Query;
++    await expect(readActiveStaffUser(query, "synthetic-user")).rejects.toBeInstanceOf(
++      StaffStateUnavailableError,
++    );
++  });
++  it.each([false, true])(
++    "preserves an unknown DB failure without turning it into ineligibility: lock=%s",
++    async (locked) => {
++      const failure = Object.assign(new Error("Synthetic connection unavailable"), {
++        code: "08006",
++      });
++      const query = vi.fn((parts: TemplateStringsArray) =>
++        parts[0].includes("select u.id") ? Promise.reject(failure) : undefined,
++      ) as unknown as Query;
++      await expect(
++        locked
++          ? lockActiveStaffUser(
++              query as Parameters<typeof lockActiveStaffUser>[0],
++              "synthetic-user",
++            )
++          : readActiveStaffUser(query, "synthetic-user"),
++      ).rejects.toBe(failure);
++    },
++  );
++  it("returns the persisted access state unchanged", async () => {
++    const row = { id: "synthetic-user", role: "Manager", team_id: "synthetic-team" };
++    const query = vi.fn().mockResolvedValue([row]) as unknown as Query;
++    await expect(readActiveStaffUser(query, row.id)).resolves.toBe(row);
++  });
++});
+diff --git a/src/features/auth/staff-state.ts b/src/features/auth/staff-state.ts
+index abf7f45..e0a887c 100644
+--- a/src/features/auth/staff-state.ts
++++ b/src/features/auth/staff-state.ts
+@@ -2,6 +2,14 @@ import type postgres from "postgres";
+ import type { AuthRole } from "./types";
+ import type { SqlClient } from "@/server/db/client";
+ 
++/** A confirmed missing/ineligible staff row, distinct from a failed DB read. */
++export class StaffStateUnavailableError extends Error {
++  constructor() {
++    super("Staff user is inactive, inconsistent or ineligible.");
++    this.name = "StaffStateUnavailableError";
++  }
++}
++
+ /** Keep a verified identity's access state stable until the domain write commits. */
+ export async function lockActiveStaffUser(tx: postgres.TransactionSql, userId: string) {
+   return readActiveStaffUser(tx, userId, true);
+@@ -18,6 +26,6 @@ export async function readActiveStaffUser(
+       and u.team_id is not distinct from sp.team_id
+     ${lock ? tx`for share of u,sp` : tx``}
+   `;
+-  if (!user) throw new Error("Staff user is inactive, inconsistent or ineligible.");
++  if (!user) throw new StaffStateUnavailableError();
+   return user;
+ }
+diff --git a/src/features/work-items/assignment-recovery.integration.test.ts b/src/features/work-items/assignment-recovery.integration.test.ts
+new file mode 100644
+index 0000000..5e710cc
+--- /dev/null
++++ b/src/features/work-items/assignment-recovery.integration.test.ts
+@@ -0,0 +1,410 @@
++import { randomUUID } from "node:crypto";
++import { appendFileSync, closeSync, openSync, realpathSync } from "node:fs";
++import { dirname, isAbsolute, relative, resolve } from "node:path";
++import { getCurrentTest } from "@vitest/runner";
++import { describe, expect, it, onTestFinished } from "vitest";
++import { createSqlClient } from "@/server/db/client";
++import { guardSqlTestLifetime } from "@/test/sql-test-lifetime";
++import type { AuthenticatedActor } from "@/features/auth/types";
++import { createWorkItemRepository } from "./repository";
++import {
++  assignWorkItemForActor,
++  queueFiltersForActor,
++  recommendWorkItemAssigneesForActor,
++} from "./server-fns";
++
++// No client, fixture or artifact is created by import/collection. The operator
++// must prove a new disposable target before supplying these opt-ins.
++const url = process.env.TEST_DATABASE_URL;
++const run = process.env.KOSSILON_ASSIGNMENT_RUN_ID;
++const attempt = process.env.KOSSILON_ASSIGNMENT_ATTEMPT;
++const directory = process.env.KOSSILON_ASSIGNMENT_EVENTS_DIR;
++const policyId = process.env.KOSSILON_ASSIGNMENT_POLICY_ID;
++type RecordEvent = (phase: string, values: object) => void;
++type Scenario =
++  | "UC130-owner"
++  | "UC130-reviewer"
++  | "UC131-users"
++  | "UC131-profile"
++  | "UC131-both"
++  | "UC131-skill";
++
++function errorFacts(error: unknown) {
++  const value = error as { message?: string; statusCode?: number; code?: string } | undefined;
++  return { message: value?.message, statusCode: value?.statusCode, code: value?.code };
++}
++async function outcome<T>(action: Promise<T>) {
++  return action.then(
++    (value) => ({ value, error: undefined }),
++    (error) => ({ value: undefined, error }),
++  );
++}
++
++async function execute(scenario: Scenario) {
++  if (
++    !url ||
++    !run ||
++    !/^cosec-20261023-assignment-[a-f0-9]{8}$/.test(run) ||
++    !attempt ||
++    !/^[a-z0-9-]+$/.test(attempt) ||
++    !directory ||
++    !policyId ||
++    !/^[a-f0-9]{64}$/.test(process.env.KOSSILON_ASSIGNMENT_TARGET_ID ?? "")
++  ) {
++    throw new Error("Fresh verified assignment target and owned artifacts required.");
++  }
++  const target = new URL(url);
++  expect(target.hostname).toBe("127.0.0.1");
++  expect(target.pathname).toBe("/" + process.env.KOSSILON_ASSIGNMENT_DB_NAME);
++  const folder = resolve(directory),
++    local = relative(resolve("docs/audit-remediation", run), folder);
++  if (
++    isAbsolute(local) ||
++    local.startsWith("..") ||
++    realpathSync(folder) !== folder ||
++    realpathSync(dirname(folder)) !== dirname(folder)
++  )
++    throw new Error("Redirected artifact path.");
++  const context = getCurrentTest()?.context;
++  if (!context) throw new Error("Running test lifetime required.");
++  const pending = withFixture(
++    url,
++    run,
++    scenario,
++    resolve(folder, `${scenario}-${attempt}.jsonl`),
++    policyId,
++    context.signal,
++  );
++  onTestFinished(async () => {
++    // The awaited test promise reports its failure. This hook only drains it
++    // after a timeout, avoiding duplicate error reports or background commits.
++    await pending.catch(() => undefined);
++  });
++  await pending;
++}
++
++describe.skipIf(!url || !run)(
++  "UC130/UC131 real SQL assignment conflicts and stale staff choices",
++  () => {
++    it.each(["owner", "reviewer"] as const)(
++      "UC130 two managers on independent connections: %s",
++      async (target) => {
++        await execute(`UC130-${target}`);
++      },
++      45_000,
++    );
++    it.each(["users", "profile", "both", "skill"] as const)(
++      "UC131 server rechecks the selected staff: %s",
++      async (mode) => {
++        await execute(`UC131-${mode}`);
++      },
++      45_000,
++    );
++  },
++);
++
++async function withFixture(
++  databaseUrl: string,
++  tag: string,
++  scenario: Scenario,
++  path: string,
++  slaPolicyId: string,
++  signal: AbortSignal,
++) {
++  const fd = openSync(path, "wx");
++  const record: RecordEvent = (phase, values) =>
++    appendFileSync(fd, JSON.stringify({ runId: tag, scenario, phase, ...values }) + "\n");
++  const ids = {
++    company: randomUUID(),
++    case: randomUUID(),
++    work: randomUUID(),
++    teams: [randomUUID(), randomUUID()],
++    users: Array.from({ length: 6 }, () => randomUUID()),
++    profiles: Array.from({ length: 6 }, () => randomUUID()),
++    skills: [randomUUID(), randomUUID()],
++  };
++  const [managerA, managerB, staffX, staffY] = ids.users;
++  const actor = (
++    index: number,
++    role: AuthenticatedActor["role"] = "Manager",
++  ): AuthenticatedActor => ({
++    userId: ids.users[index],
++    authUserId: `${tag}:${ids.users[index]}`,
++    role,
++    teamId: ids.teams[index === 4 ? 1 : 0],
++    active: index !== 5,
++  });
++  const skill = `${tag}:${scenario}:${ids.work}`;
++  record("planned-ids", { ids, policyId: slaPolicyId, synthetic: true, nativeAuth: false });
++  // The metadata/system-ID gate is performed by the parent before Vitest is
++  // started. These are three distinct physical SQL sessions, not mock providers.
++  const raw = createSqlClient(databaseUrl, { max: 1, ssl: false });
++  const firstRaw = createSqlClient(databaseUrl, { max: 1, ssl: false });
++  const secondRaw = createSqlClient(databaseUrl, { max: 1, ssl: false });
++  const sql = guardSqlTestLifetime(raw, () => signal);
++  const first = guardSqlTestLifetime(firstRaw, () => signal);
++  const second = guardSqlTestLifetime(secondRaw, () => signal);
++  const repo = createWorkItemRepository({ sql });
++  let competitor: Promise<Awaited<ReturnType<typeof outcome>>> | undefined;
++  try {
++    await sql.begin(async (tx) => {
++      for (const [index, id] of ids.teams.entries())
++        await tx`insert into teams(id,name) values(${id},${tag + ":" + scenario + ":" + index})`;
++      for (const [index, id] of ids.users.entries()) {
++        const role = index === 2 || index === 3 ? "Staff" : "Manager";
++        const active = index !== 5;
++        const team = ids.teams[index === 4 ? 1 : 0];
++        await tx`insert into users(id,name,email,role,team_id,active) values(${id},${"Synthetic " + role + ":" + index},${id + "@example.test"},${role},${team},${active})`;
++        await tx`insert into staff_profiles(id,user_id,auth_user_id,role,team_id,active) values(${ids.profiles[index]},${id},${tag + ":" + id},${role},${team},${active})`;
++      }
++      for (const index of [2, 3])
++        await tx`insert into staff_skills(id,staff_profile_id,skill_key,proficiency) values(${ids.skills[index - 2]},${ids.profiles[index]},${skill},${index === 2 ? 5 : 4})`;
++      await tx`insert into companies(id,company_name,cr_number,br_number,incorporation_date,annual_return_basis_date,registered_office,company_secretary,status,assigned_owner_id,assigned_team_id,data_origin)
++        values(${ids.company},${"Synthetic assignment company " + ids.work},${ids.company},${ids.company},'2020-01-01','2026-01-01','Synthetic','Synthetic','active',${managerA},${ids.teams[0]},'client')`;
++      await tx`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,current_status,risk_level,owner_id)
++        values(${ids.case},${ids.company},2026,'2026-01-01','2026-02-12','Upcoming','green',${managerA})`;
++      await tx`insert into work_items(id,company_id,case_type,annual_return_case_id,source_event_key,source_event_type,work_type,required_skill_key,title,team_id,sla_policy_version_id,sla_started_at,sla_warning_at,sla_due_at)
++        values(${ids.work},${ids.company},'annual_return',${ids.case},${tag + ":" + scenario + ":" + ids.work},'synthetic_assignment','annual_return_case',${skill},'Review assignment fixture',${ids.teams[0]},${slaPolicyId},'2026-10-01','2026-10-02','2026-10-03')`;
++    });
++    const [observerPid] = await sql<{ pid: number }[]>`select pg_backend_pid() pid`;
++    const [firstPid] = await first<{ pid: number }[]>`select pg_backend_pid() pid`;
++    const [secondPid] = await second<{ pid: number }[]>`select pg_backend_pid() pid`;
++    expect(new Set([observerPid.pid, firstPid.pid, secondPid.pid]).size).toBe(3);
++    record("physical-sessions", {
++      observerPid: observerPid.pid,
++      firstPid: firstPid.pid,
++      secondPid: secondPid.pid,
++    });
++    const readback = async (phase: string) => {
++      const current = await createWorkItemRepository({ sql: second }).get(ids.work);
++      const events =
++        await second`select id,work_item_id,previous_assignee_id,assigned_to_id,assigned_by_id,expected_version,decision,recommendation_factors from assignment_events where work_item_id=${ids.work} order by expected_version,id`;
++      const timeline =
++        await second`select id,actor_id,metadata from timeline_events where company_id=${ids.company} and case_id=${ids.case} and event_type='work_item_assigned' order by created_at,id`;
++      const [outbox] = await second<
++        { count: number }[]
++      >`select count(*)::int count from notification_outbox where work_item_id=${ids.work}`;
++      const queue = await createWorkItemRepository({ sql: second }).listQueuePage(
++        queueFiltersForActor(actor(1), { view: "team", limit: 50 }),
++        { caseIds: [ids.case], includeFixtures: true },
++      );
++      expect(queue.items.map((item) => item.id)).toEqual([ids.work]);
++      expect(queue.items[0].version).toBe(current?.version);
++      expect(outbox.count).toBe(0);
++      record(phase, { current, events, timeline, queue: queue.items, outbox: outbox.count });
++      return { current, events, timeline };
++    };
++    const command = (
++      assigneeId: string,
++      expectedVersion: number,
++      assignmentTarget: "owner" | "reviewer" = "owner",
++    ) => ({
++      workItemId: ids.work,
++      assigneeId,
++      expectedVersion,
++      assignmentTarget,
++      overrideReason: "Synthetic workload exception retained",
++    });
++    const before = await readback("before");
++    expect(before.current).toMatchObject({ ownerId: null, reviewerId: null, version: 1 });
++    expect(before.events).toHaveLength(0);
++
++    if (scenario.startsWith("UC130")) {
++      const target = scenario === "UC130-owner" ? "owner" : "reviewer";
++      // Supplied-actor denials plus the locked persisted role remain separate
++      // from genuine session/Auth acceptance.
++      for (const candidate of [
++        actor(2, "Staff"),
++        actor(4),
++        { ...actor(0), teamId: null },
++        actor(5),
++        actor(2, "Client"),
++      ]) {
++        const denied = await outcome(
++          assignWorkItemForActor(repo, candidate, command(staffX, 1, target)),
++        );
++        expect(denied.error).toBeDefined();
++        record("role-denied", { actor: candidate, error: errorFacts(denied.error) });
++      }
++      const forged = await outcome(
++        assignWorkItemForActor(repo, actor(2, "Admin"), command(staffY, 1, target)),
++      );
++      expect(forged.error).toBeDefined();
++      record("persisted-role-denied", { error: errorFacts(forged.error) });
++      const staleActor = await outcome(
++        assignWorkItemForActor(repo, { ...actor(5), active: true }, command(staffX, 1, target)),
++      );
++      record("persisted-inactive-actor-denied", { error: errorFacts(staleActor.error) });
++      expect(errorFacts(staleActor.error)).toMatchObject({
++        statusCode: 403,
++        code: "WORK_ITEM_ACTOR_UNAVAILABLE",
++      });
++      const initialRecommendations = await recommendWorkItemAssigneesForActor(
++        repo,
++        actor(0),
++        ids.work,
++        target,
++      );
++      expect(initialRecommendations.map((item) => item.userId)).toEqual([staffX, staffY]);
++      let blocking:
++        | { blockers: number[]; event_type: string | null; event: string | null }
++        | undefined;
++      const winner = await first.begin(async (tx) => {
++        await tx`set local statement_timeout='15s'`;
++        await tx`select id from annual_return_cases where id=${ids.case} for update`;
++        competitor = outcome(
++          second.begin(async (otherTx) => {
++            await otherTx`set local lock_timeout='10s'`;
++            await otherTx`set local statement_timeout='15s'`;
++            return assignWorkItemForActor(
++              createWorkItemRepository({ sql: otherTx }),
++              actor(1),
++              command(staffY, 1, target),
++            );
++          }),
++        );
++        for (let index = 0; index < 200; index++) {
++          const [activity] = await sql<
++            { blockers: number[]; event_type: string | null; event: string | null }[]
++          >`
++            select pg_blocking_pids(pid) blockers,wait_event_type event_type,wait_event event from pg_stat_activity where pid=${secondPid.pid}`;
++          if (activity?.blockers.includes(firstPid.pid)) {
++            blocking = activity;
++            break;
++          }
++          await new Promise((resolveWait) => setTimeout(resolveWait, 10));
++        }
++        expect(blocking?.blockers).toContain(firstPid.pid);
++        record("concurrent-lock", { firstPid: firstPid.pid, secondPid: secondPid.pid, blocking });
++        return assignWorkItemForActor(
++          createWorkItemRepository({ sql: tx }),
++          actor(0),
++          command(staffX, 1, target),
++        );
++      });
++      const loser = await competitor!;
++      expect(loser.error).toBeDefined();
++      record("concurrent-result", { winner, error: errorFacts(loser.error) });
++      const committed = await readback("winner-readback");
++      expect(committed.current).toMatchObject({ version: 2, [target + "Id"]: staffX });
++      expect(committed.events).toHaveLength(1);
++      expect(committed.timeline).toHaveLength(1);
++      expect(committed.events[0]).toMatchObject({
++        assigned_by_id: managerA,
++        assigned_to_id: staffX,
++        expected_version: 1,
++      });
++      const replay = await outcome(
++        assignWorkItemForActor(repo, actor(1), command(staffY, 1, target)),
++      );
++      expect(replay.error).toBeDefined();
++      const unchanged = await readback("stale-replay-readback");
++      expect(unchanged.events).toHaveLength(1);
++      expect(unchanged.current?.version).toBe(2);
++      // Deliberate new confirmation after an independent session read, never an
++      // automatic resend of the original version.
++      const fresh = await createWorkItemRepository({ sql: second }).get(ids.work);
++      const recovered = await assignWorkItemForActor(
++        repo,
++        actor(1),
++        command(staffY, fresh!.version, target),
++      );
++      expect(recovered).toMatchObject({ version: 3, [target + "Id"]: staffY });
++      const after = await readback("recovery-readback");
++      expect(after.events).toHaveLength(2);
++      expect(after.timeline).toHaveLength(2);
++      expect(after.events[1]).toMatchObject({
++        assigned_by_id: managerB,
++        assigned_to_id: staffY,
++        previous_assignee_id: staffX,
++        expected_version: 2,
++      });
++      // The pre-existing repository protects the write but currently loses the
++      // structured conflict contract. Assert it after recording real invariants.
++      expect(errorFacts(loser.error)).toMatchObject({
++        statusCode: 409,
++        code: "WORK_ITEM_ASSIGNMENT_STALE",
++      });
++      expect(errorFacts(replay.error)).toMatchObject({
++        statusCode: 409,
++        code: "WORK_ITEM_ASSIGNMENT_STALE",
++      });
++    } else {
++      const options = await recommendWorkItemAssigneesForActor(repo, actor(0), ids.work);
++      expect(options.some((option) => option.userId === staffX)).toBe(true);
++      if (scenario === "UC131-skill")
++        await first`update staff_skills set active=false where id=${ids.skills[0]}`;
++      if (scenario === "UC131-users" || scenario === "UC131-both")
++        await first`update users set active=false where id=${staffX}`;
++      if (scenario === "UC131-profile" || scenario === "UC131-both")
++        await first`update staff_profiles set active=false where id=${ids.profiles[2]}`;
++      const [persisted] =
++        await second`select u.active user_active,sp.active profile_active from users u join staff_profiles sp on sp.user_id=u.id where u.id=${staffX}`;
++      record("disabled-after-selection", { selected: staffX, options, persisted });
++      const denied = await outcome(assignWorkItemForActor(repo, actor(0), command(staffX, 1)));
++      expect(denied.error).toBeDefined();
++      record("inactive-rejected", { error: errorFacts(denied.error) });
++      const unchanged = await readback("inactive-readback");
++      expect(unchanged.current).toMatchObject({ ownerId: null, version: 1 });
++      expect(unchanged.events).toHaveLength(0);
++      expect(unchanged.timeline).toHaveLength(0);
++      const fresh = await recommendWorkItemAssigneesForActor(repo, actor(0), ids.work);
++      expect(fresh.map((option) => option.userId)).toEqual([staffY]);
++      const recovered = await assignWorkItemForActor(
++        repo,
++        actor(0),
++        command(staffY, unchanged.current!.version),
++      );
++      expect(recovered).toMatchObject({ ownerId: staffY, version: 2 });
++      const final = await readback("reselection-readback");
++      expect(final.events).toHaveLength(1);
++      expect(final.timeline).toHaveLength(1);
++      expect(final.events[0]).toMatchObject({
++        assigned_by_id: managerA,
++        assigned_to_id: staffY,
++        expected_version: 1,
++      });
++      expect(errorFacts(denied.error)).toMatchObject({
++        statusCode: 409,
++        code: "WORK_ITEM_ASSIGNEE_UNAVAILABLE",
++      });
++    }
++  } finally {
++    // Await outstanding transactions before exact-ID cleanup. Never start the
++    // next scenario while a timed-out query can still commit in the background.
++    try {
++      if (competitor) await competitor;
++      await raw.begin(async (tx) => {
++        const actualWork = await tx`select id from work_items where company_id=${ids.company}`;
++        record("cleanup-owned-work", { actualWork });
++        await tx`delete from notification_outbox where work_item_id=${ids.work}`;
++        await tx`delete from assignment_events where work_item_id=${ids.work}`;
++        await tx`delete from escalation_events where work_item_id=${ids.work}`;
++        await tx`delete from timeline_events where company_id=${ids.company} and case_id=${ids.case}`;
++        await tx`delete from work_items where id=${ids.work}`;
++        await tx`delete from annual_return_cases where id=${ids.case}`;
++        await tx`delete from companies where id=${ids.company}`;
++        await tx`delete from staff_skills where id=any(${ids.skills}::uuid[])`;
++        await tx`delete from staff_profiles where id=any(${ids.profiles}::uuid[])`;
++        await tx`delete from users where id=any(${ids.users}::uuid[])`;
++        await tx`delete from teams where id=any(${ids.teams}::uuid[])`;
++      });
++      const [counts] = await raw`select
++      (select count(*)::int from companies where id=${ids.company}) companies,
++      (select count(*)::int from annual_return_cases where id=${ids.case}) cases,
++      (select count(*)::int from work_items where id=${ids.work}) work_items,
++      (select count(*)::int from assignment_events where work_item_id=${ids.work}) assignment_events,
++      (select count(*)::int from timeline_events where company_id=${ids.company}) timeline,
++      (select count(*)::int from users where id=any(${ids.users}::uuid[])) users,
++      (select count(*)::int from teams where id=any(${ids.teams}::uuid[])) teams`;
++      record("cleanup-readback", counts);
++      expect(Object.values(counts)).toEqual(Array(Object.keys(counts).length).fill(0));
++    } finally {
++      try {
++        await Promise.all([raw.end(), firstRaw.end(), secondRaw.end()]);
++      } finally {
++        closeSync(fd);
++      }
++    }
++  }
++}
+diff --git a/src/features/work-items/repository.ts b/src/features/work-items/repository.ts
+index c82e063..65f0359 100644
+--- a/src/features/work-items/repository.ts
++++ b/src/features/work-items/repository.ts
+@@ -5,7 +5,7 @@ import {
+   type SqlClient,
+ } from "@/server/db/client";
+ import type postgres from "postgres";
+-import { lockActiveStaffUser } from "@/features/auth/staff-state";
++import { lockActiveStaffUser, StaffStateUnavailableError } from "@/features/auth/staff-state";
+ import { rankAssignmentCandidates } from "./assignment";
+ import { snapshotSla, thresholdFor } from "./sla";
+ import { enqueueNotification } from "@/features/notifications/outbox";
+@@ -234,6 +234,17 @@ export function assignmentDecisionFor(input: {
+   };
+ }
+ 
++function assignmentConflict(code: "WORK_ITEM_ASSIGNMENT_STALE" | "WORK_ITEM_ASSIGNEE_UNAVAILABLE") {
++  return Object.assign(
++    new Error(
++      code === "WORK_ITEM_ASSIGNMENT_STALE"
++        ? "Work item assignment is stale."
++        : "Selected assignee is no longer eligible. Refresh recommendations.",
++    ),
++    { statusCode: 409, code },
++  );
++}
++
+ export function escalationTransitionsFor(
+   item: PersistedWorkItem,
+   now: string,
+@@ -607,7 +618,7 @@ export function createWorkItemRepository(
+         const item = await getWorkItem(tx, input.workItemId, true);
+         if (!item) throw new Error("Work item not found.");
+         if (item.version !== input.expectedVersion)
+-          throw new Error("Work item assignment is stale.");
++          throw assignmentConflict("WORK_ITEM_ASSIGNMENT_STALE");
+         if (input.expectedTeamId && item.teamId !== input.expectedTeamId) {
+           throw new Error("Forbidden: work item moved outside the actor's team.");
+         }
+@@ -615,7 +626,13 @@ export function createWorkItemRepository(
+           throw new Error("Closed work items cannot be assigned.");
+         }
+         const assignmentTarget = input.assignmentTarget ?? "owner";
+-        const currentActor = await lockActiveStaffUser(tx, input.assignedById);
++        const currentActor = await lockActiveStaffUser(tx, input.assignedById).catch(
++          (error: unknown) => {
++            if (error instanceof StaffStateUnavailableError)
++              throw Object.assign(error, { statusCode: 403, code: "WORK_ITEM_ACTOR_UNAVAILABLE" });
++            throw error;
++          },
++        );
+         if (
+           currentActor.role !== "Admin" &&
+           (currentActor.role !== "Manager" ||
+@@ -624,12 +641,18 @@ export function createWorkItemRepository(
+         ) {
+           throw new Error("Forbidden: current Manager team or Admin required.");
+         }
+-        await lockActiveStaffUser(tx, input.selectedUserId);
++        await lockActiveStaffUser(tx, input.selectedUserId).catch((error: unknown) => {
++          if (error instanceof StaffStateUnavailableError)
++            throw assignmentConflict("WORK_ITEM_ASSIGNEE_UNAVAILABLE");
++          throw error;
++        });
+         const recommendations = await recommendationsFor(tx, item, readNow(), {
+           assignmentTarget,
+           requiredRole: input.requiredRole,
+           separationOfDuties: input.separationOfDuties,
+         });
++        if (!recommendations.some((option) => option.userId === input.selectedUserId))
++          throw assignmentConflict("WORK_ITEM_ASSIGNEE_UNAVAILABLE");
+         const decision = assignmentDecisionFor({
+           selectedUserId: input.selectedUserId,
+           recommendations,
+@@ -646,7 +669,7 @@ export function createWorkItemRepository(
+               update work_items set reviewer_id = ${input.selectedUserId},
+                 version = version + 1, updated_at = now()
+               where id = ${item.id} and version = ${input.expectedVersion} returning *`;
+-        if (!updated[0]) throw new Error("Work item assignment is stale.");
++        if (!updated[0]) throw assignmentConflict("WORK_ITEM_ASSIGNMENT_STALE");
+         await tx`
+           insert into assignment_events (
+             work_item_id, previous_assignee_id, assigned_to_id, assigned_by_id,
+diff --git a/src/routes/-work-queue.interaction.test.tsx b/src/routes/-work-queue.interaction.test.tsx
+index 4717e03..5aefff8 100644
+--- a/src/routes/-work-queue.interaction.test.tsx
++++ b/src/routes/-work-queue.interaction.test.tsx
+@@ -1,7 +1,8 @@
+ // @vitest-environment jsdom
+ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
++import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
++import type { PersistedWorkItem } from "@/features/work-items/repository";
+ const mocks = vi.hoisted(() => ({
+   list: vi.fn(),
+   recommend: vi.fn(),
+@@ -86,6 +87,448 @@ beforeEach(() => {
+   mocks.navigate.mockClear();
+   mocks.bulk.mockClear();
+   mocks.list.mockReset();
++  mocks.recommend.mockReset();
++  mocks.assign.mockReset();
++});
++
++const assignmentWork: PersistedWorkItem = {
++  id: "assignment-work",
++  version: 1,
++  title: "Assignment recovery task",
++  companyId: "company",
++  companyName: "Recovery company",
++  caseType: "annual_return",
++  annualReturnCaseId: "case",
++  corporateChangeRequestId: null,
++  sourceEventKey: "assignment-event",
++  sourceEventType: "assignment-test",
++  workType: "annual_return_case",
++  requiredSkillKey: null,
++  ownerId: null,
++  ownerName: null,
++  reviewerId: null,
++  reviewerName: null,
++  teamId: null,
++  slaPolicyVersionId: "policy",
++  slaStartedAt: "2026-10-22T00:00:00Z",
++  slaWarningAt: "2026-10-23T00:00:00Z",
++  slaDueAt: "2026-10-24T00:00:00Z",
++  slaBreachedAt: null,
++  escalationState: "none",
++  status: "open",
++  priority: 50,
++  completedAt: null,
++};
++const assignmentCandidates = [
++  {
++    rank: 1,
++    staffId: "staff-amy",
++    userId: "amy",
++    displayName: "Amy Chan",
++    teamName: "Team A",
++    active: true,
++    workload: 0,
++    score: 500,
++    factors: {
++      capacityUtilization: 0,
++      skillProficiency: 5,
++      workloadPoints: 0,
++      continuityBonus: 0,
++    },
++  },
++  {
++    rank: 2,
++    staffId: "staff-bob",
++    userId: "bob",
++    displayName: "Bob Chan",
++    teamName: "Team A",
++    active: true,
++    workload: 0,
++    score: 400,
++    factors: {
++      capacityUtilization: 0,
++      skillProficiency: 4,
++      workloadPoints: 0,
++      continuityBonus: 0,
++    },
++  },
++];
++const overrideReason = "Keep this reason after reading the latest assignment";
++
++function deferred<T>() {
++  let resolve!: (value: T) => void;
++  const promise = new Promise<T>((complete) => {
++    resolve = complete;
++  });
++  return { promise, resolve };
++}
++
++async function openAssignment(item = assignmentWork) {
++  mocks.list.mockResolvedValue({ items: [item], nextCursor: null });
++  mocks.recommend.mockResolvedValue(assignmentCandidates);
++  const client = new QueryClient({
++    defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
++  });
++  const renderView = () => (
++    <QueryClientProvider client={client}>
++      <WorkQueueRoute />
++    </QueryClientProvider>
++  );
++  const view = render(renderView());
++  await screen.findAllByText(item.title);
++  fireEvent.click(screen.getAllByTitle("分配工作項目")[0]);
++  await screen.findByRole("button", { name: /Amy Chan · Team A/ });
++  return { client, view, renderView };
++}
++
++async function chooseReviewerWithReason() {
++  fireEvent.change(screen.getByLabelText("分配角色"), { target: { value: "reviewer" } });
++  fireEvent.click(await screen.findByRole("button", { name: /Bob Chan · Team A/ }));
++  fireEvent.change(screen.getByLabelText("例外理由"), { target: { value: overrideReason } });
++}
++
++function confirmAssignment() {
++  return screen.getByRole<HTMLButtonElement>("button", { name: "確認分配" });
++}
++function reloadAssignment() {
++  return screen.getByRole("button", { name: "重新讀取工作及建議人選" });
++}
++
++describe("UC130/UC131 assignment recovery", () => {
++  it.each([
++    {
++      statusCode: 409,
++      code: "WORK_ITEM_ASSIGNMENT_STALE",
++      message: "Work item assignment is stale.",
++    },
++    new Error("Work item assignment is stale."),
++  ])(
++    "UC130: rereads manager A's assignment before manager B can deliberately confirm again (%#)",
++    async (error) => {
++      mocks.search.q = "Recovery";
++      mocks.search.cursor = "same-filter-page";
++      await openAssignment();
++      await chooseReviewerWithReason();
++      // Both managers read v1. Manager A has now committed v2; B still holds v1.
++      mocks.list.mockResolvedValue({
++        items: [{ ...assignmentWork, version: 2, ownerId: "amy", ownerName: "Manager A choice" }],
++        nextCursor: null,
++      });
++      mocks.assign.mockRejectedValueOnce(error).mockResolvedValue({});
++      fireEvent.click(confirmAssignment());
++      expect((await screen.findByRole("alert")).textContent).toMatch(/其他同事已更新分配/);
++      expect(confirmAssignment().disabled).toBe(true);
++      expect(mocks.assign).toHaveBeenCalledTimes(1);
++      expect(mocks.list).toHaveBeenCalledTimes(1);
++      expect(mocks.assign.mock.calls[0][0].data.expectedVersion).toBe(1);
++      fireEvent.click(confirmAssignment());
++      expect(mocks.assign).toHaveBeenCalledTimes(1);
++      fireEvent.click(reloadAssignment());
++      await waitFor(() =>
++        expect(within(screen.getByRole("dialog")).getByText(/Manager A choice/)).toBeTruthy(),
++      );
++      expect(mocks.list).toHaveBeenLastCalledWith({
++        data: {
++          view: "team",
++          q: "Recovery",
++          sort: "deadline",
++          cursor: "same-filter-page",
++          limit: 50,
++        },
++      });
++      expect(mocks.recommend).toHaveBeenLastCalledWith({
++        data: { workItemId: "assignment-work", assignmentTarget: "reviewer" },
++      });
++      expect(screen.getByRole<HTMLSelectElement>("combobox", { name: "分配角色" }).value).toBe(
++        "reviewer",
++      );
++      expect(screen.getByRole<HTMLTextAreaElement>("textbox", { name: "例外理由" }).value).toBe(
++        overrideReason,
++      );
++      expect(confirmAssignment().disabled).toBe(true);
++      expect(mocks.assign).toHaveBeenCalledTimes(1);
++      fireEvent.click(screen.getByRole("button", { name: /Bob Chan · Team A/ }));
++      fireEvent.click(confirmAssignment());
++      await waitFor(() => expect(mocks.assign).toHaveBeenCalledTimes(2));
++      expect(mocks.assign.mock.calls[1][0]).toEqual({
++        data: {
++          workItemId: "assignment-work",
++          assigneeId: "bob",
++          expectedVersion: 2,
++          assignmentTarget: "reviewer",
++          overrideReason,
++        },
++      });
++      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
++    },
++  );
++
++  it.each([
++    {
++      code: "WORK_ITEM_ASSIGNEE_UNAVAILABLE",
++      message: "Selected assignee is no longer eligible. Refresh recommendations.",
++    },
++    new Error("Selected assignee is no longer eligible. Refresh recommendations."),
++    new Error("Selected assignee is not eligible for this work item."),
++  ])(
++    "UC131: keeps input after server denial and requires an eligible replacement (%#)",
++    async (error) => {
++      await openAssignment();
++      await chooseReviewerWithReason();
++      mocks.assign.mockRejectedValueOnce(error).mockResolvedValue({});
++      fireEvent.click(confirmAssignment());
++      expect((await screen.findByRole("alert")).textContent).toMatch(/人選已不符合分配資格/);
++      expect(confirmAssignment().disabled).toBe(true);
++      expect(screen.getByLabelText<HTMLTextAreaElement>("例外理由").value).toBe(overrideReason);
++      mocks.recommend.mockResolvedValue(
++        assignmentCandidates.map((candidate) => ({
++          ...candidate,
++          active: candidate.userId !== "bob",
++        })),
++      );
++      fireEvent.click(reloadAssignment());
++      await waitFor(() =>
++        expect(screen.queryByRole("button", { name: /Bob Chan · Team A/ })).toBeNull(),
++      );
++      expect(screen.getByLabelText<HTMLSelectElement>("分配角色").value).toBe("reviewer");
++      expect(screen.getByLabelText<HTMLTextAreaElement>("例外理由").value).toBe(overrideReason);
++      expect(confirmAssignment().disabled).toBe(true);
++      expect(mocks.assign).toHaveBeenCalledTimes(1);
++      fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
++      await waitFor(() => expect(confirmAssignment().disabled).toBe(false));
++      fireEvent.click(confirmAssignment());
++      await waitFor(() => expect(mocks.assign).toHaveBeenCalledTimes(2));
++      expect(mocks.assign.mock.calls[1][0].data).toMatchObject({
++        assigneeId: "amy",
++        assignmentTarget: "reviewer",
++        overrideReason,
++      });
++    },
++  );
++
++  it.each([
++    new Error("private ambiguous transport detail"),
++    { statusCode: 403, code: "WORK_ITEM_ACTOR_UNAVAILABLE", message: "private actor detail" },
++  ])(
++    "requires explicit reread after any mutation error, without exposing server details (%#)",
++    async (error) => {
++      await openAssignment();
++      fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
++      mocks.assign.mockRejectedValue(error);
++      fireEvent.click(confirmAssignment());
++      const alert = await screen.findByRole("alert");
++      expect(alert.textContent).toMatch(/重新讀取/);
++      expect(alert.textContent).not.toMatch(/private/);
++      expect(confirmAssignment().disabled).toBe(true);
++      // Switching assignment target or reselecting cannot bypass the reread.
++      fireEvent.change(screen.getByLabelText("分配角色"), { target: { value: "reviewer" } });
++      fireEvent.click(await screen.findByRole("button", { name: /Amy Chan · Team A/ }));
++      fireEvent.click(confirmAssignment());
++      expect(mocks.assign).toHaveBeenCalledTimes(1);
++      expect(mocks.list).toHaveBeenCalledTimes(1);
++    },
++  );
++
++  it.each(["queue-error", "recommendations-error", "missing", "completed", "cancelled"])(
++    "refuses confirmation and retains input when explicit recovery returns %s",
++    async (failure) => {
++      await openAssignment();
++      await chooseReviewerWithReason();
++      mocks.assign.mockRejectedValue(new Error("unknown outcome"));
++      fireEvent.click(confirmAssignment());
++      await waitFor(() => expect(mocks.assign).toHaveBeenCalledTimes(1));
++      await waitFor(() => expect(confirmAssignment().disabled).toBe(true));
++      if (failure === "queue-error") mocks.list.mockRejectedValue(new Error("private read error"));
++      if (failure === "recommendations-error")
++        mocks.recommend.mockRejectedValue(new Error("private recommendation error"));
++      if (failure === "missing") mocks.list.mockResolvedValue({ items: [], nextCursor: null });
++      if (failure === "completed" || failure === "cancelled")
++        mocks.list.mockResolvedValue({
++          items: [{ ...assignmentWork, version: 2, status: failure }],
++          nextCursor: null,
++        });
++      fireEvent.click(reloadAssignment());
++      await waitFor(() =>
++        expect(within(screen.getByRole("dialog")).getByRole("alert").textContent).toMatch(
++          /未能重新讀取|已關閉|不在目前隊列/,
++        ),
++      );
++      expect(screen.getByLabelText<HTMLTextAreaElement>("例外理由").value).toBe(overrideReason);
++      expect(screen.getByLabelText<HTMLSelectElement>("分配角色").value).toBe("reviewer");
++      fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
++      fireEvent.click(confirmAssignment());
++      expect(confirmAssignment().disabled).toBe(true);
++      expect(mocks.assign).toHaveBeenCalledTimes(1);
++      expect(screen.queryByText(/private read error|private recommendation error/)).toBeNull();
++    },
++  );
++
++  it("does not confirm a hidden selection after background eligibility changes", async () => {
++    const { client } = await openAssignment();
++    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
++    expect(confirmAssignment().disabled).toBe(false);
++    mocks.recommend.mockResolvedValue(
++      assignmentCandidates.map((candidate) => ({ ...candidate, active: false })),
++    );
++    await act(async () => {
++      await client.refetchQueries({ queryKey: ["work-item-recommendations"] });
++    });
++    await waitFor(() =>
++      expect(screen.queryByRole("button", { name: /Amy Chan · Team A/ })).toBeNull(),
++    );
++    expect(confirmAssignment().disabled).toBe(true);
++    mocks.recommend.mockResolvedValue(assignmentCandidates);
++    await act(async () => {
++      await client.refetchQueries({ queryKey: ["work-item-recommendations"] });
++    });
++    expect(confirmAssignment().disabled).toBe(true);
++    expect(mocks.assign).not.toHaveBeenCalled();
++  });
++
++  it("does not confirm cached recommendations after their refetch fails", async () => {
++    const { client } = await openAssignment();
++    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
++    mocks.recommend.mockRejectedValue(new Error("private recommendation failure"));
++    await act(async () => {
++      await client.refetchQueries({ queryKey: ["work-item-recommendations"] });
++    });
++    await screen.findByRole("alert");
++    expect(confirmAssignment().disabled).toBe(true);
++    fireEvent.click(confirmAssignment());
++    expect(mocks.assign).not.toHaveBeenCalled();
++  });
++
++  it("cancels before submit without assigning", async () => {
++    await openAssignment();
++    await chooseReviewerWithReason();
++    fireEvent.click(screen.getByRole("button", { name: "取消" }));
++    expect(screen.queryByRole("dialog")).toBeNull();
++    expect(mocks.assign).not.toHaveBeenCalled();
++  });
++
++  it("keeps an uncertain write locked after cancelling and reopening the same item", async () => {
++    await openAssignment();
++    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
++    mocks.assign.mockRejectedValue(new Error("response lost after a possible commit"));
++    fireEvent.click(confirmAssignment());
++    await screen.findByRole("alert");
++    fireEvent.click(screen.getByRole("button", { name: "取消" }));
++    fireEvent.click(screen.getAllByTitle("分配工作項目")[0]);
++    await waitFor(() =>
++      expect(
++        screen.getByRole<HTMLButtonElement>("button", { name: /Amy Chan · Team A/ }).disabled,
++      ).toBe(false),
++    );
++    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
++    expect(confirmAssignment().disabled).toBe(true);
++    expect(mocks.list).toHaveBeenCalledTimes(1);
++    fireEvent.click(confirmAssignment());
++    expect(mocks.assign).toHaveBeenCalledTimes(1);
++    fireEvent.click(reloadAssignment());
++    await waitFor(() =>
++      expect(
++        screen.getByRole<HTMLButtonElement>("button", { name: "重新讀取工作及建議人選" }).disabled,
++      ).toBe(false),
++    );
++    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
++    expect(confirmAssignment().disabled).toBe(false);
++  });
++
++  it.each(["missing", "error", "completed", "cancelled"])(
++    "refuses a captured confirmation when a background queue read becomes %s",
++    async (state) => {
++      const { client } = await openAssignment();
++      fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
++      if (state === "error") mocks.list.mockRejectedValue(new Error("private queue error"));
++      else
++        mocks.list.mockResolvedValue({
++          items: state === "missing" ? [] : [{ ...assignmentWork, version: 2, status: state }],
++          nextCursor: null,
++        });
++      await act(async () => {
++        await client.refetchQueries({ queryKey: ["work-queue"] });
++      });
++      await waitFor(() => expect(confirmAssignment().disabled).toBe(true));
++      expect(screen.getByRole("dialog")).toBeTruthy();
++      fireEvent.click(confirmAssignment());
++      expect(mocks.assign).not.toHaveBeenCalled();
++    },
++  );
++
++  it("blocks same-turn duplicates and all dismissal paths while saving", async () => {
++    const pending = deferred<object>();
++    await openAssignment();
++    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
++    mocks.assign.mockReturnValue(pending.promise);
++    const confirm = confirmAssignment();
++    act(() => {
++      fireEvent.click(confirm);
++      fireEvent.click(confirm);
++    });
++    await waitFor(() => expect(mocks.assign).toHaveBeenCalledTimes(1));
++    expect(confirmAssignment().disabled).toBe(true);
++    expect(screen.getByRole<HTMLButtonElement>("button", { name: "取消" }).disabled).toBe(true);
++    fireEvent.click(screen.getByRole("button", { name: "取消" }));
++    fireEvent.click(screen.getByRole("button", { name: "Close" }));
++    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
++    fireEvent.pointerDown(document.body);
++    expect(screen.getByRole("dialog")).toBeTruthy();
++    expect(screen.getByLabelText<HTMLSelectElement>("分配角色").disabled).toBe(true);
++    await act(async () => {
++      pending.resolve({});
++      await pending.promise;
++    });
++    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
++  });
++
++  it("keeps confirmation locked during a reread and prevents same-turn duplicate rereads", async () => {
++    await openAssignment();
++    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
++    const pending = deferred<{ items: PersistedWorkItem[]; nextCursor: null }>();
++    mocks.list.mockReturnValue(pending.promise);
++    const reload = reloadAssignment();
++    act(() => {
++      fireEvent.click(reload);
++      fireEvent.click(reload);
++    });
++    await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
++    expect(confirmAssignment().disabled).toBe(true);
++    fireEvent.click(confirmAssignment());
++    expect(mocks.assign).not.toHaveBeenCalled();
++    await act(async () => {
++      pending.resolve({ items: [{ ...assignmentWork, version: 2 }], nextCursor: null });
++      await pending.promise;
++    });
++    await waitFor(() =>
++      expect(
++        screen.getByRole<HTMLButtonElement>("button", { name: "重新讀取工作及建議人選" }).disabled,
++      ).toBe(false),
++    );
++    expect(confirmAssignment().disabled).toBe(true);
++  });
++
++  it("discards the old actor's dialog and does not close a new dialog on late success", async () => {
++    const pending = deferred<object>();
++    const { view, renderView } = await openAssignment();
++    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
++    mocks.assign.mockReturnValue(pending.promise);
++    fireEvent.click(confirmAssignment());
++    await waitFor(() => expect(mocks.assign).toHaveBeenCalledTimes(1));
++    mocks.actorId = "next-manager";
++    view.rerender(renderView());
++    expect(screen.queryByRole("dialog")).toBeNull();
++    await screen.findAllByText(assignmentWork.title);
++    fireEvent.click(screen.getAllByTitle("分配工作項目")[0]);
++    await screen.findByRole("button", { name: /Amy Chan · Team A/ });
++    expect(confirmAssignment().disabled).toBe(true);
++    await act(async () => {
++      pending.resolve({});
++      await pending.promise;
++    });
++    expect(screen.getByRole("dialog")).toBeTruthy();
++    expect(confirmAssignment().disabled).toBe(true);
++    expect(mocks.assign).toHaveBeenCalledTimes(1);
++  });
+ });
+ afterEach(() => {
+   cleanup();
+diff --git a/src/routes/work-queue.tsx b/src/routes/work-queue.tsx
+index 189adb8..6a95a21 100644
+--- a/src/routes/work-queue.tsx
++++ b/src/routes/work-queue.tsx
+@@ -1,7 +1,7 @@
+ import { pageTitle } from "@/lib/page-title";
+ import { describeWorkItemTitle } from "@/features/work-items/title";
+ import { formatDateTime } from "@/lib/format-date";
+-import { useMemo, useState } from "react";
++import { useEffect, useMemo, useRef, useState } from "react";
+ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+ import { createFileRoute, Link, type SearchSchemaInput } from "@tanstack/react-router";
+ import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
+@@ -108,6 +108,7 @@ function WorkQueueSession() {
+   } = search;
+   const effectiveSla = view === "breached" ? ("breach" as const) : sla;
+   const [assignmentItem, setAssignmentItem] = useState<PersistedWorkItem | null>(null);
++  const assignmentsNeedingRead = useRef(new Set<string>());
+   const [acknowledgementItem, setAcknowledgementItem] = useState<PersistedWorkItem | null>(null);
+   const canManage = session?.role === "Admin" || session?.role === "Manager";
+   const filters = {
+@@ -135,6 +136,14 @@ function WorkQueueSession() {
+   const retained = useRetainedPage(readScope, response);
+   const page = retained?.page;
+   const items = useMemo(() => page?.items ?? [], [page]);
++  const currentAssignmentRow = queueQuery.data?.items.find((row) => row.id === assignmentItem?.id);
++  const assignmentQueueIssue = queueQuery.isError
++    ? "未能重新讀取目前隊列，請重新讀取工作及建議人選。"
++    : !currentAssignmentRow
++      ? "此工作不在目前隊列，請核對範圍後重新讀取。"
++      : currentAssignmentRow.status === "completed" || currentAssignmentRow.status === "cancelled"
++        ? "此工作已關閉，不能分配。請重新讀取目前隊列。"
++        : null;
+   const owners = useMemo(
+     () =>
+       assignmentLabels(
+@@ -515,13 +524,28 @@ function WorkQueueSession() {
+           下一頁工作（每頁 50 項）
+         </Button>
+       ) : null}
+-      {assignmentItem && items.some((i) => i.id === assignmentItem.id) ? (
++      {assignmentItem ? (
+         <AssignmentDialog
+-          key={actorScope}
++          key={`${actorScope}:${assignmentItem.id}`}
+           item={assignmentItem}
+           actorScope={actorScope}
++          queueIssue={assignmentQueueIssue}
++          initialReadRequired={assignmentsNeedingRead.current.has(assignmentItem.id)}
++          onReadRequired={() => {
++            assignmentsNeedingRead.current.add(assignmentItem.id);
++          }}
++          onReviewed={() => {
++            assignmentsNeedingRead.current.delete(assignmentItem.id);
++          }}
++          onReload={async () => {
++            const result = await queueQuery.refetch();
++            // A failed refetch can still contain cached rows. Never review those as fresh.
++            if (result.isError || !result.data) throw new Error("Queue reread failed.");
++            return result.data.items.find((item) => item.id === assignmentItem.id) ?? null;
++          }}
+           onClose={() => setAssignmentItem(null)}
+           onAssigned={() => {
++            assignmentsNeedingRead.current.delete(assignmentItem.id);
+             setAssignmentItem(null);
+             void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
+           }}
+@@ -544,34 +568,70 @@ function WorkQueueSession() {
+ function AssignmentDialog({
+   item,
+   actorScope,
++  queueIssue,
++  initialReadRequired,
++  onReadRequired,
++  onReviewed,
++  onReload,
+   onClose,
+   onAssigned,
+ }: {
+   item: PersistedWorkItem;
+   actorScope: string;
++  queueIssue: string | null;
++  initialReadRequired: boolean;
++  onReadRequired: () => void;
++  onReviewed: () => void;
++  onReload: () => Promise<PersistedWorkItem | null>;
+   onClose: () => void;
+   onAssigned: () => void;
+ }) {
+   const [selected, setSelected] = useState("");
+   const [reason, setReason] = useState("");
+   const [target, setTarget] = useState<"owner" | "reviewer">("owner");
++  // Keep the reviewed snapshot fixed until an explicit, successful reread.
++  const [reviewedItem, setReviewedItem] = useState(item);
++  const [readRequired, setReadRequired] = useState(initialReadRequired);
++  const [message, setMessage] = useState<string | null>(
++    initialReadRequired
++      ? "上次分配結果或隊列狀態未能確認。請重新讀取工作及建議人選，再選擇並確認。"
++      : null,
++  );
++  const [busy, setBusy] = useState(false);
++  const actionInFlight = useRef(false);
++  const mustReread = useRef(initialReadRequired);
++  const mounted = useRef(true);
++  useEffect(() => {
++    mounted.current = true;
++    return () => {
++      mounted.current = false;
++    };
++  }, []);
+   const recommendations = useQuery({
+     queryKey: ["work-item-recommendations", item.id, actorScope, target, item.version],
+     queryFn: () =>
+       recommendWorkItemAssignees({ data: { workItemId: item.id, assignmentTarget: target } }),
++    retry: false,
+   });
+   const assign = useMutation({
+-    mutationFn: () =>
+-      assignWorkItem({
+-        data: {
+-          workItemId: item.id,
+-          assigneeId: selected,
+-          expectedVersion: item.version,
+-          assignmentTarget: target,
+-          overrideReason: reason.trim() || undefined,
+-        },
+-      }),
+-    onSuccess: onAssigned,
++    mutationFn: (input: Parameters<typeof assignWorkItem>[0]) => assignWorkItem(input),
++    retry: false,
++    onSuccess: () => {
++      if (mounted.current) onAssigned();
++    },
++    onError: (error) => {
++      // Even an unknown transport error may follow a committed write.
++      mustReread.current = true;
++      if (!mounted.current) return;
++      onReadRequired();
++      setReadRequired(true);
++      setSelected("");
++      setMessage(assignmentFailureMessage(error));
++    },
++    onSettled: () => {
++      actionInFlight.current = false;
++      if (mounted.current) setBusy(false);
++    },
+   });
+   const options = activeAssignmentOptions(recommendations.data ?? []);
+   const labels = assignmentLabels(options);
+@@ -581,30 +641,125 @@ function AssignmentDialog({
+     (selectedRecommendation.rank !== 1 ||
+       selectedRecommendation.factors.capacityUtilization >= 100),
+   );
++  const closed = reviewedItem.status === "completed" || reviewedItem.status === "cancelled";
++  const canConfirm = Boolean(
++    !busy &&
++    !readRequired &&
++    !queueIssue &&
++    !closed &&
++    !recommendations.isError &&
++    !recommendations.isFetching &&
++    selectedRecommendation &&
++    (!requiresReason || reason.trim()),
++  );
++  useEffect(() => {
++    if (!queueIssue) return;
++    mustReread.current = true;
++    onReadRequired();
++    setReadRequired(true);
++    setSelected("");
++    setMessage(queueIssue);
++  }, [queueIssue, onReadRequired]);
++  useEffect(() => {
++    if (
++      selected &&
++      (recommendations.isError ||
++        (recommendations.isSuccess && !recommendations.isFetching && !selectedRecommendation))
++    ) {
++      setSelected("");
++    }
++  }, [
++    selected,
++    selectedRecommendation,
++    recommendations.isError,
++    recommendations.isSuccess,
++    recommendations.isFetching,
++  ]);
++
++  const reload = async () => {
++    if (actionInFlight.current) return;
++    actionInFlight.current = true;
++    mustReread.current = true;
++    setBusy(true);
++    setReadRequired(true);
++    setSelected("");
++    setMessage(null);
++    try {
++      // Settle BOTH reads before unlocking; neither cached data nor a partial read suffices.
++      const [work, candidates] = await Promise.allSettled([
++        onReload(),
++        recommendations.refetch({ throwOnError: true }),
++      ]);
++      if (!mounted.current) return;
++      if (
++        work.status === "rejected" ||
++        candidates.status === "rejected" ||
++        candidates.value.isError ||
++        !candidates.value.data
++      ) {
++        setMessage("未能重新讀取工作及建議人選，請重新讀取後再確認。");
++      } else if (!work.value) {
++        setMessage("此工作不在目前隊列，未能確認分配。請核對範圍後重新讀取。");
++      } else if (work.value.status === "completed" || work.value.status === "cancelled") {
++        setReviewedItem(work.value);
++        setMessage("此工作已關閉，不能分配。請重新讀取目前隊列。");
++      } else {
++        setReviewedItem(work.value);
++        mustReread.current = false;
++        onReviewed();
++        setReadRequired(false);
++        setMessage("已重新讀取目前分配及建議人選。請重新選擇人選，再確認分配。");
++      }
++    } finally {
++      actionInFlight.current = false;
++      if (mounted.current) setBusy(false);
++    }
++  };
++  const close = () => {
++    if (!actionInFlight.current) onClose();
++  };
+ 
+   return (
+-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+-      <DialogContent className="max-w-xl gap-0 p-0">
++    <Dialog open onOpenChange={(open) => !open && close()}>
++      <DialogContent
++        className="max-w-xl gap-0 p-0"
++        onEscapeKeyDown={(event) => {
++          if (actionInFlight.current) event.preventDefault();
++        }}
++        onInteractOutside={(event) => {
++          if (actionInFlight.current) event.preventDefault();
++        }}
++      >
+         <div className="border-b border-border px-5 py-4">
+           <DialogHeader>
+             <DialogTitle>分配工作項目</DialogTitle>
+-            <DialogDescription>{describeWorkItemTitle(item.title)}</DialogDescription>
++            <DialogDescription>{describeWorkItemTitle(reviewedItem.title)}</DialogDescription>
+           </DialogHeader>
+         </div>
+         <div className="max-h-[55vh] space-y-2 overflow-y-auto p-5">
++          <p className="text-sm text-muted-foreground">
++            目前負責同事：{reviewedItem.ownerName ?? (reviewedItem.ownerId ? "姓名待補" : "未分配")}
++            {" · "}覆核人：
++            {reviewedItem.reviewerName ?? (reviewedItem.reviewerId ? "姓名待補" : "未分配")}
++            {" · "}
++            {WORK_ITEM_STATUS_LABELS[reviewedItem.status]} · 版本 {reviewedItem.version}
++          </p>
+           <Select
+             aria-label="分配角色"
+             value={target}
++            disabled={busy}
+             onChange={(event) => {
++              if (actionInFlight.current) return;
+               setTarget(event.target.value as "owner" | "reviewer");
+               setSelected("");
+-              setReason("");
+             }}
+           >
+             <option value="owner">負責同事</option>
+             <option value="reviewer">覆核人</option>
+           </Select>
+-          {recommendations.isError ? <p role="alert">可分配名單未能載入，請重新載入。</p> : null}
++          {recommendations.isError && !message ? (
++            <p role="alert">可分配名單未能載入，請重新載入。</p>
++          ) : null}
+           {recommendations.isLoading ? (
+             <p className="text-sm text-muted-foreground">建議人選載入中…</p>
+           ) : null}
+@@ -614,28 +769,53 @@ function AssignmentDialog({
+               option={option}
+               label={labels.get(option.userId)!}
+               selected={selected === option.userId}
+-              onSelect={() => setSelected(option.userId)}
++              disabled={busy || recommendations.isFetching || recommendations.isError || closed}
++              onSelect={() => {
++                if (!actionInFlight.current) setSelected(option.userId);
++              }}
+             />
+           ))}
+-          {requiresReason ? (
++          {requiresReason || reason ? (
+             <Textarea
+               aria-label="例外理由"
+               value={reason}
++              disabled={busy}
+               onChange={(event) => setReason(event.target.value)}
+               placeholder="不選首選人選或超出工作量的理由"
+               className="mt-3 min-h-20 w-full"
+             />
+           ) : null}
+-          {assign.isError ? (
+-            <p className="text-sm text-destructive">未能儲存分配，請重新整理再試。</p>
++          {message ? (
++            <p role={readRequired ? "alert" : "status"} className="text-sm">
++              {message}
++            </p>
+           ) : null}
++          {closed && !message ? <p role="alert">此工作已關閉，不能分配。</p> : null}
++          <Button disabled={busy} onClick={() => void reload()}>
++            重新讀取工作及建議人選
++          </Button>
+         </div>
+         <DialogFooter className="border-t border-border px-5 py-4">
+-          <Button onClick={onClose}>取消</Button>
++          <Button disabled={busy} onClick={close}>
++            取消
++          </Button>
+           <Button
+             variant="primary"
+-            disabled={!selected || (requiresReason && !reason.trim()) || assign.isPending}
+-            onClick={() => assign.mutate()}
++            disabled={!canConfirm}
++            onClick={() => {
++              if (actionInFlight.current || mustReread.current || !canConfirm) return;
++              actionInFlight.current = true;
++              setBusy(true);
++              assign.mutate({
++                data: {
++                  workItemId: reviewedItem.id,
++                  assigneeId: selected,
++                  expectedVersion: reviewedItem.version,
++                  assignmentTarget: target,
++                  overrideReason: reason.trim() || undefined,
++                },
++              });
++            }}
+           >
+             確認分配
+           </Button>
+@@ -645,6 +825,29 @@ function AssignmentDialog({
+   );
+ }
+ 
++function assignmentFailureMessage(error: unknown): string {
++  const detail =
++    error && typeof error === "object" ? (error as { code?: unknown; message?: unknown }) : {};
++  if (
++    detail.code === "WORK_ITEM_ASSIGNMENT_STALE" ||
++    detail.message === "Work item assignment is stale."
++  )
++    return "其他同事已更新分配，你的分配未有覆寫目前記錄。請重新讀取工作及建議人選，再選擇並確認。";
++  if (
++    detail.code === "WORK_ITEM_ASSIGNEE_UNAVAILABLE" ||
++    detail.message === "Selected assignee is no longer eligible. Refresh recommendations." ||
++    detail.message === "Selected assignee is not eligible for this work item."
++  )
++    return "人選已不符合分配資格，未能儲存。請重新讀取工作及建議人選，再選擇合資格人選。";
++  if (
++    detail.code === "WORK_ITEM_ACTOR_UNAVAILABLE" ||
++    detail.message === "Forbidden: inactive users cannot assign work." ||
++    detail.message === "Forbidden: inactive staff actor."
++  )
++    return "目前帳戶已不能執行分配。請重新讀取工作及建議人選，並核對帳戶權限。";
++  return "未能確認分配結果。請重新讀取工作及建議人選，再選擇並確認；系統不會自動重送。";
++}
++
+ function AcknowledgementDialog({
+   item,
+   onClose,
+@@ -702,17 +905,20 @@ function RecommendationOption({
+   option,
+   label,
+   selected,
++  disabled,
+   onSelect,
+ }: {
+   option: AssignmentRecommendation & AssignmentOption;
+   label: string;
+   selected: boolean;
++  disabled?: boolean;
+   onSelect: () => void;
+ }) {
+   return (
+     <button
+       type="button"
+       aria-pressed={selected}
++      disabled={disabled}
+       onClick={onSelect}
+       className={cn(
+         "grid w-full grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border p-3 text-left",
+diff --git a/src/test/db-integration-files.ts b/src/test/db-integration-files.ts
+index ec2dee7..5b21cea 100644
+--- a/src/test/db-integration-files.ts
++++ b/src/test/db-integration-files.ts
+@@ -47,4 +47,5 @@ export const DB_INTEGRATION_TEST_FILES = [
+   "src/features/whatsapp/intake-repository.integration.test.ts",
+   "src/features/work-items/repository.test.ts",
+   "src/features/work-items/queue.integration.test.ts",
++  "src/features/work-items/assignment-recovery.integration.test.ts",
+ ] as const;

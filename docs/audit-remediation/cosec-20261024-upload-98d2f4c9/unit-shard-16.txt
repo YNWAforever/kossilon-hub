@@ -1,0 +1,24 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/whatsapp/components/production-inbox.pagination.test.tsx (7 tests) 1171ms
+     ✓ reaches conversation 101 without changing the selected conversation  591ms
+ ✓ |unit| src/features/whatsapp/components/production-inbox.interaction.test.tsx (13 tests) 552ms
+ ✓ |unit| src/features/whatsapp/components/message-intake.interaction.test.tsx (2 tests) 261ms
+ ✓ |unit| src/features/whatsapp/media-download.test.ts (11 tests) 41ms
+ ✓ |unit| src/features/whatsapp/intake-server-fns.test.ts (2 tests) 22ms
+ ✓ |unit| src/features/whatsapp/server-fns.test.ts (20 tests) 13ms
+ ✓ |unit| src/features/whatsapp/history-pagination.test.ts (9 tests) 12ms
+ ✓ |unit| src/features/whatsapp/conversations.test.ts (17 tests) 6ms
+ ✓ |unit| src/features/whatsapp/approved-templates.test.ts (5 tests) 6ms
+ ✓ |unit| src/features/whatsapp/fallback-templates.test.ts (8 tests) 5ms
+ ✓ |unit| src/features/whatsapp/phone.test.ts (7 tests) 3ms
+ ✓ |unit| src/features/whatsapp/config.test.ts (3 tests) 4ms
+
+ Test Files  12 passed (12)
+      Tests  104 passed (104)
+   Start at  12:19:29
+   Duration  11.20s (transform 828ms, setup 0ms, import 3.13s, tests 2.10s, environment 3.57s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

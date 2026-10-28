@@ -1,0 +1,15 @@
+{
+  "run_id": "cosec-20261023-cont-d55d8d7e",
+  "checked_utc": "2026-10-23T03:46:29.0508070Z",
+  "command": "docker version --format json-server",
+  "exit_code": 1,
+  "output": "null\r\npermission denied while trying to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine\r\n",
+  "target_identity": "NOT_ESTABLISHED",
+  "database_clients_created": 0,
+  "fixtures_written": 0,
+  "migrations_run": 0,
+  "cleanup_run": 0,
+  "previous_container_removed": true,
+  "decision": "BLOCKED_NEW_ISOLATED_DB",
+  "daemon_start_attempted": false
+}

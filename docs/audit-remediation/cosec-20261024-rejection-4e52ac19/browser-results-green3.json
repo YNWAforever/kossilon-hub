@@ -1,0 +1,688 @@
+{
+  "run_id": "cosec-20261024-rejection-4e52ac19",
+  "attempt": "green3",
+  "origin": "http://127.0.0.1:5173",
+  "sourceHashes": {
+    "src/routes/documents.tsx": "83d4b971546514d281f4124a1083925f90328d53b99f91cef3c72e9a031d7c5e",
+    "src/routes/portal.tsx": "36efebf7a5f0e748ce2a75b3b84626570e6b0c6cecd361385a7e90d3d49bc924",
+    "src/features/documents/rejection-reasons.ts": "fdcce02dafc66ea9be15699bc1dd6e6795315095230278972d9cd52419ef3963",
+    "src/features/documents/safety.ts": "86635eb2a75d55a7002d203e0c272245bc230f01e804b3004eae7bd37cc09a7c",
+    "src/features/annual-return/outstanding.ts": "cfe826f1afc0712fd4a5dfb8fc2473681e811e29b8f60cbb291635d4e521988f"
+  },
+  "historical_overlay": false,
+  "browser_version": "155.0.4283.62",
+  "results": [
+    {
+      "name": "UC149 reviewer reason/text -> client -> known precommit failure/retry -> readback/reload/return",
+      "status": "passed",
+      "evidence": {
+        "reason": "missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。",
+        "old_document_unchanged": true,
+        "new_pending_document": {
+          "id": "4e52ac19-0149-4149-8149-000000000301",
+          "companyId": "4e52ac19-0149-4149-8149-000000000003",
+          "companyName": "QA UC149 Company",
+          "caseId": "4e52ac19-0149-4149-8149-000000000004",
+          "category": "signature",
+          "fileName": "QA-corrected.pdf",
+          "uploadStatus": "quarantined",
+          "reviewStatus": "pending",
+          "rejectionReason": null,
+          "currentVersionId": "4e52ac19-0149-4149-8149-000000000401",
+          "reviewedVersionId": null,
+          "scanVerdictSource": null,
+          "availability": "unscanned",
+          "objectAvailability": "not_checked",
+          "uploadSource": "client",
+          "uploadedAt": "2026-10-24T00:01:00.000Z"
+        },
+        "review_audit": [
+          {
+            "id": "4e52ac19-0149-4149-8149-000000000100",
+            "documentId": "4e52ac19-0149-4149-8149-000000000002",
+            "documentVersionId": "4e52ac19-0149-4149-8149-000000000005",
+            "decision": "rejected",
+            "reason": "missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。"
+          }
+        ],
+        "failed_precommit_documents": 1,
+        "finalize_calls": 2,
+        "reads": [
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Staff",
+            "at": "2026-10-24T03:02:42.183Z"
+          },
+          {
+            "name": "listAnnualReturnCases",
+            "data": {
+              "q": "",
+              "limit": 200
+            },
+            "actor": "QA-UC149-Staff",
+            "at": "2026-10-24T03:02:42.184Z"
+          },
+          {
+            "name": "getAnnualReturnCase",
+            "data": {
+              "id": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Staff",
+            "at": "2026-10-24T03:02:42.184Z"
+          },
+          {
+            "name": "reviewAnnualReturnEvidenceAction",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "documentId": "4e52ac19-0149-4149-8149-000000000002",
+              "expectedDocumentVersionId": "4e52ac19-0149-4149-8149-000000000005",
+              "checklistItemId": "4e52ac19-0149-4149-8149-000000000007",
+              "decision": "rejected",
+              "reason": "missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。"
+            },
+            "actor": "QA-UC149-Staff",
+            "at": "2026-10-24T03:02:42.526Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Staff",
+            "at": "2026-10-24T03:02:42.529Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:42.802Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:42.803Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:42.813Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "checklistItemId": "4e52ac19-0149-4149-8149-000000000007",
+              "category": "signature",
+              "fileName": "QA-corrected.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 38,
+              "checksum": "a32577ebf0f14d7552d41e50cd89a7e3098ef1414f89323093d2247106cdb34f"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:42.907Z"
+          },
+          {
+            "name": "finalizeDocumentUpload",
+            "data": {
+              "intentId": "4e52ac19-0149-4149-8149-000000000200",
+              "body_present": true
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:42.907Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:42.908Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "checklistItemId": "4e52ac19-0149-4149-8149-000000000007",
+              "category": "signature",
+              "fileName": "QA-corrected.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 38,
+              "checksum": "a32577ebf0f14d7552d41e50cd89a7e3098ef1414f89323093d2247106cdb34f"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:42.971Z"
+          },
+          {
+            "name": "finalizeDocumentUpload",
+            "data": {
+              "intentId": "4e52ac19-0149-4149-8149-000000000201",
+              "body_present": true
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:42.971Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:42.972Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:42.972Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:42.972Z"
+          }
+        ],
+        "actual_reload": true,
+        "real_router_return_and_reopen": true
+      }
+    },
+    {
+      "name": "UC149 repeated same-tick submission shares one held intent",
+      "status": "passed",
+      "evidence": {
+        "intent_calls": 1,
+        "finalize_calls": 1,
+        "documents": [
+          {
+            "id": "4e52ac19-0149-4149-8149-000000000002",
+            "companyId": "4e52ac19-0149-4149-8149-000000000003",
+            "companyName": "QA UC149 Company",
+            "caseId": "4e52ac19-0149-4149-8149-000000000004",
+            "category": "signature",
+            "fileName": "QA-original.pdf",
+            "uploadStatus": "available",
+            "reviewStatus": "rejected",
+            "rejectionReason": "missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。",
+            "currentVersionId": "4e52ac19-0149-4149-8149-000000000005",
+            "reviewedVersionId": "4e52ac19-0149-4149-8149-000000000005",
+            "scanVerdictSource": "provider",
+            "availability": "available",
+            "objectAvailability": "not_checked",
+            "uploadSource": "client",
+            "uploadedAt": "2026-10-24T00:00:00.000Z"
+          },
+          {
+            "id": "4e52ac19-0149-4149-8149-000000000301",
+            "companyId": "4e52ac19-0149-4149-8149-000000000003",
+            "companyName": "QA UC149 Company",
+            "caseId": "4e52ac19-0149-4149-8149-000000000004",
+            "category": "signature",
+            "fileName": "QA-corrected.pdf",
+            "uploadStatus": "quarantined",
+            "reviewStatus": "pending",
+            "rejectionReason": null,
+            "currentVersionId": "4e52ac19-0149-4149-8149-000000000401",
+            "reviewedVersionId": null,
+            "scanVerdictSource": null,
+            "availability": "unscanned",
+            "objectAvailability": "not_checked",
+            "uploadSource": "client",
+            "uploadedAt": "2026-10-24T00:01:00.000Z"
+          }
+        ],
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:43.799Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:43.800Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:43.830Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:44.068Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:44.068Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:44.075Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "checklistItemId": "4e52ac19-0149-4149-8149-000000000007",
+              "category": "signature",
+              "fileName": "QA-corrected.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 38,
+              "checksum": "a32577ebf0f14d7552d41e50cd89a7e3098ef1414f89323093d2247106cdb34f"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:44.131Z"
+          },
+          {
+            "name": "finalizeDocumentUpload",
+            "data": {
+              "intentId": "4e52ac19-0149-4149-8149-000000000200",
+              "body_present": true
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:44.139Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:44.139Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:44.140Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:44.140Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:44.140Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC149 missing historical reason is explicit after reload",
+      "status": "passed",
+      "evidence": {
+        "missing_reason_explicit": true,
+        "saved": {
+          "documents": [
+            {
+              "id": "4e52ac19-0149-4149-8149-000000000002",
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "companyName": "QA UC149 Company",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "category": "signature",
+              "fileName": "QA-original.pdf",
+              "uploadStatus": "available",
+              "reviewStatus": "rejected",
+              "rejectionReason": null,
+              "currentVersionId": "4e52ac19-0149-4149-8149-000000000005",
+              "reviewedVersionId": "4e52ac19-0149-4149-8149-000000000005",
+              "scanVerdictSource": "provider",
+              "availability": "available",
+              "objectAvailability": "not_checked",
+              "uploadSource": "client",
+              "uploadedAt": "2026-10-24T00:00:00.000Z"
+            }
+          ],
+          "checklistStatus": "Rejected",
+          "linkedDocumentId": "4e52ac19-0149-4149-8149-000000000002",
+          "audit": [],
+          "intents": [],
+          "intentCounter": 0,
+          "documentCounter": 0,
+          "finalizeFailures": 0,
+          "mode": "normal"
+        }
+      }
+    },
+    {
+      "name": "UC149 stale reason on pending DTO is never rendered",
+      "status": "passed",
+      "evidence": {
+        "pending_reason_hidden": true
+      }
+    },
+    {
+      "name": "UC149 other client denied, cannot read document reason",
+      "status": "passed",
+      "evidence": {
+        "no_document_read": true,
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-ClientB",
+            "at": "2026-10-24T03:02:45.876Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-ClientB",
+            "at": "2026-10-24T03:02:45.878Z"
+          }
+        ],
+        "limitation": "Local transport role refusal; not native Auth/RLS"
+      }
+    },
+    {
+      "name": "UC149 document read error hides content, reload recovers",
+      "status": "passed",
+      "evidence": {
+        "error_content_hidden": true,
+        "actual_reload_recovers": true,
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:46.556Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:46.556Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:46.579Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:46.775Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:46.775Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:46.783Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:47.001Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:47.001Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:47.009Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC149 empty documents/list have explicit empty states",
+      "status": "passed",
+      "evidence": {
+        "documents_empty": true,
+        "list_empty": true
+      }
+    },
+    {
+      "name": "UC149 list read error explicit retry refetches",
+      "status": "passed",
+      "evidence": {
+        "retry_reads": 1,
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:48.046Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:48.046Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:48.071Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:48.275Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:48.327Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC149 cancel file selection and return without writes",
+      "status": "passed",
+      "evidence": {
+        "picker_cleared": true,
+        "back_restores_case": true,
+        "no_upload_or_review_writes": true,
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:48.737Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:48.737Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:48.768Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:49.048Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:49.049Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:49.056Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "4e52ac19-0149-4149-8149-000000000004"
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:49.193Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "4e52ac19-0149-4149-8149-000000000003",
+              "caseId": "4e52ac19-0149-4149-8149-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC149-Client",
+            "at": "2026-10-24T03:02:49.197Z"
+          }
+        ]
+      }
+    }
+  ],
+  "blocked_external_origins": [],
+  "page_errors": [],
+  "console_errors": [],
+  "http_errors": [],
+  "resolutions": [
+    {
+      "id": "../features/annual-return/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/portal.tsx",
+      "boundary": "annual"
+    },
+    {
+      "id": "../features/annual-return/client-portal-server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/portal.tsx",
+      "boundary": "portal"
+    },
+    {
+      "id": "../features/documents/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/portal.tsx",
+      "boundary": "documents"
+    },
+    {
+      "id": "../features/documents/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/documents.tsx",
+      "boundary": "documents"
+    },
+    {
+      "id": "../features/annual-return/evidence-server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/documents.tsx",
+      "boundary": "evidence"
+    },
+    {
+      "id": "../features/annual-return/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/documents.tsx",
+      "boundary": "annual"
+    }
+  ],
+  "outer_error": null,
+  "native_auth_http_db_storage_scanner": false,
+  "stubbed_unrelated_components": [
+    "BulkSelectionToolbar",
+    "DocumentRecoveryPanel"
+  ],
+  "cleanup": "fresh contexts closed; own server/browser closed; no database or shared resources"
+}

@@ -1,0 +1,66 @@
+{
+  "baseline": "dcc77d2ee063fe14ca8a65d445cece61579b44f1",
+  "product_commit": "aada9b4b107f5e4c754d76e72eb84b4323ceaa13",
+  "verification_state": "Final checks ran at baseline HEAD with these two files modified. Final SHA256 values match the committed files. No source/test changes after final verification. Evidence-only commit follows.",
+  "files": {
+    "src/features/annual-return/components/production-case-detail.tsx": "c2db0b742128b62693d9ec7e5ef0835bcd8733706e591037078007b9db749bc6",
+    "src/features/annual-return/components/production-case-detail.interaction.test.tsx": "9e162f87451c444097c1fa7ff797a43e2738c056d85b642bc3c18f8814be62e0"
+  },
+  "commands": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "result": "2845 passed / 290 files",
+      "log": "unit.txt",
+      "scope": "Local child-process-supported unit/component suite; DB integration project excluded"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-case-detail.interaction.test.tsx src/features/annual-return/components/case-findings.interaction.test.tsx src/features/annual-return/components/case-parties.interaction.test.tsx",
+      "exit": 0,
+      "result": "50 passed / 3 files, included in full unit count",
+      "new_tests": 5,
+      "log": "targeted-final.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/production-case-detail.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/production-case-detail.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "reproduction": {
+    "result": "5 failed / 14 passed before repair",
+    "log": "red.txt"
+  },
+  "first_repaired_targeted": {
+    "result": "2 failed / 48 passed",
+    "cause": "Cached-denial tests asserted before React rendered error notification; corrected to await visible alert. Production unchanged.",
+    "log": "targeted.txt"
+  },
+  "review": "Focused independent reviewer reported no findings; reviewer ran no tests.",
+  "limits": "Independent notes/history query retries only. Existing query retry policy unchanged. No command replay/invalidation, case reload, other-list reload or unsaved-note reset. No persisted notes/audit, real Auth/HTTP/RLS or full journey proof.",
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "build": "NOT_RUN",
+  "db_integration": "NOT_RUN",
+  "hosted_ci_acceptance": "NOT_CLAIMED",
+  "deployment": "NOT_RUN",
+  "production_changes": "NONE"
+}

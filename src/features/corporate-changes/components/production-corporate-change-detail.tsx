@@ -1,4 +1,5 @@
 import { checklistItemText } from "@/lib/checklist-item-label";
+import { caseReturnPath } from "@/features/annual-return/daily-view-state";
 import { ChecklistItemLabel } from "@/components/checklist-item-label";
 import { Link } from "@tanstack/react-router";
 import { LoadingRows } from "@/components/ui/skeleton";
@@ -22,11 +23,26 @@ import {
   CORPORATE_CHANGE_TYPE_LABELS,
 } from "../labels";
 
-export function ProductionCorporateChangeDetail({ requestId }: { requestId: string }) {
-  // A malformed link can never name a request; asking the server only fails
-  // its schema validation, which used to read as a temporary outage.
-  if (parseEntityId(requestId) === null) return <CorporateChangeNotFound />;
-  return <CorporateChangeDetail requestId={requestId} />;
+export function ProductionCorporateChangeDetail({
+  requestId,
+  returnTo,
+}: {
+  requestId: string;
+  returnTo?: string;
+}) {
+  return (
+    <>
+      <Button asChild>
+        <a href={caseReturnPath(returnTo ?? "/corporate-changes")}>返回工作列表</a>
+      </Button>
+      {/* Keep the caller's safe return path even when the ID cannot name a request. */}
+      {parseEntityId(requestId) === null ? (
+        <CorporateChangeNotFound />
+      ) : (
+        <CorporateChangeDetail requestId={requestId} />
+      )}
+    </>
+  );
 }
 
 function CorporateChangeNotFound() {

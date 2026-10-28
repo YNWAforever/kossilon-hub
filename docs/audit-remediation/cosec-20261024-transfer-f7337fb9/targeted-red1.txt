@@ -1,0 +1,3446 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/routes/-case-subroutes.interaction.test.tsx (22 tests) 2581ms
+     ✓ opens the linked detail, changes DOM and URL, and restores page3 on Back/Forward  1375ms
+ ✓ |unit| src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx (5 tests) 769ms
+ ✓ |unit| src/routes/-missing-record.interaction.test.tsx (13 tests) 729ms
+ ❯ |unit| src/components/corporate-changes/share-transfer-validation.test.tsx (10 tests | 10 failed) 10618ms
+     × missing new holder "" is linked to field and never sent 1324ms
+     × missing new holder "   " is linked to field and never sent 1121ms
+     × quantity 0 has a field error and no RPC 1134ms
+     × quantity -1 has a field error and no RPC 1293ms
+     × quantity 1.5 has a field error and no RPC 1127ms
+     × quantity 2147483648 has a field error and no RPC 1112ms
+     × blur gives a missing existing-holder field explanation despite disabled submit 1112ms
+     × switching modes sends only the active transferee and correction allows retry 1162ms
+     × hides raw server details, retains inputs, then retries once 108ms
+     × deduplicates two pending submits and cancel never submits 1122ms
+ ✓ |unit| src/features/corporate-changes/read.test.ts (8 tests) 13ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 5ms
+ ✓ |unit| src/features/corporate-changes/server-fns.test.ts (6 tests) 7ms
+ ✓ |unit| src/features/corporate-changes/workflow.test.ts (9 tests) 4ms
+ ❯ |unit| src/features/corporate-changes/create-input.test.ts (15 tests | 9 failed) 19ms
+     × rejects missing/blank new holder null 6ms
+     × rejects missing/blank new holder "" 1ms
+     × rejects missing/blank new holder "   " 2ms
+     × rejects missing/blank new holder "\t\n" 1ms
+     × reports both fields for ambiguous dual transferees 2ms
+     ✓ rejects invalid quantity 0 at its field 1ms
+     ✓ rejects invalid quantity -1 at its field 0ms
+     ✓ rejects invalid quantity 1.5 at its field 0ms
+     ✓ rejects invalid quantity NaN at its field 0ms
+     ✓ rejects invalid quantity Infinity at its field 0ms
+     ✓ rejects invalid quantity -Infinity at its field 0ms
+     × rejects invalid quantity 2147483648 at its field 1ms
+     × rejects invalid quantity 9007199254740991 at its field 1ms
+     × trims a new holder name and accepts the storage integer boundary 2ms
+     × existing holder plus an empty new-holder field is unambiguous 0ms
+ ✓ |unit| src/features/corporate-changes/authorization.test.ts (9 tests) 5ms
+
+ Test Files  2 failed | 8 passed (10)
+      Tests  19 failed | 80 passed (99)
+   Start at  14:02:48
+   Duration  55.64s (transform 1.52s, setup 0ms, import 10.49s, tests 14.75s, environment 26.85s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/components/corporate-changes/share-transfer-validation.test.tsx > UC166 share transfer dialog rejection > missing new holder "" is linked to field and never sent
+TestingLibraryElementError: Unable to find a label with the text of: 新股東名稱
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_2_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_1_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_0_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_1_"[39m
+      [36m>[39m
+        [0m新增公司變更申請[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_2_"[39m
+      [36m>[39m
+        [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<form[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-company"[39m
+        [36m>[39m
+          [0m公司[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-company"[39m
+          [33mrequired[39m=[32m""[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m選擇公司[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+          [36m>[39m
+            [0mQA UC166[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [0m變更類別[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"name_change"[39m
+          [36m>[39m
+            [0m更改公司名稱[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"share_transfer"[39m
+          [36m>[39m
+            [0m股份轉讓[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"officer_change"[39m
+          [36m>[39m
+            [0m高級人員委任／辭任／資料變更[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"address_change"[39m
+          [36m>[39m
+            [0m更改註冊辦事處地址[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+        [36m>[39m
+          [0m報價（HKD）[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-quoted-fee"[39m
+          [33mmin[39m=[32m"0"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mstep[39m=[32m"1"[39m
+          [33mtype[39m=[32m"number"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-new-office"[39m
+        [36m>[39m
+          [0m新註冊辦事處地址[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-new-office"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m取消[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0m建立申請[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</form>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_2_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_1_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_0_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_1_"[39m
+        [36m>[39m
+          [0m新增公司變更申請[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_2_"[39m
+        [36m>[39m
+          [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-company"[39m
+          [36m>[39m
+            [0m公司[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-company"[39m
+            [33mrequired[39m=[32m""[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0m選擇公司[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+            [36m>[39m
+              [0mQA UC166[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [0m變更類別[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"name_change"[39m
+            [36m>[39m
+              [0m更改公司名稱[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"share_transfer"[39m
+            [36m>[39m
+              [0m股份轉讓[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"officer_change"[39m
+            [36m>[39m
+              [0m高級人員委任／辭任／資料變更[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"address_change"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+          [36m>[39m
+            [0m報價（HKD）[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-quoted-fee"[39m
+            [33mmin[39m=[32m"0"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mstep[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-new-office"[39m
+          [36m>[39m
+            [0m新註冊辦事處地址[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-new-office"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0m建立申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M18 6 6 18"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m6 6 12 12"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"sr-only"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/corporate-changes/share-transfer-validation.test.tsx:49:11
+     47|   it.each(["", "   "])("missing new holder %j is linked to field and n…
+     48|     await view(); change("新股東名稱", name); submit();
+     49|     await waitFor(() => expectFieldError("新股東名稱"));
+       |           ^
+     50|     expect(document.activeElement).toBe(input("新股東名稱"));
+     51|     expect(rpc.create).not.toHaveBeenCalled(); expect(created).not.toH…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  |unit| src/components/corporate-changes/share-transfer-validation.test.tsx > UC166 share transfer dialog rejection > missing new holder "   " is linked to field and never sent
+TestingLibraryElementError: Unable to find a label with the text of: 新股東名稱
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_5_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_4_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_3_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_4_"[39m
+      [36m>[39m
+        [0m新增公司變更申請[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_5_"[39m
+      [36m>[39m
+        [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<form[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-company"[39m
+        [36m>[39m
+          [0m公司[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-company"[39m
+          [33mrequired[39m=[32m""[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m選擇公司[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+          [36m>[39m
+            [0mQA UC166[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [0m變更類別[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"name_change"[39m
+          [36m>[39m
+            [0m更改公司名稱[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"share_transfer"[39m
+          [36m>[39m
+            [0m股份轉讓[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"officer_change"[39m
+          [36m>[39m
+            [0m高級人員委任／辭任／資料變更[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"address_change"[39m
+          [36m>[39m
+            [0m更改註冊辦事處地址[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+        [36m>[39m
+          [0m報價（HKD）[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-quoted-fee"[39m
+          [33mmin[39m=[32m"0"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mstep[39m=[32m"1"[39m
+          [33mtype[39m=[32m"number"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-new-office"[39m
+        [36m>[39m
+          [0m新註冊辦事處地址[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-new-office"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m取消[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0m建立申請[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</form>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_5_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_4_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_3_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_4_"[39m
+        [36m>[39m
+          [0m新增公司變更申請[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_5_"[39m
+        [36m>[39m
+          [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-company"[39m
+          [36m>[39m
+            [0m公司[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-company"[39m
+            [33mrequired[39m=[32m""[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0m選擇公司[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+            [36m>[39m
+              [0mQA UC166[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [0m變更類別[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"name_change"[39m
+            [36m>[39m
+              [0m更改公司名稱[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"share_transfer"[39m
+            [36m>[39m
+              [0m股份轉讓[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"officer_change"[39m
+            [36m>[39m
+              [0m高級人員委任／辭任／資料變更[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"address_change"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+          [36m>[39m
+            [0m報價（HKD）[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-quoted-fee"[39m
+            [33mmin[39m=[32m"0"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mstep[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-new-office"[39m
+          [36m>[39m
+            [0m新註冊辦事處地址[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-new-office"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0m建立申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M18 6 6 18"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m6 6 12 12"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"sr-only"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/corporate-changes/share-transfer-validation.test.tsx:49:11
+     47|   it.each(["", "   "])("missing new holder %j is linked to field and n…
+     48|     await view(); change("新股東名稱", name); submit();
+     49|     await waitFor(() => expectFieldError("新股東名稱"));
+       |           ^
+     50|     expect(document.activeElement).toBe(input("新股東名稱"));
+     51|     expect(rpc.create).not.toHaveBeenCalled(); expect(created).not.toH…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  |unit| src/components/corporate-changes/share-transfer-validation.test.tsx > UC166 share transfer dialog rejection > quantity 0 has a field error and no RPC
+TestingLibraryElementError: Unable to find a label with the text of: 轉讓股數
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_8_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_7_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_6_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_7_"[39m
+      [36m>[39m
+        [0m新增公司變更申請[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_8_"[39m
+      [36m>[39m
+        [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<form[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-company"[39m
+        [36m>[39m
+          [0m公司[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-company"[39m
+          [33mrequired[39m=[32m""[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m選擇公司[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+          [36m>[39m
+            [0mQA UC166[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [0m變更類別[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"name_change"[39m
+          [36m>[39m
+            [0m更改公司名稱[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"share_transfer"[39m
+          [36m>[39m
+            [0m股份轉讓[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"officer_change"[39m
+          [36m>[39m
+            [0m高級人員委任／辭任／資料變更[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"address_change"[39m
+          [36m>[39m
+            [0m更改註冊辦事處地址[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+        [36m>[39m
+          [0m報價（HKD）[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-quoted-fee"[39m
+          [33mmin[39m=[32m"0"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mstep[39m=[32m"1"[39m
+          [33mtype[39m=[32m"number"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-new-office"[39m
+        [36m>[39m
+          [0m新註冊辦事處地址[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-new-office"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m取消[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0m建立申請[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</form>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_8_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_7_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_6_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_7_"[39m
+        [36m>[39m
+          [0m新增公司變更申請[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_8_"[39m
+        [36m>[39m
+          [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-company"[39m
+          [36m>[39m
+            [0m公司[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-company"[39m
+            [33mrequired[39m=[32m""[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0m選擇公司[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+            [36m>[39m
+              [0mQA UC166[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [0m變更類別[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"name_change"[39m
+            [36m>[39m
+              [0m更改公司名稱[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"share_transfer"[39m
+            [36m>[39m
+              [0m股份轉讓[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"officer_change"[39m
+            [36m>[39m
+              [0m高級人員委任／辭任／資料變更[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"address_change"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+          [36m>[39m
+            [0m報價（HKD）[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-quoted-fee"[39m
+            [33mmin[39m=[32m"0"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mstep[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-new-office"[39m
+          [36m>[39m
+            [0m新註冊辦事處地址[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-new-office"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0m建立申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M18 6 6 18"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m6 6 12 12"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"sr-only"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/corporate-changes/share-transfer-validation.test.tsx:56:11
+     54|   it.each(["0", "-1", "1.5", "2147483648"])("quantity %s has a field e…
+     55|     await view(); change("轉讓股數", value); submit();
+     56|     await waitFor(() => expectFieldError("轉讓股數"));
+       |           ^
+     57|     expect(document.activeElement).toBe(input("轉讓股數"));
+     58|     expect(rpc.create).not.toHaveBeenCalled(); expect(created).not.toH…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  |unit| src/components/corporate-changes/share-transfer-validation.test.tsx > UC166 share transfer dialog rejection > quantity -1 has a field error and no RPC
+TestingLibraryElementError: Unable to find a label with the text of: 轉讓股數
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_b_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_a_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_9_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_a_"[39m
+      [36m>[39m
+        [0m新增公司變更申請[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_b_"[39m
+      [36m>[39m
+        [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<form[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-company"[39m
+        [36m>[39m
+          [0m公司[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-company"[39m
+          [33mrequired[39m=[32m""[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m選擇公司[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+          [36m>[39m
+            [0mQA UC166[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [0m變更類別[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"name_change"[39m
+          [36m>[39m
+            [0m更改公司名稱[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"share_transfer"[39m
+          [36m>[39m
+            [0m股份轉讓[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"officer_change"[39m
+          [36m>[39m
+            [0m高級人員委任／辭任／資料變更[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"address_change"[39m
+          [36m>[39m
+            [0m更改註冊辦事處地址[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+        [36m>[39m
+          [0m報價（HKD）[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-quoted-fee"[39m
+          [33mmin[39m=[32m"0"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mstep[39m=[32m"1"[39m
+          [33mtype[39m=[32m"number"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-new-office"[39m
+        [36m>[39m
+          [0m新註冊辦事處地址[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-new-office"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m取消[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0m建立申請[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</form>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_b_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_a_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_9_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_a_"[39m
+        [36m>[39m
+          [0m新增公司變更申請[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_b_"[39m
+        [36m>[39m
+          [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-company"[39m
+          [36m>[39m
+            [0m公司[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-company"[39m
+            [33mrequired[39m=[32m""[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0m選擇公司[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+            [36m>[39m
+              [0mQA UC166[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [0m變更類別[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"name_change"[39m
+            [36m>[39m
+              [0m更改公司名稱[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"share_transfer"[39m
+            [36m>[39m
+              [0m股份轉讓[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"officer_change"[39m
+            [36m>[39m
+              [0m高級人員委任／辭任／資料變更[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"address_change"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+          [36m>[39m
+            [0m報價（HKD）[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-quoted-fee"[39m
+            [33mmin[39m=[32m"0"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mstep[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-new-office"[39m
+          [36m>[39m
+            [0m新註冊辦事處地址[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-new-office"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0m建立申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M18 6 6 18"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m6 6 12 12"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"sr-only"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/corporate-changes/share-transfer-validation.test.tsx:56:11
+     54|   it.each(["0", "-1", "1.5", "2147483648"])("quantity %s has a field e…
+     55|     await view(); change("轉讓股數", value); submit();
+     56|     await waitFor(() => expectFieldError("轉讓股數"));
+       |           ^
+     57|     expect(document.activeElement).toBe(input("轉讓股數"));
+     58|     expect(rpc.create).not.toHaveBeenCalled(); expect(created).not.toH…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  |unit| src/components/corporate-changes/share-transfer-validation.test.tsx > UC166 share transfer dialog rejection > quantity 1.5 has a field error and no RPC
+TestingLibraryElementError: Unable to find a label with the text of: 轉讓股數
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_e_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_d_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_c_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_d_"[39m
+      [36m>[39m
+        [0m新增公司變更申請[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_e_"[39m
+      [36m>[39m
+        [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<form[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-company"[39m
+        [36m>[39m
+          [0m公司[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-company"[39m
+          [33mrequired[39m=[32m""[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m選擇公司[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+          [36m>[39m
+            [0mQA UC166[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [0m變更類別[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"name_change"[39m
+          [36m>[39m
+            [0m更改公司名稱[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"share_transfer"[39m
+          [36m>[39m
+            [0m股份轉讓[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"officer_change"[39m
+          [36m>[39m
+            [0m高級人員委任／辭任／資料變更[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"address_change"[39m
+          [36m>[39m
+            [0m更改註冊辦事處地址[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+        [36m>[39m
+          [0m報價（HKD）[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-quoted-fee"[39m
+          [33mmin[39m=[32m"0"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mstep[39m=[32m"1"[39m
+          [33mtype[39m=[32m"number"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-new-office"[39m
+        [36m>[39m
+          [0m新註冊辦事處地址[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-new-office"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m取消[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0m建立申請[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</form>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_e_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_d_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_c_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_d_"[39m
+        [36m>[39m
+          [0m新增公司變更申請[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_e_"[39m
+        [36m>[39m
+          [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-company"[39m
+          [36m>[39m
+            [0m公司[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-company"[39m
+            [33mrequired[39m=[32m""[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0m選擇公司[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+            [36m>[39m
+              [0mQA UC166[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [0m變更類別[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"name_change"[39m
+            [36m>[39m
+              [0m更改公司名稱[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"share_transfer"[39m
+            [36m>[39m
+              [0m股份轉讓[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"officer_change"[39m
+            [36m>[39m
+              [0m高級人員委任／辭任／資料變更[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"address_change"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+          [36m>[39m
+            [0m報價（HKD）[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-quoted-fee"[39m
+            [33mmin[39m=[32m"0"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mstep[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-new-office"[39m
+          [36m>[39m
+            [0m新註冊辦事處地址[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-new-office"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0m建立申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M18 6 6 18"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m6 6 12 12"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"sr-only"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/corporate-changes/share-transfer-validation.test.tsx:56:11
+     54|   it.each(["0", "-1", "1.5", "2147483648"])("quantity %s has a field e…
+     55|     await view(); change("轉讓股數", value); submit();
+     56|     await waitFor(() => expectFieldError("轉讓股數"));
+       |           ^
+     57|     expect(document.activeElement).toBe(input("轉讓股數"));
+     58|     expect(rpc.create).not.toHaveBeenCalled(); expect(created).not.toH…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  |unit| src/components/corporate-changes/share-transfer-validation.test.tsx > UC166 share transfer dialog rejection > quantity 2147483648 has a field error and no RPC
+TestingLibraryElementError: Unable to find a label with the text of: 轉讓股數
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_h_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_g_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_f_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_g_"[39m
+      [36m>[39m
+        [0m新增公司變更申請[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_h_"[39m
+      [36m>[39m
+        [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<form[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-company"[39m
+        [36m>[39m
+          [0m公司[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-company"[39m
+          [33mrequired[39m=[32m""[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m選擇公司[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+          [36m>[39m
+            [0mQA UC166[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [0m變更類別[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"name_change"[39m
+          [36m>[39m
+            [0m更改公司名稱[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"share_transfer"[39m
+          [36m>[39m
+            [0m股份轉讓[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"officer_change"[39m
+          [36m>[39m
+            [0m高級人員委任／辭任／資料變更[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"address_change"[39m
+          [36m>[39m
+            [0m更改註冊辦事處地址[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+        [36m>[39m
+          [0m報價（HKD）[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-quoted-fee"[39m
+          [33mmin[39m=[32m"0"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mstep[39m=[32m"1"[39m
+          [33mtype[39m=[32m"number"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-new-office"[39m
+        [36m>[39m
+          [0m新註冊辦事處地址[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-new-office"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m取消[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0m建立申請[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</form>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_h_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_g_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_f_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_g_"[39m
+        [36m>[39m
+          [0m新增公司變更申請[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_h_"[39m
+        [36m>[39m
+          [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-company"[39m
+          [36m>[39m
+            [0m公司[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-company"[39m
+            [33mrequired[39m=[32m""[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0m選擇公司[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+            [36m>[39m
+              [0mQA UC166[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [0m變更類別[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"name_change"[39m
+            [36m>[39m
+              [0m更改公司名稱[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"share_transfer"[39m
+            [36m>[39m
+              [0m股份轉讓[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"officer_change"[39m
+            [36m>[39m
+              [0m高級人員委任／辭任／資料變更[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"address_change"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+          [36m>[39m
+            [0m報價（HKD）[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-quoted-fee"[39m
+            [33mmin[39m=[32m"0"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mstep[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-new-office"[39m
+          [36m>[39m
+            [0m新註冊辦事處地址[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-new-office"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0m建立申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M18 6 6 18"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m6 6 12 12"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"sr-only"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/corporate-changes/share-transfer-validation.test.tsx:56:11
+     54|   it.each(["0", "-1", "1.5", "2147483648"])("quantity %s has a field e…
+     55|     await view(); change("轉讓股數", value); submit();
+     56|     await waitFor(() => expectFieldError("轉讓股數"));
+       |           ^
+     57|     expect(document.activeElement).toBe(input("轉讓股數"));
+     58|     expect(rpc.create).not.toHaveBeenCalled(); expect(created).not.toH…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  |unit| src/components/corporate-changes/share-transfer-validation.test.tsx > UC166 share transfer dialog rejection > blur gives a missing existing-holder field explanation despite disabled submit
+AssertionError: expected null to be 'true' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_k_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_j_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_i_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_j_"[39m
+        [36m>[39m
+          [0m新增公司變更申請[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_k_"[39m
+        [36m>[39m
+          [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-company"[39m
+          [36m>[39m
+            [0m公司[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-company"[39m
+            [33mrequired[39m=[32m""[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0m選擇公司[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+            [36m>[39m
+              [0mQA UC166[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [0m變更類別[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"name_change"[39m
+            [36m>[39m
+              [0m更改公司名稱[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"share_transfer"[39m
+            [36m>[39m
+              [0m股份轉讓[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"officer_change"[39m
+            [36m>[39m
+              [0m高級人員委任／辭任／資料變更[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"address_change"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+          [36m>[39m
+            [0m報價（HKD）[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-quoted-fee"[39m
+            [33mmin[39m=[32m"0"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mstep[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m"2500"[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-transferor-shareholding"[39m
+          [36m>[39m
+            [0m轉讓人股權[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-des...
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ expectFieldError src/components/corporate-changes/share-transfer-validation.test.tsx:32:46
+     30| function expectFieldError(label: string) {
+     31|   const field = input(label);
+     32|   expect(field.getAttribute("aria-invalid")).toBe("true");
+       |                                              ^
+     33|   const described = field.getAttribute("aria-describedby");
+     34|   expect(described).toBeTruthy();
+ ❯ src/components/corporate-changes/share-transfer-validation.test.tsx:63:25
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  |unit| src/components/corporate-changes/share-transfer-validation.test.tsx > UC166 share transfer dialog rejection > switching modes sends only the active transferee and correction allows retry
+TestingLibraryElementError: Unable to find a label with the text of: 轉讓股數
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_n_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_m_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_l_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_m_"[39m
+      [36m>[39m
+        [0m新增公司變更申請[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_n_"[39m
+      [36m>[39m
+        [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<form[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-company"[39m
+        [36m>[39m
+          [0m公司[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-company"[39m
+          [33mrequired[39m=[32m""[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m選擇公司[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+          [36m>[39m
+            [0mQA UC166[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [0m變更類別[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-type"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"name_change"[39m
+          [36m>[39m
+            [0m更改公司名稱[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"share_transfer"[39m
+          [36m>[39m
+            [0m股份轉讓[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"officer_change"[39m
+          [36m>[39m
+            [0m高級人員委任／辭任／資料變更[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"address_change"[39m
+          [36m>[39m
+            [0m更改註冊辦事處地址[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+        [36m>[39m
+          [0m報價（HKD）[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-quoted-fee"[39m
+          [33mmin[39m=[32m"0"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mstep[39m=[32m"1"[39m
+          [33mtype[39m=[32m"number"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+          [33mfor[39m=[32m"corp-change-new-office"[39m
+        [36m>[39m
+          [0m新註冊辦事處地址[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+          [33mid[39m=[32m"corp-change-new-office"[39m
+          [33mrequired[39m=[32m""[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m取消[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0m建立申請[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</form>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_n_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_m_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_l_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_m_"[39m
+        [36m>[39m
+          [0m新增公司變更申請[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_n_"[39m
+        [36m>[39m
+          [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-company"[39m
+          [36m>[39m
+            [0m公司[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-company"[39m
+            [33mrequired[39m=[32m""[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0m選擇公司[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+            [36m>[39m
+              [0mQA UC166[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [0m變更類別[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"name_change"[39m
+            [36m>[39m
+              [0m更改公司名稱[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"share_transfer"[39m
+            [36m>[39m
+              [0m股份轉讓[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"officer_change"[39m
+            [36m>[39m
+              [0m高級人員委任／辭任／資料變更[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"address_change"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+          [36m>[39m
+            [0m報價（HKD）[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-quoted-fee"[39m
+            [33mmin[39m=[32m"0"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mstep[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-new-office"[39m
+          [36m>[39m
+            [0m新註冊辦事處地址[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-new-office"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0m建立申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M18 6 6 18"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m6 6 12 12"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"sr-only"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/corporate-changes/share-transfer-validation.test.tsx:68:11
+     66|   it("switching modes sends only the active transferee and correction …
+     67|     await view(); change("轉讓股數", "-1"); submit();
+     68|     await waitFor(() => expectFieldError("轉讓股數"));
+       |           ^
+     69|     change("轉讓股數", "10"); fireEvent.click(screen.getByLabelText("現有股東"…
+     70|     change("承讓人股權", toId); submit();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  |unit| src/components/corporate-changes/share-transfer-validation.test.tsx > UC166 share transfer dialog rejection > hides raw server details, retains inputs, then retries once
+AssertionError: expected '新增公司變更申請記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處…' not to match /db\.internal|SQL|token=/
+
+- Expected:
+/db\.internal|SQL|token=/
+
++ Received:
+"新增公司變更申請記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。公司選擇公司QA UC166變更類別更改公司名稱股份轉讓高級人員委任／辭任／資料變更更改註冊辦事處地址報價（HKD）轉讓人股權選擇股權QA TransferorQA Existing承讓人現有股東新股東新股東名稱新股東地址轉讓股數代價（HKD）印花稅（HKD）db.internal SQL token=QA-UC166取消建立申請Close"
+
+ ❯ src/components/corporate-changes/share-transfer-validation.test.tsx:81:43
+     79|     await view(); rpc.create.mockRejectedValueOnce(new Error("db.inter…
+     80|     submit(); await screen.findByRole("alert");
+     81|     expect(document.body.textContent).not.toMatch(/db\.internal|SQL|to…
+       |                                           ^
+     82|     expect(input("新股東名稱").value).toBe("QA New Holder");
+     83|     expect(created).not.toHaveBeenCalled(); submit();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  |unit| src/components/corporate-changes/share-transfer-validation.test.tsx > UC166 share transfer dialog rejection > deduplicates two pending submits and cancel never submits
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-describedby[39m=[32m"radix-_r_t_"[39m
+      [33maria-labelledby[39m=[32m"radix-_r_s_"[39m
+      [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg max-h-[85vh] overflow-y-auto sm:max-w-lg"[39m
+      [33mdata-state[39m=[32m"open"[39m
+      [33mid[39m=[32m"radix-_r_r_"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+          [33mid[39m=[32m"radix-_r_s_"[39m
+        [36m>[39m
+          [0m新增公司變更申請[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [33mid[39m=[32m"radix-_r_t_"[39m
+        [36m>[39m
+          [0m記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<form[39m
+        [33mclass[39m=[32m"space-y-4"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-company"[39m
+          [36m>[39m
+            [0m公司[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-company"[39m
+            [33mrequired[39m=[32m""[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0m選擇公司[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"f7337fb9-0166-4166-8166-000000000001"[39m
+            [36m>[39m
+              [0mQA UC166[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [0m變更類別[0m
+          [36m</label>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-type"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"name_change"[39m
+            [36m>[39m
+              [0m更改公司名稱[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"share_transfer"[39m
+            [36m>[39m
+              [0m股份轉讓[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"officer_change"[39m
+            [36m>[39m
+              [0m高級人員委任／辭任／資料變更[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"address_change"[39m
+            [36m>[39m
+              [0m更改註冊辦事處地址[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-quoted-fee"[39m
+          [36m>[39m
+            [0m報價（HKD）[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-quoted-fee"[39m
+            [33mmin[39m=[32m"0"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mstep[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"text-[10px] uppercase tracking-wider text-muted-foreground"[39m
+            [33mfor[39m=[32m"corp-change-new-office"[39m
+          [36m>[39m
+            [0m新註冊辦事處地址[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"[39m
+            [33mid[39m=[32m"corp-change-new-office"[39m
+            [33mrequired[39m=[32m""[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m取消[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0m建立申請[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M18 6 6 18"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m6 6 12 12"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"sr-only"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/corporate-changes/share-transfer-validation.test.tsx:91:44
+     89|     rpc.create.mockImplementationOnce(() => new Promise(resolve => (re…
+     90|     submit(); submit();
+     91|     await waitFor(() => expect(rpc.create).toHaveBeenCalledTimes(1));
+       |                                            ^
+     92|     await act(async () => release({id:"f7337fb9-0166-4166-8166-0000000…
+     93|     await waitFor(() => expect(created).toHaveBeenCalledTimes(1));
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  |unit| src/features/corporate-changes/create-input.test.ts > UC166 share transfer field validation > rejects missing/blank new holder null
+ FAIL  |unit| src/features/corporate-changes/create-input.test.ts > UC166 share transfer field validation > rejects missing/blank new holder ""
+AssertionError: expected [ 'transfereeShareholdingId' ] to include 'transfereeNewShareholderName'
+ ❯ src/features/corporate-changes/create-input.test.ts:24:65
+     22|     expect(result.success).toBe(false);
+     23|     if (!result.success) {
+     24|       expect(result.error.issues.map((issue) => issue.path[0])).toCont…
+       |                                                                 ^
+     25|         "transfereeNewShareholderName",
+     26|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  |unit| src/features/corporate-changes/create-input.test.ts > UC166 share transfer field validation > rejects missing/blank new holder "   "
+ FAIL  |unit| src/features/corporate-changes/create-input.test.ts > UC166 share transfer field validation > rejects missing/blank new holder "\t\n"
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/features/corporate-changes/create-input.test.ts:22:28
+     20|       transfereeNewShareholderName: name,
+     21|     });
+     22|     expect(result.success).toBe(false);
+       |                            ^
+     23|     if (!result.success) {
+     24|       expect(result.error.issues.map((issue) => issue.path[0])).toCont…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+ FAIL  |unit| src/features/corporate-changes/create-input.test.ts > UC166 share transfer field validation > reports both fields for ambiguous dual transferees
+AssertionError: expected [ 'transfereeShareholdingId' ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
++ [
+    "transfereeShareholdingId",
+-   "transfereeNewShareholderName",
+  ]
+
+ ❯ src/features/corporate-changes/create-input.test.ts:36:65
+     34|     expect(result.success).toBe(false);
+     35|     if (!result.success) {
+     36|       expect(result.error.issues.map((issue) => issue.path[0])).toEqua…
+       |                                                                 ^
+     37|         expect.arrayContaining(["transfereeShareholdingId", "transfere…
+     38|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯
+
+ FAIL  |unit| src/features/corporate-changes/create-input.test.ts > UC166 share transfer field validation > rejects invalid quantity 2147483648 at its field
+ FAIL  |unit| src/features/corporate-changes/create-input.test.ts > UC166 share transfer field validation > rejects invalid quantity 9007199254740991 at its field
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/features/corporate-changes/create-input.test.ts:45:30
+     43|     (sharesTransferred) => {
+     44|       const result = createCorporateChangeRequestSchema.safeParse({ ..…
+     45|       expect(result.success).toBe(false);
+       |                              ^
+     46|       if (!result.success) {
+     47|         expect(result.error.issues.map((issue) => issue.path[0])).toCo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯
+
+ FAIL  |unit| src/features/corporate-changes/create-input.test.ts > UC166 share transfer field validation > trims a new holder name and accepts the storage integer boundary
+AssertionError: expected { …(10) } to match object { Object (transfereeNewShareholderName) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "transfereeNewShareholderName": "QA UC166 new holder",
++   "transfereeNewShareholderName": "  QA UC166 new holder  ",
+  }
+
+ ❯ src/features/corporate-changes/create-input.test.ts:57:20
+     55|       sharesTransferred: 2147483647,
+     56|     });
+     57|     expect(result).toMatchObject({ transfereeNewShareholderName: "QA U…
+       |                    ^
+     58|   });
+     59|   it("existing holder plus an empty new-holder field is unambiguous", …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯
+
+ FAIL  |unit| src/features/corporate-changes/create-input.test.ts > UC166 share transfer field validation > existing holder plus an empty new-holder field is unambiguous
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/features/corporate-changes/create-input.test.ts:66:7
+     64|         transfereeNewShareholderName: "   ",
+     65|       }).success,
+     66|     ).toBe(true);
+       |       ^
+     67|   });
+     68| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/19]⎯
+

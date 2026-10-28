@@ -7,7 +7,7 @@ export function readTupleCursor(value: string | undefined, length: number): stri
   if (!value) return null;
   try {
     const tuple = z.array(z.string().max(512)).length(length).parse(JSON.parse(value));
-    z.string().uuid().parse(tuple.at(-1));
+    z.string().guid().parse(tuple.at(-1));
     return tuple;
   } catch {
     throw new Error("Invalid list cursor; reset pagination explicitly.");

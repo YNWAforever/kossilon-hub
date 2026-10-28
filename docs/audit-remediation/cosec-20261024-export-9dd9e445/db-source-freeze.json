@@ -1,0 +1,21 @@
+{
+  "head": "89676dca7be49f4bf65afb44b036fce087934fc4",
+  "files": [
+    {
+      "path": "src/features/bulk-operations/server-fns.ts",
+      "sha256": "cbf3cdf3e784585d6fe3548ecaf312d1d3f3acc22b064bbbbec1adc98c95830c"
+    },
+    {
+      "path": "src/features/bulk-operations/payment-export.integration.test.ts",
+      "sha256": "c3bb601b62d4b716c50f72f4269a01e4afd2772fa86bfc47f5dd2df19b109a61"
+    },
+    {
+      "path": "src/features/bulk-operations/result-export.test.ts",
+      "sha256": "273a2a6cac3dcf58e0525cffea0f89280d4287b552c5388c33e1f939e7fe6804"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "sha256": "9ee54e9ebc0c165109099872ec6e3c2c192d514f13bad047dbfbd516efc76672"
+    }
+  ]
+}

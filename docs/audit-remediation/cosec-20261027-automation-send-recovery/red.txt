@@ -1,0 +1,4303 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx (16 tests | 8 failed) 9913ms
+   × reads back uncertain send as queued without queue replay 1055ms
+   × reads back uncertain send as unknown without queue replay 1061ms
+   × reads back uncertain send as failed without queue replay 1048ms
+   × keeps automation writes blocked through cache changes and permits only a fresh explicit approval 1043ms
+   × keeps unavailable automation result readback blocked: {"fresh":null} 1052ms
+   × keeps unavailable automation result readback blocked: {"fresh":[]} 1057ms
+   × keeps unavailable automation result readback blocked: {"fresh":[{"version":"","id":"11111111-1111-4111-8111-111111111111","entityId":"11111111-1111-4111-8111-111111111111","source":"annual-return","caseId":"11111111-1111-4111-8111-111111111111","companyId":"22222222-2222-4222-8222-222222222222","companyName":"Acme Company Limited","ownerName":"Ada Chan","recipientName":"Chris Client","phone":"+85291234567","reasonLabel":"Annual return follow-up","messagePreview":"Please provide the outstanding annual return items.","status":"draft"}]} 1047ms
+   × retains uncertainty after ordinary background draft success 1057ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx > reads back uncertain send as queued without queue replay
+TestingLibraryElementError: Unable to find role="button" and name "重新核對跟進結果"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_q_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_p_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_o_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_p_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_q_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_q_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_p_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_o_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_p_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_q_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ failAutomationSend src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:325:16
+    323|   const submit=screen.getByRole("button",{name:"批准並加入隊列"});
+    324|   act(()=>{submit.click();submit.click();});
+    325|   await screen.findByRole("button",{name:"重新核對跟進結果"});
+       |                ^
+    326|   return client;
+    327| }
+ ❯ src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:330:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx > reads back uncertain send as unknown without queue replay
+TestingLibraryElementError: Unable to find role="button" and name "重新核對跟進結果"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_t_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_s_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_r_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_s_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_t_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_t_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_s_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_r_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_s_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_t_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ failAutomationSend src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:325:16
+    323|   const submit=screen.getByRole("button",{name:"批准並加入隊列"});
+    324|   act(()=>{submit.click();submit.click();});
+    325|   await screen.findByRole("button",{name:"重新核對跟進結果"});
+       |                ^
+    326|   return client;
+    327| }
+ ❯ src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:330:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx > reads back uncertain send as failed without queue replay
+TestingLibraryElementError: Unable to find role="button" and name "重新核對跟進結果"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_10_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_v_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_u_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_v_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_10_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_10_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_v_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_u_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_v_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_10_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ failAutomationSend src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:325:16
+    323|   const submit=screen.getByRole("button",{name:"批准並加入隊列"});
+    324|   act(()=>{submit.click();submit.click();});
+    325|   await screen.findByRole("button",{name:"重新核對跟進結果"});
+       |                ^
+    326|   return client;
+    327| }
+ ❯ src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:330:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx > keeps automation writes blocked through cache changes and permits only a fresh explicit approval
+TestingLibraryElementError: Unable to find role="button" and name "重新核對跟進結果"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_13_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_12_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_11_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_12_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_13_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_13_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_12_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_11_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_12_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_13_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ failAutomationSend src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:325:16
+    323|   const submit=screen.getByRole("button",{name:"批准並加入隊列"});
+    324|   act(()=>{submit.click();submit.click();});
+    325|   await screen.findByRole("button",{name:"重新核對跟進結果"});
+       |                ^
+    326|   return client;
+    327| }
+ ❯ src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:342:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx > keeps unavailable automation result readback blocked: {"fresh":null}
+TestingLibraryElementError: Unable to find role="button" and name "重新核對跟進結果"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_16_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_15_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_14_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_15_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_16_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_16_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_15_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_14_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_15_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_16_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ failAutomationSend src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:325:16
+    323|   const submit=screen.getByRole("button",{name:"批准並加入隊列"});
+    324|   act(()=>{submit.click();submit.click();});
+    325|   await screen.findByRole("button",{name:"重新核對跟進結果"});
+       |                ^
+    326|   return client;
+    327| }
+ ❯ src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:363:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx > keeps unavailable automation result readback blocked: {"fresh":[]}
+TestingLibraryElementError: Unable to find role="button" and name "重新核對跟進結果"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_19_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_18_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_17_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_18_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_19_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_19_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_18_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_17_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_18_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_19_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ failAutomationSend src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:325:16
+    323|   const submit=screen.getByRole("button",{name:"批准並加入隊列"});
+    324|   act(()=>{submit.click();submit.click();});
+    325|   await screen.findByRole("button",{name:"重新核對跟進結果"});
+       |                ^
+    326|   return client;
+    327| }
+ ❯ src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:363:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx > keeps unavailable automation result readback blocked: {"fresh":[{"version":"","id":"11111111-1111-4111-8111-111111111111","entityId":"11111111-1111-4111-8111-111111111111","source":"annual-return","caseId":"11111111-1111-4111-8111-111111111111","companyId":"22222222-2222-4222-8222-222222222222","companyName":"Acme Company Limited","ownerName":"Ada Chan","recipientName":"Chris Client","phone":"+85291234567","reasonLabel":"Annual return follow-up","messagePreview":"Please provide the outstanding annual return items.","status":"draft"}]}
+TestingLibraryElementError: Unable to find role="button" and name "重新核對跟進結果"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_1c_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_1b_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_1a_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_1b_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_1c_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_1c_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_1b_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_1a_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_1b_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_1c_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ failAutomationSend src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:325:16
+    323|   const submit=screen.getByRole("button",{name:"批准並加入隊列"});
+    324|   act(()=>{submit.click();submit.click();});
+    325|   await screen.findByRole("button",{name:"重新核對跟進結果"});
+       |                ^
+    326|   return client;
+    327| }
+ ❯ src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:363:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx > retains uncertainty after ordinary background draft success
+TestingLibraryElementError: Unable to find role="button" and name "重新核對跟進結果"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_1f_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_1e_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_1d_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_1e_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_1f_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] lg:items-center"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"font-medium hover:underline"[39m
+                [33mhref[39m=[32m"/annual-returns/11111111-1111-4111-8111-111111111111"[39m
+              [36m>[39m
+                [0mAcme Company Limited[0m
+              [36m</a>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-muted-foreground"[39m
+              [36m>[39m
+                [0mAda Chan[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate"[39m
+            [36m>[39m
+              [0mChris Client / +85291234567[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m周年申報[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m草稿[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate"[39m
+              [36m>[39m
+                [0mPlease provide the outstanding annual return items.[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mAnnual return follow-up[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-start lg:justify-end"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm disabled:bg-muted disabled:text-muted-foreground"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m預覽並批准[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"radix-_r_1f_"[39m
+    [33maria-labelledby[39m=[32m"radix-_r_1e_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_1d_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-semibold leading-none tracking-tight"[39m
+        [33mid[39m=[32m"radix-_r_1e_"[39m
+      [36m>[39m
+        [0m批准跟進[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_1f_"[39m
+      [36m>[39m
+        [0m請確認收件人及完整草稿。加入發送隊列不代表已送達；超出對話時段時，可能改用已批准的模板。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-3 text-sm"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAcme Company Limited[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mChris Client[0m
+        [0m / [0m
+        [0m+85291234567[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"whitespace-pre-wrap break-words"[39m
+      [36m>[39m
+        [0mPlease provide the outstanding annual return items.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-muted-foreground"[39m
+      [36m>[39m
+        [0mAnnual return follow-up[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-sm text-destructive"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [0mprivate unknown queue result[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m取消[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m批准並加入隊列[0m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x h-4 w-4"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ failAutomationSend src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:325:16
+    323|   const submit=screen.getByRole("button",{name:"批准並加入隊列"});
+    324|   act(()=>{submit.click();submit.click();});
+    325|   await screen.findByRole("button",{name:"重新核對跟進結果"});
+       |                ^
+    326|   return client;
+    327| }
+ ❯ src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:372:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 8 passed (16)
+   Start at  06:53:30
+   Duration  12.04s (transform 454ms, setup 0ms, import 878ms, tests 9.91s, environment 1.01s)

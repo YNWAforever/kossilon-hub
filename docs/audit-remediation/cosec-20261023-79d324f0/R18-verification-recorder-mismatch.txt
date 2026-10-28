@@ -1,0 +1,696 @@
+
+> test
+> vitest run --project unit src/components/bulk-selection-toolbar.test.tsx src/features/bulk-operations/snapshot-scope.unit.test.ts src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/bulk-operations/snapshot-scope.unit.test.ts (4 tests | 2 failed) 73ms
+     × retains the displayed restriction (1 cases) alongside authorization 60ms
+     × retains the displayed restriction (0 cases) alongside authorization 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/bulk-operations/snapshot-scope.unit.test.ts > draft snapshot SQL contract > retains the displayed restriction (1 cases) alongside authorization
+AssertionError: expected [ { …(3) }, { …(3) }, { …(3) }, …(3) ] to deep equally contain [ Array(1) ]
+
+- Expected
++ Received
+
+  [
++   {
++     "text": "md5(jsonb_build_object('case',to_jsonb(arc),'team',c.assigned_team_id,'origin',c.data_origin,'work',coalesce((select jsonb_agg(jsonb_build_array(w.id,w.version,w.status,w.owner_id,w.reviewer_id,w.team_id) order by w.id) from work_items w where w.annual_return_case_id=arc.id),'[]'::jsonb))::text)",
++     "then": [Function then],
++     "values": [],
++   },
++   {
++     "text": "
++     (?::uuid is null or arc.owner_id=?::uuid)
++     and (?::uuid[] is null or arc.id=any(?::uuid[]))
++     and (? or c.data_origin<>'fixture')
++     and (? or ?)
++     and (?::uuid is null or c.assigned_team_id=?::uuid)
++     and (?::uuid is null or arc.reviewer_id=?::uuid)
++     and (?::text is null or arc.current_status=?)
++     and (?::uuid is null or arc.owner_id=?::uuid or arc.reviewer_id=?::uuid)
++     and (?::uuid[] is null or arc.company_id=any(?::uuid[]))
++     and (?::text is null or exists(select 1 from payments p where p.case_id=arc.id and p.status=?))
++     and (? or (? and arc.filing_due_date<?::date))
++     and (? or ?=exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?))
++     and (?::text is null or c.company_name ilike ? escape '\\' or c.cr_number ilike ? escape '\\'
++       or arc.return_year::text ilike ? escape '\\'
++       or exists(select 1 from users search_owner where search_owner.id=arc.owner_id and search_owner.name ilike ? escape '\\'))
++     and (?::text is null or ?=?)",
++     "then": [Function then],
++     "values": [
++       null,
++       null,
++       [
+          "40000000-0000-0000-0000-000000000001",
++       ],
++       [
++         "40000000-0000-0000-0000-000000000001",
++       ],
++       false,
++       true,
++       {
++         "text": "arc.current_status not in ('Filed','Completed')",
++         "then": [Function then],
++         "values": [],
++       },
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       true,
++       {
++         "text": "arc.current_status not in ('Filed','Completed')",
++         "then": [Function then],
++         "values": [],
++       },
++       "2026-10-23",
++       true,
++       false,
++       {
++         "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++         "then": [Function then],
++         "values": [],
++       },
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       {
++         "text": "case
++     when arc.current_status in ('Filed','Completed') and not ? and not ? and not ? then 'green'
++     when arc.filing_due_date<?::date then 'red'
++     when arc.filing_due_date<=?::date+7 and (? or ? or ?) then 'red'
++     when arc.filing_due_date<=?::date+14 and ? then 'orange'
++     when arc.filing_due_date<=?::date+30 and (? or ?) then 'yellow'
++     else 'green' end",
++         "then": [Function then],
++         "values": [
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           {
++             "text": "not exists(select 1 from payments p where p.case_id=arc.id and p.status='Payment received' and p.payment_proof_document_id is not null)",
++             "then": [Function then],
++             "values": [],
++           },
++           {
++             "text": "(nullif(btrim(arc.filing_reference),'') is null or arc.confirmation_document_id is null)",
++             "then": [Function then],
++             "values": [],
++           },
++           "2026-10-23",
++           "2026-10-23",
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           {
++             "text": "not exists(select 1 from payments p where p.case_id=arc.id and p.status='Payment received')",
++             "then": [Function then],
++             "values": [],
++           },
++           {
++             "text": "(nullif(btrim(arc.filing_reference),'') is null or arc.confirmation_document_id is null)",
++             "then": [Function then],
++             "values": [],
++           },
++           "2026-10-23",
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           "2026-10-23",
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           {
++             "text": "not exists(select 1 from payments p where p.case_id=arc.id and p.status='Payment received')",
++             "then": [Function then],
++             "values": [],
++           },
++         ],
++       },
++       null,
++     ],
++   },
++   {
++     "text": "
++     (?::uuid is null or arc.owner_id=?::uuid)
++     and (?::uuid[] is null or arc.id=any(?::uuid[]))
++     and (? or c.data_origin<>'fixture')
++     and (? or ?)
++     and (?::uuid is null or c.assigned_team_id=?::uuid)
++     and (?::uuid is null or arc.reviewer_id=?::uuid)
++     and (?::text is null or arc.current_status=?)
++     and (?::uuid is null or arc.owner_id=?::uuid or arc.reviewer_id=?::uuid)
++     and (?::uuid[] is null or arc.company_id=any(?::uuid[]))
++     and (?::text is null or exists(select 1 from payments p where p.case_id=arc.id and p.status=?))
++     and (? or (? and arc.filing_due_date<?::date))
++     and (? or ?=exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?))
++     and (?::text is null or c.company_name ilike ? escape '\\' or c.cr_number ilike ? escape '\\'
++       or arc.return_year::text ilike ? escape '\\'
++       or exists(select 1 from users search_owner where search_owner.id=arc.owner_id and search_owner.name ilike ? escape '\\'))
++     and (?::text is null or ?=?)",
++     "then": [Function then],
++     "values": [
++       null,
++       null,
++       null,
++       null,
++       false,
++       true,
++       {
++         "text": "arc.current_status not in ('Filed','Completed')",
++         "then": [Function then],
++         "values": [],
++       },
++       "10000000-0000-0000-0000-000000000001",
++       "10000000-0000-0000-0000-000000000001",
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       true,
++       {
++         "text": "arc.current_status not in ('Filed','Completed')",
++         "then": [Function then],
++         "values": [],
++       },
++       "2026-10-23",
++       true,
++       false,
++       {
++         "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++         "then": [Function then],
++         "values": [],
++       },
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       {
++         "text": "case
++     when arc.current_status in ('Filed','Completed') and not ? and not ? and not ? then 'green'
++     when arc.filing_due_date<?::date then 'red'
++     when arc.filing_due_date<=?::date+7 and (? or ? or ?) then 'red'
++     when arc.filing_due_date<=?::date+14 and ? then 'orange'
++     when arc.filing_due_date<=?::date+30 and (? or ?) then 'yellow'
++     else 'green' end",
++         "then": [Function then],
++         "values": [
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           {
++             "text": "not exists(select 1 from payments p where p.case_id=arc.id and p.status='Payment received' and p.payment_proof_document_id is not null)",
++             "then": [Function then],
++             "values": [],
++           },
++           {
++             "text": "(nullif(btrim(arc.filing_reference),'') is null or arc.confirmation_document_id is null)",
++             "then": [Function then],
++             "values": [],
++           },
++           "2026-10-23",
++           "2026-10-23",
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           {
++             "text": "not exists(select 1 from payments p where p.case_id=arc.id and p.status='Payment received')",
++             "then": [Function then],
++             "values": [],
++           },
++           {
++             "text": "(nullif(btrim(arc.filing_reference),'') is null or arc.confirmation_document_id is null)",
++             "then": [Function then],
++             "values": [],
++           },
++           "2026-10-23",
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           "2026-10-23",
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           {
++             "text": "not exists(select 1 from payments p where p.case_id=arc.id and p.status='Payment received')",
++             "then": [Function then],
++             "values": [],
++           },
++         ],
++       },
++       null,
++     ],
++   },
++   null,
++   null,
++   {
++     "text": "",
++     "then": [Function then],
++     "values": [],
++   },
+  ]
+
+ ❯ src/features/bulk-operations/snapshot-scope.unit.test.ts:33:26
+     31|     const result = await createBulkOperationsRepository({ sql }).creat…
+     32|     const query = calls.find((c) => c.text.startsWith("select arc.id")…
+     33|     expect(query.values).toContainEqual(draftCaseIds);
+       |                          ^
+     34|     expect(result.count).toBe(0);
+     35|     const saved = calls.find((c) => c.text.startsWith("insert into bul…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| src/features/bulk-operations/snapshot-scope.unit.test.ts > draft snapshot SQL contract > retains the displayed restriction (0 cases) alongside authorization
+AssertionError: expected [ { …(3) }, { …(3) }, { …(3) }, …(3) ] to deep equally contain []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "text": "md5(jsonb_build_object('case',to_jsonb(arc),'team',c.assigned_team_id,'origin',c.data_origin,'work',coalesce((select jsonb_agg(jsonb_build_array(w.id,w.version,w.status,w.owner_id,w.reviewer_id,w.team_id) order by w.id) from work_items w where w.annual_return_case_id=arc.id),'[]'::jsonb))::text)",
++     "then": [Function then],
++     "values": [],
++   },
++   {
++     "text": "
++     (?::uuid is null or arc.owner_id=?::uuid)
++     and (?::uuid[] is null or arc.id=any(?::uuid[]))
++     and (? or c.data_origin<>'fixture')
++     and (? or ?)
++     and (?::uuid is null or c.assigned_team_id=?::uuid)
++     and (?::uuid is null or arc.reviewer_id=?::uuid)
++     and (?::text is null or arc.current_status=?)
++     and (?::uuid is null or arc.owner_id=?::uuid or arc.reviewer_id=?::uuid)
++     and (?::uuid[] is null or arc.company_id=any(?::uuid[]))
++     and (?::text is null or exists(select 1 from payments p where p.case_id=arc.id and p.status=?))
++     and (? or (? and arc.filing_due_date<?::date))
++     and (? or ?=exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?))
++     and (?::text is null or c.company_name ilike ? escape '\\' or c.cr_number ilike ? escape '\\'
++       or arc.return_year::text ilike ? escape '\\'
++       or exists(select 1 from users search_owner where search_owner.id=arc.owner_id and search_owner.name ilike ? escape '\\'))
++     and (?::text is null or ?=?)",
++     "then": [Function then],
++     "values": [
++       null,
++       null,
++       [],
++       [],
++       false,
++       true,
++       {
++         "text": "arc.current_status not in ('Filed','Completed')",
++         "then": [Function then],
++         "values": [],
++       },
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       true,
++       {
++         "text": "arc.current_status not in ('Filed','Completed')",
++         "then": [Function then],
++         "values": [],
++       },
++       "2026-10-23",
++       true,
++       false,
++       {
++         "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++         "then": [Function then],
++         "values": [],
++       },
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       {
++         "text": "case
++     when arc.current_status in ('Filed','Completed') and not ? and not ? and not ? then 'green'
++     when arc.filing_due_date<?::date then 'red'
++     when arc.filing_due_date<=?::date+7 and (? or ? or ?) then 'red'
++     when arc.filing_due_date<=?::date+14 and ? then 'orange'
++     when arc.filing_due_date<=?::date+30 and (? or ?) then 'yellow'
++     else 'green' end",
++         "then": [Function then],
++         "values": [
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           {
++             "text": "not exists(select 1 from payments p where p.case_id=arc.id and p.status='Payment received' and p.payment_proof_document_id is not null)",
++             "then": [Function then],
++             "values": [],
++           },
++           {
++             "text": "(nullif(btrim(arc.filing_reference),'') is null or arc.confirmation_document_id is null)",
++             "then": [Function then],
++             "values": [],
++           },
++           "2026-10-23",
++           "2026-10-23",
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           {
++             "text": "not exists(select 1 from payments p where p.case_id=arc.id and p.status='Payment received')",
++             "then": [Function then],
++             "values": [],
++           },
++           {
++             "text": "(nullif(btrim(arc.filing_reference),'') is null or arc.confirmation_document_id is null)",
++             "then": [Function then],
++             "values": [],
++           },
++           "2026-10-23",
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           "2026-10-23",
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           {
++             "text": "not exists(select 1 from payments p where p.case_id=arc.id and p.status='Payment received')",
++             "then": [Function then],
++             "values": [],
++           },
++         ],
++       },
++       null,
++     ],
++   },
++   {
++     "text": "
++     (?::uuid is null or arc.owner_id=?::uuid)
++     and (?::uuid[] is null or arc.id=any(?::uuid[]))
++     and (? or c.data_origin<>'fixture')
++     and (? or ?)
++     and (?::uuid is null or c.assigned_team_id=?::uuid)
++     and (?::uuid is null or arc.reviewer_id=?::uuid)
++     and (?::text is null or arc.current_status=?)
++     and (?::uuid is null or arc.owner_id=?::uuid or arc.reviewer_id=?::uuid)
++     and (?::uuid[] is null or arc.company_id=any(?::uuid[]))
++     and (?::text is null or exists(select 1 from payments p where p.case_id=arc.id and p.status=?))
++     and (? or (? and arc.filing_due_date<?::date))
++     and (? or ?=exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?))
++     and (?::text is null or c.company_name ilike ? escape '\\' or c.cr_number ilike ? escape '\\'
++       or arc.return_year::text ilike ? escape '\\'
++       or exists(select 1 from users search_owner where search_owner.id=arc.owner_id and search_owner.name ilike ? escape '\\'))
++     and (?::text is null or ?=?)",
++     "then": [Function then],
++     "values": [
++       null,
++       null,
++       null,
++       null,
++       false,
++       true,
++       {
++         "text": "arc.current_status not in ('Filed','Completed')",
++         "then": [Function then],
++         "values": [],
++       },
++       "10000000-0000-0000-0000-000000000001",
++       "10000000-0000-0000-0000-000000000001",
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       true,
++       {
++         "text": "arc.current_status not in ('Filed','Completed')",
++         "then": [Function then],
++         "values": [],
++       },
++       "2026-10-23",
++       true,
++       false,
++       {
++         "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++         "then": [Function then],
++         "values": [],
++       },
++       null,
++       null,
++       null,
++       null,
++       null,
++       null,
++       {
++         "text": "case
++     when arc.current_status in ('Filed','Completed') and not ? and not ? and not ? then 'green'
++     when arc.filing_due_date<?::date then 'red'
++     when arc.filing_due_date<=?::date+7 and (? or ? or ?) then 'red'
++     when arc.filing_due_date<=?::date+14 and ? then 'orange'
++     when arc.filing_due_date<=?::date+30 and (? or ?) then 'yellow'
++     else 'green' end",
++         "then": [Function then],
++         "values": [
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           {
++             "text": "not exists(select 1 from payments p where p.case_id=arc.id and p.status='Payment received' and p.payment_proof_document_id is not null)",
++             "then": [Function then],
++             "values": [],
++           },
++           {
++             "text": "(nullif(btrim(arc.filing_reference),'') is null or arc.confirmation_document_id is null)",
++             "then": [Function then],
++             "values": [],
++           },
++           "2026-10-23",
++           "2026-10-23",
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           {
++             "text": "not exists(select 1 from payments p where p.case_id=arc.id and p.status='Payment received')",
++             "then": [Function then],
++             "values": [],
++           },
++           {
++             "text": "(nullif(btrim(arc.filing_reference),'') is null or arc.confirmation_document_id is null)",
++             "then": [Function then],
++             "values": [],
++           },
++           "2026-10-23",
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           "2026-10-23",
++           {
++             "text": "exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ?)",
++             "then": [Function then],
++             "values": [
++               {
++                 "text": "i.required and (i.status<>'Verified' or i.received_at is null or i.verified_at is null or i.document_id is null)",
++                 "then": [Function then],
++                 "values": [],
++               },
++             ],
++           },
++           {
++             "text": "not exists(select 1 from payments p where p.case_id=arc.id and p.status='Payment received')",
++             "then": [Function then],
++             "values": [],
++           },
++         ],
++       },
++       null,
++     ],
++   },
++   null,
++   null,
++   {
++     "text": "",
++     "then": [Function then],
++     "values": [],
++   },
++ ]
+
+ ❯ src/features/bulk-operations/snapshot-scope.unit.test.ts:33:26
+     31|     const result = await createBulkOperationsRepository({ sql }).creat…
+     32|     const query = calls.find((c) => c.text.startsWith("select arc.id")…
+     33|     expect(query.values).toContainEqual(draftCaseIds);
+       |                          ^
+     34|     expect(result.count).toBe(0);
+     35|     const saved = calls.find((c) => c.text.startsWith("insert into bul…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 17 passed (19)
+   Start at  04:58:10
+   Duration  10.43s (transform 1.18s, setup 0ms, import 2.98s, tests 2.44s, environment 3.66s)
+

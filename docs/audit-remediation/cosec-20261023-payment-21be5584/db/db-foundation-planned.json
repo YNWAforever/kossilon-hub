@@ -1,0 +1,7 @@
+{
+  "run_id": "cosec-20261023-payment-21be5584",
+  "actorId": "6fbf14df-e2c8-4be5-a589-8b51f76fb2f9",
+  "calendarId": "4233ac33-aa8e-4776-92ad-e8f46a60e586",
+  "policyId": "7c164195-fb56-4d39-8731-1a0dd5694fb9",
+  "reason": "annual_return_case requires an immutable active SLA calendar/policy; retained until exact tmpfs container removal"
+}

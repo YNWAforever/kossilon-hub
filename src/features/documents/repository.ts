@@ -9,14 +9,19 @@ import {
 } from "@/server/db/client";
 import type postgres from "postgres";
 import { boundedPageSize, readTupleCursor, tupleCursor } from "@/server/db/pagination";
-export type DocumentListFilters = {
+import {
+  bindDocumentQuery,
+  documentSearchPredicate,
+  type DocumentSearchFilters,
+} from "./list-filters";
+export type DocumentListFilters = DocumentSearchFilters & {
   id?: string;
   companyId?: string;
   caseId?: string;
   teamId?: string;
   assignedUserId?: string;
-  q?: string;
-  category?: string;
+  /** Internal diagnostics retain fixture metadata; public list RPCs force false. */
+  includeFixtures?: boolean;
   cursor?: string;
   limit?: number;
 };
@@ -111,6 +116,32 @@ export type PrivateDocument = {
   availability?: DocumentAvailability;
 };
 
+/** A receipt replay is a read of this exact version, never a fresh upload. */
+export function assertCommittedUploadMatchesDocument(
+  intent: DocumentUploadIntent,
+  document: PrivateDocument | null,
+): asserts document is PrivateDocument {
+  if (
+    !document ||
+    !intent.documentId ||
+    !intent.currentVersionId ||
+    intent.status === "created" ||
+    intent.status === "expired" ||
+    document.id !== intent.documentId ||
+    document.currentVersionId !== intent.currentVersionId ||
+    document.companyId !== intent.companyId ||
+    document.caseId !== intent.caseId ||
+    document.category !== intent.category ||
+    document.fileName !== intent.fileName ||
+    document.contentType !== intent.contentType ||
+    document.sizeBytes !== intent.expectedSizeBytes ||
+    document.checksum !== intent.checksum ||
+    document.objectKey !== intent.objectKey ||
+    document.uploadStatus !== intent.status
+  )
+    throw new Error("Committed upload lineage does not match the current document.");
+}
+
 /** A register entry is visible even when it cannot safely supply bytes. */
 export type DocumentSummary = Omit<
   PrivateDocument,
@@ -124,6 +155,9 @@ export type DocumentSummary = Omit<
   intentId?: string | null;
   /** Listing metadata does not check storage or prove that an object exists. */
   objectAvailability?: "not_checked";
+  uploadSource?: "staff" | "client" | "system";
+  /** Client-facing instruction for the rejected current version only. */
+  rejectionReason?: string | null;
 };
 
 export type DocumentUploadRequest = {
@@ -220,6 +254,7 @@ type IntentRow = {
   quarantine_retention_until: string | Date | null;
 };
 type DocumentRow = {
+  rejection_reason?: string | null;
   cursor_uploaded_at: string;
   scan_document_version_id?: string | null;
   reviewed_document_version_id?: string | null;
@@ -236,6 +271,7 @@ type DocumentRow = {
   expected_size_bytes: string | number | null;
   checksum_sha256: string | null;
   upload_status: DocumentStatus | null;
+  upload_source?: "staff" | "client" | "system";
   scan_verdict_source: ScanVerdictSource | null;
   current_version_id?: string | null;
   intent_id?: string | null;
@@ -337,6 +373,12 @@ function availabilityOf(row: DocumentRow): DocumentAvailability {
 
 function mapDocumentSummary(row: DocumentRow): DocumentSummary {
   return {
+    rejectionReason:
+      row.current_version_id &&
+      row.reviewed_document_version_id === row.current_version_id &&
+      row.verification_status === "rejected"
+        ? row.rejection_reason?.trim() || null
+        : null,
     scannedVersionId: row.scan_document_version_id ?? null,
     reviewedVersionId: row.reviewed_document_version_id ?? null,
     verifiedChecksum: row.verified_checksum_sha256 ?? null,
@@ -361,6 +403,7 @@ function mapDocumentSummary(row: DocumentRow): DocumentSummary {
     intentId: row.intent_id ?? null,
     availability: availabilityOf(row),
     objectAvailability: "not_checked",
+    uploadSource: row.upload_source,
   };
 }
 
@@ -480,17 +523,14 @@ export function createDocumentRepository(
   ) {
     const limit = boundedPageSize(filters.limit),
       cursor = readTupleCursor(filters.cursor, 2);
-    const q = filters.q?.trim()
-      ? `%${filters.q.trim().replace(/[\\%_]/g, (c) => "\\" + c)}%`
-      : null;
-    return client<DocumentRow[]>`
+    const query = bindDocumentQuery`
       with page as materialized (
       select d.* from documents d join companies c on c.id=d.company_id
       where (${filters.id ?? null}::uuid is null or d.id = ${filters.id ?? null})
         and (${filters.companyId ?? null}::uuid is null or d.company_id = ${filters.companyId ?? null})
+        and (${filters.includeFixtures !== false} or c.data_origin<>'fixture')
         and (${filters.caseId ?? null}::uuid is null or d.case_id = ${filters.caseId ?? null})
-        and (${filters.category ?? null}::text is null or d.file_type=${filters.category ?? null})
-        and (${q}::text is null or d.file_name ilike ${q} escape '\\' or c.company_name ilike ${q} escape '\\')
+        and ${documentSearchPredicate(filters)}
         -- Send the boundary as text: postgres.js serializes timestamptz through JS Date, losing microseconds.
         and (${cursor === null} or d.uploaded_at<${cursor?.[0] ?? null}::text::timestamptz or (d.uploaded_at=${cursor?.[0] ?? null}::text::timestamptz and d.id>${cursor?.[1] ?? null}::uuid))
         and (
@@ -502,13 +542,28 @@ export function createDocumentRepository(
       order by d.uploaded_at desc, d.id limit ${limit + (extra ? 1 : 0)})
       select d.*, d.uploaded_at::text as cursor_uploaded_at, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,
         i.scan_verdict_source,i.scan_document_version_id,v.id current_version_id,i.id intent_id,v.verified_checksum_sha256,
+        review.rejection_reason,
         md5(jsonb_build_object('document',to_jsonb(d),'version',to_jsonb(v),'intent',to_jsonb(i))::text) version_token
       from page d left join lateral (
         select * from document_versions where document_id=d.id and superseded_by_version_id is null order by version_number desc limit 1
       ) v on true
       left join document_upload_intents i on i.id=v.intent_id and i.document_id=d.id
         and i.company_id=d.company_id and i.case_id is not distinct from d.case_id and i.object_key=v.storage_url and v.storage_url=d.storage_url
+        and i.category=d.file_type and i.file_name=d.file_name and i.file_name=v.file_name
+        and i.content_type=v.content_type and i.expected_size_bytes=v.declared_byte_size
+        and i.checksum_sha256=v.declared_checksum_sha256
+      left join lateral (
+        select e.metadata->>'reason' as rejection_reason from timeline_events e
+        where d.verification_status='rejected' and d.reviewed_document_version_id=v.id
+          and e.company_id=d.company_id and e.case_id is not distinct from d.case_id
+          and e.event_type='document_reviewed'
+          and e.metadata->>'documentId'=d.id::text
+          and e.metadata->>'documentVersionId'=v.id::text
+          and e.metadata->>'decision'='rejected'
+        order by e.created_at desc,e.id desc limit 1
+      ) review on true
       order by d.uploaded_at desc,d.id`;
+    return client<DocumentRow[]>(query.strings, ...(query.values as never[]));
   }
 
   async function lockRecoverySource(tx: Tx, id: string) {
@@ -641,7 +696,37 @@ export function createDocumentRepository(
           ) values (${input.companyId}, ${input.caseId ?? null}, ${input.checklistItemId ?? null},
             ${input.requestedByAuthUserId},
             ${input.category}, ${input.fileName}, ${input.contentType}, ${input.expectedSizeBytes},
-            ${input.checksum}, ${input.objectKey}, ${input.expiresAt}) returning *`;
+            ${input.checksum}, ${input.objectKey}, ${input.expiresAt})
+          on conflict (object_key) do nothing returning *`;
+        if (!rows[0]) {
+          // A separate statement sees the winner of a concurrent unique-key
+          // insert at READ COMMITTED. Do not update its expiry or lifecycle.
+          const [existing] = await tx<(IntentRow & { is_recovery: boolean })[]>`
+            select i.*,v.id current_version_id,
+              exists(select 1 from timeline_events e where e.event_type='document_recovery_requested'
+                and e.metadata->>'intentId'=i.id::text) is_recovery
+            from document_upload_intents i left join document_versions v
+              on v.intent_id=i.id and v.superseded_by_version_id is null
+            where i.object_key=${input.objectKey}`;
+          if (
+            !existing ||
+            input.recovery ||
+            existing.is_recovery ||
+            existing.requested_by_auth_user_id !== input.requestedByAuthUserId ||
+            existing.company_id !== input.companyId ||
+            existing.case_id !== (input.caseId ?? null) ||
+            existing.checklist_item_id !== (input.checklistItemId ?? null) ||
+            existing.category !== input.category ||
+            existing.file_name !== input.fileName ||
+            existing.content_type !== input.contentType ||
+            Number(existing.expected_size_bytes) !== input.expectedSizeBytes ||
+            existing.checksum_sha256 !== input.checksum
+          )
+            throw new Error(
+              "Upload request does not match the original request or recovery scope.",
+            );
+          return mapIntent(existing);
+        }
         if (input.recovery)
           await tx`insert into timeline_events(company_id,case_id,event_type,actor_type,actor_id,description,metadata)
           values(${input.companyId},${input.caseId ?? null},'document_recovery_requested','user',${input.recoveryApprovedBy!},'Versioned additive document recovery approved.',
@@ -671,9 +756,20 @@ export function createDocumentRepository(
         }
         const intents = await tx<
           IntentRow[]
-        >`select * from document_upload_intents where id = ${input.intentId} for update`;
+        >`select i.*,v.id current_version_id from document_upload_intents i
+          left join document_versions v on v.intent_id=i.id and v.superseded_by_version_id is null
+          where i.id = ${input.intentId} for update of i`;
         const intent = intents[0] ? mapIntent(intents[0]) : null;
         if (!intent) throw new Error("Upload intent not found.");
+        if (intent.documentId) {
+          // The case -> intent lock serializes two first finalizes. The loser
+          // reads the committed chain without receipts, jobs or review resets.
+          const [row] = await documentRows({ id: intent.documentId }, tx);
+          const document =
+            row?.current_version_id && row.intent_id === intent.id ? mapDocument(row) : null;
+          assertCommittedUploadMatchesDocument(intent, document);
+          return { ...document, availability: availabilityOf(row) };
+        }
         if (intent.status !== "created") throw new Error("Upload intent cannot be finalized.");
         if (Date.parse(intent.expiresAt) <= Date.now()) throw new Error("Upload intent expired.");
         const [recovery] = await tx<

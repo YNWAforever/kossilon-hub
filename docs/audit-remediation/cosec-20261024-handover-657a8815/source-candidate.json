@@ -1,0 +1,24 @@
+{
+  "source_sha": "4e5b4532091d125d79ca19244a0699f26832166a",
+  "parent_sha": "d2f96c899e30661943b2a59740c2e266a976d9d2",
+  "tested_head": "d2f96c899e30661943b2a59740c2e266a976d9d2",
+  "paths": [
+    "src/features/admin/handover-scope.integration.test.ts",
+    "src/features/admin/production-staff-admin.interaction.test.tsx",
+    "src/features/admin/production-staff-admin.tsx",
+    "src/features/admin/repository.ts",
+    "src/features/admin/types.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "source_freeze": "source-post-checks.json",
+  "source_files_verified": 669,
+  "product_bytes_equal_unit_build": true,
+  "unit_build_freeze": "source-accepted2-before.json",
+  "test_only_hardening_after_unit_build": "src/features/admin/handover-scope.integration.test.ts",
+  "other_668_files_unchanged": true,
+  "final_fixture_validated_by": [
+    "typecheck-hardened.json",
+    "lintTest-hardened.json",
+    "db/test-green-r4.jsonl"
+  ]
+}

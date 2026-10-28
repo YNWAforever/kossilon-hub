@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  createWhatsAppWebhookHandler,
+  createWhatsAppWebhookHandler as createActualWhatsAppWebhookHandler,
   providerEventIdFrom,
   readWoztellSignatureHeader,
   WHATSAPP_WEBHOOK_PATH,
@@ -14,6 +14,14 @@ import {
   WOZTELL_STATUS_DELIVERED,
   WOZTELL_STATUS_READ,
 } from "./woztell-fixtures";
+
+// Existing provider/payload unit cases have no database. Schema admission is
+// exercised independently by webhook-schema and the gated SQL acceptance.
+function createWhatsAppWebhookHandler(
+  config: Parameters<typeof createActualWhatsAppWebhookHandler>[0],
+) {
+  return createActualWhatsAppWebhookHandler({ assertSchemaReady: async () => {}, ...config });
+}
 
 const SECRET = "woztell-webhook-secret-value";
 

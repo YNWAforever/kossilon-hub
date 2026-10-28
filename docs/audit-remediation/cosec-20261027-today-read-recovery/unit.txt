@@ -1,0 +1,16 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+[tanstack-router] These exports from "/workspace/kossilon-hub/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[tanstack-router] These exports from "/workspace/kossilon-hub/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+ Test Files  290 passed (290)
+      Tests  2904 passed (2904)
+   Start at  05:45:17
+   Duration  105.87s (transform 27.09s, setup 0ms, import 67.92s, tests 128.69s, environment 63.19s)

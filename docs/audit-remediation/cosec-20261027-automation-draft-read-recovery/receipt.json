@@ -1,0 +1,106 @@
+{
+  "baseline": "b9b6bee531a5af0e2036e720799b831938965dec",
+  "product_commit": "9099ffc9e1a42c9cbe5990707ad0d773b5f56573",
+  "files_sha256": {
+    "src/features/annual-return/components/production-whatsapp-automation.tsx": "ae1a400f6004e3fb51f589d5c576d9e0569d6e32c56db3333dd5653bb45d84a5",
+    "src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx": "22001e9958ff01fc2b1585d47c4af6215153648646d01bdb82d7f86efca614c2",
+    "src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx": "89343f4a96f9171784fc6d42631fad9e8d4fba96f0bd98509c94f92a5eb4dd1b"
+  },
+  "reviewed_server_files_sha256": {
+    "src/features/annual-return/server-fns.ts": "e75f3a303f1ebd649c4e62ec243ebb267cb4d688ce3af9a18c97d03d2a124af3",
+    "src/features/annual-return/whatsapp-reminders.ts": "a65a20719d3a568de8e580eb4a126362f04f2ee7cf74082998e5d6cdf1d087f5",
+    "src/features/annual-return/follow-up-repository.ts": "ecaa8d47c31f31abb665298e2f7024eaaf2c133a123622c3abd4670f75ac05fd",
+    "src/features/annual-return/follow-up-server-fns.ts": "8f18d9794965c6211993ba937aad570f8d553a34c3ca176d6a8bdb5effa44040",
+    "src/features/whatsapp/repository.ts": "d0cc726645e5861587668c228773dd4ca88118e3dc9e056d07fb18be0a169b63"
+  },
+  "checks": {
+    "red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx",
+      "exit": 1,
+      "log": "red.txt",
+      "failed": 4,
+      "passed": 4,
+      "files": 1
+    },
+    "targeted-initial": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx",
+      "exit": 1,
+      "log": "targeted-initial.txt",
+      "failed": 3,
+      "passed": 8,
+      "files": 2,
+      "cause": "Assertions preceded React query-error renders; changed to await visible disabled state."
+    },
+    "targeted-fixture": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx src/features/annual-return/whatsapp-reminders.test.ts",
+      "exit": 1,
+      "log": "targeted-fixture.txt",
+      "failed": 1,
+      "passed": 19,
+      "files": 3,
+      "unhandled_errors": 1,
+      "cause": "Vitest spread array case values, giving an object rather than array. Corrected with wrapped fresh field."
+    },
+    "targeted": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx src/features/annual-return/whatsapp-reminders.test.ts",
+      "exit": 0,
+      "log": "targeted.txt",
+      "passed": 20,
+      "files": 3,
+      "unhandled_errors": 0
+    },
+    "unit": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "log": "unit.txt",
+      "passed": 2940,
+      "files": 290,
+      "unhandled_errors": 0
+    },
+    "typecheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    "lint": {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/production-whatsapp-automation.tsx src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    "format": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/production-whatsapp-automation.tsx src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  },
+  "new_test_cases": 5,
+  "review": "Focused read-only review: no important findings.",
+  "scope": "Unit/JSDOM mocked RPC only; targeted tests included in full total. Actual bulk toolbar selection lifecycle tested with mocked bulk RPCs, not real jobs/cancellation. Final checks matched final product hashes before commit; evidence-only commit follows.",
+  "manual_reminder_assessment": "Queue/outbox precedes separate case counter/log write, server derives key from current counter, lost response lacks stable UI command handle. Existing automation delivery read filters follow-up:% rather than annual-return-reminder:%. Case/log readback cannot prove queue outcome; no manual reconciliation or durable-ID protocol invented.",
+  "further_local_passes_justified": true,
+  "remaining_local_candidates": [
+    "Automation sendMutation uncertain-result UI review against existing follow-up version/stable-key/outbox semantics; no server duplicate/delivery defect claimed.",
+    "Manual reminder and upload durable identity/reload recovery need explicit safe identity/read protocol design.",
+    "Cross-tab semantics need evidence before any fix; no exhaustive inventory claimed."
+  ],
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "not_performed": [
+    "server/schema/config changes",
+    "build",
+    "DB integration",
+    "hosted CI acceptance",
+    "Native execution or Native-only gates",
+    "deploy/promote",
+    "real message/filing",
+    "production Vercel/Neon changes"
+  ]
+}

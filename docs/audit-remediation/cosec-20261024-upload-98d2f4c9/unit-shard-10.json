@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-10",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/clients/components/production-client-register.interaction.test.tsx",
+    "src/features/clients/components/service-subscriptions-section.test.tsx",
+    "src/features/clients/create-command.test.ts",
+    "src/features/clients/data-origin.test.ts",
+    "src/features/clients/errors.test.ts",
+    "src/features/clients/identifiers.test.ts",
+    "src/features/clients/register-view-state.test.ts",
+    "src/features/corporate-changes/authorization.test.ts",
+    "src/features/corporate-changes/components/production-corporate-change-detail.test.tsx",
+    "src/features/corporate-changes/read.test.ts",
+    "src/features/corporate-changes/server-fns.test.ts",
+    "src/features/corporate-changes/workflow.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/features/clients/components/production-client-register.interaction.test.tsx",
+    "src/features/clients/components/service-subscriptions-section.test.tsx",
+    "src/features/clients/create-command.test.ts",
+    "src/features/clients/data-origin.test.ts",
+    "src/features/clients/errors.test.ts",
+    "src/features/clients/identifiers.test.ts",
+    "src/features/clients/register-view-state.test.ts",
+    "src/features/corporate-changes/authorization.test.ts",
+    "src/features/corporate-changes/components/production-corporate-change-detail.test.tsx",
+    "src/features/corporate-changes/read.test.ts",
+    "src/features/corporate-changes/server-fns.test.ts",
+    "src/features/corporate-changes/workflow.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/features/corporate-changes/components/production-corporate-change-detail.test.tsx",
+      "tests": 15
+    },
+    {
+      "path": "src/features/clients/components/service-subscriptions-section.test.tsx",
+      "tests": 7
+    },
+    {
+      "path": "src/features/clients/components/production-client-register.interaction.test.tsx",
+      "tests": 6
+    },
+    {
+      "path": "src/features/clients/create-command.test.ts",
+      "tests": 18
+    },
+    {
+      "path": "src/features/clients/register-view-state.test.ts",
+      "tests": 26
+    },
+    {
+      "path": "src/features/corporate-changes/read.test.ts",
+      "tests": 8
+    },
+    {
+      "path": "src/features/corporate-changes/workflow.test.ts",
+      "tests": 9
+    },
+    {
+      "path": "src/features/clients/errors.test.ts",
+      "tests": 8
+    },
+    {
+      "path": "src/features/clients/identifiers.test.ts",
+      "tests": 21
+    },
+    {
+      "path": "src/features/corporate-changes/server-fns.test.ts",
+      "tests": 6
+    },
+    {
+      "path": "src/features/corporate-changes/authorization.test.ts",
+      "tests": 9
+    },
+    {
+      "path": "src/features/clients/data-origin.test.ts",
+      "tests": 2
+    }
+  ]
+}

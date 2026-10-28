@@ -12,6 +12,8 @@ const loginWithMagicLink = vi.fn();
 const loginDemo = vi.fn();
 const loginWithGoogle = vi.fn();
 const signOut = vi.fn().mockResolvedValue(undefined);
+const retrySession = vi.fn();
+let mockAuthIssue: { kind: string; message: string } | null = null;
 
 // Mutable so individual tests (the still-valid-session race in particular) can
 // simulate a hydrated AuthProvider that already carries a truthy session, which
@@ -39,6 +41,8 @@ vi.mock("@/features/auth/auth-context-neon", () => ({
     loginDemo,
     loginWithGoogle,
     signOut,
+    authIssue: mockAuthIssue,
+    retrySession,
   }),
 }));
 
@@ -60,6 +64,8 @@ beforeEach(() => {
   vi.stubEnv("VITE_ENABLE_DEMO_AUTH", "false");
   mockSession = null;
   mockIsHydrated = true;
+  mockAuthIssue = null;
+  retrySession.mockResolvedValue({ ok: true });
   login.mockResolvedValue({ ok: true });
   loginWithMagicLink.mockResolvedValue({
     ok: true,
@@ -70,6 +76,73 @@ beforeEach(() => {
 });
 
 describe("LoginPage", () => {
+  it("explains a transient session failure and retries without losing a safe return", async () => {
+    const originalHref = window.location.href;
+    history.replaceState(null, "", "/login?redirect=%2Fdocuments%3Fsearch%3Dannual");
+    mockAuthIssue = { kind: "service", message: "登入服務暫時無法使用，請重試。" };
+    retrySession.mockImplementation(async () => {
+      mockAuthIssue = null;
+      mockSession = {
+        id: "A",
+        name: "User",
+        email: "a@example.test",
+        role: "Staff",
+        initials: "U",
+        team: "A",
+        signedInAt: "2026-10-23T00:00:00Z",
+      };
+      return { ok: true };
+    });
+    try {
+      render(<LoginPage />);
+      expect(screen.getByRole("alert").textContent).toContain("登入服務暫時無法使用");
+      expect(navigate).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole("button", { name: "重試登入狀態" }));
+      await waitFor(() =>
+        expect(navigate).toHaveBeenCalledWith({
+          href: "/documents?search=annual",
+          replace: true,
+        }),
+      );
+    } finally {
+      history.replaceState(null, "", originalHref);
+    }
+  });
+
+  it("explains an expired callback without reporting sign-in success", () => {
+    mockAuthIssue = { kind: "unauthenticated", message: "登入連結已過期，請重新登入。" };
+    render(<LoginPage />);
+    expect(screen.getByRole("alert").textContent).toContain("已過期");
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("explains the magic-link provider's expired callback without exposing its query details", () => {
+    const originalHref = window.location.href;
+    history.replaceState(
+      null,
+      "",
+      "/login?error=TOKEN_EXPIRED&error_description=private-unit-token",
+    );
+    try {
+      render(<LoginPage />);
+      expect(screen.getByRole("alert").textContent).toContain("登入連結已過期或無效");
+      expect(screen.queryByText(/private-unit-token/)).toBeNull();
+      expect(navigate).not.toHaveBeenCalled();
+    } finally {
+      history.replaceState(null, "", originalHref);
+    }
+  });
+
+  it("recovers Google controls after a rejected request", async () => {
+    loginWithGoogle.mockRejectedValueOnce(new Error("Network unavailable"));
+    render(<LoginPage />);
+    fireEvent.click(screen.getByRole("button", { name: "以 Google 帳戶登入" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("未能完成登入要求");
+    expect(
+      (screen.getByRole("button", { name: "以 Google 帳戶登入" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+  });
+
   it.each(["Admin", "Manager", "Staff", "Client"] as const)(
     "uses daily role landing for %s without an explicit return",
     async (role) => {

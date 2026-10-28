@@ -1,0 +1,12 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--check",
+    "--",
+    "src/components/clients/client-form-dialog.tsx",
+    "src/components/clients/client-form-dialog.test.tsx"
+  ],
+  "exit_code": 0,
+  "at": "2026-10-23T13:18:27.717Z"
+}

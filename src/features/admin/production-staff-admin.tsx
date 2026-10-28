@@ -13,6 +13,8 @@ import {
   listStaffAudit,
 } from "./server-fns";
 import { annualReturnStatusLabel } from "@/features/annual-return/labels";
+import { INCORPORATION_STATUS_LABELS } from "@/features/incorporation/labels";
+import { CORPORATE_CHANGE_STATUS_LABELS } from "@/features/corporate-changes/labels";
 import {
   STAFF_ROLES,
   STAFF_ROLE_LABELS,
@@ -21,6 +23,7 @@ import {
   type UpdateStaffInput,
 } from "./types";
 import { staffInvitationCapability } from "./auth-provider";
+import { StaffHandoverPanel } from "./staff-handover-panel";
 export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
   const [q, setQ] = useState(""),
     [role, setRole] = useState("all"),
@@ -261,15 +264,33 @@ function StaffRow({
               </p>
               {preview.data.cases.map((c) => (
                 <p key={c.id}>
-                  <Link to="/annual-returns/$id" params={{ id: c.id }}>
-                    {c.companyName} · {annualReturnStatusLabel(c.status)}
-                  </Link>
+                  {c.caseType === "incorporation" ? (
+                    <Link to="/incorporation/$id" params={{ id: c.id }}>
+                      公司註冊 · {c.companyName} ·{" "}
+                      {(INCORPORATION_STATUS_LABELS as Record<string, string>)[c.status] ??
+                        c.status}
+                    </Link>
+                  ) : c.caseType === "corporate_change" ? (
+                    <Link to="/corporate-changes/$id" params={{ id: c.id }}>
+                      公司變更 · {c.companyName} ·{" "}
+                      {(CORPORATE_CHANGE_STATUS_LABELS as Record<string, string>)[c.status] ??
+                        c.status}
+                    </Link>
+                  ) : (
+                    <Link to="/annual-returns/$id" params={{ id: c.id }}>
+                      {c.companyName} · {annualReturnStatusLabel(c.status)}
+                    </Link>
+                  )}
                 </p>
               ))}
               {preview.data.workItems.map((w) => (
                 <p key={w.id}>{w.title}</p>
               ))}
-              {preview.data.truncated ? <p>只顯示首100筆，請在工作隊列核對完整範圍。</p> : null}
+              {preview.data.truncated ? (
+                <p>
+                  只顯示首100筆，仍有未列出的案件。請在相應業務清單核對完整範圍；工作隊列不包含所有案件。
+                </p>
+              ) : null}
               <Link
                 to="/work-queue"
                 search={{
@@ -281,11 +302,12 @@ function StaffRow({
                   status: "all",
                 }}
               >
-                開啟工作隊列轉交
+                開啟工作隊列（只處理已建立的工作項）
               </Link>
             </div>
           ) : null}
           {blocked ? <p>必須先完成轉交，才可停用、移隊或改為客戶。</p> : null}
+          {open ? <StaffHandoverPanel member={member} actorScope={actorScope} /> : null}
           <Button
             variant="primary"
             disabled={
@@ -310,7 +332,12 @@ function StaffRow({
           ) : (
             audit.data?.map((event) => (
               <p key={event.id}>
-                {event.event_type} · {event.actor_name} ·{" "}
+                {event.command === "staff_handover"
+                  ? `責任交接 · 操作 ${event.id}`
+                  : event.command === "staff_handover_cancelled"
+                    ? `取消交接 · 操作 ${event.id}`
+                    : event.event_type}{" "}
+                · {event.actor_name} ·{" "}
                 {new Date(event.created_at).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })}
               </p>
             ))

@@ -1,0 +1,8 @@
+{
+  "baseline_counts_equal": true,
+  "outbox_after": 0,
+  "native_auth": false,
+  "new_fixture_exact_id_zero_readbacks": "See R16-owned-fixture*,R17-document-volume*,R14-R20-owned-SQL*,R21-owned-fixture*; existing suite cleanup bound to exact generated IDs",
+  "observed_sql_reference_ids": 20281,
+  "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de"
+}

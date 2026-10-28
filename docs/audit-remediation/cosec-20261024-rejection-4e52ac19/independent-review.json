@@ -1,0 +1,341 @@
+{
+  "schema_version": 1,
+  "run_id": "cosec-20261024-rejection-4e52ac19",
+  "scenario": "UC149",
+  "review_kind": "Bounded independent read-only source and evidence review",
+  "skill": "C:/Users/laich/.codex/skills/product-development-execution/SKILL.md",
+  "recorded_at": "2026-10-24T02:59:58.718Z",
+  "repo": {
+    "root": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+    "origin": "https://github.com/YNWAforever/kossilon-hub.git",
+    "branch": "codex/cosec-20261023",
+    "base": "6f29c4068fcbbaa2197efdf0b8969777b78f47c5",
+    "head": "6f29c4068fcbbaa2197efdf0b8969777b78f47c5",
+    "source_state": "Owned uncommitted UC149 diff at base; no source or Git mutations by reviewer"
+  },
+  "result": "NO_ACTIONABLE_FINDINGS",
+  "findings": [],
+  "conclusion": "No concrete regression, privacy leak, current-version scope defect, cache-key mismatch or same-file in-flight duplicate flaw identified in the reviewed UC149 change.",
+  "reviewed_source_files": [
+    {
+      "path": "src/features/documents/repository.ts",
+      "bytes": 51956,
+      "sha256": "be7a0bad596146e806a11ddf66c9a416e51be2e7472e81b2ee819d3e94a7e151"
+    },
+    {
+      "path": "src/routes/portal.tsx",
+      "bytes": 40996,
+      "sha256": "36efebf7a5f0e748ce2a75b3b84626570e6b0c6cecd361385a7e90d3d49bc924"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "bytes": 3196,
+      "sha256": "a88e13ad15297393a8c0a735229318dc9828977a90f04f194ee8d402d1f78aa7"
+    },
+    {
+      "path": "src/features/documents/rejection-projection.test.ts",
+      "bytes": 2110,
+      "sha256": "087f1da2eb06c7abd612003acd96e039b1c9430e8222926acb2752cbf6a5b825"
+    },
+    {
+      "path": "src/features/documents/rejection-readback.integration.test.ts",
+      "bytes": 28585,
+      "sha256": "2005efe60c42c2f32e90c70f70dafd9c61e28664f6a275175ca4b4bae6727b81"
+    },
+    {
+      "path": "src/routes/-document-rejection.interaction.test.tsx",
+      "bytes": 7272,
+      "sha256": "1c6bbccab0c247fb59ac6a8f861e68d534b2e40608bcc7a617ec53cb7d83d51f"
+    },
+    {
+      "path": "src/features/documents/server-fns.ts",
+      "bytes": 27307,
+      "sha256": "2c1b58ef9ee2dc79d30525bd0a402f493c8f0c9acd42782ed4eea157a683da25"
+    },
+    {
+      "path": "src/features/annual-return/evidence-service.ts",
+      "bytes": 12500,
+      "sha256": "0e820636c3a4d8ed6811d59ab51129bec194d00b2671479b2435f496ebf15ca5"
+    },
+    {
+      "path": "src/routes/documents.tsx",
+      "bytes": 39360,
+      "sha256": "83d4b971546514d281f4124a1083925f90328d53b99f91cef3c72e9a031d7c5e"
+    },
+    {
+      "path": "src/routes/-portal-identity.interaction.test.tsx",
+      "bytes": 2886,
+      "sha256": "e6d3b6df14b5ca26dac8d757b3cea4eee557d506aae7033057b5729a47267b21"
+    },
+    {
+      "path": "vite.config.ts",
+      "bytes": 8318,
+      "sha256": "d6fa421a6b6dafe0af56fd791c4fc485944b98b12365ed04265448b8dc2df6dd"
+    }
+  ],
+  "exact_base_comparison": {
+    "base": "6f29c4068fcbbaa2197efdf0b8969777b78f47c5",
+    "tracked_paths": [
+      "src/features/documents/repository.ts",
+      "src/routes/portal.tsx",
+      "src/test/db-integration-files.ts"
+    ],
+    "tracked_diff_utf8": "diff --git a/src/features/documents/repository.ts b/src/features/documents/repository.ts\nindex c8bbc05..910dc0e 100644\n--- a/src/features/documents/repository.ts\n+++ b/src/features/documents/repository.ts\n@@ -130,6 +130,8 @@ export type DocumentSummary = Omit<\n   /** Listing metadata does not check storage or prove that an object exists. */\n   objectAvailability?: \"not_checked\";\n   uploadSource?: \"staff\" | \"client\" | \"system\";\n+  /** Client-facing instruction for the rejected current version only. */\n+  rejectionReason?: string | null;\n };\n \n export type DocumentUploadRequest = {\n@@ -226,6 +228,7 @@ type IntentRow = {\n   quarantine_retention_until: string | Date | null;\n };\n type DocumentRow = {\n+  rejection_reason?: string | null;\n   cursor_uploaded_at: string;\n   scan_document_version_id?: string | null;\n   reviewed_document_version_id?: string | null;\n@@ -344,6 +347,12 @@ function availabilityOf(row: DocumentRow): DocumentAvailability {\n \n function mapDocumentSummary(row: DocumentRow): DocumentSummary {\n   return {\n+    rejectionReason:\n+      row.current_version_id &&\n+      row.reviewed_document_version_id === row.current_version_id &&\n+      row.verification_status === \"rejected\"\n+        ? row.rejection_reason?.trim() || null\n+        : null,\n     scannedVersionId: row.scan_document_version_id ?? null,\n     reviewedVersionId: row.reviewed_document_version_id ?? null,\n     verifiedChecksum: row.verified_checksum_sha256 ?? null,\n@@ -507,12 +516,23 @@ export function createDocumentRepository(\n       order by d.uploaded_at desc, d.id limit ${limit + (extra ? 1 : 0)})\n       select d.*, d.uploaded_at::text as cursor_uploaded_at, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,\n         i.scan_verdict_source,i.scan_document_version_id,v.id current_version_id,i.id intent_id,v.verified_checksum_sha256,\n+        review.rejection_reason,\n         md5(jsonb_build_object('document',to_jsonb(d),'version',to_jsonb(v),'intent',to_jsonb(i))::text) version_token\n       from page d left join lateral (\n         select * from document_versions where document_id=d.id and superseded_by_version_id is null order by version_number desc limit 1\n       ) v on true\n       left join document_upload_intents i on i.id=v.intent_id and i.document_id=d.id\n         and i.company_id=d.company_id and i.case_id is not distinct from d.case_id and i.object_key=v.storage_url and v.storage_url=d.storage_url\n+      left join lateral (\n+        select e.metadata->>'reason' as rejection_reason from timeline_events e\n+        where d.verification_status='rejected' and d.reviewed_document_version_id=v.id\n+          and e.company_id=d.company_id and e.case_id is not distinct from d.case_id\n+          and e.event_type='document_reviewed'\n+          and e.metadata->>'documentId'=d.id::text\n+          and e.metadata->>'documentVersionId'=v.id::text\n+          and e.metadata->>'decision'='rejected'\n+        order by e.created_at desc,e.id desc limit 1\n+      ) review on true\n       order by d.uploaded_at desc,d.id`;\n     return client<DocumentRow[]>(query.strings, ...(query.values as never[]));\n   }\ndiff --git a/src/routes/portal.tsx b/src/routes/portal.tsx\nindex 68b324e..0a3d5da 100644\n--- a/src/routes/portal.tsx\n+++ b/src/routes/portal.tsx\n@@ -8,7 +8,7 @@ import {\n } from \"../features/annual-return/server-fns\";\n import { parseEntityId } from \"@/lib/entity-id\";\n import type { AnnualReturnCase as ProductionAnnualReturnCase } from \"../features/annual-return/types\";\n-import { useEffect, useMemo, useState } from \"react\";\n+import { useEffect, useMemo, useRef, useState } from \"react\";\n import { useInfiniteQuery, useQuery, useQueryClient } from \"@tanstack/react-query\";\n import { Link, createFileRoute, useNavigate } from \"@tanstack/react-router\";\n import { CheckCircle2, Download, ReceiptText } from \"lucide-react\";\n@@ -771,6 +771,8 @@ function ScopedDocumentPanel({\n   // last of them. Keyed by name+size+lastModified so re-picking the same file\n   // reuses its row instead of accumulating duplicates.\n   const [outcomes, setOutcomes] = useState<Record<string, UploadOutcome>>({});\n+  const pendingFiles = useRef(new Set<string>());\n+  const batchPending = useRef(false);\n   const [uploading, setUploading] = useState(false);\n   const productionReady = isUuid(companyId) && isUuid(caseId);\n   const documentsQuery = useInfiniteQuery({\n@@ -788,6 +790,8 @@ function ScopedDocumentPanel({\n       : (documentsQuery.data?.pages.flatMap((page) => page.documents) ?? []);\n   async function uploadOne(candidate: File): Promise<void> {\n     const key = fileKey(candidate);\n+    if (pendingFiles.current.has(key)) return;\n+    pendingFiles.current.add(key);\n     setOutcomes((current) => ({ ...current, [key]: { state: \"uploading\" } }));\n     try {\n       const bytes = new Uint8Array(await candidate.arrayBuffer());\n@@ -811,6 +815,14 @@ function ScopedDocumentPanel({\n       // yet readable evidence, and saying so plainly is the difference between an\n       // honest state and the one this phase exists to remove.\n       setOutcomes((current) => ({ ...current, [key]: { state: \"received\" } }));\n+      // Both the batch and per-file retry must reread the saved document and\n+      // the client requirement projection; a toast cannot establish receipt.\n+      await Promise.all([\n+        queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.documents(caseId) }),\n+        queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.detail(caseId) }),\n+        queryClient.invalidateQueries({ queryKey: [\"client-portal\", \"case\", caseId, actorScope] }),\n+        queryClient.invalidateQueries({ queryKey: [\"client-portal\", \"cases\", actorScope] }),\n+      ]);\n     } catch (error) {\n       setOutcomes((current) => ({\n         ...current,\n@@ -819,10 +831,14 @@ function ScopedDocumentPanel({\n           message: error instanceof Error ? error.message : \"上載失敗。\",\n         },\n       }));\n+    } finally {\n+      pendingFiles.current.delete(key);\n     }\n   }\n \n   async function uploadAll(candidates: File[]): Promise<void> {\n+    if (batchPending.current) return;\n+    batchPending.current = true;\n     setUploading(true);\n     try {\n       // Sequential on purpose: each upload sends the whole body through a single\n@@ -832,6 +848,7 @@ function ScopedDocumentPanel({\n         await uploadOne(candidate);\n       }\n     } finally {\n+      batchPending.current = false;\n       setUploading(false);\n       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.documents(caseId) });\n     }\n@@ -966,6 +983,13 @@ function ScopedDocumentPanel({\n                       : \"只有文件登記，欠上載來源\"}{\" \"}\n                     / {labelValue(document.reviewStatus)}\n                   </p>\n+                  {document.reviewStatus === \"rejected\" ? (\n+                    <p className=\"mt-1 whitespace-pre-wrap break-words text-sm text-status-orange-text\">\n+                      {document.rejectionReason\n+                        ? `退回原因：${document.rejectionReason}`\n+                        : \"退回原因未有記錄，請聯絡負責同事確認需補正的內容。\"}\n+                    </p>\n+                  ) : null}\n                 </div>\n                 {document.uploadStatus === \"available\" && document.reviewStatus === \"verified\" ? (\n                   <Button onClick={() => handleDownload(document.id)} type=\"button\">\ndiff --git a/src/test/db-integration-files.ts b/src/test/db-integration-files.ts\nindex be00a62..89465d3 100644\n--- a/src/test/db-integration-files.ts\n+++ b/src/test/db-integration-files.ts\n@@ -36,6 +36,7 @@ export const DB_INTEGRATION_TEST_FILES = [\n   \"src/features/clients/create-recovery.integration.test.ts\",\n   \"src/features/corporate-changes/repository.test.ts\",\n   \"src/features/documents/repository.integration.test.ts\",\n+  \"src/features/documents/rejection-readback.integration.test.ts\",\n   \"src/features/documents/company-document-register.integration.test.ts\",\n   \"src/features/documents/document-volume.integration.test.ts\",\n   \"src/features/incorporation/repository.test.ts\",\n",
+    "tracked_diff_bytes": 8121,
+    "tracked_diff_sha256": "807a1ded29ee4056c9191fc62fa55c5f28f6f42d64b2723fd15d4a5e84c09d16",
+    "new_test_additions": [
+      {
+        "path": "src/features/documents/rejection-projection.test.ts",
+        "base_state": "absent",
+        "patch_utf8": "diff --git a/src/features/documents/rejection-projection.test.ts b/src/features/documents/rejection-projection.test.ts\nnew file mode 100644\nindex 0000000..692a2ab\n--- /dev/null\n+++ b/src/features/documents/rejection-projection.test.ts\n@@ -0,0 +1,48 @@\n+import { describe, expect, it, vi } from \"vitest\";\n+import type { SqlClient } from \"@/server/db/client\";\n+import { createDocumentRepository } from \"./repository\";\n+const current = \"4e52ac19-0149-4149-8149-000000000001\";\n+const reason = \"missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。\";\n+const row = {\n+  id: \"4e52ac19-0149-4149-8149-000000000002\",\n+  company_id: \"4e52ac19-0149-4149-8149-000000000003\",\n+  case_id: \"4e52ac19-0149-4149-8149-000000000004\",\n+  file_type: \"identity\",\n+  file_name: \"QA-UC149.pdf\",\n+  storage_url: \"QA-UC149/local-only\",\n+  verification_status: \"rejected\",\n+  uploaded_by: null,\n+  uploaded_at: \"2026-10-24T00:00:00Z\",\n+  cursor_uploaded_at: \"2026-10-24 00:00:00+00\",\n+  content_type: \"application/pdf\",\n+  expected_size_bytes: 4,\n+  checksum_sha256: \"a\".repeat(64),\n+  upload_status: \"available\",\n+  scan_verdict_source: \"provider\",\n+  current_version_id: current,\n+  reviewed_document_version_id: current,\n+  scan_document_version_id: current,\n+  intent_id: \"4e52ac19-0149-4149-8149-000000000005\",\n+  verified_checksum_sha256: \"a\".repeat(64),\n+  rejection_reason: reason,\n+};\n+describe(\"UC149 rejection projection\", () => {\n+  async function read(overrides: object = {}) {\n+    const sql = vi.fn(async () => [{ ...row, ...overrides }]);\n+    const repository = createDocumentRepository({ sql: sql as unknown as SqlClient });\n+    return (await repository.listDocumentPage({ caseId: row.case_id })).documents[0];\n+  }\n+  it(\"returns the explicit client instruction attached to the rejected current version\", async () => {\n+    expect(await read()).toMatchObject({ reviewStatus: \"rejected\", rejectionReason: reason });\n+  });\n+  it.each([\n+    { reviewed_document_version_id: \"4e52ac19-0149-4149-8149-000000000006\" },\n+    { current_version_id: null },\n+    { verification_status: \"verified\" },\n+    { verification_status: \"pending\" },\n+    { rejection_reason: null },\n+    { rejection_reason: \"  \" },\n+  ])(\"does not disclose old or absent instructions for %j\", async (overrides) => {\n+    expect(await read(overrides)).toMatchObject({ rejectionReason: null });\n+  });\n+});\n",
+        "patch_bytes": 2410,
+        "patch_sha256": "2851348a097b2866a2b287496e0bc52ea4cd47882f09d5e01e3f8133fcc8828a"
+      },
+      {
+        "path": "src/features/documents/rejection-readback.integration.test.ts",
+        "base_state": "absent",
+        "patch_utf8": "diff --git a/src/features/documents/rejection-readback.integration.test.ts b/src/features/documents/rejection-readback.integration.test.ts\nnew file mode 100644\nindex 0000000..9e6da8c\n--- /dev/null\n+++ b/src/features/documents/rejection-readback.integration.test.ts\n@@ -0,0 +1,626 @@\n+import { randomUUID } from \"node:crypto\";\n+import { appendFileSync, closeSync, openSync, realpathSync } from \"node:fs\";\n+import { dirname, resolve } from \"node:path\";\n+import { getCurrentTest } from \"@vitest/runner\";\n+import { describe, expect, it, onTestFinished, vi } from \"vitest\";\n+import type { AuthenticatedActor } from \"@/features/auth/types\";\n+import { createSqlClient, type SqlClient } from \"@/server/db/client\";\n+import { guardSqlTestLifetime } from \"@/test/sql-test-lifetime\";\n+import {\n+  requireClientCompanyAccess,\n+  type NeonSessionAdapter,\n+} from \"@/features/auth/neon-auth-server\";\n+import { createDocumentRepository, type DocumentSummary } from \"./repository\";\n+import { listDocumentPageForActor } from \"./server-fns\";\n+import { DocumentVersionConflictError } from \"./version-conflict\";\n+\n+// Collection is inert: no dotenv, SQL constructor, fixture or artifact. The parent\n+// alone verifies its NEW disposable container/image/labels/mounts/mapped TCP path\n+// before supplying this sanitized environment. Loopback and an env label are not\n+// isolation proof. No storage, scanner, worker or native Auth provider is invoked.\n+const RUN = \"cosec-20261024-rejection-4e52ac19\";\n+const DATABASE = \"cosec_rejection_4e52ac19\";\n+const DB_USER = \"cosec_runner\";\n+const run = process.env.COSEC_UC149_RUN_ID;\n+const checksum = \"a\".repeat(64);\n+\n+type Identity = {\n+  database: string;\n+  db_role: string;\n+  system_id: string;\n+  server_address: string;\n+  server_port: number;\n+  pid: number;\n+};\n+\n+async function identity(sql: SqlClient) {\n+  const [row] = await sql<Identity[]>`select current_database() database,current_user db_role,\n+    (select system_identifier::text from pg_control_system()) system_id,\n+    inet_server_addr()::text server_address,inet_server_port() server_port,pg_backend_pid() pid`;\n+  return row;\n+}\n+\n+async function fixtureCounts(sql: SqlClient) {\n+  const [row] = await sql`select\n+    (select count(*)::int from teams) teams,\n+    (select count(*)::int from users) users,\n+    (select count(*)::int from staff_profiles) profiles,\n+    (select count(*)::int from client_company_memberships) memberships,\n+    (select count(*)::int from companies) companies,\n+    (select count(*)::int from annual_return_cases) cases,\n+    (select count(*)::int from annual_return_checklist_items) checklist,\n+    (select count(*)::int from documents) documents,\n+    (select count(*)::int from document_versions) versions,\n+    (select count(*)::int from document_upload_intents) intents,\n+    (select count(*)::int from document_scan_jobs) scan_jobs,\n+    (select count(*)::int from document_analysis_jobs) analysis_jobs,\n+    (select count(*)::int from timeline_events) timeline,\n+    (select count(*)::int from annual_return_audit_events) audits,\n+    (select count(*)::int from work_items) work_items,\n+    (select count(*)::int from notification_outbox) outbox`;\n+  return row;\n+}\n+\n+describe.skipIf(!run)(\"UC149 rejection readback on parent-owned disposable SQL\", () => {\n+  it(\"projects only the current scoped reason; replacement stays pending and old review survives\", async () => {\n+    const databaseUrl = process.env.DATABASE_URL;\n+    const targetId = process.env.COSEC_UC149_TARGET_ID;\n+    const systemId = process.env.COSEC_UC149_SYSTEM_ID;\n+    const directory = process.env.COSEC_UC149_EVENTS_DIR;\n+    const attempt = process.env.COSEC_UC149_ATTEMPT;\n+    if (\n+      run !== RUN ||\n+      !databaseUrl ||\n+      process.env.COSEC_UC149_DB_NAME !== DATABASE ||\n+      !/^[a-f0-9]{64}$/.test(targetId ?? \"\") ||\n+      !/^\\d+$/.test(systemId ?? \"\") ||\n+      !directory ||\n+      ![\"red\", \"green\"].includes(attempt ?? \"\")\n+    )\n+      throw new Error(\n+        \"Parent-gated UC149 run, target, system identity and fresh attempt required.\",\n+      );\n+    let target: URL;\n+    try {\n+      target = new URL(databaseUrl);\n+    } catch {\n+      throw new Error(\"Invalid parent-gated UC149 TCP URL.\");\n+    }\n+    if (\n+      target.protocol !== \"postgresql:\" ||\n+      target.hostname !== \"127.0.0.1\" ||\n+      !target.port ||\n+      target.username !== DB_USER ||\n+      target.pathname !== \"/\" + DATABASE ||\n+      target.search ||\n+      target.hash\n+    )\n+      throw new Error(\"UC149 URL differs from the parent's direct mapped TCP target.\");\n+    const folder = resolve(directory);\n+    if (\n+      realpathSync(process.cwd()).toLowerCase() !==\n+        \"c:\\\\users\\\\laich\\\\documents\\\\kossilon-hub\\\\cosec-20261023\" ||\n+      folder !== resolve(\"docs/audit-remediation\", RUN, \"db\") ||\n+      realpathSync(folder) !== folder ||\n+      realpathSync(dirname(folder)) !== dirname(folder)\n+    )\n+      throw new Error(\"UC149 evidence path is outside the exact run or redirected.\");\n+    const signal = getCurrentTest()?.context.signal;\n+    if (!signal) throw new Error(\"Running test lifetime required.\");\n+    signal.throwIfAborted();\n+    const pending = scenario(databaseUrl, targetId!, systemId!, folder, attempt!, signal);\n+    onTestFinished(async () => {\n+      // Drain in-flight operations AND raw-client cleanup after a timeout/abort.\n+      await pending.catch(() => undefined);\n+    });\n+    await pending;\n+  }, 60_000);\n+});\n+\n+async function scenario(\n+  databaseUrl: string,\n+  targetId: string,\n+  systemId: string,\n+  folder: string,\n+  attempt: string,\n+  signal: AbortSignal,\n+) {\n+  const fd = openSync(resolve(folder, `sidecar-UC149-SQL-${attempt}.jsonl`), \"wx\");\n+  const record = (phase: string, values: object) => {\n+    const receipt = { runId: RUN, attempt, phase, ...values };\n+    appendFileSync(fd, JSON.stringify(receipt) + \"\\n\");\n+    console.info(JSON.stringify(receipt));\n+  };\n+  const ids = {\n+    team: randomUUID(),\n+    staff: randomUUID(),\n+    profile: randomUUID(),\n+    companies: [randomUUID(), randomUUID()],\n+    cases: [randomUUID(), randomUUID(), randomUUID()],\n+    checklist: randomUUID(),\n+    memberships: [randomUUID(), randomUUID(), randomUUID()],\n+    clientAuth: randomUUID(),\n+    otherClientAuth: randomUUID(),\n+    staleVersion: randomUUID(),\n+  };\n+  const staffAuth = `${RUN}:${ids.staff}`;\n+  const objectKeys: string[] = [];\n+  let raw: SqlClient | undefined;\n+  let observerRaw: SqlClient | undefined;\n+  let fixturesCommitted = false;\n+  let assertionsPassed = false;\n+  const failures: unknown[] = [];\n+  try {\n+    record(\"planned-ids\", { ids, targetId, nativeAuth: false, nativeProvider: false });\n+    signal.throwIfAborted();\n+    // Constructors follow the parent's metadata gate AND the checks above.\n+    raw = createSqlClient(databaseUrl, { max: 1, ssl: false });\n+    observerRaw = createSqlClient(databaseUrl, { max: 1, ssl: false });\n+    const sql = guardSqlTestLifetime(raw, () => signal);\n+    const observer = guardSqlTestLifetime(observerRaw, () => signal);\n+    const writerIdentity = await identity(sql);\n+    const observerIdentity = await identity(observer);\n+    record(\"tcp-identity\", { targetId, writerIdentity, observerIdentity });\n+    for (const value of [writerIdentity, observerIdentity]) {\n+      expect(value.database).toBe(DATABASE);\n+      expect(value.db_role).toBe(DB_USER);\n+      expect(value.system_id).toBe(systemId);\n+      expect(value.server_port).toBe(5432);\n+      expect(value.server_address).toBeTruthy();\n+    }\n+    expect(observerIdentity.server_address).toBe(writerIdentity.server_address);\n+    expect(observerIdentity.pid).not.toBe(writerIdentity.pid);\n+    const baseline = await fixtureCounts(observer);\n+    record(\"empty-fixture-gate\", { baseline });\n+    expect(Object.values(baseline).every((n) => n === 0)).toBe(true);\n+\n+    await sql.begin(async (tx) => {\n+      await tx`insert into teams(id,name) values(${ids.team},${`${RUN}:${ids.team}`})`;\n+      await tx`insert into users(id,name,email,role,team_id,active)\n+        values(${ids.staff},'Synthetic UC149 reviewer',${ids.staff + \"@example.test\"},'Staff',${ids.team},true)`;\n+      await tx`insert into staff_profiles(id,user_id,auth_user_id,role,team_id,active)\n+        values(${ids.profile},${ids.staff},${staffAuth},'Staff',${ids.team},true)`;\n+      for (const [index, company] of ids.companies.entries()) {\n+        // Public lists omit fixture-origin companies. These run-owned\n+        // client-origin rows exist only in the newly gated disposable database.\n+        await tx`insert into companies(id,company_name,cr_number,br_number,incorporation_date,\n+          annual_return_basis_date,registered_office,company_secretary,assigned_owner_id,assigned_team_id,data_origin)\n+          values(${company},${`Synthetic UC149 ${index}`},${company},${company},'2025-01-01',\n+            '2026-01-01','Synthetic office','Synthetic secretary',${ids.staff},${ids.team},'client')`;\n+      }\n+      for (const [index, caseId] of ids.cases.entries()) {\n+        await tx`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,\n+          current_status,owner_id,reviewer_id)\n+          values(${caseId},${ids.companies[index === 2 ? 1 : 0]},${2026 + index},'2026-01-01',\n+            '2026-02-12','Documents pending',${ids.staff},${ids.staff})`;\n+      }\n+      await tx`insert into annual_return_checklist_items(id,case_id,item_label,due_date,status)\n+        values(${ids.checklist},${ids.cases[0]},'Synthetic signed form','2026-02-12','Missing')`;\n+      await tx`insert into client_company_memberships(id,auth_user_id,company_id,active) values\n+        (${ids.memberships[0]},${ids.clientAuth},${ids.companies[0]},true),\n+        (${ids.memberships[1]},${ids.clientAuth},${ids.companies[1]},false),\n+        (${ids.memberships[2]},${ids.otherClientAuth},${ids.companies[1]},true)`;\n+    });\n+    fixturesCommitted = true;\n+    record(\"fixtures-committed\", { ids });\n+\n+    const repository = createDocumentRepository({ sql });\n+    const reader = createDocumentRepository({ sql: observer });\n+    const upload = async (label: string, replacementDocumentId?: string) => {\n+      const objectKey = `${RUN}/${ids.companies[0]}/${label}.pdf`;\n+      objectKeys.push(objectKey);\n+      const intent = await repository.createUploadIntent({\n+        companyId: ids.companies[0],\n+        caseId: ids.cases[0],\n+        checklistItemId:\n+          label === \"original\" || label === \"replacement\" ? ids.checklist : undefined,\n+        replacementDocumentId,\n+        requestedByAuthUserId: ids.clientAuth,\n+        category: \"signature\",\n+        fileName: `${label}.pdf`,\n+        contentType: \"application/pdf\",\n+        expectedSizeBytes: 4,\n+        checksum,\n+        objectKey,\n+        expiresAt: new Date(Date.now() + 900_000).toISOString(),\n+      });\n+      const document = await repository.finalizeUploadIntent({\n+        intentId: intent.id,\n+        uploadedBy: null,\n+        source: \"client\",\n+      });\n+      expect(document.currentVersionId).toBeTruthy();\n+      record(\"upload-received\", {\n+        label,\n+        intentId: intent.id,\n+        documentId: document.id,\n+        versionId: document.currentVersionId,\n+      });\n+      return {\n+        intentId: intent.id,\n+        documentId: document.id,\n+        versionId: document.currentVersionId!,\n+      };\n+    };\n+    const scan = async (document: Awaited<ReturnType<typeof upload>>) => {\n+      // Controlled SQL stimulus only: 'provider' selects the production version\n+      // binding branch. This fabricated result is NOT native scan/storage proof.\n+      await repository.recordScanResult(\n+        document.intentId,\n+        {\n+          status: \"clean\",\n+          providerReference: `${RUN}:LOCAL-STUB-NOT-NATIVE`,\n+          verifiedChecksum: checksum,\n+          verifiedByteSize: 4,\n+          documentVersionId: document.versionId,\n+        },\n+        {\n+          verdictSource: \"provider\",\n+          expectedChecksum: checksum,\n+          expectedVersionId: document.versionId,\n+        },\n+      );\n+      record(\"controlled-scan-result\", { ...document, localStub: true, nativeProvider: false });\n+    };\n+    const review = (\n+      document: Awaited<ReturnType<typeof upload>>,\n+      decision: \"verified\" | \"rejected\",\n+      reason?: string,\n+    ) =>\n+      repository.reviewDocument({\n+        documentId: document.documentId,\n+        expectedVersionId: document.versionId,\n+        reviewerId: ids.staff,\n+        reviewerAuthUserId: staffAuth,\n+        decision,\n+        reason,\n+      });\n+    const readOne = async (documentId: string): Promise<DocumentSummary> => {\n+      const page = await reader.listDocumentPage({\n+        id: documentId,\n+        companyId: ids.companies[0],\n+        caseId: ids.cases[0],\n+      });\n+      expect(page.documents).toHaveLength(1);\n+      expect(page.nextCursor).toBeNull();\n+      return page.documents[0];\n+    };\n+    const reviewRows = () => observer`select id,company_id,case_id,event_type,actor_id,metadata,\n+      created_at::text,xmin::text row_version from timeline_events\n+      where company_id=any(${ids.companies}::uuid[]) order by id`;\n+    const original = await upload(\"original\");\n+    await scan(original);\n+    const reason = \"缺少董事簽署；請於第 2 頁簽名後補傳。\\nKeep the signed page readable.\";\n+    await review(original, \"rejected\", reason);\n+    const events = await reviewRows();\n+    expect(events).toHaveLength(1);\n+    expect(events[0]).toMatchObject({\n+      company_id: ids.companies[0],\n+      case_id: ids.cases[0],\n+      event_type: \"document_reviewed\",\n+      actor_id: ids.staff,\n+      metadata: {\n+        documentId: original.documentId,\n+        documentVersionId: original.versionId,\n+        decision: \"rejected\",\n+        reason,\n+      },\n+    });\n+\n+    // Later decoys must not shadow the authoritative reason. Each mismatch is\n+    // independent, so dropping any one company/case/version/type/decision fence fails.\n+    const decoys = [\n+      {\n+        company: ids.companies[1],\n+        caseId: ids.cases[0],\n+        type: \"document_reviewed\",\n+        version: original.versionId,\n+        decision: \"rejected\",\n+      },\n+      {\n+        company: ids.companies[0],\n+        caseId: ids.cases[1],\n+        type: \"document_reviewed\",\n+        version: original.versionId,\n+        decision: \"rejected\",\n+      },\n+      {\n+        company: ids.companies[0],\n+        caseId: ids.cases[0],\n+        type: \"document_reviewed\",\n+        version: randomUUID(),\n+        decision: \"rejected\",\n+      },\n+      {\n+        company: ids.companies[0],\n+        caseId: ids.cases[0],\n+        type: \"internal_note\",\n+        version: original.versionId,\n+        decision: \"rejected\",\n+      },\n+      {\n+        company: ids.companies[0],\n+        caseId: ids.cases[0],\n+        type: \"document_reviewed\",\n+        version: original.versionId,\n+        decision: \"verified\",\n+      },\n+    ];\n+    for (const [index, decoy] of decoys.entries()) {\n+      await sql`insert into timeline_events(company_id,case_id,event_type,actor_type,actor_id,description,metadata,created_at)\n+        values(${decoy.company},${decoy.caseId},${decoy.type},'user',${ids.staff},'Synthetic projection decoy',\n+          ${sql.json({ documentId: original.documentId, documentVersionId: decoy.version, decision: decoy.decision, reason: `PRIVATE-DECOY-${index}` })},\n+          now() + ${index + 1}::int * interval '1 minute')`;\n+    }\n+    expect((await readOne(original.documentId)).rejectionReason).toBe(reason);\n+\n+    const request = new Request(\"https://example.test/uc149\");\n+    const auth = (authUserId: string): NeonSessionAdapter => ({\n+      getSession: async () => ({ user: { id: authUserId, email: \"uc149@example.test\" } }),\n+      signOut: async () => new Response(),\n+    });\n+    const client: AuthenticatedActor = {\n+      authUserId: ids.clientAuth,\n+      userId: null,\n+      teamId: null,\n+      role: \"Client\",\n+      active: true,\n+    };\n+    const listPage = vi.fn(reader.listDocumentPage);\n+    const listFor = (actor: AuthenticatedActor, companyId?: string, caseId = ids.cases[0]) =>\n+      listDocumentPageForActor(\n+        actor,\n+        { companyId, caseId },\n+        {\n+          repository: { ...reader, listDocumentPage: listPage },\n+          authorizeDocument: async (who, subject) => {\n+            await requireClientCompanyAccess(request, subject.companyId, {\n+              auth: auth(who.authUserId),\n+              sql: observer,\n+            });\n+          },\n+        },\n+      );\n+    expect((await listFor(client, ids.companies[0])).documents[0].rejectionReason).toBe(reason);\n+    const auditBeforeDenials = [...(await reviewRows())];\n+    for (const denied of [\n+      () => listFor(client, ids.companies[1], ids.cases[2]), // persisted inactive membership\n+      () => listFor({ ...client, authUserId: ids.otherClientAuth }, ids.companies[0]),\n+      () => listFor(client),\n+    ]) {\n+      listPage.mockClear();\n+      await expect(denied()).rejects.toThrow(/membership|company ID/);\n+      expect(listPage).not.toHaveBeenCalled();\n+    }\n+    expect((await listFor(client, ids.companies[0], ids.cases[2])).documents).toEqual([]);\n+    expect([...(await reviewRows())]).toEqual(auditBeforeDenials);\n+\n+    const snapshotOriginal = async () => {\n+      const [row] = await observer`select to_jsonb(d) document,d.xmin::text row_version,\n+        (select jsonb_agg(to_jsonb(v) order by v.id) from document_versions v where v.document_id=d.id) versions,\n+        (select jsonb_agg(to_jsonb(e) order by e.id) from timeline_events e\n+          where e.metadata->>'documentId'=d.id::text) events\n+        from documents d where d.id=${original.documentId}`;\n+      return row;\n+    };\n+    const beforeReplacement = await snapshotOriginal();\n+    // Explicit fixture setup for a rejected requirement. We deliberately use\n+    // reviewDocument above, not the annual-return service's SLA/work-item path.\n+    await sql`update annual_return_checklist_items set status='Rejected',document_id=${original.documentId}\n+      where id=${ids.checklist} and case_id=${ids.cases[0]}`;\n+    const replacement = await upload(\"replacement\", original.documentId);\n+    expect(replacement.documentId).not.toBe(original.documentId);\n+    expect(replacement.versionId).not.toBe(original.versionId);\n+    expect(await readOne(replacement.documentId)).toMatchObject({\n+      reviewStatus: \"pending\",\n+      rejectionReason: null,\n+      uploadStatus: \"quarantined\",\n+    });\n+    await scan(replacement);\n+    expect(await readOne(replacement.documentId)).toMatchObject({\n+      reviewStatus: \"pending\",\n+      rejectionReason: null,\n+      uploadStatus: \"available\",\n+    });\n+    const [item] =\n+      await observer`select status,document_id,verified_at from annual_return_checklist_items where id=${ids.checklist}`;\n+    expect(item).toEqual({\n+      status: \"Received\",\n+      document_id: replacement.documentId,\n+      verified_at: null,\n+    });\n+    const [unreviewed] =\n+      await observer`select reviewed_document_version_id,verified_by,verified_at from documents where id=${replacement.documentId}`;\n+    expect(unreviewed).toEqual({\n+      reviewed_document_version_id: null,\n+      verified_by: null,\n+      verified_at: null,\n+    });\n+    expect(await snapshotOriginal()).toEqual(beforeReplacement);\n+\n+    const beforeRefusals = [...(await reviewRows())];\n+    await expect(\n+      repository.reviewDocument({\n+        documentId: replacement.documentId,\n+        expectedVersionId: original.versionId,\n+        reviewerId: ids.staff,\n+        reviewerAuthUserId: staffAuth,\n+        decision: \"verified\",\n+      }),\n+    ).rejects.toBeInstanceOf(DocumentVersionConflictError);\n+    for (const decision of [\"rejected\", \"verified\"] as const) {\n+      await expect(review(original, decision, \"Conflicting retry\")).rejects.toThrow(/immutable/);\n+    }\n+    expect([...(await reviewRows())]).toEqual(beforeRefusals);\n+    expect(await snapshotOriginal()).toEqual(beforeReplacement);\n+    expect((await readOne(replacement.documentId)).reviewStatus).toBe(\"pending\");\n+\n+    const verified = await upload(\"verified\");\n+    await scan(verified);\n+    await review(verified, \"verified\", \"PRIVATE verification note\");\n+    expect(await readOne(verified.documentId)).toMatchObject({\n+      reviewStatus: \"verified\",\n+      rejectionReason: null,\n+    });\n+    const missing = await upload(\"missing-reason\");\n+    await scan(missing);\n+    await review(missing, \"rejected\");\n+    expect(await readOne(missing.documentId)).toMatchObject({\n+      reviewStatus: \"rejected\",\n+      rejectionReason: null,\n+    });\n+    // Controlled missing-history setup, using only the precise event just created.\n+    const [missingEvent] = await observer<{ id: string }[]>`select id from timeline_events\n+      where company_id=${ids.companies[0]} and case_id=${ids.cases[0]}\n+        and event_type='document_reviewed' and metadata->>'documentId'=${missing.documentId}`;\n+    expect(missingEvent).toBeDefined();\n+    await sql`delete from timeline_events where id=${missingEvent.id}\n+      and metadata->>'documentId'=${missing.documentId}`;\n+    expect((await readOne(missing.documentId)).rejectionReason).toBeNull();\n+\n+    const stale = await upload(\"stale-history\");\n+    await scan(stale);\n+    await review(stale, \"rejected\", \"PRIVATE historical reason\");\n+    await sql.begin(async (tx) => {\n+      // A legacy rejected decision and timeline event refer to superseded bytes.\n+      // The current upload lineage remains intact; this is controlled history setup.\n+      await tx`update document_versions set version_number=2 where id=${stale.versionId}`;\n+      await tx`insert into document_versions(id,document_id,version_number,file_name,storage_url,superseded_by_version_id,superseded_at)\n+        values(${ids.staleVersion},${stale.documentId},1,'uc149-history.pdf',${RUN + \"/history\"},${stale.versionId},now())`;\n+      await tx`update timeline_events set metadata=jsonb_set(metadata,'{documentVersionId}',to_jsonb(${ids.staleVersion}::text))\n+        where company_id=${ids.companies[0]} and case_id=${ids.cases[0]}\n+          and event_type='document_reviewed' and metadata->>'documentId'=${stale.documentId}`;\n+    });\n+    // A current rejected pointer without a matching current-version event is null.\n+    expect(await readOne(stale.documentId)).toMatchObject({\n+      currentVersionId: stale.versionId,\n+      reviewStatus: \"rejected\",\n+      rejectionReason: null,\n+    });\n+    await sql.begin(async (tx) => {\n+      await tx`update documents set reviewed_document_version_id=${ids.staleVersion} where id=${stale.documentId}`;\n+      await tx`insert into timeline_events(company_id,case_id,event_type,actor_type,actor_id,description,metadata)\n+        values(${ids.companies[0]},${ids.cases[0]},'document_reviewed','user',${ids.staff},'Synthetic current-version decoy',\n+          ${tx.json({ documentId: stale.documentId, documentVersionId: stale.versionId, decision: \"rejected\", reason: \"PRIVATE current event with stale review pointer\" })})`;\n+    });\n+    // Even a matching event cannot make a superseded review current again.\n+    expect(await readOne(stale.documentId)).toMatchObject({\n+      currentVersionId: stale.versionId,\n+      reviewStatus: \"pending\",\n+      rejectionReason: null,\n+    });\n+    const clientPage = await listFor(client, ids.companies[0]);\n+    expect(clientPage.documents).toHaveLength(5);\n+    expect(\n+      clientPage.documents.find((document) => document.id === original.documentId)?.rejectionReason,\n+    ).toBe(reason);\n+    expect(\n+      clientPage.documents\n+        .filter((document) => document.id !== original.documentId)\n+        .every((document) => document.rejectionReason === null),\n+    ).toBe(true);\n+    expect(await snapshotOriginal()).toEqual(beforeReplacement);\n+    const [auditCount] =\n+      await observer`select count(*)::int count from annual_return_audit_events where case_id=any(${ids.cases}::uuid[])`;\n+    expect(auditCount.count).toBe(0); // No hidden service/SLA side effects.\n+    record(\"observer-readback\", {\n+      ids,\n+      original,\n+      replacement,\n+      verified,\n+      missing,\n+      stale,\n+      documents: clientPage.documents,\n+      checklist: item,\n+      originalUnchanged: true,\n+      auditCount: auditCount.count,\n+    });\n+    assertionsPassed = true;\n+    record(\"assertions-complete\", { assertionsPassed });\n+  } catch (error) {\n+    record(\"scenario-failed\", { fixturesCommitted, assertionsPassed, ids });\n+    failures.push(error);\n+  } finally {\n+    try {\n+      if (raw && observerRaw && fixturesCommitted) {\n+        // Raw clients are reserved for awaited teardown after the lifetime guard\n+        // aborts. Recheck server identity before ANY cleanup, and preserve on drift.\n+        for (const client of [raw, observerRaw]) {\n+          const value = await identity(client);\n+          expect(value.database).toBe(DATABASE);\n+          expect(value.db_role).toBe(DB_USER);\n+          expect(value.system_id).toBe(systemId);\n+        }\n+        await raw.begin(async (tx) => {\n+          // Discover only descendants of exact committed, fresh fixture parents.\n+          // Freeze their exact IDs before deleting; no prefix/blanket deletes.\n+          const intents = await tx<\n+            { id: string; object_key: string }[]\n+          >`select id,object_key from document_upload_intents\n+            where company_id=${ids.companies[0]} and case_id=${ids.cases[0]}`;\n+          expect(intents.every((row) => objectKeys.includes(row.object_key))).toBe(true);\n+          const documents = await tx<\n+            { id: string; storage_url: string }[]\n+          >`select id,storage_url from documents\n+            where company_id=${ids.companies[0]} and case_id=${ids.cases[0]}`;\n+          expect(documents.every((row) => objectKeys.includes(row.storage_url))).toBe(true);\n+          const documentIds = documents.map((row) => row.id);\n+          const intentIds = intents.map((row) => row.id);\n+          const versions = await tx<\n+            { id: string }[]\n+          >`select id from document_versions where document_id=any(${documentIds}::uuid[])`;\n+          const versionIds = versions.map((row) => row.id);\n+          const scans = await tx<\n+            { id: string }[]\n+          >`select id from document_scan_jobs where intent_id=any(${intentIds}::uuid[])`;\n+          const analyses = await tx<\n+            { id: string }[]\n+          >`select id from document_analysis_jobs where document_version_id=any(${versionIds}::uuid[])`;\n+          const events = await tx<{ id: string }[]>`select id from timeline_events\n+            where company_id=any(${ids.companies}::uuid[]) and case_id=any(${ids.cases}::uuid[])`;\n+          record(\"exact-cleanup-ids\", {\n+            ids,\n+            intents,\n+            documents,\n+            versions,\n+            scans,\n+            analyses,\n+            events,\n+          });\n+          await tx`delete from timeline_events where id=any(${events.map((row) => row.id)}::uuid[])`;\n+          await tx`delete from annual_return_checklist_items where id=${ids.checklist} and case_id=${ids.cases[0]}`;\n+          await tx`delete from document_analysis_jobs where id=any(${analyses.map((row) => row.id)}::uuid[])`;\n+          await tx`delete from document_scan_jobs where id=any(${scans.map((row) => row.id)}::uuid[])`;\n+          // Remove the single owned superseded history row first (self-FK restrict).\n+          await tx`delete from document_versions where id=${ids.staleVersion} and document_id=any(${documentIds}::uuid[])`;\n+          await tx`delete from document_versions where id=any(${versionIds}::uuid[]) and document_id=any(${documentIds}::uuid[])`;\n+          await tx`delete from document_upload_intents where id=any(${intentIds}::uuid[])`;\n+          await tx`delete from documents where id=any(${documentIds}::uuid[])`;\n+          await tx`delete from client_company_memberships where id=any(${ids.memberships}::uuid[])`;\n+          await tx`delete from annual_return_cases where id=any(${ids.cases}::uuid[])`;\n+          await tx`delete from companies where id=any(${ids.companies}::uuid[])`;\n+          await tx`delete from staff_profiles where id=${ids.profile} and user_id=${ids.staff}`;\n+          await tx`delete from users where id=${ids.staff}`;\n+          await tx`delete from teams where id=${ids.team}`;\n+        });\n+        const remaining = await fixtureCounts(observerRaw);\n+        record(\"cleanup-readback\", { ids, remaining, assertionsPassed });\n+        expect(Object.values(remaining).every((n) => n === 0)).toBe(true);\n+      } else record(\"no-committed-fixtures-to-clean\", { fixturesCommitted, ids });\n+    } catch (error) {\n+      record(\"cleanup-failed-preserve-target\", { fixturesCommitted, assertionsPassed, ids });\n+      failures.push(error);\n+    } finally {\n+      const closes = await Promise.allSettled([raw?.end(), observerRaw?.end()]);\n+      for (const result of closes) if (result.status === \"rejected\") failures.push(result.reason);\n+      try {\n+        closeSync(fd);\n+      } catch (error) {\n+        failures.push(error);\n+      }\n+    }\n+  }\n+  if (failures.length === 1) throw failures[0];\n+  if (failures.length > 1)\n+    throw new AggregateError(failures, \"UC149 scenario and teardown failed.\");\n+}\n",
+        "patch_bytes": 29494,
+        "patch_sha256": "432e940bf72819b5a93b40796bff1655d736d23ec3c545cce8507097cfdfe94a"
+      },
+      {
+        "path": "src/routes/-document-rejection.interaction.test.tsx",
+        "base_state": "absent",
+        "patch_utf8": "diff --git a/src/routes/-document-rejection.interaction.test.tsx b/src/routes/-document-rejection.interaction.test.tsx\nnew file mode 100644\nindex 0000000..da4fffa\n--- /dev/null\n+++ b/src/routes/-document-rejection.interaction.test.tsx\n@@ -0,0 +1,201 @@\n+// @vitest-environment jsdom\n+import { QueryClient, QueryClientProvider } from \"@tanstack/react-query\";\n+import { act, cleanup, fireEvent, render, screen, waitFor } from \"@testing-library/react\";\n+import { Suspense } from \"react\";\n+import { afterEach, beforeEach, expect, it, vi } from \"vitest\";\n+const f = vi.hoisted(() => ({\n+  actor: {\n+    authUserId: \"QA-UC149-Client-A\",\n+    role: \"Client\",\n+    userId: null,\n+    teamId: null,\n+    active: true,\n+  },\n+  cases: vi.fn(),\n+  documents: vi.fn(),\n+  intent: vi.fn(),\n+  finalize: vi.fn(),\n+}));\n+vi.mock(\"@tanstack/react-router\", async (original) => ({\n+  ...(await original<typeof import(\"@tanstack/react-router\")>()),\n+  createFileRoute: () => (options: unknown) => ({\n+    options,\n+    useRouteContext: () => ({ dataMode: \"production\", actor: f.actor }),\n+    useSearch: () => ({ caseId: \"4e52ac19-0149-4149-8149-000000000004\" }),\n+  }),\n+  useNavigate: () => vi.fn(),\n+  Link: ({ children }: { children: React.ReactNode }) => <a href=\"/portal\">{children}</a>,\n+}));\n+vi.mock(\"../features/annual-return/client-portal-server-fns\", () => ({\n+  getClientPortalCase: f.cases,\n+  listClientPortalCases: async () => [],\n+}));\n+vi.mock(\"../features/annual-return/server-fns\", () => ({\n+  getAnnualReturnCase: vi.fn(),\n+  listAnnualReturnCasePage: vi.fn(),\n+}));\n+vi.mock(\"../features/documents/server-fns\", () => ({\n+  listDocumentPage: f.documents,\n+  createDocumentUploadIntent: f.intent,\n+  finalizeDocumentUpload: f.finalize,\n+  downloadDocument: vi.fn(),\n+}));\n+import { Route } from \"./portal\";\n+const companyId = \"4e52ac19-0149-4149-8149-000000000003\",\n+  caseId = \"4e52ac19-0149-4149-8149-000000000004\";\n+const itemId = \"4e52ac19-0149-4149-8149-000000000007\";\n+const reason = \"missing-signature: 缺少必要簽署 — 第 2 頁未有董事簽署，請補正後重新上載。\";\n+const original = {\n+  id: \"4e52ac19-0149-4149-8149-000000000002\",\n+  fileName: \"QA-rejected.pdf\",\n+  uploadStatus: \"available\",\n+  reviewStatus: \"rejected\",\n+  rejectionReason: reason,\n+};\n+let saved: object[], received: boolean;\n+const clients: QueryClient[] = [];\n+beforeEach(() => {\n+  vi.resetAllMocks();\n+  received = false;\n+  saved = [original];\n+  f.actor = { ...f.actor, authUserId: \"QA-UC149-Client-A\" };\n+  f.cases.mockImplementation(async () => ({\n+    id: caseId,\n+    companyId,\n+    companyName: \"QA UC149 Company\",\n+    returnYear: 2026,\n+    filingDueDate: \"2026-12-01\",\n+    currentStatus: \"Documents pending\",\n+    checklist: [\n+      {\n+        id: itemId,\n+        itemLabel: \"NAR1 form\",\n+        required: true,\n+        status: received ? \"Received\" : \"Rejected\",\n+        dueDate: \"2026-12-01\",\n+      },\n+    ],\n+  }));\n+  f.documents.mockImplementation(async () => ({\n+    documents: structuredClone(saved),\n+    nextCursor: null,\n+  }));\n+  f.intent.mockResolvedValue({ id: \"4e52ac19-0149-4149-8149-000000000008\" });\n+  f.finalize.mockImplementation(async () => {\n+    received = true;\n+    saved.push({\n+      id: \"4e52ac19-0149-4149-8149-000000000009\",\n+      fileName: \"QA-corrected.pdf\",\n+      uploadStatus: \"quarantined\",\n+      reviewStatus: \"pending\",\n+      rejectionReason: null,\n+    });\n+    return {};\n+  });\n+});\n+afterEach(() => {\n+  cleanup();\n+  clients.splice(0).forEach((client) => client.clear());\n+  vi.restoreAllMocks();\n+});\n+async function view() {\n+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });\n+  clients.push(client);\n+  const Page = Route.options.component!;\n+  await Page.preload?.();\n+  render(\n+    <QueryClientProvider client={client}>\n+      <Suspense fallback={<p>Local loading</p>}>\n+        <Page />\n+      </Suspense>\n+    </QueryClientProvider>,\n+  );\n+  await screen.findByRole(\"heading\", {\n+    name: f.actor.authUserId === \"QA-UC149-Client-B\" ? \"找不到周年申報\" : \"QA UC149 Company\",\n+  });\n+  return client;\n+}\n+async function chooseFile() {\n+  const file = new File([\"%PDF-1.4 QA only\"], \"QA-corrected.pdf\", { type: \"application/pdf\" });\n+  Object.defineProperty(file, \"arrayBuffer\", {\n+    value: async () => new TextEncoder().encode(\"%PDF-1.4 QA only\").buffer,\n+  });\n+  fireEvent.change(screen.getByLabelText(\"回應哪一項要求\"), { target: { value: itemId } });\n+  fireEvent.change(screen.getByLabelText(\"要上載的文件\"), { target: { files: [file] } });\n+}\n+it(\"shows the actionable returned reason to the client, including after fresh-cache reopen\", async () => {\n+  await view();\n+  await screen.findByText(reason, { exact: false });\n+  cleanup();\n+  clients.splice(0).forEach((client) => client.clear());\n+  await view();\n+  await screen.findByText(reason, { exact: false });\n+});\n+it(\"does not reuse an old reason for a pending replacement\", async () => {\n+  saved = [{ ...original, reviewStatus: \"pending\", rejectionReason: \"Old private instruction\" }];\n+  await view();\n+  await screen.findByText(\"QA-rejected.pdf\");\n+  expect(screen.queryByText(/Old private instruction/)).toBeNull();\n+});\n+it(\"makes missing historical rejection guidance explicit\", async () => {\n+  saved = [{ ...original, rejectionReason: null }];\n+  await view();\n+  await screen.findByText(/退回原因未有記錄/);\n+});\n+it(\"refreshes documents and requirement state after explicit upload retry, without claiming review success\", async () => {\n+  f.finalize.mockRejectedValueOnce(new Error(\"Local temporary upload failure\"));\n+  await view();\n+  await chooseFile();\n+  fireEvent.click(screen.getByRole(\"button\", { name: \"安全上載\" }));\n+  fireEvent.click(await screen.findByRole(\"button\", { name: \"重試\" }));\n+  await waitFor(() => expect(f.finalize).toHaveBeenCalledTimes(2));\n+  await screen.findByText(/我們已收到您提供的 1 份文件，現正覆核/);\n+  expect(screen.getAllByText(\"QA-corrected.pdf\").length).toBe(2);\n+  expect(saved[0]).toMatchObject({ reviewStatus: \"rejected\", rejectionReason: reason });\n+  expect(saved[1]).toMatchObject({ reviewStatus: \"pending\", rejectionReason: null });\n+  expect(f.intent).toHaveBeenCalledWith({\n+    data: expect.objectContaining({\n+      companyId,\n+      caseId,\n+      checklistItemId: itemId,\n+      fileName: \"QA-corrected.pdf\",\n+    }),\n+  });\n+});\n+it(\"does not expose another client's cached reason after role scope changes\", async () => {\n+  const client = await view();\n+  await screen.findByText(\"QA-rejected.pdf\");\n+  f.actor.authUserId = \"QA-UC149-Client-B\";\n+  f.cases.mockRejectedValue(new Error(\"Forbidden\"));\n+  await act(async () => {\n+    await client.invalidateQueries();\n+  });\n+  cleanup();\n+  await view();\n+  await screen.findByText(\"找不到周年申報\");\n+  expect(screen.queryByText(reason, { exact: false })).toBeNull();\n+});\n+\n+it(\"starts one upload for repeated submissions while the same file is pending\", async () => {\n+  let release!: (value: { id: string }) => void;\n+  const intent = new Promise<{ id: string }>((resolve) => {\n+    release = resolve;\n+  });\n+  f.intent.mockReturnValue(intent);\n+  await view();\n+  await chooseFile();\n+  const button = screen.getByRole(\"button\", { name: \"安全上載\" });\n+  act(() => {\n+    button.click();\n+    button.click();\n+  });\n+  try {\n+    await waitFor(() => expect(f.intent).toHaveBeenCalledTimes(1));\n+    expect((button as HTMLButtonElement).disabled).toBe(true);\n+  } finally {\n+    await act(async () => {\n+      release({ id: \"4e52ac19-0149-4149-8149-000000000008\" });\n+    });\n+  }\n+  await waitFor(() => expect(f.finalize).toHaveBeenCalledTimes(1));\n+});\n",
+        "patch_bytes": 7726,
+        "patch_sha256": "74d6ee1fa9fadc37535840cdee0010c8db022a23763124263f4a52d6ca61e5a9"
+      }
+    ]
+  },
+  "inspected_boundaries": [
+    {
+      "path": "src/features/documents/repository.ts",
+      "lines": [
+        526,
+        535
+      ],
+      "evidence": "Timeline projection requires current rejected review pointer, same company/case, document_reviewed type, exact document/version IDs and rejected decision; maps only metadata.reason."
+    },
+    {
+      "path": "src/features/documents/repository.ts",
+      "lines": [
+        348,
+        355
+      ],
+      "evidence": "Mapper independently returns null for absent/current-version mismatch/non-rejected review; trims empty reason."
+    },
+    {
+      "path": "src/features/documents/repository.ts",
+      "lines": [
+        1062,
+        1082
+      ],
+      "evidence": "Existing reviewer update and timeline reason are written in the same transaction; new projection does not read internal checklist notes."
+    },
+    {
+      "path": "src/routes/portal.tsx",
+      "lines": [
+        778,
+        785
+      ],
+      "evidence": "Document query carries case/company/actor scope; client case/list keys inspected at lines 623-633 match new invalidations at lines 820-825."
+    },
+    {
+      "path": "src/routes/portal.tsx",
+      "lines": [
+        791,
+        854
+      ],
+      "evidence": "Per-file Set is acquired before first await and released in finally; batch ref similarly guards repeated batch entry. Explicit retry invokes the guarded uploadOne path."
+    },
+    {
+      "path": "src/routes/portal.tsx",
+      "lines": [
+        986,
+        992
+      ],
+      "evidence": "Rejected-only reason is rendered as escaped React text; absent reason has explicit guidance. Pending replacements do not render previous reasons."
+    },
+    {
+      "path": "src/features/documents/rejection-readback.integration.test.ts",
+      "lines": [
+        310,
+        539
+      ],
+      "evidence": "Reviewed actual SQL test includes scoped decoys, membership refusals before listing, independent observer, pending additive replacement, immutable original and stale-version/missing-history cases. Checklist rejection setup and scanner result are explicitly synthetic."
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "lines": [
+        39,
+        40
+      ],
+      "evidence": "New SQL suite is included in DB registry; existing vite.config.ts excludes registry paths from unit collection and includes them in db project."
+    }
+  ],
+  "raw_test_receipts_read": [
+    {
+      "path": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/targeted-final.json",
+      "bytes": 1164,
+      "sha256": "c23d9c6a917712bdc2cecbf09fbb71ec105cf227aeb735021520275d7d4ae15e",
+      "read_scope": "full metadata",
+      "observed": "exit_code 0; targeted suite metadata",
+      "provenance": "Existing implementer receipt read by reviewer; not executed by reviewer"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/targeted-final.txt",
+      "bytes": 1421,
+      "sha256": "3b4af7d042c82c365fde38d6b21cfe61d7c7e2fc446897825983546091aa7423",
+      "read_scope": "full raw log",
+      "observed": "81 passed across 8 files; includes 6 new component and 7 projection tests",
+      "provenance": "Existing implementer receipt read by reviewer; not executed by reviewer"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/targeted-red-contract.json",
+      "bytes": 1171,
+      "sha256": "07a66c37ca24b4300f6f2d9b1e01a9b459be8fda7881662d9a0bc4b974f97092",
+      "read_scope": "full metadata",
+      "observed": "exit_code 1",
+      "provenance": "Existing implementer receipt read by reviewer; not executed by reviewer"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/targeted-red-contract.txt",
+      "bytes": 72528,
+      "sha256": "24094dfba5d1d1812c9246bf060fadf701a36a912c0887ac14c2e912b525e0e7",
+      "read_scope": "failure summaries and selected assertion/DOM excerpts",
+      "observed": "10 failed / 70 passed; missing reason projection/rendering/fallback and stale requirement after retry",
+      "provenance": "Existing implementer receipt read by reviewer; not executed by reviewer"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/targeted-duplicate-red.json",
+      "bytes": 1172,
+      "sha256": "1786c8b18e26b1779acf9bac8c43f93c7108aa285dee9b66a37cd6342aa80f7f",
+      "read_scope": "full metadata",
+      "observed": "exit_code 1",
+      "provenance": "Existing implementer receipt read by reviewer; not executed by reviewer"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/targeted-duplicate-red.txt",
+      "bytes": 14658,
+      "sha256": "03d6bb2b4d7cd18948dc61d34ea735556aee333c953b3ddd20a125d93e88a66f",
+      "read_scope": "failure summary and duplicate assertion excerpt",
+      "observed": "1 failed / 80 passed; expected one intent, observed two",
+      "provenance": "Existing implementer receipt read by reviewer; not executed by reviewer"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/db/db-rejection-green.json",
+      "bytes": 105,
+      "sha256": "ad338fbf10aae59ec7a47a207b39c972e0a19af9d25540d6bfa57f23eaa38716",
+      "read_scope": "full metadata",
+      "observed": "exit_code 0",
+      "provenance": "Existing implementer receipt read by reviewer; not executed by reviewer"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/db/db-rejection-green.txt",
+      "bytes": 22555,
+      "sha256": "d4e7f2992f699fe3b4b6cf5a06820afeae9f509f4ba35dbc071b6a20361019c5",
+      "read_scope": "final raw test summary (tail)",
+      "observed": "1 test / 1 file passed",
+      "provenance": "Existing implementer receipt read by reviewer; not executed by reviewer"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/db/sidecar-UC149-SQL-green.jsonl",
+      "bytes": 16790,
+      "sha256": "c3a332144b16b80f7730a580ed17fcbdd88836ba9257b4963f0ea00814a00eb2",
+      "read_scope": "selected phases: planned-ids, tcp-identity, empty-fixture-gate, assertions-complete, cleanup-readback",
+      "observed": "writer PID 132 / observer PID 133; same system ID 7700060938157912103; baseline and final counts zero; assertionsPassed true",
+      "provenance": "Existing implementer receipt read by reviewer; not executed by reviewer"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/db/db-cleanup.json",
+      "bytes": 838,
+      "sha256": "27c59050d7d8ef000d483f33d6b3a1354b931c4e880c685342b77e1cd0b417d9",
+      "read_scope": "full receipt",
+      "observed": "all listed owned row counts zero; container_absent_after true; credentials_removed true",
+      "provenance": "Existing implementer receipt read by reviewer; not executed by reviewer"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/typecheck-final.json",
+      "bytes": 653,
+      "sha256": "a82c6d291cc92ba82cfc89720dae0a05b955b7e045cea9a2e4f053dcc0eb4c69",
+      "read_scope": "full metadata",
+      "observed": "exit_code 0",
+      "provenance": "Existing implementer receipt read by reviewer; not executed by reviewer"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/lint-final.json",
+      "bytes": 688,
+      "sha256": "d9750b9a5d8f9daf982ebe382e4fc0e36c12d766fb48f2ba268133960b304e42",
+      "read_scope": "full metadata",
+      "observed": "exit_code 0",
+      "provenance": "Existing implementer receipt read by reviewer; not executed by reviewer"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/lint-final.txt",
+      "bytes": 301,
+      "sha256": "03105a2d86d5d9a6c9880c50a783d65754ad6580cef09fca1375762f39c21a91",
+      "read_scope": "full raw log",
+      "observed": "0 errors; 1 work-queue.tsx Fast Refresh warning",
+      "provenance": "Existing implementer receipt read by reviewer; not executed by reviewer"
+    }
+  ],
+  "source_freeze_comparison": {
+    "manifest": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/source-final-tests.json",
+    "files": [
+      {
+        "path": "src/features/documents/repository.ts",
+        "reviewed_sha256": "be7a0bad596146e806a11ddf66c9a416e51be2e7472e81b2ee819d3e94a7e151",
+        "freeze_sha256": "be7a0bad596146e806a11ddf66c9a416e51be2e7472e81b2ee819d3e94a7e151",
+        "matches": true
+      },
+      {
+        "path": "src/routes/portal.tsx",
+        "reviewed_sha256": "36efebf7a5f0e748ce2a75b3b84626570e6b0c6cecd361385a7e90d3d49bc924",
+        "freeze_sha256": "36efebf7a5f0e748ce2a75b3b84626570e6b0c6cecd361385a7e90d3d49bc924",
+        "matches": true
+      },
+      {
+        "path": "src/test/db-integration-files.ts",
+        "reviewed_sha256": "a88e13ad15297393a8c0a735229318dc9828977a90f04f194ee8d402d1f78aa7",
+        "freeze_sha256": "a88e13ad15297393a8c0a735229318dc9828977a90f04f194ee8d402d1f78aa7",
+        "matches": true
+      },
+      {
+        "path": "src/features/documents/rejection-projection.test.ts",
+        "reviewed_sha256": "087f1da2eb06c7abd612003acd96e039b1c9430e8222926acb2752cbf6a5b825",
+        "freeze_sha256": "087f1da2eb06c7abd612003acd96e039b1c9430e8222926acb2752cbf6a5b825",
+        "matches": true
+      },
+      {
+        "path": "src/features/documents/rejection-readback.integration.test.ts",
+        "reviewed_sha256": "2005efe60c42c2f32e90c70f70dafd9c61e28664f6a275175ca4b4bae6727b81",
+        "freeze_sha256": "2005efe60c42c2f32e90c70f70dafd9c61e28664f6a275175ca4b4bae6727b81",
+        "matches": true
+      },
+      {
+        "path": "src/routes/-document-rejection.interaction.test.tsx",
+        "reviewed_sha256": "1c6bbccab0c247fb59ac6a8f861e68d534b2e40608bcc7a617ec53cb7d83d51f",
+        "freeze_sha256": "1c6bbccab0c247fb59ac6a8f861e68d534b2e40608bcc7a617ec53cb7d83d51f",
+        "matches": true
+      }
+    ]
+  },
+  "limitations": [
+    "Reviewer executed no tests, build, lint, typecheck, database client, environment/provider access or browser runtime. Existing receipts are not independent re-execution.",
+    "Full-unit execution was reported in progress at delegation and is not accepted or rejected by this review. Browser harness/results are outside this bounded review and were not edited.",
+    "SQL evidence covers actual repository queries/writes and injected membership adapter with an independent observer; checklist rejection setup and scanner result are controlled stimuli. It does not establish the full annual-return service/SLA path, real object bytes or native provider behavior.",
+    "UC150 lost-response retry, resumable upload and post-commit idempotency are not claimed. Reviewed retry is a known pre-commit failure and duplicate protection is local in-flight scope only.",
+    "Native Auth/HTTP/storage/scanner/provider acceptance remains BLOCKED; no release or production readiness conclusion.",
+    "Graph project metadata was reported hung and private indexing/upload was previously auto-review denied. No retry/index/upload was attempted; review used exact supplied paths and bounded context reads.",
+    "Review applies only to recorded file SHA256 values and exact diff; subsequent edits require re-assessment."
+  ],
+  "actions": {
+    "source_writes": [],
+    "test_commands_run": [],
+    "clients_or_providers_used": [],
+    "git_mutations": [],
+    "push_merge_deploy": false,
+    "only_output": "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/independent-review.json",
+    "exclusive_create": true
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "checked_utc": "2026-10-24T17:29:37.884Z",
+  "free_bytes": 6626041856,
+  "total_bytes": 34033348608,
+  "minimum_gib": 3,
+  "allowed": true,
+  "started": false,
+  "policy": "Original3GiB gate; no other process/resource stopped"
+}

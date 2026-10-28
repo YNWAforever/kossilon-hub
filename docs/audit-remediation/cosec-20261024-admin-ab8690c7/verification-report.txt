@@ -1,0 +1,18 @@
+{
+  "source_sha": "9c3afceae55014a024b547d47daf9d7d97e9cc44",
+  "verified_source_git_blobs": 668,
+  "verified_prior_runs": 17,
+  "verified_prior_files": 2435,
+  "verified_current_manifest_files": 99,
+  "related_unit_tests": 25,
+  "test_files": 7,
+  "full_unit": {
+    "status": "NOT_RUN_THIS_BATCH",
+    "reason": "Only a new gated DB acceptance file and its exclusion registry changed; 25 related unit/component checks cover guards, auth and registry; earlier 2768 result remains historical."
+  },
+  "sql_rehearsals": 1,
+  "browser_tests": 0,
+  "native_pass": 0,
+  "release_gate": "NO_GO",
+  "push_merge_deploy": false
+}

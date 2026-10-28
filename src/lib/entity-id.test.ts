@@ -11,7 +11,7 @@ describe("canonical Postgres entity IDs", () => {
     "C5F247D0-F74F-46E6-A04B-331F0074DE13",
   ])("accepts canonical DB ID %s without imposing UUID version/variant bits", (id) => {
     expect(parseEntityId(id)).toBe(id.toLowerCase());
-    expect(z.string().uuid().safeParse(id).success).toBe(true);
+    expect(z.string().guid().safeParse(id).success).toBe(true);
   });
   it.each([
     undefined,

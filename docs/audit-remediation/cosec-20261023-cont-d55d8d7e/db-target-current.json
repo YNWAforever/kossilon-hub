@@ -1,0 +1,21 @@
+{
+  "run_id": "cosec-20261023-cont-d55d8d7e",
+  "checked_utc": "2026-10-23T03:57:16.822Z",
+  "endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+  "container_id": "f3d366104b311d60f881cee4486bfc8a61bf8453ebef424519f0553710537bcb",
+  "image_id": "sha256:f4c66b820c6f974249089d3d16d86a3698eae11e8746eb6644b2271031e91232",
+  "database": "cosec_cont_d55d8d7e",
+  "port": 56558,
+  "host": "127.0.0.1",
+  "mounts": [],
+  "tmpfs": {
+    "/var/lib/postgresql/data": "rw,noexec,nosuid,size=1g"
+  },
+  "memory": 536870912,
+  "labels": {
+    "codex.repo": "kossilon-hub",
+    "codex.run": "cosec-20261023-cont-d55d8d7e"
+  },
+  "restart": "no",
+  "target_verified_before_client": true
+}

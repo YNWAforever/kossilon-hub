@@ -1,0 +1,19 @@
+{
+  "reason": "Unimplemented full UC186 command and unrun concurrency probe are separate pending candidates, not green acceptance. Final product diff only repairs proven null-skill eligibility. No expectation weakened or skipped to claim UC186 complete.",
+  "files": [
+    {
+      "path": "src/features/admin/production-staff-admin.interaction.test.tsx",
+      "snapshot": "handover-ui-red.test.tsx.snapshot",
+      "result": "RED missing explicit handover command; unchanged oracle retained",
+      "bytes": 7249,
+      "sha256": "1e09dd4744160bd38f8a7c1c19d39ee0059ab44aef1fc9e71d67df9ced8006f2"
+    },
+    {
+      "path": "src/features/admin/handover-execution.integration.test.ts",
+      "snapshot": "handover-execution.test.ts.snapshot",
+      "result": "NOT_RUN: RAM refused before provision, not a reproduced SQL defect",
+      "bytes": 9312,
+      "sha256": "5c06d54e67f19d3bc0c4b61b439729db7a3f6e8cd337c7dbbf3ddc5e8d5a8ad3"
+    }
+  ]
+}

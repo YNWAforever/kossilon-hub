@@ -1,0 +1,15 @@
+
+> test
+> vitest run --project unit src/features/annual-return/components/payment-pagination.test.tsx src/routes/-payments.interaction.test.tsx src/features/annual-return/permissions.test.ts src/features/annual-return/server-fns.authorization.test.ts src/features/annual-return/server-fns.test.ts src/features/annual-return/readiness.test.ts --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+
+ Test Files  6 passed (6)
+      Tests  109 passed (109)
+   Start at  04:58:43
+   Duration  15.47s (transform 1.39s, setup 0ms, import 4.53s, tests 4.70s, environment 4.13s)
+

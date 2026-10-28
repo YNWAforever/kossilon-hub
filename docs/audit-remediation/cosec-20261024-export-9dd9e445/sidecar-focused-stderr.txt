@@ -1,0 +1,87 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/bulk-export.interaction.test.tsx > UC157 saved result export interactions > downloads the mocked saved-job CSV bytes with the results filename and releases its URL
+AssertionError: expected Mock{ …(1) } to be an instance of Blob
+ ❯ downloadedText src/components/bulk-export.interaction.test.tsx:159:16
+    157| async function downloadedText() {
+    158|   const blob = createObjectURL.mock.calls[0]?.[0] as Blob | undefined;
+    159|   expect(blob).toBeInstanceOf(nativeBlob);
+       |                ^
+    160|   expect(blob!.type).toBe("text/csv;charset=utf-8");
+    161|   // Read the actual Blob bytes; text decoders may consume the CSV BOM.
+ ❯ src/components/bulk-export.interaction.test.tsx:184:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/components/bulk-export.interaction.test.tsx > UC157 saved result export interactions > shows a rejected export without making a Blob or download and recovers only after explicit retry
+AssertionError: expected Mock{ …(1) } to be an instance of Blob
+ ❯ downloadedText src/components/bulk-export.interaction.test.tsx:159:16
+    157| async function downloadedText() {
+    158|   const blob = createObjectURL.mock.calls[0]?.[0] as Blob | undefined;
+    159|   expect(blob).toBeInstanceOf(nativeBlob);
+       |                ^
+    160|   expect(blob!.type).toBe("text/csv;charset=utf-8");
+    161|   // Read the actual Blob bytes; text decoders may consume the CSV BOM.
+ ❯ src/components/bulk-export.interaction.test.tsx:205:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/components/bulk-export.interaction.test.tsx > UC157 saved result export interactions > discards a pending export when the selected saved job changes and permits the new job export
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        "prior job CSV must not download",
+      ],
+      Object {
+        "type": "text/csv;charset=utf-8",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/components/bulk-export.interaction.test.tsx:234:33
+    232|     await act(async () => resolve({ csv: "prior job CSV must not downl…
+    233|     await waitFor(() => expect(newButton.disabled).toBe(false));
+    234|     expect(blobConstructor).not.toHaveBeenCalled();
+       |                                 ^
+    235|     expect(createObjectURL).not.toHaveBeenCalled();
+    236|     expect(downloads).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/components/bulk-export.interaction.test.tsx > UC157 saved result export interactions > discards a pending export after an actor change and requires that actor to select and export again
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        "prior actor CSV must not download",
+      ],
+      Object {
+        "type": "text/csv;charset=utf-8",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/components/bulk-export.interaction.test.tsx:251:33
+    249|     expect((screen.getByLabelText("已保存工作") as HTMLSelectElement).value…
+    250|     await act(async () => resolve({ csv: "prior actor CSV must not dow…
+    251|     expect(blobConstructor).not.toHaveBeenCalled();
+       |                                 ^
+    252|     expect(createObjectURL).not.toHaveBeenCalled();
+    253|     expect(downloads).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+

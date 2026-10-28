@@ -1,0 +1,94 @@
+{
+  "baseline": "bb5c9d34d1f4ec0864cc65f7ba66653752218af0",
+  "product_commit": "bfb3722bdb8abdb42a92b135621cb663c074f2f4",
+  "files_sha256": {
+    "src/routes/today.tsx": "5089c85e9fceda8c86bb8d0dbcd369fb4fe6df49a1416946c104a1169356856e",
+    "src/routes/-today.interaction.test.tsx": "29958a31f1721cc5a6e431d175faa1ed2004ca7a2d575b88f1459b700906e2e8"
+  },
+  "checks": {
+    "red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-today.interaction.test.tsx",
+      "exit": 1,
+      "log": "red.txt",
+      "failed": 3,
+      "passed": 4,
+      "files": 1
+    },
+    "targeted": {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-today.interaction.test.tsx src/routes/-work-queue.interaction.test.tsx src/features/annual-return/work-views-today.test.tsx",
+      "exit": 0,
+      "log": "targeted.txt",
+      "passed": 42,
+      "files": 3
+    },
+    "unit": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "log": "unit.txt",
+      "passed": 2904,
+      "files": 290
+    },
+    "unit-interrupted": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 143,
+      "log": "unit-interrupted.txt",
+      "status": "Deliberately stopped (143) to correct test-fixture formatting; not completed acceptance"
+    },
+    "typecheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    "lint-initial": {
+      "command": "node node_modules/eslint/bin/eslint.js src/routes/today.tsx src/routes/-today.interaction.test.tsx",
+      "exit": 1,
+      "log": "lint-initial.txt",
+      "status": "Prettier errors in test fixture, corrected by second formatting pass"
+    },
+    "format-initial": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/routes/today.tsx src/routes/-today.interaction.test.tsx",
+      "exit": 1,
+      "log": "format-initial.txt",
+      "status": "Same test-fixture formatting correction"
+    },
+    "lint": {
+      "command": "node node_modules/eslint/bin/eslint.js src/routes/today.tsx src/routes/-today.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    "format": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/routes/today.tsx src/routes/-today.interaction.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  },
+  "new_test_cases": 3,
+  "review": "Focused read-only review: no important findings. Subsequent correction only changed test-fixture whitespace.",
+  "scope": "JSDOM/mock-read RPCs plus unit project; targeted tests included in full total. Final checks ran on files matching final product hashes before commit; no source changes afterward. Evidence-only commit follows.",
+  "remaining_scope": [
+    "Standalone work-queue retention/mutation protocols",
+    "Real queue data/SLA/calendar accuracy",
+    "Scheduler freshness",
+    "Duplicate-open navigation across tabs",
+    "Upload reload/lost-intent-without-ID recovery",
+    "Real Auth/session/HTTP/RLS and full daily-use journeys"
+  ],
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "not_performed": [
+    "build",
+    "DB integration",
+    "hosted CI acceptance",
+    "Native execution",
+    "deploy/promote",
+    "production Vercel/Neon changes"
+  ]
+}

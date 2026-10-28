@@ -1,0 +1,19 @@
+{
+  "scope": "Local synthetic logical backup and DB/application readback; not production RTO/RPO or SLA",
+  "local_restore_and_readback_ms": 5394.7183,
+  "pg_restore_ms": 382.3208000000013,
+  "archive_sha256": "abc60d6c12281c53364d3453feb10ab45ab61f327dc8bdd2fc05162d7384dccd",
+  "archive_bytes": 279723,
+  "recovery_point_dump_interval": {
+    "from": "2026-10-24T08:48:37.339Z",
+    "to": "2026-10-24T08:48:38.082Z"
+  },
+  "post_dump_write_committed": "2026-10-24T08:48:38.086Z",
+  "post_dump_write_absent_after_restore": true,
+  "lost_marker_age_bounds_ms": {
+    "minimum": 4,
+    "maximum": 747
+  },
+  "backup_age_at_verified_readback_ms": 16947,
+  "native": false
+}

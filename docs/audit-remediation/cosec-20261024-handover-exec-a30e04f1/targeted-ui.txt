@@ -1,0 +1,1111 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/admin/staff-handover-panel.interaction.test.tsx (4 tests | 4 failed) 4092ms
+     × requires all pages, cancellation writes nothing, then confirms once and independently reads current scope 1042ms
+     × retains the exact operation on lost response and remount; only explicit retry sends it again 1025ms
+     × reads a committed receipt after unknown response without issuing another command; scope read failure stays unresolved 1014ms
+     × never turns a preview error into empty scope, and empty scope cannot be submitted 1010ms
+ ✓ |unit| src/features/admin/production-staff-admin.interaction.test.tsx (7 tests) 503ms
+ ✓ |unit| src/routes/-admin-guard.test.tsx (3 tests) 318ms
+ ✓ |unit| src/features/auth/authorization.test.ts (7 tests) 14ms
+ ✓ |unit| src/features/auth/neon-auth-server.test.ts (2 tests) 14ms
+ ✓ |unit| src/features/admin/server-fns.test.ts (5 tests) 10ms
+ ✓ |unit| src/features/auth/staff-state.test.ts (4 tests) 4ms
+ ✓ |unit| src/features/work-items/assignment.test.ts (8 tests) 5ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 5ms
+
+ Test Files  1 failed | 8 passed (9)
+      Tests  4 failed | 38 passed (42)
+   Start at  23:23:25
+   Duration  14.43s (transform 2.97s, setup 0ms, import 5.78s, tests 4.97s, environment 2.02s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/admin/staff-handover-panel.interaction.test.tsx > UC186 explicit handover confirmation (mock RPC only) > requires all pages, cancellation writes nothing, then confirms once and independently reads current scope
+TestingLibraryElementError: Found multiple elements with the role "option" and name `/Owner/`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<option[39m
+  [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+[36m>[39m
+  [0mOwner[0m
+  [0m · [0m
+  [0mSynthetic[0m
+  [0m · [0m
+  [0m同事[0m
+[36m</option>[39m
+
+Ignored nodes: comments, script, style
+[36m<option[39m
+  [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+[36m>[39m
+  [0mOwner[0m
+  [0m · [0m
+  [0mSynthetic[0m
+  [0m · [0m
+  [0m同事[0m
+[36m</option>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Source 的責任交接"[39m
+      [33mclass[39m=[32m"space-y-3 border-t pt-3"[39m
+    [36m>[39m
+      [36m<h3>[39m
+        [0m交接全部未交責任[0m
+      [36m</h3>[39m
+      [36m<p>[39m
+        [0m帳戶變更須另行確認。交接會按當前業務團隊、技能及負責／覆核分工核對。[0m
+      [36m</p>[39m
+      [36m<label>[39m
+        [0m搜尋接手人[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m負責接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"負責接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m覆核接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"覆核接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label>[39m
+        [0m交接原因[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"交接原因"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"500"[39m
+          [33mplaceholder[39m=[32m"請填寫至少5字的交接原因"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m預覽責任交接[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m確認交接全部責任[0m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Source 的責任交接"[39m
+      [33mclass[39m=[32m"space-y-3 border-t pt-3"[39m
+    [36m>[39m
+      [36m<h3>[39m
+        [0m交接全部未交責任[0m
+      [36m</h3>[39m
+      [36m<p>[39m
+        [0m帳戶變更須另行確認。交接會按當前業務團隊、技能及負責／覆核分工核對。[0m
+      [36m</p>[39m
+      [36m<label>[39m
+        [0m搜尋接手人[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m負責接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"負責接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m覆核接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"覆核接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label>[39m
+        [0m交接原因[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"交接原因"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"500"[39m
+          [33mplaceholder[39m=[32m"請填寫至少5字的交接原因"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m預覽責任交接[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m確認交接全部責任[0m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ select src/features/admin/staff-handover-panel.interaction.test.tsx:84:16
+     82| }
+     83| async function select() {
+     84|   await screen.findByRole("option", { name: /Owner/ });
+       |                ^
+     85|   fireEvent.change(screen.getByLabelText("負責接手人"), { target: { value: …
+     86|   fireEvent.change(screen.getByLabelText("覆核接手人"), { target: { value: …
+ ❯ src/features/admin/staff-handover-panel.interaction.test.tsx:123:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |unit| src/features/admin/staff-handover-panel.interaction.test.tsx > UC186 explicit handover confirmation (mock RPC only) > retains the exact operation on lost response and remount; only explicit retry sends it again
+TestingLibraryElementError: Found multiple elements with the role "option" and name `/Owner/`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<option[39m
+  [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+[36m>[39m
+  [0mOwner[0m
+  [0m · [0m
+  [0mSynthetic[0m
+  [0m · [0m
+  [0m同事[0m
+[36m</option>[39m
+
+Ignored nodes: comments, script, style
+[36m<option[39m
+  [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+[36m>[39m
+  [0mOwner[0m
+  [0m · [0m
+  [0mSynthetic[0m
+  [0m · [0m
+  [0m同事[0m
+[36m</option>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Source 的責任交接"[39m
+      [33mclass[39m=[32m"space-y-3 border-t pt-3"[39m
+    [36m>[39m
+      [36m<h3>[39m
+        [0m交接全部未交責任[0m
+      [36m</h3>[39m
+      [36m<p>[39m
+        [0m帳戶變更須另行確認。交接會按當前業務團隊、技能及負責／覆核分工核對。[0m
+      [36m</p>[39m
+      [36m<label>[39m
+        [0m搜尋接手人[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m負責接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"負責接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m覆核接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"覆核接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label>[39m
+        [0m交接原因[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"交接原因"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"500"[39m
+          [33mplaceholder[39m=[32m"請填寫至少5字的交接原因"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m預覽責任交接[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m確認交接全部責任[0m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Source 的責任交接"[39m
+      [33mclass[39m=[32m"space-y-3 border-t pt-3"[39m
+    [36m>[39m
+      [36m<h3>[39m
+        [0m交接全部未交責任[0m
+      [36m</h3>[39m
+      [36m<p>[39m
+        [0m帳戶變更須另行確認。交接會按當前業務團隊、技能及負責／覆核分工核對。[0m
+      [36m</p>[39m
+      [36m<label>[39m
+        [0m搜尋接手人[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m負責接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"負責接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m覆核接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"覆核接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label>[39m
+        [0m交接原因[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"交接原因"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"500"[39m
+          [33mplaceholder[39m=[32m"請填寫至少5字的交接原因"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m預覽責任交接[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m確認交接全部責任[0m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ select src/features/admin/staff-handover-panel.interaction.test.tsx:84:16
+     82| }
+     83| async function select() {
+     84|   await screen.findByRole("option", { name: /Owner/ });
+       |                ^
+     85|   fireEvent.change(screen.getByLabelText("負責接手人"), { target: { value: …
+     86|   fireEvent.change(screen.getByLabelText("覆核接手人"), { target: { value: …
+ ❯ src/features/admin/staff-handover-panel.interaction.test.tsx:150:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |unit| src/features/admin/staff-handover-panel.interaction.test.tsx > UC186 explicit handover confirmation (mock RPC only) > reads a committed receipt after unknown response without issuing another command; scope read failure stays unresolved
+TestingLibraryElementError: Found multiple elements with the role "option" and name `/Owner/`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<option[39m
+  [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+[36m>[39m
+  [0mOwner[0m
+  [0m · [0m
+  [0mSynthetic[0m
+  [0m · [0m
+  [0m同事[0m
+[36m</option>[39m
+
+Ignored nodes: comments, script, style
+[36m<option[39m
+  [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+[36m>[39m
+  [0mOwner[0m
+  [0m · [0m
+  [0mSynthetic[0m
+  [0m · [0m
+  [0m同事[0m
+[36m</option>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Source 的責任交接"[39m
+      [33mclass[39m=[32m"space-y-3 border-t pt-3"[39m
+    [36m>[39m
+      [36m<h3>[39m
+        [0m交接全部未交責任[0m
+      [36m</h3>[39m
+      [36m<p>[39m
+        [0m帳戶變更須另行確認。交接會按當前業務團隊、技能及負責／覆核分工核對。[0m
+      [36m</p>[39m
+      [36m<label>[39m
+        [0m搜尋接手人[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m負責接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"負責接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m覆核接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"覆核接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label>[39m
+        [0m交接原因[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"交接原因"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"500"[39m
+          [33mplaceholder[39m=[32m"請填寫至少5字的交接原因"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m預覽責任交接[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m確認交接全部責任[0m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Source 的責任交接"[39m
+      [33mclass[39m=[32m"space-y-3 border-t pt-3"[39m
+    [36m>[39m
+      [36m<h3>[39m
+        [0m交接全部未交責任[0m
+      [36m</h3>[39m
+      [36m<p>[39m
+        [0m帳戶變更須另行確認。交接會按當前業務團隊、技能及負責／覆核分工核對。[0m
+      [36m</p>[39m
+      [36m<label>[39m
+        [0m搜尋接手人[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m負責接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"負責接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m覆核接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"覆核接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label>[39m
+        [0m交接原因[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"交接原因"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"500"[39m
+          [33mplaceholder[39m=[32m"請填寫至少5字的交接原因"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m預覽責任交接[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m確認交接全部責任[0m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ select src/features/admin/staff-handover-panel.interaction.test.tsx:84:16
+     82| }
+     83| async function select() {
+     84|   await screen.findByRole("option", { name: /Owner/ });
+       |                ^
+     85|   fireEvent.change(screen.getByLabelText("負責接手人"), { target: { value: …
+     86|   fireEvent.change(screen.getByLabelText("覆核接手人"), { target: { value: …
+ ❯ src/features/admin/staff-handover-panel.interaction.test.tsx:168:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |unit| src/features/admin/staff-handover-panel.interaction.test.tsx > UC186 explicit handover confirmation (mock RPC only) > never turns a preview error into empty scope, and empty scope cannot be submitted
+TestingLibraryElementError: Found multiple elements with the role "option" and name `/Owner/`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<option[39m
+  [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+[36m>[39m
+  [0mOwner[0m
+  [0m · [0m
+  [0mSynthetic[0m
+  [0m · [0m
+  [0m同事[0m
+[36m</option>[39m
+
+Ignored nodes: comments, script, style
+[36m<option[39m
+  [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+[36m>[39m
+  [0mOwner[0m
+  [0m · [0m
+  [0mSynthetic[0m
+  [0m · [0m
+  [0m同事[0m
+[36m</option>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Source 的責任交接"[39m
+      [33mclass[39m=[32m"space-y-3 border-t pt-3"[39m
+    [36m>[39m
+      [36m<h3>[39m
+        [0m交接全部未交責任[0m
+      [36m</h3>[39m
+      [36m<p>[39m
+        [0m帳戶變更須另行確認。交接會按當前業務團隊、技能及負責／覆核分工核對。[0m
+      [36m</p>[39m
+      [36m<label>[39m
+        [0m搜尋接手人[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m負責接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"負責接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m覆核接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"覆核接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label>[39m
+        [0m交接原因[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"交接原因"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"500"[39m
+          [33mplaceholder[39m=[32m"請填寫至少5字的交接原因"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m預覽責任交接[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m確認交接全部責任[0m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Source 的責任交接"[39m
+      [33mclass[39m=[32m"space-y-3 border-t pt-3"[39m
+    [36m>[39m
+      [36m<h3>[39m
+        [0m交接全部未交責任[0m
+      [36m</h3>[39m
+      [36m<p>[39m
+        [0m帳戶變更須另行確認。交接會按當前業務團隊、技能及負責／覆核分工核對。[0m
+      [36m</p>[39m
+      [36m<label>[39m
+        [0m搜尋接手人[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"搜尋接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m負責接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"負責接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block"[39m
+      [36m>[39m
+        [0m覆核接手人[0m
+        [36m<select[39m
+          [33maria-label[39m=[32m"覆核接手人"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m""[39m
+          [36m>[39m
+            [0m如有此職責，請選擇接手人[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000002"[39m
+          [36m>[39m
+            [0mOwner[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"a30e04f1-0186-4186-8186-000000000003"[39m
+          [36m>[39m
+            [0mReviewer[0m
+            [0m · [0m
+            [0mSynthetic[0m
+            [0m · [0m
+            [0m同事[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</label>[39m
+      [36m<label>[39m
+        [0m交接原因[0m
+        [36m<input[39m
+          [33maria-label[39m=[32m"交接原因"[39m
+          [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+          [33mmaxlength[39m=[32m"500"[39m
+          [33mplaceholder[39m=[32m"請填寫至少5字的交接原因"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m預覽責任交接[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m確認交接全部責任[0m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ select src/features/admin/staff-handover-panel.interaction.test.tsx:84:16
+     82| }
+     83| async function select() {
+     84|   await screen.findByRole("option", { name: /Owner/ });
+       |                ^
+     85|   fireEvent.change(screen.getByLabelText("負責接手人"), { target: { value: …
+     86|   fireEvent.change(screen.getByLabelText("覆核接手人"), { target: { value: …
+ ❯ src/features/admin/staff-handover-panel.interaction.test.tsx:189:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+

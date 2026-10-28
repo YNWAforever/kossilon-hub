@@ -1,0 +1,96 @@
+{
+  "run_id": "cosec-20261023-assignment-86b2aa9a",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "c298685341603c3c30d953e03aede262f1875455",
+  "parent_sha": "8a0fbdcc860981d43fb9e12f794d7b549e331435",
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "phase": "LOCAL_UC130_UC131_VERIFIED_NATIVE_BLOCKED",
+  "release_gate": "NO_GO",
+  "auth_runtime_verified": false,
+  "deployed": false,
+  "source_manifest": "source-candidate.json",
+  "source_diff": "source.patch",
+  "evidence_manifest": "evidence-manifest.json",
+  "checks": {
+    "unit": {
+      "exit_code": 0,
+      "log": "unit-final.txt",
+      "receipt": "unit-final.json",
+      "files": 267,
+      "passed": 2497,
+      "failed": 0,
+      "skipped": 0
+    },
+    "typecheck": {
+      "exit_code": 0,
+      "log": "typecheck-final.txt",
+      "receipt": "typecheck-final.json"
+    },
+    "lint": {
+      "exit_code": 0,
+      "log": "lint-final.txt",
+      "receipt": "lint-final.json",
+      "errors": 0,
+      "warnings": 1
+    },
+    "build": {
+      "exit_code": 0,
+      "log": "build-final.txt",
+      "receipt": "build-final.json",
+      "preset": "cloudflare-module",
+      "manifest": "build-artifact-manifest.json"
+    },
+    "db": {
+      "files": 1,
+      "passed": 6,
+      "exit_code": 0,
+      "log": "db/db-assignment-expanded.txt",
+      "receipt": "db/db-assignment-expanded.json",
+      "events": "db/*-expanded.jsonl",
+      "summary": "readback-summary.json",
+      "auth": "in-process supplied actors and persisted staff rows; no native Auth/HTTP/RLS"
+    },
+    "component": {
+      "passed": 30,
+      "included_in_full_unit": true,
+      "receipt": "sidecar-green2.json",
+      "mocked_boundaries": "Auth/RPC/router"
+    },
+    "browser": {
+      "run_this_batch": false,
+      "prior_evidence_not_reclassified": true
+    },
+    "node_handler": {
+      "run_this_batch": false
+    },
+    "acceptance": {
+      "records": 184,
+      "f": 35,
+      "r": 15,
+      "uc": 100,
+      "la": 34,
+      "native_blocked": 70,
+      "native_not_run": 114,
+      "native_passes": 0
+    }
+  },
+  "cleanup": "cleanup-final.json",
+  "remaining": "blockers.md",
+  "production": {
+    "sha_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "accessed": false,
+    "current_verified": false
+  },
+  "external_actions": {
+    "push": false,
+    "merge": false,
+    "deploy": false,
+    "production_migration": false,
+    "provider_dispatch": false,
+    "real_payment": false,
+    "filing": false
+  },
+  "rollback": "Ordinary new commit reverting source candidate; production rollback remains unauthorized and requires compatible artifact/schema/data proof"
+}

@@ -1,0 +1,31 @@
+{
+  "name": "unit-shard-24",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/test/fixture-sequence-coverage.convention.test.ts",
+    "vite.config.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/test/fixture-sequence-coverage.convention.test.ts",
+    "vite.config.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "vite.config.test.ts",
+      "tests": 5
+    },
+    {
+      "path": "src/test/fixture-sequence-coverage.convention.test.ts",
+      "tests": 2
+    }
+  ]
+}

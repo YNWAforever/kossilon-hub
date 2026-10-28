@@ -1,0 +1,50 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/routes/-upload-resume.interaction.test.tsx (10 tests | 1 failed) 4231ms
+   ✓ reuses one logical upload after a near-limit PDF commits but its response is lost  3337ms
+   ✓ reuses the request identity when even the intent response was lost 98ms
+   ✓ restores uncertain scope after fresh-cache reopen and file re-selection even after the requirement became Received 151ms
+   ✓ refuses different bytes selected for an uncertain attempt before any further RPC 129ms
+   ✓ does not start an unjournaled request if session persistence fails 63ms
+   ✓ leaves an intent response arriving after departure resumable, without starting finalize 56ms
+   ✓ does not show another actor's unfinished journal 133ms
+   ✓ only starts a new request after a server-confirmed expired uncommitted attempt 99ms
+   ✓ fails closed on a corrupt journal instead of replacing an uncertain identity 54ms
+   × cancels resume selection without erasing the uncertain request or issuing writes 108ms
+ ✓ |unit| src/routes/-document-rejection.interaction.test.tsx (6 tests) 1017ms
+   ✓ shows the actionable returned reason to the client, including after fresh-cache reopen  538ms
+ ✓ |unit| src/routes/-portal-identity.interaction.test.tsx (1 test) 315ms
+   ✓ does not render accountA's cached case or filenames for accountB's Forbidden result  314ms
+ ✓ |unit| src/features/annual-return/evidence-service.test.ts (24 tests) 19ms
+ ✓ |unit| src/features/documents/upload-retry.test.ts (36 tests) 28ms
+ ✓ |unit| src/features/annual-return/evidence-server-fns.test.ts (5 tests) 28ms
+ ✓ |unit| src/features/documents/server-fns.test.ts (26 tests) 23ms
+ ✓ |unit| src/features/documents/upload-resume.test.ts (7 tests) 17ms
+ ✓ |unit| src/features/annual-return/client-portal-server-fns.test.ts (10 tests) 11ms
+ ✓ |unit| src/features/documents/rejection-projection.test.ts (7 tests) 6ms
+ ✓ |unit| src/features/documents/repository.test.ts (2 tests) 4ms
+ ✓ |unit| src/test/db-integration-files.convention.test.ts (2 tests) 3ms
+
+ Test Files  1 failed | 11 passed (12)
+      Tests  1 failed | 135 passed (136)
+   Start at  12:00:23
+   Duration  19.22s (transform 2.72s, setup 0ms, import 5.16s, tests 5.70s, environment 5.58s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-upload-resume.interaction.test.tsx > cancels resume selection without erasing the uncertain request or issuing writes
+Error: Invalid Chai property: toBeDisabled
+ ❯ src/routes/-upload-resume.interaction.test.tsx:290:54
+    288|   fireEvent.click(screen.getByRole("button", { name: "取消恢復選擇" }));
+    289|   expect(screen.getByRole("button", { name: "繼續此上載" })).toBeTruthy();
+    290|   expect(screen.getByRole("button", { name: "安全上載" })).toBeDisabled();
+       |                                                      ^
+    291|   expect(f.intent).toHaveBeenCalledTimes(calls);
+    292|   expect(saved).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

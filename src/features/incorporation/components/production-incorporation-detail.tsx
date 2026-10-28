@@ -1,4 +1,5 @@
 import { checklistItemText } from "@/lib/checklist-item-label";
+import { caseReturnPath } from "@/features/annual-return/daily-view-state";
 import { ChecklistItemLabel } from "@/components/checklist-item-label";
 import { parseEntityId } from "@/lib/entity-id";
 import { LoadingRows } from "@/components/ui/skeleton";
@@ -10,7 +11,7 @@ import {
   isValidCrNumber,
 } from "@/features/clients/identifiers";
 import { formatDate } from "@/lib/format-date";
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -26,7 +27,12 @@ import {
   updateIncorporationChecklistItem,
 } from "../server-fns";
 import { INCORPORATION_STATUSES } from "../types";
-import type { ChecklistItemStatus, IncorporationStatus } from "../types";
+import type {
+  ChecklistItemStatus,
+  IncorporationStatus,
+  IncorporationChecklistItem,
+  IncorporationCase,
+} from "../types";
 import { CHECKLIST_ITEM_STATUS_LABELS, INCORPORATION_STATUS_LABELS } from "../labels";
 
 const statusTone: Record<ChecklistItemStatus, StatusTone> = {
@@ -45,11 +51,140 @@ function nextStatus(current: IncorporationStatus): IncorporationStatus | null {
 
 const REGISTRY_NUMBERS_ERROR = "必須填寫 CR 號碼及 BR 號碼。";
 
-export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
+function ChecklistStatusControl({
+  item,
+  name,
+  onSaved,
+}: {
+  item: IncorporationChecklistItem;
+  name: string;
+  onSaved: (item: IncorporationChecklistItem) => void;
+}) {
+  const feedbackId = useId();
+  const selectRef = useRef<HTMLSelectElement>(null);
+  const active = useRef(true);
+  const pending = useRef(false);
+  const choice = useRef(item.status);
+  const [draft, setDraft] = useState(item.status);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  const update = useMutation({
+    mutationFn: async (status: ChecklistItemStatus) => {
+      const result = await updateIncorporationChecklistItem({
+        data: { caseId: item.caseId, itemId: item.id, status, note: item.note },
+      });
+      const confirmed = result?.checklist.find(
+        (row) => row.id === item.id && row.caseId === item.caseId,
+      );
+      if (result?.id !== item.caseId || confirmed?.status !== status)
+        throw new Error("Checklist save was not confirmed.");
+      return confirmed;
+    },
+    retry: false,
+    onSuccess: (confirmed) => {
+      if (active.current) onSaved(confirmed);
+    },
+    onSettled: () => {
+      pending.current = false;
+    },
+  });
+  useEffect(() => {
+    if (!pending.current && !update.isError) {
+      choice.current = item.status;
+      setDraft(item.status);
+    }
+  }, [item.status, update.isError]);
+  function save(status: ChecklistItemStatus) {
+    if (pending.current) return;
+    pending.current = true;
+    choice.current = status;
+    setDraft(status);
+    update.mutate(status);
+  }
+  const feedback = update.isPending || update.isError || update.isSuccess;
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <Select
+        size="sm"
+        ref={selectRef}
+        aria-label={`${name} 狀態`}
+        value={draft}
+        aria-disabled={update.isPending}
+        aria-busy={update.isPending}
+        aria-invalid={update.isError || undefined}
+        aria-describedby={feedback ? feedbackId : undefined}
+        onKeyDown={(event) => {
+          if (
+            pending.current &&
+            ["ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown", " ", "Enter"].includes(
+              event.key,
+            )
+          )
+            event.preventDefault();
+        }}
+        onChange={(event) => {
+          if (pending.current) {
+            event.currentTarget.value = choice.current;
+            return;
+          }
+          save(event.target.value as ChecklistItemStatus);
+        }}
+      >
+        <option value="Missing">{CHECKLIST_ITEM_STATUS_LABELS.Missing}</option>
+        <option value="Received">{CHECKLIST_ITEM_STATUS_LABELS.Received}</option>
+        <option value="Verified">{CHECKLIST_ITEM_STATUS_LABELS.Verified}</option>
+        <option value="Rejected">{CHECKLIST_ITEM_STATUS_LABELS.Rejected}</option>
+      </Select>
+      {feedback ? (
+        <p
+          id={feedbackId}
+          role={update.isError ? "alert" : "status"}
+          className={update.isError ? "text-xs text-destructive" : "text-xs text-muted-foreground"}
+        >
+          {update.isError
+            ? `未能保存「${name}」的狀態，請重試。`
+            : update.isPending
+              ? `正在保存「${name}」…`
+              : `已保存「${name}」的狀態。`}
+        </p>
+      ) : null}
+      {update.isError ? (
+        <Button
+          size="sm"
+          onClick={(event) => {
+            if (document.activeElement === event.currentTarget) selectRef.current?.focus();
+            save(choice.current);
+          }}
+        >
+          重試「{name}」
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+export function ProductionIncorporationDetail({
+  caseId,
+  returnTo,
+}: {
+  caseId: string;
+  returnTo?: string;
+}) {
   // A malformed link can never name a case; asking the server only fails its
   // schema validation, which used to read as a temporary outage.
   if (parseEntityId(caseId) === null) return <IncorporationNotFound />;
-  return <IncorporationDetail caseId={caseId} />;
+  return (
+    <>
+      <Button asChild>
+        <a href={caseReturnPath(returnTo ?? "/incorporation")}>返回工作列表</a>
+      </Button>
+      <IncorporationDetail caseId={caseId} />
+    </>
+  );
 }
 
 function IncorporationNotFound() {
@@ -90,13 +225,6 @@ function IncorporationDetail({ caseId }: { caseId: string }) {
       updateIncorporationCaseStatus({ data: { caseId, status } }),
     onSuccess: invalidate,
     onError: () => toast.error("未能更新案件狀態，請再試一次。"),
-  });
-
-  const updateItem = useMutation({
-    mutationFn: (input: { itemId: string; status: ChecklistItemStatus; note: string | null }) =>
-      updateIncorporationChecklistItem({ data: { caseId, ...input } }),
-    onSuccess: invalidate,
-    onError: () => toast.error("未能更新清單項目，請再試一次。"),
   });
 
   const complete = useMutation({
@@ -143,6 +271,21 @@ function IncorporationDetail({ caseId }: { caseId: string }) {
   if (!incorporationCase) return <IncorporationNotFound />;
 
   const upcoming = nextStatus(incorporationCase.status);
+  const checklistNames = incorporationCase.checklist.map((item) =>
+    checklistItemText(item.itemLabel),
+  );
+
+  function checklistSaved(saved: IncorporationChecklistItem) {
+    queryClient.setQueryData<IncorporationCase>(
+      ["incorporation-cases", caseId],
+      (current) =>
+        current && {
+          ...current,
+          checklist: current.checklist.map((item) => (item.id === saved.id ? saved : item)),
+        },
+    );
+    invalidate();
+  }
 
   return (
     <main className="flex-1 space-y-6 p-4 md:p-6">
@@ -192,31 +335,28 @@ function IncorporationDetail({ caseId }: { caseId: string }) {
       <section className="rounded-lg border bg-card p-4">
         <h2 className="mb-3 text-sm font-semibold">清單</h2>
         <div className="divide-y">
-          {incorporationCase.checklist.map((item) => (
-            <div key={item.id} className="flex items-center justify-between gap-3 py-3">
+          {incorporationCase.checklist.length === 0 ? (
+            <p className="text-sm text-muted-foreground">此案件暫未有清單項目。</p>
+          ) : null}
+          {incorporationCase.checklist.map((item, index) => (
+            <div
+              key={`${caseId}:${item.id}`}
+              className="flex items-center justify-between gap-3 py-3"
+            >
               <ChecklistItemLabel label={item.itemLabel} className="truncate text-sm" />
               <div className="flex shrink-0 items-center gap-2">
                 <StatusPill tone={statusTone[item.status]}>
                   {CHECKLIST_ITEM_STATUS_LABELS[item.status]}
                 </StatusPill>
-                <Select
-                  size="sm"
-                  aria-label={`${checklistItemText(item.itemLabel)} 狀態`}
-                  value={item.status}
-                  onChange={(event) =>
-                    updateItem.mutate({
-                      itemId: item.id,
-                      status: event.target.value as ChecklistItemStatus,
-                      note: item.note,
-                    })
+                <ChecklistStatusControl
+                  item={item}
+                  onSaved={checklistSaved}
+                  name={
+                    checklistNames.filter((name) => name === checklistNames[index]).length > 1
+                      ? `${checklistNames[index]}（清單第 ${index + 1} 項）`
+                      : checklistNames[index]
                   }
-                  disabled={updateItem.isPending}
-                >
-                  <option value="Missing">{CHECKLIST_ITEM_STATUS_LABELS.Missing}</option>
-                  <option value="Received">{CHECKLIST_ITEM_STATUS_LABELS.Received}</option>
-                  <option value="Verified">{CHECKLIST_ITEM_STATUS_LABELS.Verified}</option>
-                  <option value="Rejected">{CHECKLIST_ITEM_STATUS_LABELS.Rejected}</option>
-                </Select>
+                />
               </div>
             </div>
           ))}

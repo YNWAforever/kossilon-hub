@@ -1,0 +1,52 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/admin/production-staff-admin.interaction.test.tsx (5 tests | 2 failed) 429ms
+     × UC186 opens the correct 'incorporation' responsibility, keeping removal blocked 181ms
+     × UC186 opens the correct 'corporate_change' responsibility, keeping removal blocked 46ms
+     ✓ shows concrete handover before disabling and never calls a provider invite 77ms
+     ✓ does not display a failed read as an empty roster 26ms
+     ✓ requires a current handover preview and sends the displayed staff revision without auto retry 97ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  18:26:45
+   Duration  30.12s (transform 257ms, setup 0ms, import 6.27s, tests 429ms, environment 22.33s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/admin/production-staff-admin.interaction.test.tsx > verified staff maintenance UI > UC186 opens the correct 'incorporation' responsibility, keeping removal blocked
+AssertionError: expected '/annual-returns/20000000-0000-0000-00…' to be '/incorporation/20000000-0000-0000-000…' // Object.is equality
+
+Expected: "/incorporation/20000000-0000-0000-0000-000000000003"
+Received: "/annual-returns/20000000-0000-0000-0000-000000000003"
+
+ ❯ src/features/admin/production-staff-admin.interaction.test.tsx:92:41
+     90|       fireEvent(details, new Event("toggle"));
+     91|       const link = await screen.findByRole("link", { name: /UC186 resp…
+     92|       expect(link.getAttribute("href")).toBe(path + member.userId);
+       |                                         ^
+     93|       fireEvent.click(screen.getByLabelText("Mei Lam 的帳戶有效狀態"));
+     94|       expect((screen.getByText("套用帳戶變更") as HTMLButtonElement).disable…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| src/features/admin/production-staff-admin.interaction.test.tsx > verified staff maintenance UI > UC186 opens the correct 'corporate_change' responsibility, keeping removal blocked
+AssertionError: expected '/annual-returns/20000000-0000-0000-00…' to be '/corporate-changes/20000000-0000-0000…' // Object.is equality
+
+Expected: "/corporate-changes/20000000-0000-0000-0000-000000000003"
+Received: "/annual-returns/20000000-0000-0000-0000-000000000003"
+
+ ❯ src/features/admin/production-staff-admin.interaction.test.tsx:92:41
+     90|       fireEvent(details, new Event("toggle"));
+     91|       const link = await screen.findByRole("link", { name: /UC186 resp…
+     92|       expect(link.getAttribute("href")).toBe(path + member.userId);
+       |                                         ^
+     93|       fireEvent.click(screen.getByLabelText("Mei Lam 的帳戶有效狀態"));
+     94|       expect((screen.getByText("套用帳戶變更") as HTMLButtonElement).disable…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+

@@ -1,0 +1,35 @@
+{
+  "kind": "browser",
+  "attempt": "historical1",
+  "started": "2026-10-24T00:47:27.265Z",
+  "finished": "2026-10-24T00:47:40.910Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "docs/audit-remediation/cosec-20261024-routes-e4b761c9/browser-routes.mjs",
+    "historical1"
+  ],
+  "exit_code": 1,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ]
+}

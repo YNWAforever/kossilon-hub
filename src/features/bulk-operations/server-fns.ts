@@ -121,34 +121,75 @@ export const listBulkAssignees = createServerFn({ method: "GET" })
   });
 export const getBulkSnapshotMembership = createServerFn({ method: "GET" })
   .validator(
-    z.object({ snapshotId: z.string().uuid(), ids: z.array(z.string().uuid()).max(5000) }).strict(),
+    z.object({ snapshotId: z.string().guid(), ids: z.array(z.string().guid()).max(5000) }).strict(),
   )
   .handler(async ({ data }) => {
     const { actor, repository } = await context();
     return repository.snapshotMembership(actor, data);
   });
+export async function exportBulkResultsForActor(
+  actor: AuthenticatedActor,
+  input: unknown,
+  repository: Pick<BulkOperationsRepository, "getJob">,
+) {
+  assertBulkManager(actor);
+  const data = jobSchema.parse(input);
+  let cursor: number | undefined;
+  const lines = ["item,state,reason,attempts,output_json"];
+  const ordinals = new Set<number>();
+  let exported = 0,
+    expectedTotal: number | undefined,
+    fingerprint: string | undefined;
+  const conflict = (message: string) => Object.assign(new Error(message), { statusCode: 409 });
+  do {
+    const page = await repository.getJob(actor, { jobId: data.jobId, cursor, limit: 100 });
+    const current = JSON.stringify([
+      page.jobId,
+      page.payloadHash,
+      page.total,
+      page.updatedAt,
+      page.state,
+      page.operation,
+      page.createdBy,
+    ]);
+    if (
+      page.jobId !== data.jobId ||
+      !Number.isSafeInteger(page.total) ||
+      page.total < 0 ||
+      (fingerprint !== undefined && fingerprint !== current)
+    )
+      throw conflict("Saved export scope changed. Refresh the job and retry.");
+    fingerprint = current;
+    expectedTotal = page.total;
+    for (const i of page.items) {
+      if (!Number.isSafeInteger(i.ordinal) || i.ordinal < 0 || ordinals.has(i.ordinal))
+        throw conflict("Inconsistent export pagination. Refresh the job and retry.");
+      ordinals.add(i.ordinal);
+      // A current access denial is a scope disposition, not a vanished row.
+      // Preserve its count while withholding identity, labels and prior output.
+      const visible = Boolean(i.resourceId);
+      const values = [
+        visible ? i.resourceId! : "",
+        visible ? i.state : "forbidden",
+        visible ? (i.reason ?? "") : "access_denied",
+        String(i.attempts),
+        visible && i.output ? JSON.stringify(i.output) : "",
+      ];
+      lines.push(values.map((v) => '"' + v.replaceAll('"', '""') + '"').join(","));
+      exported++;
+      if (exported > expectedTotal) throw conflict("Incomplete or inconsistent export total.");
+    }
+    const next = page.nextCursor;
+    if (next !== null && (!Number.isSafeInteger(next) || next <= (cursor ?? 0)))
+      throw conflict("Inconsistent export pagination. Refresh the job and retry.");
+    cursor = next ?? undefined;
+  } while (cursor !== undefined);
+  if (exported !== expectedTotal) throw conflict("Incomplete export. Refresh the job and retry.");
+  return { csv: lines.join("\n") + "\n", exported };
+}
 export const exportBulkResults = createServerFn({ method: "GET" })
   .validator(jobSchema)
   .handler(async ({ data }) => {
     const { actor, repository } = await context();
-    let cursor: number | undefined;
-    const lines = ["item,state,reason,attempts,output_json"];
-    let exported = 0;
-    do {
-      const page = await repository.getJob(actor, { jobId: data.jobId, cursor, limit: 100 });
-      for (const i of page.items) {
-        if (!i.resourceId) continue;
-        const values = [
-          i.resourceId,
-          i.state,
-          i.reason ?? "",
-          String(i.attempts),
-          i.output ? JSON.stringify(i.output) : "",
-        ];
-        lines.push(values.map((v) => '"' + v.replaceAll('"', '""') + '"').join(","));
-        exported++;
-      }
-      cursor = page.nextCursor ?? undefined;
-    } while (cursor !== undefined);
-    return { csv: lines.join("\n") + "\n", exported };
+    return exportBulkResultsForActor(actor, data, repository);
   });

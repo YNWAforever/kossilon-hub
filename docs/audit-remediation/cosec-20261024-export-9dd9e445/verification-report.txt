@@ -1,0 +1,5 @@
+Verified both SQL attempts, six CSV files, money/audit equality, denials/conflict/cancel/replay, exact fixture cleanup and target removal.
+VERIFIED source=04bcf729ba3f799e30fa8321e7acc9fba621c2db; evidence_files=114; prior_batches=7
+VERIFIED unit=2559/270_files; UI=5_included; SQL=1_per_attempt; typecheck/lint/build=0
+VERIFIED original_rows=184; 35F/15R/100UC/34LA; native=70_BLOCKED/114_NOT_RUN/0_PASS; NO_GO
+VERIFIED two_SQL_fixture_cleanups=0; container/credentials_removed; 313_preexisting_preserved

@@ -1,0 +1,14 @@
+# UC189 remaining gates
+
+**Native BLOCKED; release NO_GO.** The native matrix remains 70 BLOCKED / 114 NOT_RUN / 0 PASS. F01 / R23 / R25 / UC189 / LA27 and the original LA27 failure remain unchanged.
+
+- Native same-version Neon Auth, compiled server-function/custom HTTP, application-role permissions/RLS, browser persisted reload, platform scheduler ticks, provider delivery and production schema/artifact readback have not been exercised. SQL uses an injected synthetic session adapter, locally signed synthetic HMAC Request objects and a disposable PostgreSQL superuser. No live webhook, external message, payment, filing or provider request was sent.
+- The source inventory maps 74 POST functions across 17 modules and three custom/operator paths. It is source tracing and independent static review, not 74 executed end-to-end journeys. The SQL scenarios execute the real actor/catalog/domain/repository paths; they do not run TanStack's compiled HTTP serialization or a real Auth provider.
+- Admission verifies migration ID parity and the existing two outbox marker catalog facts. Full schema contracts, migration checksums, SQL privileges and concurrent DDL/TOCTOU are not established. This is a precondition before operations, not an all-operation transaction or a production release authorization.
+- The client example verifies a late contact failure rolls back company/contact/officer/timeline work, then a corrected operation commits completely. This does not prove every later domain/provider failure is atomic. Webhook recovery verifies one durable message/event after retry; it does not claim zero timestamp churn in contact/upsert records.
+- GET/HEAD/OPTIONS diagnostics remain available; external Auth proxy/session/login/recovery infrastructure is deliberately independent of the business DB gate. Future write-capable routes or read-method side effects require explicit admission review. Offline maintenance/migration scripts have separate target/preflight requirements; this change does not authorize invoking them on production.
+- Divergent historical ledgers stay refused. No reviewed target/build-bound exception or production reconciliation was installed. Do not rewrite the ledger, seed production, bypass scan state or invent successful ticks to clear this guard.
+
+The owned tmpfs container `0789aa90aa1233d210170281713fdd1804c6db881b7aa84ec3c315d5cd120211` was verified restored and removed in `db/teardown-teardown3.jsonl`, with owned credentials removed. Earlier resource and sandbox refusals are retained independently.
+
+Rollback candidate: ordinary new commit reverting the source SHA in `source-candidate.json`, preserving evidence and published history. No migration added; no deploy/production rollback performed. Next acceptance requires an approved same-version native environment, roles and target identities; local results cannot clear those gates.

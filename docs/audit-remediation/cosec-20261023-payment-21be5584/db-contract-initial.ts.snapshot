@@ -1,0 +1,460 @@
+import { createHash, randomUUID } from "node:crypto";
+import { appendFileSync, closeSync, openSync, realpathSync } from "node:fs";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { getCurrentTest } from "@vitest/runner";
+import { describe, expect, it, onTestFinished } from "vitest";
+import { createSqlClient } from "@/server/db/client";
+import { guardSqlTestLifetime } from "@/test/sql-test-lifetime";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import { createDocumentRepository } from "@/features/documents/repository";
+import { createAnnualReturnRepository } from "./repository";
+import { createPaymentEvidenceService } from "./payment-evidence";
+import type { PaymentReviewInput } from "./payment-review-input";
+import { reviewAnnualReturnPaymentEvidenceForActor } from "./server-fns";
+
+// Collection does not create a client, artifact or fixture. The runner must
+// prove a fresh disposable container and TCP system identity before opting in.
+const url = process.env.TEST_DATABASE_URL;
+const run = process.env.KOSSILON_PAYMENT_CONFLICT_RUN_ID;
+const attempt = process.env.KOSSILON_PAYMENT_CONFLICT_ATTEMPT;
+const directory = process.env.KOSSILON_PAYMENT_CONFLICT_EVENTS_DIR;
+const amounts = [
+  { name: "empty-full", prior: "0", pending: "1800.00" },
+  { name: "partial-full", prior: "350.25", pending: "1449.75" },
+  { name: "partial-open", prior: "350.25", pending: "450.75" },
+] as const;
+type Amounts = (typeof amounts)[number];
+type Decision = PaymentReviewInput["decision"];
+async function outcome<T>(action: Promise<T>) {
+  return action.then(
+    (value) => ({ value, error: undefined }),
+    (error: unknown) => ({ value: undefined, error }),
+  );
+}
+async function errorFacts(error: unknown) {
+  if (error instanceof Response) return { status: error.status, body: await error.clone().json() };
+  const value = error as { message?: string; statusCode?: number } | undefined;
+  return { status: value?.statusCode, message: value?.message };
+}
+
+describe.skipIf(!url || !run)(
+  "UC155 opposite payment decisions on independent SQL sessions",
+  () => {
+    for (const amount of amounts)
+      it.each(["verified", "rejected"] as const)(
+        `${amount.name}: %s commits before the opposite decision`,
+        async (winner) => {
+          if (
+            !url ||
+            !run ||
+            !/^cosec-20261023-payment-[a-f0-9]{8}$/.test(run) ||
+            !attempt ||
+            !/^[a-z0-9-]+$/.test(attempt) ||
+            !directory ||
+            !/^[a-f0-9]{64}$/.test(process.env.KOSSILON_PAYMENT_CONFLICT_TARGET_ID ?? "")
+          )
+            throw new Error("Fresh verified UC155 target and owned artifacts required.");
+          const target = new URL(url);
+          expect(target.hostname).toBe("127.0.0.1");
+          expect(target.pathname).toBe("/" + process.env.KOSSILON_PAYMENT_CONFLICT_DB_NAME);
+          const folder = resolve(directory),
+            local = relative(resolve("docs/audit-remediation", run), folder);
+          if (
+            isAbsolute(local) ||
+            local.startsWith("..") ||
+            realpathSync(folder) !== folder ||
+            realpathSync(dirname(folder)) !== dirname(folder)
+          )
+            throw new Error("Redirected artifact path.");
+          const context = getCurrentTest()?.context;
+          if (!context) throw new Error("Running test lifetime required.");
+          const pending = scenario(
+            url,
+            run,
+            amount,
+            winner,
+            resolve(folder, `UC155-${amount.name}-${winner}-${attempt}.jsonl`),
+            context.signal,
+          );
+          onTestFinished(async () => {
+            await pending.catch(() => undefined);
+          });
+          await pending;
+        },
+        45_000,
+      );
+  },
+);
+
+async function scenario(
+  databaseUrl: string,
+  tag: string,
+  amount: Amounts,
+  winner: Decision,
+  path: string,
+  signal: AbortSignal,
+) {
+  const fd = openSync(path, "wx");
+  const record = (phase: string, values: object) =>
+    appendFileSync(
+      fd,
+      JSON.stringify({ runId: tag, scenario: `${amount.name}-${winner}`, phase, ...values }) + "\n",
+    );
+  const ids = {
+    company: randomUUID(),
+    case: randomUUID(),
+    payment: randomUUID(),
+    team: randomUUID(),
+    users: Array.from({ length: 3 }, () => randomUUID()),
+  };
+  record("planned-ids", {
+    ids,
+    synthetic: true,
+    nativeAuth: false,
+    scanner: "in-process local stub; no storage or provider request",
+  });
+  const raw = createSqlClient(databaseUrl, { max: 1, ssl: false });
+  const firstRaw = createSqlClient(databaseUrl, { max: 1, ssl: false });
+  const secondRaw = createSqlClient(databaseUrl, { max: 1, ssl: false });
+  const sql = guardSqlTestLifetime(raw, () => signal);
+  const first = guardSqlTestLifetime(firstRaw, () => signal);
+  const second = guardSqlTestLifetime(secondRaw, () => signal);
+  const repo = createAnnualReturnRepository({ sql });
+  const documents = createDocumentRepository({ sql });
+  const service = createPaymentEvidenceService({ sql });
+  const actor = (index: number): AuthenticatedActor => ({
+    userId: ids.users[index],
+    authUserId: `${tag}:${ids.users[index]}`,
+    role: "Staff",
+    teamId: ids.team,
+    active: true,
+  });
+  let competitor: Promise<Awaited<ReturnType<typeof outcome>>> | undefined;
+  try {
+    await sql.begin(async (tx) => {
+      await tx`insert into teams(id,name) values(${ids.team},${tag + ":" + ids.team})`;
+      for (const [index, id] of ids.users.entries())
+        await tx`insert into users(id,name,email,role,team_id,active) values(${id},${"Synthetic UC155 reviewer " + index},${id + "@example.test"},'Staff',${ids.team},true)`;
+      await tx`insert into companies(id,company_name,cr_number,br_number,incorporation_date,annual_return_basis_date,registered_office,company_secretary,status,assigned_owner_id,assigned_team_id)
+        values(${ids.company},${"Synthetic UC155 " + ids.company},${ids.company},${ids.company},'2020-01-01','2026-09-01','Synthetic','Synthetic','active',${ids.users[0]},${ids.team})`;
+      await tx`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,current_status,risk_level,owner_id,reviewer_id)
+        values(${ids.case},${ids.company},2026,'2026-09-01','2026-10-13','Payment pending','green',${ids.users[0]},${ids.users[1]})`;
+      await tx`insert into payments(id,company_id,case_id,invoice_number,amount,due_date) values(${ids.payment},${ids.company},${ids.case},${ids.payment},1800,'2026-10-13')`;
+    });
+    const currentVersion = async () => (await repo.getCase(ids.case))!.readiness!.sourceVersion!;
+    const proof = async (label: string, recordedAmount: string) => {
+      // Real digest of deterministic local bytes; provider verdict is explicitly
+      // stubbed through the repository contract, never a production scan claim.
+      const bytes = Buffer.from(`%PDF-1.4\nSynthetic UC155 ${ids.case} ${label}\n%%EOF`);
+      const checksum = createHash("sha256").update(bytes).digest("hex");
+      const objectKey = `${tag}/${ids.case}/${label}.pdf`;
+      record("proof-planned", {
+        label,
+        objectKey,
+        checksum,
+        byteSize: bytes.length,
+        recordedAmount,
+      });
+      const intent = await documents.createUploadIntent({
+        companyId: ids.company,
+        caseId: ids.case,
+        requestedByAuthUserId: actor(0).authUserId!,
+        category: "payment",
+        fileName: `${label}.pdf`,
+        contentType: "application/pdf",
+        expectedSizeBytes: bytes.length,
+        checksum,
+        objectKey,
+        expiresAt: new Date(Date.now() + 300_000).toISOString(),
+      });
+      record("intent-created", { label, intentId: intent.id });
+      const document = await documents.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: ids.users[0],
+        source: "staff",
+      });
+      record("document-created", { label, documentId: document.id, intentId: intent.id });
+      await documents.recordScanResult(
+        intent.id,
+        {
+          status: "clean",
+          providerReference: `${tag}:local-stub:${label}`,
+          verifiedChecksum: checksum,
+          verifiedByteSize: bytes.length,
+        },
+        { verdictSource: "provider" },
+      );
+      const version = (await documents.getDocument(document.id))!.currentVersionId!;
+      const base = {
+        caseId: ids.case,
+        paymentId: ids.payment,
+        documentId: document.id,
+        proofVersionId: version,
+      };
+      record("proof-version", { label, ...base, intentId: intent.id, checksum });
+      await service.record({
+        ...base,
+        expectedVersion: await currentVersion(),
+        amount: recordedAmount,
+        receivedOn: "2026-10-01",
+        reference: `${tag}:${label}`,
+        actorId: ids.users[0],
+      });
+      return base;
+    };
+    if (Number(amount.prior)) {
+      const prior = await proof("prior", amount.prior);
+      await reviewAnnualReturnPaymentEvidenceForActor(
+        actor(1),
+        { ...prior, expectedVersion: await currentVersion(), decision: "verified" },
+        service,
+      );
+    }
+    const base = await proof("contested", amount.pending);
+    const expectedVersion = await currentVersion();
+    const command = (decision: Decision, version = expectedVersion): PaymentReviewInput => ({
+      ...base,
+      expectedVersion: version,
+      decision,
+      ...(decision === "rejected"
+        ? {
+            reasonCode: "amount_mismatch" as const,
+            reasonText: "Synthetic UC155: receipt amount requires correction",
+          }
+        : {}),
+    });
+    const readback = async (phase: string) => {
+      // The observer is physically distinct from both committing/rejected sessions.
+      const case_ = (await repo.getCase(ids.case))!;
+      const entries =
+        await sql`select id,payment_id,document_id,proof_version_id,amount::text,received_on::text,status,recorded_by,reviewed_by,reviewed_at::text,reason_code,reason_text from payment_evidence_entries where payment_id=${ids.payment} order by document_id`;
+      const audits =
+        await sql`select id,actor_id,actor_role,action,result,metadata from annual_return_audit_events where case_id=${ids.case} order by created_at,id`;
+      const timeline =
+        await sql`select id,actor_id,event_type,metadata from timeline_events where case_id=${ids.case} order by created_at,id`;
+      const document = await documents.getDocument(base.documentId);
+      const [outbox] =
+        await sql`select count(*)::int count from notification_outbox where work_item_id in (select id from work_items where annual_return_case_id=${ids.case})`;
+      const snapshot = {
+        payment: case_.payment,
+        sourceVersion: case_.readiness!.sourceVersion,
+        entries: [...entries],
+        audits: [...audits],
+        timeline: [...timeline],
+        document,
+        outbox: outbox.count,
+      };
+      record(phase, snapshot);
+      return snapshot;
+    };
+    const before = await readback("before");
+    expect(before.payment).toMatchObject({
+      amount: 1800,
+      receivedAmount: Number(amount.prior),
+      balance: 1800 - Number(amount.prior),
+      status: "Payment pending",
+      paymentProofDocumentId: null,
+    });
+    // Persisted server permissions, not a real Auth/RLS role acceptance.
+    const denied = await outcome(
+      reviewAnnualReturnPaymentEvidenceForActor(actor(2), command(winner), service),
+    );
+    expect(denied.error).toBeDefined();
+    record("unassigned-denied", { actorId: ids.users[2], error: await errorFacts(denied.error) });
+    expect(await readback("after-role-denial")).toEqual(before);
+    const [observerPid] = await sql<{ pid: number }[]>`select pg_backend_pid() pid`;
+    const [firstPid] = await first<{ pid: number }[]>`select pg_backend_pid() pid`;
+    const [secondPid] = await second<{ pid: number }[]>`select pg_backend_pid() pid`;
+    expect(new Set([observerPid.pid, firstPid.pid, secondPid.pid]).size).toBe(3);
+    record("physical-sessions", {
+      observerPid: observerPid.pid,
+      firstPid: firstPid.pid,
+      secondPid: secondPid.pid,
+    });
+    const loser: Decision = winner === "verified" ? "rejected" : "verified";
+    record("same-version-commands", {
+      winnerActorId: ids.users[0],
+      loserActorId: ids.users[1],
+      winner: command(winner),
+      loser: command(loser),
+    });
+    const winningCase = await first.begin(async (tx) => {
+      await tx`select id from annual_return_cases where id=${ids.case} for update`;
+      competitor = outcome(
+        second.begin(async (other) => {
+          await other`set local lock_timeout='10s'`;
+          return reviewAnnualReturnPaymentEvidenceForActor(
+            actor(1),
+            command(loser),
+            createPaymentEvidenceService({ sql: other }),
+          );
+        }),
+      );
+      let blocked = false;
+      for (let n = 0; n < 200; n++) {
+        signal.throwIfAborted();
+        const [activity] = await sql<
+          { wait_type: string; blockers: number[] }[]
+        >`select wait_event_type wait_type,pg_blocking_pids(pid) blockers from pg_stat_activity where pid=${secondPid.pid}`;
+        if (activity?.wait_type === "Lock" && activity.blockers.includes(firstPid.pid)) {
+          blocked = true;
+          record("lock-observed", {
+            ...activity,
+            firstPid: firstPid.pid,
+            secondPid: secondPid.pid,
+          });
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      expect(blocked).toBe(true);
+      return reviewAnnualReturnPaymentEvidenceForActor(
+        actor(0),
+        command(winner),
+        createPaymentEvidenceService({ sql: tx }),
+      );
+    });
+    const lost = await competitor!;
+    record("concurrent-result", { error: await errorFacts(lost.error), value: lost.value ?? null });
+    expect(await errorFacts(lost.error)).toMatchObject({
+      status: 409,
+      body: { code: "version_conflict" },
+    });
+    const expectedCredit =
+      Number(amount.prior) + (winner === "verified" ? Number(amount.pending) : 0);
+    const after = await readback("winner-readback");
+    expect(after.payment).toEqual(winningCase.payment);
+    expect(after.sourceVersion).not.toBe(expectedVersion);
+    expect(after.payment).toMatchObject({
+      amount: 1800,
+      receivedAmount: expectedCredit,
+      balance: 1800 - expectedCredit,
+      status: expectedCredit === 1800 ? "Payment received" : "Payment pending",
+      paymentProofDocumentId: expectedCredit === 1800 ? base.documentId : null,
+    });
+    expect(after.entries).toHaveLength(Number(amount.prior) ? 2 : 1);
+    expect(after.entries.find((e) => e.document_id === base.documentId)).toMatchObject({
+      proof_version_id: base.proofVersionId,
+      amount: amount.pending,
+      status: winner,
+      reviewed_by: ids.users[0],
+      reason_code: winner === "rejected" ? "amount_mismatch" : null,
+      reason_text: winner === "rejected" ? command(winner).reasonText : null,
+    });
+    const reviews = after.audits.filter(
+      (row) =>
+        row.metadata.command === "review" && row.metadata.proofVersionId === base.proofVersionId,
+    );
+    expect(reviews).toHaveLength(1);
+    expect(reviews[0]).toMatchObject({
+      actor_id: ids.users[0],
+      actor_role: "Staff",
+      action: "update_payment",
+      result: "succeeded",
+      metadata: {
+        paymentId: ids.payment,
+        documentId: base.documentId,
+        proofVersionId: base.proofVersionId,
+        command: "review",
+        decision: winner,
+      },
+    });
+    const reviewTimeline = after.timeline.filter(
+      (row) =>
+        row.event_type === "payment_evidence_review" &&
+        row.metadata.command === "review" &&
+        row.metadata.proofVersionId === base.proofVersionId,
+    );
+    expect(reviewTimeline).toHaveLength(1);
+    expect(reviewTimeline[0].actor_id).toBe(ids.users[0]);
+    expect(reviewTimeline[0].metadata).toEqual(reviews[0].metadata);
+    expect(after.document).toMatchObject({
+      currentVersionId: base.proofVersionId,
+      reviewStatus: winner,
+    });
+    expect(
+      after.payment!.proofReturns!.filter((p) => p.documentId === base.documentId),
+    ).toHaveLength(winner === "rejected" ? 1 : 0);
+    expect(after.outbox).toBe(0);
+    // Both lost-response replay and repeated winning submission remain conflicts.
+    for (const [decision, index] of [
+      [loser, 1],
+      [winner, 0],
+    ] as const) {
+      const replay = await outcome(
+        reviewAnnualReturnPaymentEvidenceForActor(
+          actor(index),
+          command(decision),
+          createPaymentEvidenceService({ sql: second }),
+        ),
+      );
+      record("stale-replay", {
+        decision,
+        actorId: ids.users[index],
+        error: await errorFacts(replay.error),
+      });
+      expect(await errorFacts(replay.error)).toMatchObject({
+        status: 409,
+        body: { code: "version_conflict" },
+      });
+    }
+    // A fresh read does not authorize overwriting a terminal proof decision.
+    const fresh = await outcome(
+      reviewAnnualReturnPaymentEvidenceForActor(
+        actor(1),
+        command(loser, after.sourceVersion!),
+        createPaymentEvidenceService({ sql: second }),
+      ),
+    );
+    record("fresh-terminal-retry", { error: await errorFacts(fresh.error) });
+    expect(await errorFacts(fresh.error)).toMatchObject({
+      status: 409,
+      body: { code: "version_conflict" },
+    });
+    expect(await readback("retry-readback")).toEqual(after);
+  } finally {
+    try {
+      await competitor;
+      // Exact owned parents only. Await cleanup even after the test is aborted.
+      await raw.begin(async (tx) => {
+        await tx`delete from notification_outbox where work_item_id in(select id from work_items where annual_return_case_id=${ids.case})`;
+        await tx`delete from assignment_events where work_item_id in(select id from work_items where annual_return_case_id=${ids.case})`;
+        await tx`delete from escalation_events where work_item_id in(select id from work_items where annual_return_case_id=${ids.case})`;
+        await tx`delete from work_items where annual_return_case_id=${ids.case}`;
+        await tx`delete from payment_evidence_entries where case_id=${ids.case}`;
+        await tx`update payments set payment_proof_document_id=null where case_id=${ids.case}`;
+        await tx`delete from document_versions where document_id in(select id from documents where case_id=${ids.case})`;
+        await tx`delete from document_scan_jobs where intent_id in(select id from document_upload_intents where case_id=${ids.case})`;
+        await tx`delete from document_upload_intents where case_id=${ids.case}`;
+        await tx`delete from documents where case_id=${ids.case}`;
+        await tx`delete from annual_return_audit_events where case_id=${ids.case}`;
+        await tx`delete from timeline_events where case_id=${ids.case}`;
+        await tx`delete from payments where case_id=${ids.case}`;
+        await tx`delete from annual_return_cases where id=${ids.case}`;
+        await tx`delete from companies where id=${ids.company}`;
+        await tx`delete from users where id=any(${ids.users}::uuid[])`;
+        await tx`delete from teams where id=${ids.team}`;
+      });
+      const [remaining] = await raw`select
+        (select count(*)::int from companies where id=${ids.company}) companies,
+        (select count(*)::int from annual_return_cases where id=${ids.case}) cases,
+        (select count(*)::int from payments where id=${ids.payment}) payments,
+        (select count(*)::int from payment_evidence_entries where case_id=${ids.case}) entries,
+        (select count(*)::int from documents where case_id=${ids.case}) documents,
+        (select count(*)::int from document_upload_intents where case_id=${ids.case}) intents,
+        (select count(*)::int from annual_return_audit_events where case_id=${ids.case}) audits,
+        (select count(*)::int from timeline_events where case_id=${ids.case}) timeline,
+        (select count(*)::int from work_items where annual_return_case_id=${ids.case}) work_items,
+        (select count(*)::int from users where id=any(${ids.users}::uuid[])) users,
+        (select count(*)::int from teams where id=${ids.team}) teams`;
+      record("cleanup", { remaining });
+      expect(Object.values(remaining).every((value) => value === 0)).toBe(true);
+    } finally {
+      try {
+        await Promise.all([raw.end(), firstRaw.end(), secondRaw.end()]);
+      } finally {
+        closeSync(fd);
+      }
+    }
+  }
+}

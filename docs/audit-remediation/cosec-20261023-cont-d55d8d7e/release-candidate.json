@@ -1,0 +1,94 @@
+{
+  "run_id": "cosec-20261023-cont-d55d8d7e",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "candidate_root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "d632570839640cc07c83aa76b3b51310038cf245",
+  "parent_delivery_sha": "717ee08cfdfb6dc819d2105d8152b153207c9e03",
+  "base_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "runtime_source_baseline": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+  "runtime_source_changed": false,
+  "phase": "LOCAL_ACCEPTANCE_EXTENDED_NATIVE_BLOCKED",
+  "release_gate": "NO_GO",
+  "auth_runtime_verified": false,
+  "deployed": false,
+  "source_manifest": "source-candidate.json",
+  "source_manifest_sha256": "33ab5cf0e4c5d8c3dad79672011b01e6cf826521e06345984819c430601a0abe",
+  "source_diff": "source.patch",
+  "evidence_manifest": "evidence-manifest.json",
+  "parent_delivery": "../cosec-20261023-79d324f0/DELIVERY.md",
+  "remote_main": "remote-main-final.json",
+  "production": {
+    "sha_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "accessed": false,
+    "current_verified": false
+  },
+  "checks": {
+    "unit": {
+      "earlier_failure": "3 watcher cases due task TEMP inside ignored node_modules; unchanged assertions passed with separate TEMP",
+      "log": "unit-verified.txt",
+      "earlier_failed_invocation": "unit-final.txt",
+      "files": 265,
+      "skipped": 0,
+      "failed": 0,
+      "passed": 2464
+    },
+    "db": {
+      "failed": 0,
+      "readback": "db-readback-summary.json",
+      "cleanup": "db-verify/db-cleanup.json",
+      "native_auth": false,
+      "files": 1,
+      "full_prior_db_suite_rerun": false,
+      "identity": "db-verify/db-target-current.json",
+      "passed": 1,
+      "scope": "500 generated normalized inputs; actual SQL repository only",
+      "events": "db-verify/events-final.jsonl",
+      "log": "db-verify/db-500-final.txt"
+    },
+    "browser": {
+      "failed": 0,
+      "actual_zoom": false,
+      "native_auth": false,
+      "skipped": 0,
+      "demo_only": true,
+      "results": "browser/final/results.json",
+      "passed": 2,
+      "full_prior_browser_suite_rerun": false,
+      "log": "browser-04.txt",
+      "receipt": "browser-receipt.json"
+    },
+    "typecheck": {
+      "e2e_log": "e2e-typecheck-final.txt",
+      "e2e_exit_code": 0,
+      "log": "typecheck-events-final.txt",
+      "exit_code": 0
+    },
+    "lint": {
+      "warnings": 1,
+      "last_changed_file_log": "lint-events-final.txt",
+      "errors": 0,
+      "full_log": "lint-final.txt",
+      "exit_code": 0
+    },
+    "build": {
+      "artifact_manifest": "build-artifact-manifest.json",
+      "preset": "cloudflare-module",
+      "deployed": false,
+      "log": "build-final.txt",
+      "exit_code": 0
+    },
+    "acceptance": {
+      "receipt": "acceptance-integrity-final.json",
+      "native_blocked": 70,
+      "native_passes": 0,
+      "native_not_run": 114,
+      "records": 184,
+      "original_fields_preserved": true
+    }
+  },
+  "cleanup": "cleanup-final.json",
+  "remaining": "blockers.md",
+  "forbidden_actions_performed": [],
+  "user_steering": "先完成餘下本機驗收"
+}

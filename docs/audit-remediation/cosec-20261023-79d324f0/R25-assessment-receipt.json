@@ -1,0 +1,423 @@
+{
+  "assessment": "R25.1 local-source assessment only; R25.2/R27/R23 followup assessment",
+  "recorded_at_utc": "2026-10-22T20:56:27.338123+00:00",
+  "worktree": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "head": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "required_base": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "production_artifact": "UNKNOWN_NOT_ACCESSED",
+  "current_production_registry": "UNKNOWN_NOT_ACCESSED",
+  "release_decision": "NO_GO",
+  "graph": {
+    "search": "timed out after 15000ms before user rejection update",
+    "indexing": "Parent reports auto-review rejection: unverified MCP disclosure risk; no retry/index/upload by assessor",
+    "fallback": "user-authorized local-source discovery"
+  },
+  "input_root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-input-20261023-79d324f0",
+  "input_move": "Input moved by parent during assessment; original read location in run/input no longer authoritative",
+  "isolation_gate": "NOT_VERIFIED; parent reports Docker identity read denied; no DB clients or scripts instantiated",
+  "locks": {
+    "production_label": {
+      "sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+      "files": {
+        "package.json": {
+          "git_blob_sha256": "08731c16bab73386bd4c4ca5cf60c0569be9f3bd211dc83981026d46903c090e"
+        },
+        "package-lock.json": {
+          "git_blob_sha256": "5c8c76c7323a6cee7eab8212919757578d0acc4300956fff5e8ea743ce37bee2"
+        },
+        "bun.lock": {
+          "git_blob_sha256": "c2c5c8e380285c100ec0cec5bb265bbe1c594c292615a3af98f6706c7bfc63ef",
+          "resolved_versions": {
+            "@tanstack/react-start": "1.168.26",
+            "@tanstack/start-server-core": "1.169.15"
+          }
+        }
+      },
+      "npm_resolved_versions": {
+        "@tanstack/react-start": "1.168.26",
+        "@tanstack/start-server-core": "1.169.15"
+      },
+      "source_migration_count": 34
+    },
+    "pinned_audit_base": {
+      "sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+      "files": {
+        "package.json": {
+          "git_blob_sha256": "a59dd2177080ce3e77cb9414948f0d030c58bfeac96150a217cfd20784275b49"
+        },
+        "package-lock.json": {
+          "git_blob_sha256": "d15cefb788e67b59c49d56e0ca674e158615181ad86667dde4d72ce186d53465"
+        },
+        "bun.lock": {
+          "git_blob_sha256": "d3275fa41f0415571262ec3aeff1707791bccf3438d60d275cc236659043f8be",
+          "resolved_versions": {
+            "@tanstack/react-start": "1.168.60",
+            "@tanstack/start-server-core": "1.169.39"
+          }
+        }
+      },
+      "npm_resolved_versions": {
+        "@tanstack/react-start": "1.168.60",
+        "@tanstack/start-server-core": "1.169.39"
+      },
+      "source_migration_count": 50
+    },
+    "cached_origin_main": {
+      "sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+      "files": {
+        "package.json": {
+          "git_blob_sha256": "a59dd2177080ce3e77cb9414948f0d030c58bfeac96150a217cfd20784275b49"
+        },
+        "package-lock.json": {
+          "git_blob_sha256": "d15cefb788e67b59c49d56e0ca674e158615181ad86667dde4d72ce186d53465"
+        },
+        "bun.lock": {
+          "git_blob_sha256": "d3275fa41f0415571262ec3aeff1707791bccf3438d60d275cc236659043f8be",
+          "resolved_versions": {
+            "@tanstack/react-start": "1.168.60",
+            "@tanstack/start-server-core": "1.169.39"
+          }
+        }
+      },
+      "npm_resolved_versions": {
+        "@tanstack/react-start": "1.168.60",
+        "@tanstack/start-server-core": "1.169.39"
+      },
+      "source_migration_count": 50
+    },
+    "local_main_ref": {
+      "sha": "c1b41a81d76ed98f3ddd98a3e69fc3db3a6f0360",
+      "files": {
+        "package.json": {
+          "git_blob_sha256": "08731c16bab73386bd4c4ca5cf60c0569be9f3bd211dc83981026d46903c090e"
+        },
+        "package-lock.json": {
+          "git_blob_sha256": "5c8c76c7323a6cee7eab8212919757578d0acc4300956fff5e8ea743ce37bee2"
+        },
+        "bun.lock": {
+          "git_blob_sha256": "c2c5c8e380285c100ec0cec5bb265bbe1c594c292615a3af98f6706c7bfc63ef",
+          "resolved_versions": {
+            "@tanstack/react-start": "1.168.26",
+            "@tanstack/start-server-core": "1.169.15"
+          }
+        }
+      },
+      "npm_resolved_versions": {
+        "@tanstack/react-start": "1.168.26",
+        "@tanstack/start-server-core": "1.169.15"
+      },
+      "source_migration_count": 33
+    }
+  },
+  "migration_comparison": {
+    "rows": 83,
+    "counts": {
+      "shared_0001_0033": 33,
+      "historical_unknown33_candidate": 33,
+      "missing0034_source": 1,
+      "candidate_addition_0067_0082": 16
+    },
+    "historical_source": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+    "historical_observation_at": "2026-10-02T12:57:40.026354+00:00",
+    "source_order": "Lexical filenames/recorded historical source listing; not verified database execution chronology",
+    "source_checksum": "SHA256 of exact git blob bytes; distinct from historically applied checksums and package LF normalization",
+    "current_registry": "Every row UNKNOWN_NOT_QUERIED; unknown33 mapping is historical-source reconstruction only"
+  },
+  "offline_integrity_checks": {
+    "historical66_git_hashes_match_saved_source": true,
+    "shared33_git_blobs_equal_historical_prod_base": true,
+    "manifest_input_hashes_match_current_lf": true,
+    "manifest_bridge_hash_matches_current_lf": true,
+    "manifest_compiler_hash_matches_current_lf": true,
+    "manifest_package_hash_matches_current_lf": true
+  },
+  "manifest": {
+    "id": "kossilon-historical-release-20261002",
+    "historicalAppliedHashes": "unknown",
+    "payloadSha256": "e685b365b785afada3745c60e4c9eb5b7de0153c5780be0b18e0122902d7b480",
+    "catalogSha256": "6d4451c7957295936132f3ba5bd156b51975a4f6fcf8d0cbffd9f28ceefc3100",
+    "compilerSha256": "d133620406f8df5adb409d215a1c498e13154b58769ae8b28b5c5203f3f82e52",
+    "packageSha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad",
+    "adaptedInputs": [
+      "0073_bulk_maintenance_job_kind.sql",
+      "0074_reviewed_nar_apply.sql",
+      "0080_manual_handoff_provenance.sql",
+      "0082_case_template_snapshots.sql"
+    ],
+    "releaseDecision": "NO_GO: provider clone/restore, lineage policy, owners and runtime acceptance pending"
+  },
+  "f21": {
+    "official_url": "https://github.com/TanStack/router/security/advisories/GHSA-qx66-fv34-fjm8",
+    "verified_in_this_assessment": true,
+    "access_method": "web.run public advisory only; no private repository upload",
+    "cve": "CVE-2026-102989",
+    "react_start_affected": ">=1.143.12 <1.168.60",
+    "react_start_patched_floor": "1.168.60",
+    "start_server_core_affected": ">=1.143.12 <1.169.39",
+    "start_server_core_patched_floor": "1.169.39",
+    "severity": "Critical",
+    "artifact_sbom_backport_waf": "UNKNOWN_NOT_VERIFIED",
+    "conclusion": "Production-labelled source locks affected; pinned base locks at patched floors; actual deployed artifact remains unknown. No exploit or intrusion claim."
+  },
+  "tests": {
+    "command": "node node_modules/vitest/vitest.mjs run --project unit --maxWorkers 1 src/features/operations/schema-health.test.ts src/features/operations/schema-readiness.test.ts src/features/operations/release-compatibility.test.ts src/server/maintenance-trigger.test.ts src/server/maintenance-http.test.ts",
+    "node_version": "v24.18.0",
+    "attempt1": {
+      "log": "R25-unit.txt",
+      "exit_code": 1,
+      "result": "ENVIRONMENT_BLOCKED_BEFORE_TESTS",
+      "files_failed": 5,
+      "tests_executed": 0,
+      "reason": "Sandbox temporary-directory rename EPERM; not an assertion RED"
+    },
+    "attempt2": {
+      "log": "R25-unit-workspace-temp.txt",
+      "exit_code": 0,
+      "temp_tmp": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261023-79d324f0\\R25-unit-temp",
+      "files_passed": 5,
+      "tests_passed": 52,
+      "skipped": 0,
+      "classification": "UNIT: pure logic and in-memory stubs, no real DB, provider, scheduler or runtime",
+      "warning": "Existing vite-tsconfig-paths advisory printed twice; no source/config change"
+    },
+    "red_green": "NOT_APPLICABLE_NO_SOURCE_CHANGE; environmental failure followed by unit pass is not product RED/GREEN",
+    "source_fingerprint_timing": "Recorded after unit run in shared tree; not atomic whole-worktree attestation"
+  },
+  "historical_evidence": {
+    "files": [
+      "docs/audit-remediation/evidence/2026-10-02-historical-schema.json",
+      "docs/audit-remediation/evidence/2026-10-02-historical-release-rehearsal.json",
+      "docs/audit-remediation/historical-release-runbook.md"
+    ],
+    "classification": "HISTORICAL_UNVERIFIED_CURRENT; read but not replayed",
+    "memory_pointed_paths_checked_once_and_absent": [
+      "docs/audit-remediation/2026-10-12/batch4-safe-runtime-receipt.json",
+      "docs/audit-remediation/2026-10-12/batch4-evidence-index.json"
+    ],
+    "memory_claims_not_adopted_as_current": true
+  },
+  "working_source_fingerprints_after_tests": {
+    "scripts/db-migrate.ts": {
+      "working_bytes_sha256": "f2ee5616a2b2bdeb7655d0c9a27ba424c3ea3955334ff5af3fbed28662880d37",
+      "working_lf_sha256": "f2ee5616a2b2bdeb7655d0c9a27ba424c3ea3955334ff5af3fbed28662880d37",
+      "base_git_sha256": "f2ee5616a2b2bdeb7655d0c9a27ba424c3ea3955334ff5af3fbed28662880d37"
+    },
+    "scripts/prepare-historical-schema-release.ts": {
+      "working_bytes_sha256": "d133620406f8df5adb409d215a1c498e13154b58769ae8b28b5c5203f3f82e52",
+      "working_lf_sha256": "d133620406f8df5adb409d215a1c498e13154b58769ae8b28b5c5203f3f82e52",
+      "base_git_sha256": "d133620406f8df5adb409d215a1c498e13154b58769ae8b28b5c5203f3f82e52"
+    },
+    "scripts/rehearse-historical-schema-release.mjs": {
+      "working_bytes_sha256": "9d6dc96e571f113808a430d840325f9dca8aaf59c8b89d55a80be1160dc8f561",
+      "working_lf_sha256": "9d6dc96e571f113808a430d840325f9dca8aaf59c8b89d55a80be1160dc8f561",
+      "base_git_sha256": "9d6dc96e571f113808a430d840325f9dca8aaf59c8b89d55a80be1160dc8f561"
+    },
+    "src/features/operations/schema-health.ts": {
+      "working_bytes_sha256": "8ae971accef4238ea2cdd69f3295a91590838ec1797f011e908fc4b02e00b918",
+      "working_lf_sha256": "8ae971accef4238ea2cdd69f3295a91590838ec1797f011e908fc4b02e00b918",
+      "base_git_sha256": "8ae971accef4238ea2cdd69f3295a91590838ec1797f011e908fc4b02e00b918"
+    },
+    "src/features/operations/schema-catalog.ts": {
+      "working_bytes_sha256": "b4698c045854661a83f1b2a56d14013ca53c39c6363f979d06ec74aee7c5208e",
+      "working_lf_sha256": "b4698c045854661a83f1b2a56d14013ca53c39c6363f979d06ec74aee7c5208e",
+      "base_git_sha256": "b4698c045854661a83f1b2a56d14013ca53c39c6363f979d06ec74aee7c5208e"
+    },
+    "src/features/operations/release-compatibility.ts": {
+      "working_bytes_sha256": "4c3c76c97d9c8065390950dbdf1508affe83c87a4cd49c05e5b4eb21ca3d8fae",
+      "working_lf_sha256": "4c3c76c97d9c8065390950dbdf1508affe83c87a4cd49c05e5b4eb21ca3d8fae",
+      "base_git_sha256": "4c3c76c97d9c8065390950dbdf1508affe83c87a4cd49c05e5b4eb21ca3d8fae"
+    },
+    "src/features/operations/release-catalog.ts": {
+      "working_bytes_sha256": "720db78be05ae652e3d1fbd1f2524daa88f076047c441fda5dfe93388e152ddb",
+      "working_lf_sha256": "720db78be05ae652e3d1fbd1f2524daa88f076047c441fda5dfe93388e152ddb",
+      "base_git_sha256": "720db78be05ae652e3d1fbd1f2524daa88f076047c441fda5dfe93388e152ddb"
+    },
+    "src/features/operations/server-fns.ts": {
+      "working_bytes_sha256": "45f58c6f07db7acc5cd0733a76a67848da6e4a1c98c3c0328810317e6121200d",
+      "working_lf_sha256": "45f58c6f07db7acc5cd0733a76a67848da6e4a1c98c3c0328810317e6121200d",
+      "base_git_sha256": "45f58c6f07db7acc5cd0733a76a67848da6e4a1c98c3c0328810317e6121200d"
+    },
+    "src/features/operations/repository.ts": {
+      "working_bytes_sha256": "52d691ee3a95b18541f3d8208ede7275094aebaacd194d4e7fb7700c0e41382b",
+      "working_lf_sha256": "52d691ee3a95b18541f3d8208ede7275094aebaacd194d4e7fb7700c0e41382b",
+      "base_git_sha256": "52d691ee3a95b18541f3d8208ede7275094aebaacd194d4e7fb7700c0e41382b"
+    },
+    "src/server/maintenance-trigger.ts": {
+      "working_bytes_sha256": "4ab6b0caeae31dd9fac3b5f73630d822ebb754ae5b6aa82acfaae4cc19ef944d",
+      "working_lf_sha256": "4ab6b0caeae31dd9fac3b5f73630d822ebb754ae5b6aa82acfaae4cc19ef944d",
+      "base_git_sha256": "4ab6b0caeae31dd9fac3b5f73630d822ebb754ae5b6aa82acfaae4cc19ef944d"
+    },
+    "src/server/maintenance-trigger-runtime.ts": {
+      "working_bytes_sha256": "3c81ba802278b20a566a9c136f6f4dfb5342e62e9d38d9117dd4edff2782ab6c",
+      "working_lf_sha256": "3c81ba802278b20a566a9c136f6f4dfb5342e62e9d38d9117dd4edff2782ab6c",
+      "base_git_sha256": "3c81ba802278b20a566a9c136f6f4dfb5342e62e9d38d9117dd4edff2782ab6c"
+    },
+    "src/server/maintenance-http.ts": {
+      "working_bytes_sha256": "4fa82329673115eb60816d851cbcf80d1736befc546acec8d7ccebd5936d3a88",
+      "working_lf_sha256": "4fa82329673115eb60816d851cbcf80d1736befc546acec8d7ccebd5936d3a88",
+      "base_git_sha256": "4fa82329673115eb60816d851cbcf80d1736befc546acec8d7ccebd5936d3a88"
+    },
+    "src/server/nitro-scheduled.ts": {
+      "working_bytes_sha256": "e398641aa655b69293a8ccfacf90a011a9fd7ac5459895f274bef6079fe9b8a1",
+      "working_lf_sha256": "e398641aa655b69293a8ccfacf90a011a9fd7ac5459895f274bef6079fe9b8a1",
+      "base_git_sha256": "e398641aa655b69293a8ccfacf90a011a9fd7ac5459895f274bef6079fe9b8a1"
+    },
+    "src/server.ts": {
+      "working_bytes_sha256": "2fdcbb1a3a85202495608d51e415b0a92edbab25b172b3e7c5c59b742edcb5f5",
+      "working_lf_sha256": "2fdcbb1a3a85202495608d51e415b0a92edbab25b172b3e7c5c59b742edcb5f5",
+      "base_git_sha256": "2fdcbb1a3a85202495608d51e415b0a92edbab25b172b3e7c5c59b742edcb5f5"
+    },
+    "scripts/verify-audit-release.ts": {
+      "working_bytes_sha256": "8c3aaddc71aeee4fb7412c1d19b0746f25204597fd19cdecc0daece613d4580e",
+      "working_lf_sha256": "8c3aaddc71aeee4fb7412c1d19b0746f25204597fd19cdecc0daece613d4580e",
+      "base_git_sha256": "8c3aaddc71aeee4fb7412c1d19b0746f25204597fd19cdecc0daece613d4580e"
+    },
+    "src/features/operations/health.ts": {
+      "working_bytes_sha256": "281fc307aaebb8cd4bda2a48c449612dfffc08880fab6e66443b68a7242bc22c",
+      "working_lf_sha256": "281fc307aaebb8cd4bda2a48c449612dfffc08880fab6e66443b68a7242bc22c",
+      "base_git_sha256": "281fc307aaebb8cd4bda2a48c449612dfffc08880fab6e66443b68a7242bc22c"
+    },
+    "src/features/notifications/dispatcher.ts": {
+      "working_bytes_sha256": "08a8e035047523735f4001d9037ad2a544b8969c9606f16d626e1a8f55066e4e",
+      "working_lf_sha256": "08a8e035047523735f4001d9037ad2a544b8969c9606f16d626e1a8f55066e4e",
+      "base_git_sha256": "08a8e035047523735f4001d9037ad2a544b8969c9606f16d626e1a8f55066e4e"
+    },
+    "src/features/notifications/runtime-dispatch.ts": {
+      "working_bytes_sha256": "f296f9050b775fb5d95540163b5dd2522e8f3a2f74d82a6392f9b7ec88d2efbb",
+      "working_lf_sha256": "f296f9050b775fb5d95540163b5dd2522e8f3a2f74d82a6392f9b7ec88d2efbb",
+      "base_git_sha256": "f296f9050b775fb5d95540163b5dd2522e8f3a2f74d82a6392f9b7ec88d2efbb"
+    },
+    "src/features/annual-return/handoff-destination.ts": {
+      "working_bytes_sha256": "ef052be66f214809859e9688d1d37f1ddadbf7c816d36e5dce146b02d390b57d",
+      "working_lf_sha256": "ef052be66f214809859e9688d1d37f1ddadbf7c816d36e5dce146b02d390b57d",
+      "base_git_sha256": "ef052be66f214809859e9688d1d37f1ddadbf7c816d36e5dce146b02d390b57d"
+    },
+    "src/features/documents/scan-worker.ts": {
+      "working_bytes_sha256": "1448658ca953db75318d004fb78971348be81a3abaffd28a12a4a6746a25fbca",
+      "working_lf_sha256": "1448658ca953db75318d004fb78971348be81a3abaffd28a12a4a6746a25fbca",
+      "base_git_sha256": "1448658ca953db75318d004fb78971348be81a3abaffd28a12a4a6746a25fbca"
+    },
+    "src/features/documents/analysis-worker.ts": {
+      "working_bytes_sha256": "93c4d2804c27b484be84906ffbc44494ce5a3fa9feac58b1bc938b67f0e684a6",
+      "working_lf_sha256": "93c4d2804c27b484be84906ffbc44494ce5a3fa9feac58b1bc938b67f0e684a6",
+      "base_git_sha256": "93c4d2804c27b484be84906ffbc44494ce5a3fa9feac58b1bc938b67f0e684a6"
+    },
+    "src/features/documents/evidence-contract.ts": {
+      "working_bytes_sha256": "e30f62eeb0c18f8f3789c0ac7bd083d281db5773a9ad0ed4dcdbdf44b11c762f",
+      "working_lf_sha256": "e30f62eeb0c18f8f3789c0ac7bd083d281db5773a9ad0ed4dcdbdf44b11c762f",
+      "base_git_sha256": "e30f62eeb0c18f8f3789c0ac7bd083d281db5773a9ad0ed4dcdbdf44b11c762f"
+    },
+    "vercel.json": {
+      "working_bytes_sha256": "7cfb0eeeaed33b9effd9e6555d8832fc721a5df3cc442dac4fa39040f5a301a2",
+      "working_lf_sha256": "7cfb0eeeaed33b9effd9e6555d8832fc721a5df3cc442dac4fa39040f5a301a2",
+      "base_git_sha256": "7cfb0eeeaed33b9effd9e6555d8832fc721a5df3cc442dac4fa39040f5a301a2"
+    },
+    "docs/audit-remediation/evidence/2026-10-02-historical-schema.json": {
+      "working_bytes_sha256": "e37425e5b67da2827ffbbbb5e2bba5fa3f86580cc29605abc152812c007ec26b",
+      "working_lf_sha256": "e37425e5b67da2827ffbbbb5e2bba5fa3f86580cc29605abc152812c007ec26b",
+      "base_git_sha256": "e37425e5b67da2827ffbbbb5e2bba5fa3f86580cc29605abc152812c007ec26b"
+    },
+    "docs/audit-remediation/historical-contract-bridge.sql": {
+      "working_bytes_sha256": "e39fcb75ab7a9e1d977e0e32880be71ec8521a7b95b3be2a574220a7a7b4f3de",
+      "working_lf_sha256": "e39fcb75ab7a9e1d977e0e32880be71ec8521a7b95b3be2a574220a7a7b4f3de",
+      "base_git_sha256": "e39fcb75ab7a9e1d977e0e32880be71ec8521a7b95b3be2a574220a7a7b4f3de"
+    },
+    "docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json": {
+      "working_bytes_sha256": "e1abf95905a5be9315eccf62446cab368f6e3c5941b008e52f644aa728618cae",
+      "working_lf_sha256": "e1abf95905a5be9315eccf62446cab368f6e3c5941b008e52f644aa728618cae",
+      "base_git_sha256": "e1abf95905a5be9315eccf62446cab368f6e3c5941b008e52f644aa728618cae"
+    },
+    "docs/audit-remediation/releases/2026-10-02-historical-release.sql": {
+      "working_bytes_sha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad",
+      "working_lf_sha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad",
+      "base_git_sha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad"
+    },
+    "docs/audit-remediation/evidence/2026-10-02-historical-release-rehearsal.json": {
+      "working_bytes_sha256": "426bd0860838983f58a53ca237a27cac9dde693331783751bca6fa77c1a9d338",
+      "working_lf_sha256": "426bd0860838983f58a53ca237a27cac9dde693331783751bca6fa77c1a9d338",
+      "base_git_sha256": "426bd0860838983f58a53ca237a27cac9dde693331783751bca6fa77c1a9d338"
+    },
+    "package.json": {
+      "working_bytes_sha256": "a59dd2177080ce3e77cb9414948f0d030c58bfeac96150a217cfd20784275b49",
+      "working_lf_sha256": "a59dd2177080ce3e77cb9414948f0d030c58bfeac96150a217cfd20784275b49",
+      "base_git_sha256": "a59dd2177080ce3e77cb9414948f0d030c58bfeac96150a217cfd20784275b49"
+    },
+    "package-lock.json": {
+      "working_bytes_sha256": "d15cefb788e67b59c49d56e0ca674e158615181ad86667dde4d72ce186d53465",
+      "working_lf_sha256": "d15cefb788e67b59c49d56e0ca674e158615181ad86667dde4d72ce186d53465",
+      "base_git_sha256": "d15cefb788e67b59c49d56e0ca674e158615181ad86667dde4d72ce186d53465"
+    },
+    "bun.lock": {
+      "working_bytes_sha256": "d3275fa41f0415571262ec3aeff1707791bccf3438d60d275cc236659043f8be",
+      "working_lf_sha256": "d3275fa41f0415571262ec3aeff1707791bccf3438d60d275cc236659043f8be",
+      "base_git_sha256": "d3275fa41f0415571262ec3aeff1707791bccf3438d60d275cc236659043f8be"
+    },
+    "src/features/operations/schema-health.test.ts": {
+      "working_bytes_sha256": "6ba5183c4ecb782b9294bbcb9ffc13d66d3f318224b428e4070f1f214d29075a",
+      "working_lf_sha256": "6ba5183c4ecb782b9294bbcb9ffc13d66d3f318224b428e4070f1f214d29075a",
+      "base_git_sha256": "6ba5183c4ecb782b9294bbcb9ffc13d66d3f318224b428e4070f1f214d29075a"
+    },
+    "src/features/operations/schema-readiness.test.ts": {
+      "working_bytes_sha256": "e5dd0d00c21be0c01d02c1bc24ab0644b2c22b6b8c1da90a34dac45d1b77cd4d",
+      "working_lf_sha256": "e5dd0d00c21be0c01d02c1bc24ab0644b2c22b6b8c1da90a34dac45d1b77cd4d",
+      "base_git_sha256": "e5dd0d00c21be0c01d02c1bc24ab0644b2c22b6b8c1da90a34dac45d1b77cd4d"
+    },
+    "src/features/operations/release-compatibility.test.ts": {
+      "working_bytes_sha256": "fd02f3a136b0a7813a1a34f66ba9ad81ff807063d0b121bd777ae5f4ab083241",
+      "working_lf_sha256": "fd02f3a136b0a7813a1a34f66ba9ad81ff807063d0b121bd777ae5f4ab083241",
+      "base_git_sha256": "fd02f3a136b0a7813a1a34f66ba9ad81ff807063d0b121bd777ae5f4ab083241"
+    },
+    "src/server/maintenance-trigger.test.ts": {
+      "working_bytes_sha256": "4469b140ed93b515676a293855f1aa0ab7dfe94133337ef793c82b4d79d0374b",
+      "working_lf_sha256": "4469b140ed93b515676a293855f1aa0ab7dfe94133337ef793c82b4d79d0374b",
+      "base_git_sha256": "4469b140ed93b515676a293855f1aa0ab7dfe94133337ef793c82b4d79d0374b"
+    },
+    "src/server/maintenance-http.test.ts": {
+      "working_bytes_sha256": "da46e222974c272558a1c9e50d3cf6d5e1a76fef54c09e213898a3222d668df4",
+      "working_lf_sha256": "da46e222974c272558a1c9e50d3cf6d5e1a76fef54c09e213898a3222d668df4",
+      "base_git_sha256": "da46e222974c272558a1c9e50d3cf6d5e1a76fef54c09e213898a3222d668df4"
+    }
+  },
+  "actions": {
+    "source_mutations": 0,
+    "test_mutations": 0,
+    "commits": 0,
+    "installs": 0,
+    "heavy_suites": 0,
+    "db_clients": 0,
+    "db_connections": 0,
+    "rehearsals": 0,
+    "migrations": 0,
+    "fixture_operations": 0,
+    "cleanup": 0,
+    "provider_calls": 0,
+    "sends": 0,
+    "push_merge_deploy": 0
+  },
+  "limitations": [
+    "No fresh production deployment metadata, installed SBOM, artifact hash or backport proof.",
+    "No current registry IDs/checksums/applied chronology, physical catalog, permissions or Auth identity.",
+    "No recovery point, restore, native ticks, provider receipt, cross-role UAT or performance evidence.",
+    "Local main ref is stale relative to pinned base/cached origin-main; no fetch was performed.",
+    "No R25.2/R27/R23 code changes; proposed followups require scoped ownership and TDD."
+  ],
+  "outputs": {
+    "R25-compatibility.md": {
+      "sha256": "67f959d20ad4c0cade6f3b321745e4a4ab9113ac296048cb8f288f1ba9bce91d",
+      "bytes": 28887
+    },
+    "migration-comparison.csv": {
+      "sha256": "2bdf597237a0df247114c8b14a26579dccf87f405131659d0ad06219ad6454e5",
+      "bytes": 254166
+    },
+    "R25-unit.txt": {
+      "sha256": "0658d1b1dcd2358c99e547fdfebe67770f0ac7a90c9959eca81eb8f886a36859",
+      "bytes": 3873
+    },
+    "R25-unit-workspace-temp.txt": {
+      "sha256": "bc0185c430623e68b532f181cdd6d6ac5b9f8f4e526282b2adc3ed5103682835",
+      "bytes": 1124
+    }
+  }
+}

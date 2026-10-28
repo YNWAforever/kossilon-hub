@@ -1,0 +1,3 @@
+VERIFIED source=d632570839640cc07c83aa76b3b51310038cf245
+VERIFIED evidence_files=108; original_rows=184; native_passes=0
+VERIFIED unit=2464; SQL=1 (500 normalized rows); demo browser=2; release_gate=NO_GO

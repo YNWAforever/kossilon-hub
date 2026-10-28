@@ -1,0 +1,14 @@
+{
+  "checked_utc": "2026-10-24T00:49:25.6650947Z",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "owned_temp": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\routes-e4b761c9-unit",
+  "matching_processes": [
+    {
+      "ProcessId": 13092,
+      "ParentProcessId": 41928,
+      "Name": "node.exe",
+      "CommandLine": "\"C:\\Program Files\\nodejs\\node.exe\" --experimental-strip-types scripts/audit-performance-report.ts C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\routes-e4b761c9-unit\\kossilon-r10-csv-refusal-dqO6qz\\DO_NOT_ECHO.json --csv"
+    }
+  ],
+  "operation": "read-only identity inspection; no process stopped or file removed"
+}

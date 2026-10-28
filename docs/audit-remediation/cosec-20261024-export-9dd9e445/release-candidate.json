@@ -1,0 +1,59 @@
+{
+  "run_id": "cosec-20261024-export-9dd9e445",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "04bcf729ba3f799e30fa8321e7acc9fba621c2db",
+  "parent_sha": "89676dca7be49f4bf65afb44b036fce087934fc4",
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "main_recheck": "remote-final.json",
+  "production_sha_user_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "phase": "LOCAL_UC157_VERIFIED_NATIVE_BLOCKED",
+  "release_gate": "NO_GO",
+  "auth_runtime_verified": false,
+  "deployed": false,
+  "source_manifest": "source-candidate.json",
+  "evidence_manifest": "evidence-manifest.json",
+  "checks": {
+    "unit": {
+      "receipt": "unit-verified.json",
+      "log": "unit-verified.txt",
+      "exit_code": 0
+    },
+    "typecheck": {
+      "receipt": "typecheck-final.json",
+      "log": "typecheck-final.txt",
+      "exit_code": 0
+    },
+    "lint": {
+      "receipt": "lint-final.json",
+      "log": "lint-final.txt",
+      "exit_code": 0
+    },
+    "build": {
+      "receipt": "build-final.json",
+      "log": "build-final.txt",
+      "exit_code": 0
+    },
+    "targeted": {
+      "receipt": "targeted-final.json",
+      "log": "targeted-final.txt",
+      "exit_code": 0
+    },
+    "sql": {
+      "files": 1,
+      "passed": 1,
+      "attempt": "final",
+      "receipt": "db/db-export-final.json",
+      "log": "db/db-export-final.txt",
+      "summary": "readback-summary.json",
+      "earlier_attempt": "db/db-export-initial.json"
+    },
+    "browser": "NOT_RUN",
+    "native": "BLOCKED"
+  },
+  "rollback": {
+    "action": "ordinary new commit reverting 04bcf729ba3f799e30fa8321e7acc9fba621c2db; preserve evidence and published history",
+    "production_action": false
+  }
+}

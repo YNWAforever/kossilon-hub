@@ -1,0 +1,327 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config=playwright.local.config.ts",
+      "e2e/continuation-reflow.spec.ts"
+    ],
+    "configFile": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\playwright.local.config.ts",
+    "rootDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\local-evidence-guard.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/.worktrees/local-browser-runs/run-47QxVl/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile390",
+        "name": "mobile390",
+        "testDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "local-ux.spec.ts",
+          "performance.spec.ts",
+          "audit-release-demo.spec.ts",
+          "audit-persona-local.spec.ts",
+          "continuation-reflow.spec.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/.worktrees/local-browser-runs/run-47QxVl/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "desktop1280",
+        "name": "desktop1280",
+        "testDir": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "local-ux.spec.ts",
+          "performance.spec.ts",
+          "audit-release-demo.spec.ts",
+          "audit-persona-local.spec.ts",
+          "continuation-reflow.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-47QxVl\\results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "npm run dev -- --host 127.0.0.1 --port 5180",
+      "url": "http://127.0.0.1:5180",
+      "reuseExistingServer": false,
+      "timeout": 30000,
+      "env": {
+        "VITE_ENABLE_DEMO_AUTH": "true"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "continuation-reflow.spec.ts",
+      "file": "continuation-reflow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [
+                {
+                  "type": "scope",
+                  "description": "Local demo only; client record journey unavailable; 640 CSS px is reflow, not actual 200% zoom or native Auth."
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "mobile390",
+              "projectName": "mobile390",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 14682,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeDisabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByLabel('付款', { exact: true })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeDisabled\" getByRole('main').getByLabel('付款', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByLabel('付款', { exact: true })\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeDisabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByLabel('付款', { exact: true })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeDisabled\" getByRole('main').getByLabel('付款', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByLabel('付款', { exact: true })\u001b[22m\n\n    at assertReadonlyDelta (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:94:27)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:235:28\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:215:5",
+                    "location": {
+                      "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                      "column": 27,
+                      "line": 94
+                    },
+                    "snippet": "  92 |   ]) {\n  93 |     const control = main.getByLabel(label, { exact: true });\n> 94 |     await expect(control).toBeDisabled();\n     |                           ^\n  95 |     await expect(control).toHaveValue(value);\n  96 |   }\n  97 |   const blockers = main.locator(\"section\").filter({"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                        "column": 27,
+                        "line": 94
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeDisabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByLabel('付款', { exact: true })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeDisabled\" getByRole('main').getByLabel('付款', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByLabel('付款', { exact: true })\u001b[22m\n\n\n  92 |   ]) {\n  93 |     const control = main.getByLabel(label, { exact: true });\n> 94 |     await expect(control).toBeDisabled();\n     |                           ^\n  95 |     await expect(control).toHaveValue(value);\n  96 |   }\n  97 |   const blockers = main.locator(\"section\").filter({\n    at assertReadonlyDelta (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:94:27)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:235:28\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:215:5"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "Admin: keyboard login and honest client demo boundary",
+                      "duration": 7963
+                    },
+                    {
+                      "title": "Admin: real fixture board -> detail -> read-only reload -> return",
+                      "duration": 6076,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeDisabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByLabel('付款', { exact: true })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeDisabled\" getByRole('main').getByLabel('付款', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByLabel('付款', { exact: true })\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeDisabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByLabel('付款', { exact: true })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeDisabled\" getByRole('main').getByLabel('付款', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByLabel('付款', { exact: true })\u001b[22m\n\n    at assertReadonlyDelta (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:94:27)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:235:28\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:215:5",
+                        "location": {
+                          "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                          "column": 27,
+                          "line": 94
+                        },
+                        "snippet": "  92 |   ]) {\n  93 |     const control = main.getByLabel(label, { exact: true });\n> 94 |     await expect(control).toBeDisabled();\n     |                           ^\n  95 |     await expect(control).toHaveValue(value);\n  96 |   }\n  97 |   const blockers = main.locator(\"section\").filter({"
+                      }
+                    }
+                  ],
+                  "startTime": "2026-10-23T03:50:12.511Z",
+                  "annotations": [
+                    {
+                      "type": "scope",
+                      "description": "Local demo only; client record journey unavailable; 640 CSS px is reflow, not actual 200% zoom or native Auth."
+                    }
+                  ],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-47QxVl\\artifacts\\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-47QxVl\\artifacts\\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-47QxVl\\artifacts\\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-mobile390\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                    "column": 27,
+                    "line": 94
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "b6315d36f2618dba9d63-81dc79fc085298038846",
+          "file": "continuation-reflow.spec.ts",
+          "line": 122,
+          "column": 1
+        },
+        {
+          "title": "LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [
+                {
+                  "type": "scope",
+                  "description": "Local demo only; client record journey unavailable; 640 CSS px is reflow, not actual 200% zoom or native Auth."
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "desktop1280",
+              "projectName": "desktop1280",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 9620,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeDisabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByLabel('付款', { exact: true })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeDisabled\" getByRole('main').getByLabel('付款', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByLabel('付款', { exact: true })\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeDisabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByLabel('付款', { exact: true })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeDisabled\" getByRole('main').getByLabel('付款', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByLabel('付款', { exact: true })\u001b[22m\n\n    at assertReadonlyDelta (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:94:27)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:235:28\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:215:5",
+                    "location": {
+                      "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                      "column": 27,
+                      "line": 94
+                    },
+                    "snippet": "  92 |   ]) {\n  93 |     const control = main.getByLabel(label, { exact: true });\n> 94 |     await expect(control).toBeDisabled();\n     |                           ^\n  95 |     await expect(control).toHaveValue(value);\n  96 |   }\n  97 |   const blockers = main.locator(\"section\").filter({"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                        "column": 27,
+                        "line": 94
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeDisabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByLabel('付款', { exact: true })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeDisabled\" getByRole('main').getByLabel('付款', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByLabel('付款', { exact: true })\u001b[22m\n\n\n  92 |   ]) {\n  93 |     const control = main.getByLabel(label, { exact: true });\n> 94 |     await expect(control).toBeDisabled();\n     |                           ^\n  95 |     await expect(control).toHaveValue(value);\n  96 |   }\n  97 |   const blockers = main.locator(\"section\").filter({\n    at assertReadonlyDelta (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:94:27)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:235:28\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:215:5"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "Admin: keyboard login and honest client demo boundary",
+                      "duration": 2845
+                    },
+                    {
+                      "title": "Admin: real fixture board -> detail -> read-only reload -> return",
+                      "duration": 6227,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeDisabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByLabel('付款', { exact: true })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeDisabled\" getByRole('main').getByLabel('付款', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByLabel('付款', { exact: true })\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeDisabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByLabel('付款', { exact: true })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeDisabled\" getByRole('main').getByLabel('付款', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByLabel('付款', { exact: true })\u001b[22m\n\n    at assertReadonlyDelta (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:94:27)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:235:28\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts:215:5",
+                        "location": {
+                          "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                          "column": 27,
+                          "line": 94
+                        },
+                        "snippet": "  92 |   ]) {\n  93 |     const control = main.getByLabel(label, { exact: true });\n> 94 |     await expect(control).toBeDisabled();\n     |                           ^\n  95 |     await expect(control).toHaveValue(value);\n  96 |   }\n  97 |   const blockers = main.locator(\"section\").filter({"
+                      }
+                    }
+                  ],
+                  "startTime": "2026-10-23T03:50:28.699Z",
+                  "annotations": [
+                    {
+                      "type": "scope",
+                      "description": "Local demo only; client record journey unavailable; 640 CSS px is reflow, not actual 200% zoom or native Auth."
+                    }
+                  ],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-47QxVl\\artifacts\\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-47QxVl\\artifacts\\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-47QxVl\\artifacts\\continuation-reflow-LOCAL--ccd5d-eturn-and-640-CSS-px-reflow-desktop1280\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\e2e\\continuation-reflow.spec.ts",
+                    "column": 27,
+                    "line": 94
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "b6315d36f2618dba9d63-168774fe365f8f8a21b4",
+          "file": "continuation-reflow.spec.ts",
+          "line": 122,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-23T03:50:04.744Z",
+    "duration": 34955.824,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "kind": "targeted",
+  "attempt": "green",
+  "started": "2026-10-23T18:37:43.129Z",
+  "finished": "2026-10-23T18:38:06.302Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/bulk-operations/result-export.test.ts",
+    "src/features/bulk-operations/server-fns.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "exit_code": 0,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ]
+}

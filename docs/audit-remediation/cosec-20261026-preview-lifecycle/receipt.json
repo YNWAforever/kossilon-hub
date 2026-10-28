@@ -1,0 +1,71 @@
+{
+  "baseline": "ad53351606d63ed166eb39f4d302e5399dbba12a",
+  "product_commit": "7e34f7e1c8d169b0b832b62c02267854fd399cd5",
+  "verification_state": "Final checks ran at baseline HEAD with the two product files modified. Their SHA256 values below equal the committed files. No product/test changes after final verification. Evidence-only commit follows.",
+  "files": {
+    "src/features/documents/safe-preview.tsx": "e3c6e557718738590479774ba34b7804dce217d2e120a31f05cf680ac36e697d",
+    "src/features/documents/safe-preview.test.tsx": "3f52d20d8a5c426dbb1b0dbdc89b7efc9acb0e893ba103cc75185cf4498cdad1"
+  },
+  "commands": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "result": "2807 passed / 289 files",
+      "log": "unit-final.txt",
+      "execution": "Local child-process-supported unit project only; DB project excluded"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/documents/safe-preview.test.tsx src/routes/-payments.interaction.test.tsx src/features/annual-return/components/payment-pagination.test.tsx",
+      "exit": 0,
+      "result": "52 passed / 3 files, included in full unit total",
+      "new_tests": 8,
+      "log": "targeted-final.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck-final.txt"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/documents/safe-preview.tsx src/features/documents/safe-preview.test.tsx",
+      "exit": 0,
+      "log": "lint-final.txt"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/documents/safe-preview.tsx src/features/documents/safe-preview.test.tsx",
+      "exit": 0,
+      "log": "format-final.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "initial_red": {
+    "result": "6 failed / 6 initial tests",
+    "log": "red.txt"
+  },
+  "fixture_correction": {
+    "result": "3 failed / 47 passed",
+    "cause": "Mock returned the same already-consumed Response body across calls; corrected to construct a new Response per download.",
+    "log": "targeted.txt"
+  },
+  "interrupted_broad_run": {
+    "exit": 143,
+    "complete": false,
+    "observed_failures": 3,
+    "cause": "Same test-fixture Response reuse; stopped before final rerun",
+    "log": "unit.txt"
+  },
+  "review": "Focused reviewer reported no important findings; reviewer ran no tests. Added deferred-blob and same-turn duplicate coverage after review; production implementation unchanged.",
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "build": "NOT_RUN",
+  "db_integration": "NOT_RUN",
+  "hosted_ci_acceptance": "NOT_CLAIMED",
+  "deployment": "NOT_RUN"
+}

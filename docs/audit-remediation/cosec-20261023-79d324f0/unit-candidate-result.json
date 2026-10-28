@@ -1,0 +1,9 @@
+{
+  "temp_mode": "normal OS temp; no node_modules override",
+  "started_utc": "2026-10-22T22:16:17.0107117Z",
+  "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+  "exit_code": 0,
+  "db_provider_env_cleared": true,
+  "command": "npm test -- --project unit --maxWorkers 2",
+  "finished_utc": "2026-10-22T22:18:41.0793245Z"
+}

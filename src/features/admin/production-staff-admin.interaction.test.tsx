@@ -19,7 +19,15 @@ vi.mock("./server-fns", () => ({
 }));
 vi.mock("@tanstack/react-router", async (original) => ({
   ...(await original<typeof import("@tanstack/react-router")>()),
-  Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+  Link: ({
+    children,
+    to,
+    params,
+  }: {
+    children: React.ReactNode;
+    to: string;
+    params?: { id: string };
+  }) => <a href={to.replace("$id", params?.id ?? "")}>{children}</a>,
 }));
 import { ProductionStaffAdmin } from "./production-staff-admin";
 const member: StaffMember = {
@@ -60,6 +68,61 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 describe("verified staff maintenance UI", () => {
+  it("UC186 provides an explicit preview for lawful owner/reviewer handover", async () => {
+    mount();
+    await screen.findByText(/Mei Lam · Annual return/);
+    const details = screen.getByText("維護帳戶／轉交預覽").closest("details")!;
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
+    expect(await screen.findByRole("button", { name: "預覽責任交接" })).toBeTruthy();
+  });
+  it("UC186 warns that a truncated preview and the work queue are not the complete handover scope", async () => {
+    api.preview.mockResolvedValue({
+      userId: member.userId,
+      expectedVersion: 7,
+      openCases: 104,
+      openWorkItems: 0,
+      cases: [],
+      workItems: [],
+      truncated: true,
+    });
+    mount();
+    await screen.findByText(/Mei Lam · Annual return/);
+    const details = screen.getByText("維護帳戶／轉交預覽").closest("details")!;
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
+    await screen.findByText(/只顯示首100筆，仍有未列出的案件/);
+    expect(screen.getByRole("link", { name: /只處理已建立的工作項/ })).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("Mei Lam 的帳戶有效狀態"));
+    expect((screen.getByText("套用帳戶變更") as HTMLButtonElement).disabled).toBe(true);
+  });
+  it.each([
+    { caseType: "incorporation", status: "Intake", path: "/incorporation/" },
+    { caseType: "corporate_change", status: "Requested", path: "/corporate-changes/" },
+  ])(
+    "UC186 opens the correct $caseType responsibility, keeping removal blocked",
+    async ({ caseType, status, path }) => {
+      api.preview.mockResolvedValue({
+        userId: member.userId,
+        expectedVersion: 7,
+        openCases: 1,
+        openWorkItems: 0,
+        cases: [{ id: member.userId, companyName: "UC186 responsibility", status, caseType }],
+        workItems: [],
+        truncated: false,
+      });
+      mount();
+      await screen.findByText(/Mei Lam · Annual return/);
+      const details = screen.getByText("維護帳戶／轉交預覽").closest("details")!;
+      details.open = true;
+      fireEvent(details, new Event("toggle"));
+      const link = await screen.findByRole("link", { name: /UC186 responsibility/ });
+      expect(link.getAttribute("href")).toBe(path + member.userId);
+      fireEvent.click(screen.getByLabelText("Mei Lam 的帳戶有效狀態"));
+      expect((screen.getByText("套用帳戶變更") as HTMLButtonElement).disabled).toBe(true);
+      expect(api.update).not.toHaveBeenCalled();
+    },
+  );
   it("shows concrete handover before disabling and never calls a provider invite", async () => {
     mount();
     await screen.findByText(/Mei Lam · Annual return/);

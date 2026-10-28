@@ -1,0 +1,2 @@
+{"run":"cosec-20261024-writegate-ac7d801e","attempt":"teardown1","action":"teardown","phase":"resource-gate","utc":"2026-10-24T07:49:07.317Z","freeBytes":2932797440,"minimumBytes":3221225472}
+{"run":"cosec-20261024-writegate-ac7d801e","attempt":"teardown1","action":"teardown","phase":"failed-preserved","utc":"2026-10-24T07:49:07.319Z","name":"AssertionError","message":"Parent SQL resource gate requires 3 GiB free RAM"}

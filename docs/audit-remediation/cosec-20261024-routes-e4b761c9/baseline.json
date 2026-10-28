@@ -1,0 +1,40 @@
+{
+  "base": "36dad48dc30a86329f0afcc2ffb46749be71e94e",
+  "branch": "codex/cosec-20261023",
+  "origin": "https://github.com/YNWAforever/kossilon-hub.git",
+  "remote_main_readonly": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "production_historical_not_accessed": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "status_at_capture": "?? docs/audit-remediation/cosec-20261024-routes-e4b761c9/\n?? src/routes/-case-subroutes.interaction.test.tsx\n?? src/test/case-route-fixtures.ts\n",
+  "worktrees": "worktree C:/Users/laich/Documents/kossilon-hub/kossilon-hub-work\nHEAD 76ad310ca8bad75a7ce44c82c9e20db734fd6eaa\nbranch refs/heads/codex/outbox-safety\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree\nHEAD 38123c96ed84fae84e41f17d4dea606c7a8938d0\nbranch refs/heads/codex/r03-role-review-package-20261005\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r12-f25-ci-20261009\nHEAD c9417b925d2134d7c2aef1d45be5d52da8154e50\nbranch refs/heads/codex/staff-remediation-20261012\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r13-dependency-audit-20261009\nHEAD 01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e\nbranch refs/heads/codex/audit-r13-dependency-gates-20261009\n\nworktree C:/Users/laich/Documents/kossilon-hub/cosec-20261023\nHEAD 36dad48dc30a86329f0afcc2ffb46749be71e94e\nbranch refs/heads/codex/cosec-20261023\n\n",
+  "no_env_files": [],
+  "snapshots": [
+    {
+      "revision": "43e2b9765cb8174fcd154b94c268c5b73e587373^",
+      "path": "src/routes/incorporation.tsx",
+      "filename": "incorporation-before-43e2b97.tsx.snapshot",
+      "bytes": 695,
+      "sha256": "29541fdba3f474e9673b14e57c9cab9f81d5017fc31aaf05a6fb3c933a536e49"
+    },
+    {
+      "revision": "36dad48dc30a86329f0afcc2ffb46749be71e94e",
+      "path": "src/routes/incorporation.tsx",
+      "filename": "incorporation-baseline.tsx.snapshot",
+      "bytes": 1026,
+      "sha256": "6f5faed2659f65f39c215b69f53016804e2a8005326b7afc91a6d6d8b1315633"
+    },
+    {
+      "revision": "43e2b9765cb8174fcd154b94c268c5b73e587373^",
+      "path": "src/routes/corporate-changes.tsx",
+      "filename": "corporate-changes-before-43e2b97.tsx.snapshot",
+      "bytes": 727,
+      "sha256": "2dcea7a6599b19646812895b8a181b746adc53a1bc43bc45184dffd617aec248"
+    },
+    {
+      "revision": "36dad48dc30a86329f0afcc2ffb46749be71e94e",
+      "path": "src/routes/corporate-changes.tsx",
+      "filename": "corporate-changes-baseline.tsx.snapshot",
+      "bytes": 1066,
+      "sha256": "4423afd278142ca42564aa2b0e6149a0c951f39f9ffd20b80207633d5a410c38"
+    }
+  ]
+}

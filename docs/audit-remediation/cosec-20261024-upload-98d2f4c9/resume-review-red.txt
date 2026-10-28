@@ -1,0 +1,1003 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/routes/-upload-resume.interaction.test.tsx (12 tests | 2 failed) 4142ms
+   ✓ reuses one logical upload after a near-limit PDF commits but its response is lost  1314ms
+   ✓ reuses the request identity when even the intent response was lost 73ms
+   ✓ restores uncertain scope after fresh-cache reopen and file re-selection even after the requirement became Received 96ms
+   ✓ refuses different bytes selected for an uncertain attempt before any further RPC 96ms
+   ✓ does not start an unjournaled request if session persistence fails 49ms
+   ✓ leaves an intent response arriving after departure resumable, without starting finalize 50ms
+   ✓ does not show another actor's unfinished journal 84ms
+   ✓ only starts a new request after a server-confirmed created uncommitted attempt 64ms
+   × only starts a new request after a server-confirmed expired uncommitted attempt 1042ms
+   × honors explicit resume B over cached file A, rejecting A then confirming only B 1126ms
+   ✓ fails closed on a corrupt journal instead of replacing an uncertain identity 56ms
+   ✓ cancels resume selection without erasing the uncertain request or issuing writes 91ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  12:09:51
+   Duration  6.39s (transform 528ms, setup 0ms, import 711ms, tests 4.14s, environment 1.24s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-upload-resume.interaction.test.tsx > only starts a new request after a server-confirmed expired uncommitted attempt
+TestingLibraryElementError: Unable to find an element with the text: /上載要求已過期且未提交/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m客戶入口[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mQA UC150 Company[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m2026 年度周年申報 · 到期日 2026年12月1日[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-xl border border-border bg-card p-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-baseline justify-between gap-2"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-display text-base font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m進度[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-status-yellow"[39m
+            [36m/>[39m
+            [0m待收文件[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"mt-2 text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m我們已收到所需的全部文件，謝謝您。[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m我們已收到您提供的 1 份文件，現正覆核，您毋須再提交。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg font-semibold"[39m
+            [36m>[39m
+              [0m上載文件[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-1 text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m檔案會上載至私人儲存空間，並在完成安全掃描前保持隔離。[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rounded-md bg-muted px-2 py-1 text-xs font-medium"[39m
+          [36m>[39m
+            [0m私人上載[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-4 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_auto] md:items-end"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"grid gap-1 text-sm"[39m
+          [36m>[39m
+            [0m類別[0m
+            [36m<select[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm w-full"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"identity"[39m
+              [36m>[39m
+                [0m身分證明[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"registry"[39m
+              [36m>[39m
+                [0m登記冊[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"signature"[39m
+              [36m>[39m
+                [0m簽署[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"payment"[39m
+              [36m>[39m
+                [0m付款[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"packet"[39m
+              [36m>[39m
+                [0m交件套件[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"submission"[39m
+              [36m>[39m
+                [0m遞交記錄[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"receipt"[39m
+              [36m>[39m
+                [0m回條[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"other"[39m
+              [36m>[39m
+                [0m其他[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"grid gap-1 text-sm"[39m
+          [36m>[39m
+            [0m檔案[0m
+            [36m<input[39m
+              [33maccept[39m=[32m".pdf,.png,.jpg,.jpeg"[39m
+              [33maria-label[39m=[32m"要上載的文件"[39m
+              [33mclass[39m=[32m"rounded-md border bg-background px-3 py-2"[39m
+              [33mmultiple[39m=[32m""[39m
+              [33mtype[39m=[32m"file"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m安全上載[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m中斷後可重新選取原檔並核對先前結果。檔案會由頭重傳；返回不會撤回已送出的檔案。[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"上載結果"[39m
+          [33mclass[39m=[32m"mt-3 space-y-1"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate"[39m
+            [36m>[39m
+              [0mQA-resume.pdf[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-status-green-text"[39m
+              [36m>[39m
+                [0m已收到，等待掃描[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-4 divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3 py-3 text-sm"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-medium"[39m
+              [36m>[39m
+                [0mQA-resume.pdf[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0m隔離中[0m
+                [0m [0m
+                [0m/ [0m
+                [0m待付款[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<a[39m
+        [33mhref[39m=[32m"/portal"[39m
+      [36m>[39m
+        [0m返回您的周年申報[0m
+      [36m</a>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m客戶入口[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mQA UC150 Company[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m2026 年度周年申報 · 到期日 2026年12月1日[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-xl border border-border bg-card p-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-baseline justify-between gap-2"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-display text-base font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m進度[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-status-yellow"[39m
+            [36m/>[39m
+            [0m待收文件[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"mt-2 text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m我們已收到所需的全部文件，謝謝您。[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m我們已收到您提供的 1 份文件，現正覆核，您毋須再提交。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg font-semibold"[39m
+            [36m>[39m
+              [0m上載文件[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-1 text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m檔案會上載至私人儲存空間，並在完成安全掃描前保持隔離。[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rounded-md bg-muted px-2 py-1 text-xs font-medium"[39m
+          [36m>[39m
+            [0m私人上載[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-4 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_auto] md:items-end"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"grid gap-1 text-sm"[39m
+          [36m>[39m
+            [0m類別[0m
+            [36m<select[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm w-full"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"identity"[39m
+              [36m>[39m
+                [0m身分證明[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"registry"[39m
+              [36m>[39m
+                [0m登記冊[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"signature"[39m
+              [36m>[39m
+                [0m簽署[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"payment"[39m
+              [36m>[39m
+                [0m付款[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"packet"[39m
+              [36m>[39m
+                [0m交件套件[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"submission"[39m
+              [36m>[39m
+                [0m遞交記錄[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"receipt"[39m
+              [36m>[39m
+                [0m回條[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"other"[39m
+              [36m>[39m
+                [0m其他[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"grid gap-1 text-sm"[39m
+          [36m>[39m
+            [0m檔案[0m
+            [36m<input[39m
+              [33maccept[39m=[32m".pdf,.png,.jpg,.jpeg"[39m
+              [33maria-label[39m=[32m"要上載的文件"[39m
+              [33mclass[39m=[32m"rounded-md border bg-background px-3 py-2"[39m
+              [33mmultiple[39m=[32m""[39m
+              [33mtype[39m=[32m"file"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m安全上載[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m中斷後可重新選取原檔並核對先前結果。檔案會由頭重傳；返回不會撤回已送出的檔案。[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"上載結果"[39m
+          [33mclass[39m=[32m"mt-3 space-y-1"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate"[39m
+            [36m>[39m
+              [0mQA-resume.pdf[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-status-green-text"[39m
+              [36m>[39m
+                [0m已收到，等待掃描[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-4 divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3 py-3 text-sm"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-medium"[39m
+              [36m>[39m
+                [0mQA-resume.pdf[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0m隔離中[0m
+                [0m [0m
+                [0m/ [0m
+                [0m待付款[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<a[39m
+        [33mhref[39m=[32m"/portal"[39m
+      [36m>[39m
+        [0m返回您的周年申報[0m
+      [36m</a>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/routes/-upload-resume.interaction.test.tsx:261:16
+    259|   await choose();
+    260|   fireEvent.click(screen.getByRole("button", { name: "安全上載" }));
+    261|   await screen.findByText(/上載要求已過期且未提交/);
+       |                ^
+    262|   expect(f.finalize).not.toHaveBeenCalled();
+    263|   expect(attempts).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| src/routes/-upload-resume.interaction.test.tsx > honors explicit resume B over cached file A, rejecting A then confirming only B
+TestingLibraryElementError: Unable to find an element with the text: /檔案與先前的上載不符/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m客戶入口[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mQA UC150 Company[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m2026 年度周年申報 · 到期日 2026年12月1日[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-xl border border-border bg-card p-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-baseline justify-between gap-2"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-display text-base font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m進度[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-status-yellow"[39m
+            [36m/>[39m
+            [0m待收文件[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"mt-2 text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m我們已收到所需的全部文件，謝謝您。[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m我們已收到您提供的 1 份文件，現正覆核，您毋須再提交。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg font-semibold"[39m
+            [36m>[39m
+              [0m上載文件[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-1 text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m檔案會上載至私人儲存空間，並在完成安全掃描前保持隔離。[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rounded-md bg-muted px-2 py-1 text-xs font-medium"[39m
+          [36m>[39m
+            [0m私人上載[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-4 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_auto] md:items-end"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"grid gap-1 text-sm"[39m
+          [36m>[39m
+            [0m類別[0m
+            [36m<select[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm w-full"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"identity"[39m
+              [36m>[39m
+                [0m身分證明[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"registry"[39m
+              [36m>[39m
+                [0m登記冊[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"signature"[39m
+              [36m>[39m
+                [0m簽署[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"payment"[39m
+              [36m>[39m
+                [0m付款[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"packet"[39m
+              [36m>[39m
+                [0m交件套件[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"submission"[39m
+              [36m>[39m
+                [0m遞交記錄[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"receipt"[39m
+              [36m>[39m
+                [0m回條[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"other"[39m
+              [36m>[39m
+                [0m其他[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"grid gap-1 text-sm"[39m
+          [36m>[39m
+            [0m檔案[0m
+            [36m<input[39m
+              [33maccept[39m=[32m".pdf,.png,.jpg,.jpeg"[39m
+              [33maria-label[39m=[32m"要上載的文件"[39m
+              [33mclass[39m=[32m"rounded-md border bg-background px-3 py-2"[39m
+              [33mmultiple[39m=[32m""[39m
+              [33mtype[39m=[32m"file"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m安全上載[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m中斷後可重新選取原檔並核對先前結果。檔案會由頭重傳；返回不會撤回已送出的檔案。[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"未完成上載"[39m
+          [33mclass[39m=[32m"mt-3 space-y-2 rounded-md border p-3"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm"[39m
+          [36m>[39m
+            [0m有上載尚未確認結果。繼續時請重新選取同一檔案；先前的文件類別及要求會保留。[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between gap-2 text-sm"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0mQA-B.pdf[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m繼續此上載[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"上載結果"[39m
+          [33mclass[39m=[32m"mt-3 space-y-1"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate"[39m
+            [36m>[39m
+              [0mQA-A.pdf[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-status-green-text"[39m
+              [36m>[39m
+                [0m已收到，等待掃描[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-4 divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3 py-3 text-sm"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-medium"[39m
+              [36m>[39m
+                [0mQA-A.pdf[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0m隔離中[0m
+                [0m [0m
+                [0m/ [0m
+                [0m待付款[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3 py-3 text-sm"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-medium"[39m
+              [36m>[39m
+                [0mQA-B.pdf[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0m隔離中[0m
+                [0m [0m
+                [0m/ [0m
+                [0m待付款[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<a[39m
+        [33mhref[39m=[32m"/portal"[39m
+      [36m>[39m
+        [0m返回您的周年申報[0m
+      [36m</a>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m客戶入口[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mQA UC150 Company[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m2026 年度周年申報 · 到期日 2026年12月1日[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-xl border border-border bg-card p-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-baseline justify-between gap-2"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-display text-base font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m進度[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"h-1.5 w-1.5 rounded-full bg-status-yellow"[39m
+            [36m/>[39m
+            [0m待收文件[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"mt-2 text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m我們已收到所需的全部文件，謝謝您。[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m我們已收到您提供的 1 份文件，現正覆核，您毋須再提交。[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-lg border bg-card p-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg font-semibold"[39m
+            [36m>[39m
+              [0m上載文件[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-1 text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m檔案會上載至私人儲存空間，並在完成安全掃描前保持隔離。[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rounded-md bg-muted px-2 py-1 text-xs font-medium"[39m
+          [36m>[39m
+            [0m私人上載[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-4 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_auto] md:items-end"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"grid gap-1 text-sm"[39m
+          [36m>[39m
+            [0m類別[0m
+            [36m<select[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm w-full"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"identity"[39m
+              [36m>[39m
+                [0m身分證明[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"registry"[39m
+              [36m>[39m
+                [0m登記冊[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"signature"[39m
+              [36m>[39m
+                [0m簽署[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"payment"[39m
+              [36m>[39m
+                [0m付款[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"packet"[39m
+              [36m>[39m
+                [0m交件套件[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"submission"[39m
+              [36m>[39m
+                [0m遞交記錄[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"receipt"[39m
+              [36m>[39m
+                [0m回條[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"other"[39m
+              [36m>[39m
+                [0m其他[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"grid gap-1 text-sm"[39m
+          [36m>[39m
+            [0m檔案[0m
+            [36m<input[39m
+              [33maccept[39m=[32m".pdf,.png,.jpg,.jpeg"[39m
+              [33maria-label[39m=[32m"要上載的文件"[39m
+              [33mclass[39m=[32m"rounded-md border bg-background px-3 py-2"[39m
+              [33mmultiple[39m=[32m""[39m
+              [33mtype[39m=[32m"file"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m安全上載[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"mt-3 text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0m中斷後可重新選取原檔並核對先前結果。檔案會由頭重傳；返回不會撤回已送出的檔案。[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"未完成上載"[39m
+          [33mclass[39m=[32m"mt-3 space-y-2 rounded-md border p-3"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm"[39m
+          [36m>[39m
+            [0m有上載尚未確認結果。繼續時請重新選取同一檔案；先前的文件類別及要求會保留。[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between gap-2 text-sm"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0mQA-B.pdf[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m繼續此上載[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"上載結果"[39m
+          [33mclass[39m=[32m"mt-3 space-y-1"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 truncate"[39m
+            [36m>[39m
+              [0mQA-A.pdf[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-status-green-text"[39m
+              [36m>[39m
+                [0m已收到，等待掃描[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-4 divide-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3 py-3 text-sm"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-medium"[39m
+              [36m>[39m
+                [0mQA-A.pdf[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0m隔離中[0m
+                [0m [0m
+                [0m/ [0m
+                [0m待付款[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3 py-3 text-sm"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-medium"[39m
+              [36m>[39m
+                [0mQA-B.pdf[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0m隔離中[0m
+                [0m [0m
+                [0m/ [0m
+                [0m待付款[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<a[39m
+        [33mhref[39m=[32m"/portal"[39m
+      [36m>[39m
+        [0m返回您的周年申報[0m
+      [36m</a>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/routes/-upload-resume.interaction.test.tsx:284:79
+    282|   fireEvent.click(within(rowB).getByRole("button", { name: "繼續此上載" }));
+    283|   await choose(36, 150, false, "QA-A.pdf"); const count = f.intent.moc…
+    284|   fireEvent.click(screen.getByRole("button", { name: "安全上載" })); await…
+       |                                                                               ^
+    285|   expect(f.intent).toHaveBeenCalledTimes(count);
+    286|   await choose(36, 151, true, "QA-B.pdf"); fireEvent.click(screen.getB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+

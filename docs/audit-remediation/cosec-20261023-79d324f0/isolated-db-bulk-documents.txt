@@ -1,0 +1,243 @@
+
+> test
+> vitest run --project db src/features/bulk-operations/repository.integration.test.ts src/features/bulk-operations/actions.integration.test.ts src/features/documents/company-document-register.integration.test.ts src/features/documents/repository.integration.test.ts --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |db| src/features/documents/repository.integration.test.ts (43 tests | 6 failed) 8664ms
+     × retains the V1 review history without approving V2 or trusting a legacy unbound scan 69ms
+     × does not deadlock recovery against concurrent replacement locks 1551ms
+     × does not deadlock recovery against concurrent scanner locks 1968ms
+     × keeps legacy metadata visible without making it downloadable or verified evidence 55ms
+     × rechecks Client membership in real Postgres for reads and writes, including revocation with the same session 161ms
+     × intersects filters with same-team OR cross-team case assignments in Postgres 126ms
+ ❯ |db| src/features/documents/company-document-register.integration.test.ts (2 tests | 1 failed) 123ms
+     × reads three exact company businesses with consistent metrics and denies another team's scope 27ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |db| src/features/documents/company-document-register.integration.test.ts > company register exact scoped pages and counts > reads three exact company businesses with consistent metrics and denies another team's scope
+AssertionError: expected PostgresError: new row for relation "corp… { …(13) } to be Error: R19 synthetic transaction rollback // Object.is equality
+
+- Expected
++ Received
+
+- Error {
+-   "message": "R19 synthetic transaction rollback",
++ PostgresError {
++   "message": "new row for relation \"corporate_change_requests\" violates check constraint \"corporate_change_requests_type_fields_check\"",
++   "name": "PostgresError",
++   "severity_local": "ERROR",
++   "severity": "ERROR",
++   "code": "23514",
++   "detail": "Failing row contains (5f665383-ac3e-4878-b781-dbb740f25d1f, b328dc81-0706-44ad-b70a-08ae3e3d379a, name_change, Requested, cdd3f198-e7ff-4980-95c1-c3f3009f3a7f, 100.00, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 2026-10-23 01:00:00.123456+00, 2026-10-22 21:12:09.388871+00).",
++   "schema_name": "public",
++   "table_name": "corporate_change_requests",
++   "constraint_name": "corporate_change_requests_type_fields_check",
++   "file": "execMain.c",
++   "line": "2074",
++   "routine": "ExecConstraints",
+  }
+
+ ❯ src/features/documents/company-document-register.integration.test.ts:137:5
+    135|         throw rollback;
+    136|       }),
+    137|     ).rejects.toBe(rollback);
+       |     ^
+    138|   });
+    139| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |db| src/features/documents/repository.integration.test.ts > version-bound scan persistence > retains the V1 review history without approving V2 or trusting a legacy unbound scan
+AssertionError: expected AssertionError: expected undefined to be … { …(4) } to be Error: review version fixture rollback // Object.is equality
+
+- Expected
++ Received
+
+- Error {
+-   "message": "review version fixture rollback",
++ AssertionError {
++   "message": "expected undefined to be 'unscanned' // Object.is equality",
++   "actual": undefined,
++   "expected": "unscanned",
++   "showDiff": true,
++   "operator": "strictEqual",
+  }
+
+ ❯ src/features/documents/repository.integration.test.ts:445:5
+    443|         throw rollback;
+    444|       }),
+    445|     ).rejects.toBe(rollback);
+       |     ^
+    446|   });
+    447|   it("refuses an approval for an older version even when the current s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |db| src/features/documents/repository.integration.test.ts > metadata document lineage > does not deadlock recovery against concurrent replacement locks
+ FAIL  |db| src/features/documents/repository.integration.test.ts > metadata document lineage > does not deadlock recovery against concurrent scanner locks
+AssertionError: expected [ 'rejected', 'fulfilled' ] to deeply equal [ 'fulfilled', 'fulfilled' ]
+
+- Expected
++ Received
+
+  [
+-   "fulfilled",
++   "rejected",
+    "fulfilled",
+  ]
+
+ ❯ src/features/documents/repository.integration.test.ts:767:56
+    765|         releaseSource();
+    766|         const results = await Promise.allSettled([recovery, other]);
+    767|         expect(results.map((result) => result.status)).toEqual(["fulfi…
+       |                                                        ^
+    768|       } finally {
+    769|         releaseSource();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |db| src/features/documents/repository.integration.test.ts > metadata document lineage > keeps legacy metadata visible without making it downloadable or verified evidence
+AssertionError: expected AssertionError: expected undefined to mat… { …(3) } to be Error: metadata lineage rollback // Object.is equality
+
+- Expected
++ Received
+
+- Error {
+-   "message": "metadata lineage rollback",
++ AssertionError {
++   "message": "expected undefined to match object { availability: 'metadata_only', …(4) }",
++   "showDiff": true,
++   "expected": {
++     "availability": "metadata_only",
++     "checksum": null,
++     "contentType": null,
++     "sizeBytes": null,
++     "uploadStatus": null,
++   },
++   "actual": undefined,
+  }
+
+ ❯ src/features/documents/repository.integration.test.ts:926:5
+    924|         throw rolledBack;
+    925|       }),
+    926|     ).rejects.toBe(rolledBack);
+       |     ^
+    927|   });
+    928| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |db| src/features/documents/repository.integration.test.ts > document list and detail scope parity > rechecks Client membership in real Postgres for reads and writes, including revocation with the same session
+AssertionError: expected AssertionError: expected false to be true… { …(4) } to be Error: client membership rollback // Object.is equality
+
+- Expected
++ Received
+
+- Error {
+-   "message": "client membership rollback",
++ AssertionError {
++   "message": "expected false to be true // Object.is equality",
++   "actual": false,
++   "expected": true,
++   "showDiff": true,
++   "operator": "strictEqual",
+  }
+
+ ❯ src/features/documents/repository.integration.test.ts:1008:5
+    1006|         throw rolledBack;
+    1007|       }),
+    1008|     ).rejects.toBe(rolledBack);
+       |     ^
+    1009|   });
+    1010|   it("intersects filters with same-team OR cross-team case assignments…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |db| src/features/documents/repository.integration.test.ts > document list and detail scope parity > intersects filters with same-team OR cross-team case assignments in Postgres
+AssertionError: expected AssertionError: expected false to be true… { …(4) } to be Error: document scope rollback // Object.is equality
+
+- Expected
++ Received
+
+- Error {
+-   "message": "document scope rollback",
++ AssertionError {
++   "message": "expected false to be true // Object.is equality",
++   "actual": false,
++   "expected": true,
++   "showDiff": true,
++   "operator": "strictEqual",
+  }
+
+ ❯ src/features/documents/repository.integration.test.ts:1100:5
+    1098|         throw rolledBack;
+    1099|       }),
+    1100|     ).rejects.toBe(rolledBack);
+       |     ^
+    1101|   });
+    1102| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 2 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+PostgresError: syntax error at or near "$1"
+ ❯ ErrorResponse node_modules/postgres/src/connection.js:815:30
+ ❯ handle node_modules/postgres/src/connection.js:489:6
+ ❯ Socket.data node_modules/postgres/src/connection.js:324:9
+ ❯ Socket.emit node:events:509:28
+ ❯ addChunk node:internal/streams/readable:563:12
+ ❯ readableAddChunkPushByteMode node:internal/streams/readable:514:3
+ ❯ Socket.Readable.push node:internal/streams/readable:394:5
+ ❯ TCP.onStreamRead node:internal/stream_base_commons:189:23
+ ❯ cachedError node_modules/postgres/src/query.js:170:23
+ ❯ new Query node_modules/postgres/src/query.js:36:24
+ ❯ sql node_modules/postgres/src/index.js:112:11
+ ❯ documentSearchPredicate src/features/documents/list-filters.ts:31:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { severity_local: 'ERROR', severity: 'ERROR', code: '42601', position: '7', file: 'scan.l', routine: 'scanner_yyerror', query: '\n    ($1::text is null or d.file_name ilike $2 escape \'\\' or c.company_name ilike $3 escape \'\\')\n    and ($4::text is null or d.file_type=$5)\n    and ($6::text is null or d.upload_source=$7)\n    and ($8::text is null or\n      (case when d.reviewed_document_version_id=(select v.id from document_versions v\n        where v.document_id=d.id and v.superseded_by_version_id is null\n        order by v.version_number desc limit 1)\n        then d.verification_status else \'pending\' end)=$9)', parameters: [ null, null, null, null, null, null, null, null, null ], args: [ null, null, null, null, null, null, null, null, null ], types: [ +0, +0, +0, +0, +0, +0, +0, +0, +0 ] }
+This error originated in "src/features/documents/repository.integration.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "does not deadlock recovery against concurrent replacement locks". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+PostgresError: syntax error at or near "$1"
+ ❯ ErrorResponse node_modules/postgres/src/connection.js:815:30
+ ❯ handle node_modules/postgres/src/connection.js:489:6
+ ❯ Socket.data node_modules/postgres/src/connection.js:324:9
+ ❯ Socket.emit node:events:509:28
+ ❯ addChunk node:internal/streams/readable:563:12
+ ❯ readableAddChunkPushByteMode node:internal/streams/readable:514:3
+ ❯ Socket.Readable.push node:internal/streams/readable:394:5
+ ❯ TCP.onStreamRead node:internal/stream_base_commons:189:23
+ ❯ cachedError node_modules/postgres/src/query.js:170:23
+ ❯ new Query node_modules/postgres/src/query.js:36:24
+ ❯ sql node_modules/postgres/src/index.js:112:11
+ ❯ documentSearchPredicate src/features/documents/list-filters.ts:31:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { severity_local: 'ERROR', severity: 'ERROR', code: '42601', position: '7', file: 'scan.l', routine: 'scanner_yyerror', query: '\n    ($1::text is null or d.file_name ilike $2 escape \'\\' or c.company_name ilike $3 escape \'\\')\n    and ($4::text is null or d.file_type=$5)\n    and ($6::text is null or d.upload_source=$7)\n    and ($8::text is null or\n      (case when d.reviewed_document_version_id=(select v.id from document_versions v\n        where v.document_id=d.id and v.superseded_by_version_id is null\n        order by v.version_number desc limit 1)\n        then d.verification_status else \'pending\' end)=$9)', parameters: [ null, null, null, null, null, null, null, null, null ], args: [ null, null, null, null, null, null, null, null, null ], types: [ +0, +0, +0, +0, +0, +0, +0, +0, +0 ] }
+This error originated in "src/features/documents/repository.integration.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "does not deadlock recovery against concurrent scanner locks". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  7 failed | 67 passed (74)
+     Errors  2 errors
+   Start at  05:11:29
+   Duration  39.84s (transform 1.20s, setup 0ms, import 1.99s, tests 36.57s, environment 1ms)
+

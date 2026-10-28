@@ -1,0 +1,21 @@
+{
+  "run_id": "cosec-20261023-cont-d55d8d7e",
+  "records": 184,
+  "original_and_native_fields_preserved": true,
+  "native_passes": 0,
+  "native_results": [
+    {
+      "Name": "BLOCKED",
+      "Count": 70
+    },
+    {
+      "Name": "NOT_RUN",
+      "Count": 114
+    }
+  ],
+  "user_steering": "先完成餘下本機驗收",
+  "native_auth_attempted": false,
+  "db_scope": "fresh run-owned disposable PostgreSQL only",
+  "provider_actions": 0,
+  "push_merge_deploy": 0
+}

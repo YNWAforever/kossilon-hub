@@ -1,0 +1,16 @@
+{
+  "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "source_git_blobs": 674,
+  "prior_runs": 20,
+  "prior_manifested_files": 2718,
+  "current_manifested_files": 125,
+  "unit": 2780,
+  "unit_files": 288,
+  "sql": 1,
+  "build": "NOT_RUN_RESOURCE",
+  "required_local_checks": "INCOMPLETE",
+  "original_uc186": "PARTIAL_SCOPED",
+  "native_pass": 0,
+  "release_gate": "NO_GO",
+  "push_merge_deploy": false
+}

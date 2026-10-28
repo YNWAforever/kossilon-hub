@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+const folder=import.meta.dirname,path=n=>join(folder,n);
+const map=readFileSync(path('native-scenario-map.csv'),'utf8');
+assert(map.includes('"original_evidence_paths"'));
+writeFileSync(path('native-scenario-map.csv'),map.replace('"original_evidence_paths"','"original_record_source_csv"'));
+const release=JSON.parse(readFileSync(path('release-candidate.json'),'utf8'));
+release.acceptance_csv_evidence_base='../cosec-20261025-build-d29cd5ec/';
+writeFileSync(path('release-candidate.json'),JSON.stringify(release,null,2)+'\n');
+writeFileSync(path('evidence-path-base.json'),JSON.stringify({csv:'acceptance-results.csv',byte_identical_to:'../cosec-20261025-build-d29cd5ec/acceptance-results.csv',evidence_paths_resolve_relative_to:'../cosec-20261025-build-d29cd5ec/',status:'Copied original matrix; no result changed'},null,2)+'\n',{flag:'wx'});
+console.log('Unsealed plan metadata and inherited evidence-path base made explicit.');

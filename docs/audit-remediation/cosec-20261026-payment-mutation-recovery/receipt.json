@@ -1,0 +1,70 @@
+{
+  "baseline": "22984cd9c672c6400505ecdb14e876dc24dac1f1",
+  "product_commit": "ea48f89b020414aaa10384cb3ea44f2c3538fb3e",
+  "verification_state": "Tests ran at baseline HEAD with the two product files modified; their final SHA256 values below equal the committed product files. No product changes after final verification. Evidence-only commit follows.",
+  "files": {
+    "src/features/annual-return/components/production-payment-review.tsx": "184e6e5d725c499f530fae78a70aca7c3e0bc787d30f05993d0eeed72dc920cc",
+    "src/features/annual-return/components/payment-pagination.test.tsx": "5b77b4f16cf751082564036b13ba62f98c3b5c7d9b38ff35c5a24aa409de558f"
+  },
+  "commands": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "result": "2799 passed / 288 files",
+      "log": "unit-final.txt",
+      "execution": "child-process-supported local execution; DB project excluded"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/payment-pagination.test.tsx src/routes/-payments.interaction.test.tsx",
+      "exit": 0,
+      "result": "44 passed / 2 files (included in full unit count)",
+      "log": "targeted-final.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck-final.txt"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/production-payment-review.tsx src/features/annual-return/components/payment-pagination.test.tsx",
+      "exit": 0,
+      "log": "lint-final.txt"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/production-payment-review.tsx src/features/annual-return/components/payment-pagination.test.tsx",
+      "exit": 0,
+      "log": "format-final.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "red": {
+    "initial": "4 failed / 25 passed",
+    "review_edges": "2 failed / 32 passed",
+    "shared_guard": "1 failed / 34 skipped"
+  },
+  "interrupted_runs": {
+    "unit.txt": {
+      "exit": 143,
+      "observed_failures": 10,
+      "complete": false
+    },
+    "unit-supported.txt": {
+      "exit": 143,
+      "complete": false,
+      "reason": "Stopped for review-driven source changes"
+    }
+  },
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "build": "NOT_RUN",
+  "db_integration": "NOT_RUN",
+  "hosted_ci_acceptance": "NOT_CLAIMED",
+  "deployment": "NOT_RUN"
+}

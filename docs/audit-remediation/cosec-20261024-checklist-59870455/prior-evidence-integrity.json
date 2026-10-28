@@ -1,0 +1,50 @@
+[
+  {
+    "run": "cosec-20261023-79d324f0",
+    "files_verified": 399,
+    "manifest_sha256": "c4036e7134c6a4c3779431e5d8ff57d504806cb92a0e98f21de5a31f7df4718d",
+    "all_unchanged": true
+  },
+  {
+    "run": "cosec-20261023-cont-d55d8d7e",
+    "files_verified": 108,
+    "manifest_sha256": "f4a74e9634d8fe97aef6bfe24452d05d508f629679ddd6184563dd59845a1b1a",
+    "all_unchanged": true
+  },
+  {
+    "run": "cosec-20261023-xlsx-db68ab95",
+    "files_verified": 45,
+    "manifest_sha256": "3579ca5e233f675eb5fa9a5fe6e85244ebc4f35c591f9039bb9900d650821bc5",
+    "all_unchanged": true
+  },
+  {
+    "run": "cosec-20261023-r22-fe4a5635",
+    "files_verified": 394,
+    "manifest_sha256": "de00aaccc89f09b01c8b2dbecc52ec6e1dee2749f4db322e87ea82d8951329df",
+    "all_unchanged": true
+  },
+  {
+    "run": "cosec-20261023-assignment-86b2aa9a",
+    "files_verified": 106,
+    "manifest_sha256": "2b4cd76b923ab6040c1c9b4a65ef38e5b87c7af4e29afcbb99bae068dec2cef2",
+    "all_unchanged": true
+  },
+  {
+    "run": "cosec-20261023-payment-21be5584",
+    "files_verified": 101,
+    "manifest_sha256": "47f5c61134cdd669dd2fb02ef107364483813e44dd9404078aeaeace1852154d",
+    "all_unchanged": true
+  },
+  {
+    "run": "cosec-20261023-clients-d20c646a",
+    "files_verified": 152,
+    "manifest_sha256": "38844f22e96ecd144a0d5846287549e71c96b03aa6c54186d96011b46238991f",
+    "all_unchanged": true
+  },
+  {
+    "run": "cosec-20261024-export-9dd9e445",
+    "files_verified": 114,
+    "manifest_sha256": "8700f6ac0edf93ee7160b2a65201c395971fe5e7297d148c71f671476c95beaf",
+    "all_unchanged": true
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "agent_id": "01a16cd7-869a-7433-bc0f-20c722a860bb",
+  "result": "No findings in bounded static review against 495fc88061a874b285e0fd7131b042243ab74b92",
+  "scope": "74 POST functions across17 modules, handoff export, HMAC webhook, manual maintenance, fresh retry and GET availability; source only",
+  "limitations": "No edits/tests/network/DB/containers/commits performed by reviewer. SQL test and transport typing completed afterward; no independent rereview claimed.",
+  "remaining_findings": 0,
+  "native": "BLOCKED",
+  "release": "NO_GO"
+}

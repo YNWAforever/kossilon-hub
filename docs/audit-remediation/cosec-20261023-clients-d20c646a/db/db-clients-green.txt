@@ -1,0 +1,12 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Users/laich/Documents/kossilon-hub/cosec-20261023[39m
+
+ [32m✓[39m [30m[45m db [49m[39m src/features/clients/create-recovery.integration.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 1479[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+[2m   Start at [22m 21:07:20
+[2m   Duration [22m 2.14s[2m (transform 229ms, setup 0ms, import 409ms, tests 1.48s, environment 0ms)[22m
+
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m

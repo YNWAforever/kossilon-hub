@@ -1,0 +1,25 @@
+{
+  "base": "e629583fbc4559e80f6b9c2cbb560928c7a1603b",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "origin": "https://github.com/YNWAforever/kossilon-hub.git",
+  "intake_status": "clean before owned edits, verified in PLAN.md and intake command",
+  "status_at_capture": "?? docs/audit-remediation/cosec-20261024-admin-ab8690c7/PLAN.md\n?? docs/audit-remediation/cosec-20261024-admin-ab8690c7/bootstrap.mjs\n?? docs/audit-remediation/cosec-20261024-admin-ab8690c7/capture-evidence.mjs\n?? docs/audit-remediation/cosec-20261024-admin-ab8690c7/capture-remote-final.ps1\n?? docs/audit-remediation/cosec-20261024-admin-ab8690c7/check-local-cleanup.ps1\n?? docs/audit-remediation/cosec-20261024-admin-ab8690c7/freeze-source.mjs\n?? docs/audit-remediation/cosec-20261024-admin-ab8690c7/git-blob-verify.mjs\n?? docs/audit-remediation/cosec-20261024-admin-ab8690c7/isolated-db-runner.mjs\n?? docs/audit-remediation/cosec-20261024-admin-ab8690c7/make-manifest.mjs\n?? docs/audit-remediation/cosec-20261024-admin-ab8690c7/repository.before.snapshot\n?? docs/audit-remediation/cosec-20261024-admin-ab8690c7/resource-gate.mjs\n?? docs/audit-remediation/cosec-20261024-admin-ab8690c7/run-checks.mjs\n?? docs/audit-remediation/cosec-20261024-admin-ab8690c7/server-fns.before.snapshot\n",
+  "worktrees": "worktree C:/Users/laich/Documents/kossilon-hub/kossilon-hub-work\nHEAD 76ad310ca8bad75a7ce44c82c9e20db734fd6eaa\nbranch refs/heads/codex/outbox-safety\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree\nHEAD 38123c96ed84fae84e41f17d4dea606c7a8938d0\nbranch refs/heads/codex/r03-role-review-package-20261005\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r12-f25-ci-20261009\nHEAD c9417b925d2134d7c2aef1d45be5d52da8154e50\nbranch refs/heads/codex/staff-remediation-20261012\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r13-dependency-audit-20261009\nHEAD 01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e\nbranch refs/heads/codex/audit-r13-dependency-gates-20261009\n\nworktree C:/Users/laich/Documents/kossilon-hub/cosec-20261023\nHEAD e629583fbc4559e80f6b9c2cbb560928c7a1603b\nbranch refs/heads/codex/cosec-20261023\n\n",
+  "main_readonly": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "production_historical_not_accessed": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "snapshots": [
+    {
+      "path": "src/features/admin/repository.ts",
+      "snapshot": "repository.before.snapshot",
+      "bytes": 10605,
+      "sha256": "cae99346869b8003931ea0903eed9be3e3918136cd8af31aa89fe8e2155ca307"
+    },
+    {
+      "path": "src/features/admin/server-fns.ts",
+      "snapshot": "server-fns.before.snapshot",
+      "bytes": 3242,
+      "sha256": "6f5599545d67fe4dde2088b6308c3902286572fdca3affaac1b4853737ca553e"
+    }
+  ]
+}

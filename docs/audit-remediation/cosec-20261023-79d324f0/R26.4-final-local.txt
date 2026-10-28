@@ -1,0 +1,15 @@
+
+> test
+> vitest run --project unit src/routes/-operations.interaction.test.tsx src/routes/-operations-dispatch-labels.test.ts src/features/operations/server-fns.test.ts src/features/operations/health.test.ts src/features/operations/capabilities.test.ts src/features/admin/server-fns.test.ts src/features/admin/production-staff-admin.interaction.test.tsx src/routes/-settings.interaction.test.tsx src/routes/-settings-admin-guard.test.tsx src/routes/-settings-templates.test.tsx src/routes/-settings-sections.test.ts src/routes/-settings-save.interaction.test.tsx src/features/nar-import/apply-server.test.ts src/features/nar-import/server-fns.test.ts src/features/nar-import/apply-panel.test.tsx src/features/nar-import/normalize.test.ts src/features/nar-import/mapping.test.ts src/features/nar-import/xlsx/workbook.test.ts src/features/nar-import/xlsx/zip.test.ts --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+
+ Test Files  19 passed (19)
+      Tests  186 passed (186)
+   Start at  05:10:05
+   Duration  64.60s (transform 13.90s, setup 0ms, import 24.58s, tests 15.04s, environment 13.78s)
+

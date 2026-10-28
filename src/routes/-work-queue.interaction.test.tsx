@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { PersistedWorkItem } from "@/features/work-items/repository";
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   recommend: vi.fn(),
@@ -9,14 +10,44 @@ const mocks = vi.hoisted(() => ({
   ack: vi.fn(),
   navigate: vi.fn(),
   dataMode: "production" as "demo" | "production",
+  actorId: "admin",
+  bulk: vi.fn(),
+  search: {
+    view: "team",
+    owner: "all",
+    workType: "all",
+    sla: "all",
+    priority: "all",
+    status: "all",
+    q: "",
+    sort: "deadline",
+    cursor: undefined as string | undefined,
+    contextError: undefined as boolean | undefined,
+  },
 }));
 vi.mock("@/components/bulk-selection-toolbar", () => ({
-  BulkSelectionToolbar: ({ resource }: { resource: string }) => (
-    <section aria-label="Bulk assignment">{resource}</section>
-  ),
+  BulkSelectionToolbar: ({
+    resource,
+    filters,
+    selectionDisabled,
+  }: {
+    resource: string;
+    filters: unknown;
+    selectionDisabled?: boolean;
+  }) => {
+    mocks.bulk(filters);
+    return (
+      <section
+        aria-label="Bulk assignment"
+        data-selection-disabled={String(Boolean(selectionDisabled))}
+      >
+        {resource}
+      </section>
+    );
+  },
 }));
 vi.mock("@/features/work-items/server-fns", () => ({
-  listWorkQueue: mocks.list,
+  listWorkQueuePage: mocks.list,
   recommendWorkItemAssignees: mocks.recommend,
   assignWorkItem: mocks.assign,
   acknowledgeWorkItemEscalation: mocks.ack,
@@ -28,23 +59,492 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-router")>()),
   createFileRoute: () => (options: object) => ({
     ...options,
-    useSearch: () => ({
-      view: "team",
-      owner: "all",
-      workType: "all",
-      sla: "all",
-      priority: "all",
-      status: "all",
-    }),
+    useSearch: () => mocks.search,
     useNavigate: () => mocks.navigate,
     useRouteContext: () => ({
       dataMode: mocks.dataMode,
-      actor: { userId: "admin", authUserId: "auth", role: "Admin", teamId: null, active: true },
+      actor: {
+        userId: mocks.actorId,
+        authUserId: mocks.actorId,
+        role: "Admin",
+        teamId: null,
+        active: true,
+      },
     }),
   }),
-  Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+  Link: ({
+    children,
+    search,
+  }: {
+    children: React.ReactNode;
+    search?: { returnTo?: string; cursor?: string };
+  }) => (
+    <a href="#" data-return-to={search?.returnTo} data-route-search={JSON.stringify(search)}>
+      {children}
+    </a>
+  ),
 }));
 import { WorkQueueRoute } from "./work-queue";
+beforeEach(() => {
+  mocks.actorId = "admin";
+  mocks.search = {
+    view: "team",
+    owner: "all",
+    workType: "all",
+    sla: "all",
+    priority: "all",
+    status: "all",
+    q: "",
+    sort: "deadline",
+    cursor: undefined,
+    contextError: undefined,
+  };
+  mocks.navigate.mockClear();
+  mocks.bulk.mockClear();
+  mocks.list.mockReset();
+  mocks.recommend.mockReset();
+  mocks.assign.mockReset();
+});
+
+const assignmentWork: PersistedWorkItem = {
+  id: "assignment-work",
+  version: 1,
+  title: "Assignment recovery task",
+  companyId: "company",
+  companyName: "Recovery company",
+  caseType: "annual_return",
+  annualReturnCaseId: "case",
+  corporateChangeRequestId: null,
+  sourceEventKey: "assignment-event",
+  sourceEventType: "assignment-test",
+  workType: "annual_return_case",
+  requiredSkillKey: null,
+  ownerId: null,
+  ownerName: null,
+  reviewerId: null,
+  reviewerName: null,
+  teamId: null,
+  slaPolicyVersionId: "policy",
+  slaStartedAt: "2026-10-22T00:00:00Z",
+  slaWarningAt: "2026-10-23T00:00:00Z",
+  slaDueAt: "2026-10-24T00:00:00Z",
+  slaBreachedAt: null,
+  escalationState: "none",
+  status: "open",
+  priority: 50,
+  completedAt: null,
+};
+const assignmentCandidates = [
+  {
+    rank: 1,
+    staffId: "staff-amy",
+    userId: "amy",
+    displayName: "Amy Chan",
+    teamName: "Team A",
+    active: true,
+    workload: 0,
+    score: 500,
+    factors: {
+      capacityUtilization: 0,
+      skillProficiency: 5,
+      workloadPoints: 0,
+      continuityBonus: 0,
+    },
+  },
+  {
+    rank: 2,
+    staffId: "staff-bob",
+    userId: "bob",
+    displayName: "Bob Chan",
+    teamName: "Team A",
+    active: true,
+    workload: 0,
+    score: 400,
+    factors: {
+      capacityUtilization: 0,
+      skillProficiency: 4,
+      workloadPoints: 0,
+      continuityBonus: 0,
+    },
+  },
+];
+const overrideReason = "Keep this reason after reading the latest assignment";
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((complete) => {
+    resolve = complete;
+  });
+  return { promise, resolve };
+}
+
+async function openAssignment(item = assignmentWork) {
+  mocks.list.mockResolvedValue({ items: [item], nextCursor: null });
+  mocks.recommend.mockResolvedValue(assignmentCandidates);
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
+  });
+  const renderView = () => (
+    <QueryClientProvider client={client}>
+      <WorkQueueRoute />
+    </QueryClientProvider>
+  );
+  const view = render(renderView());
+  await screen.findAllByText(item.title);
+  fireEvent.click(screen.getAllByTitle("分配工作項目")[0]);
+  await screen.findByRole("button", { name: /Amy Chan · Team A/ });
+  return { client, view, renderView };
+}
+
+async function chooseReviewerWithReason() {
+  fireEvent.change(screen.getByLabelText("分配角色"), { target: { value: "reviewer" } });
+  fireEvent.click(await screen.findByRole("button", { name: /Bob Chan · Team A/ }));
+  fireEvent.change(screen.getByLabelText("例外理由"), { target: { value: overrideReason } });
+}
+
+function confirmAssignment() {
+  return screen.getByRole<HTMLButtonElement>("button", { name: "確認分配" });
+}
+function reloadAssignment() {
+  return screen.getByRole("button", { name: "重新讀取工作及建議人選" });
+}
+
+describe("UC130/UC131 assignment recovery", () => {
+  it.each([
+    {
+      statusCode: 409,
+      code: "WORK_ITEM_ASSIGNMENT_STALE",
+      message: "Work item assignment is stale.",
+    },
+    new Error("Work item assignment is stale."),
+  ])(
+    "UC130: rereads manager A's assignment before manager B can deliberately confirm again (%#)",
+    async (error) => {
+      mocks.search.q = "Recovery";
+      mocks.search.cursor = "same-filter-page";
+      await openAssignment();
+      await chooseReviewerWithReason();
+      // Both managers read v1. Manager A has now committed v2; B still holds v1.
+      mocks.list.mockResolvedValue({
+        items: [{ ...assignmentWork, version: 2, ownerId: "amy", ownerName: "Manager A choice" }],
+        nextCursor: null,
+      });
+      mocks.assign.mockRejectedValueOnce(error).mockResolvedValue({});
+      fireEvent.click(confirmAssignment());
+      expect((await screen.findByRole("alert")).textContent).toMatch(/其他同事已更新分配/);
+      expect(confirmAssignment().disabled).toBe(true);
+      expect(mocks.assign).toHaveBeenCalledTimes(1);
+      expect(mocks.list).toHaveBeenCalledTimes(1);
+      expect(mocks.assign.mock.calls[0][0].data.expectedVersion).toBe(1);
+      fireEvent.click(confirmAssignment());
+      expect(mocks.assign).toHaveBeenCalledTimes(1);
+      fireEvent.click(reloadAssignment());
+      await waitFor(() =>
+        expect(within(screen.getByRole("dialog")).getByText(/Manager A choice/)).toBeTruthy(),
+      );
+      expect(mocks.list).toHaveBeenLastCalledWith({
+        data: {
+          view: "team",
+          q: "Recovery",
+          sort: "deadline",
+          cursor: "same-filter-page",
+          limit: 50,
+        },
+      });
+      expect(mocks.recommend).toHaveBeenLastCalledWith({
+        data: { workItemId: "assignment-work", assignmentTarget: "reviewer" },
+      });
+      expect(screen.getByRole<HTMLSelectElement>("combobox", { name: "分配角色" }).value).toBe(
+        "reviewer",
+      );
+      expect(screen.getByRole<HTMLTextAreaElement>("textbox", { name: "例外理由" }).value).toBe(
+        overrideReason,
+      );
+      expect(confirmAssignment().disabled).toBe(true);
+      expect(mocks.assign).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole("button", { name: /Bob Chan · Team A/ }));
+      fireEvent.click(confirmAssignment());
+      await waitFor(() => expect(mocks.assign).toHaveBeenCalledTimes(2));
+      expect(mocks.assign.mock.calls[1][0]).toEqual({
+        data: {
+          workItemId: "assignment-work",
+          assigneeId: "bob",
+          expectedVersion: 2,
+          assignmentTarget: "reviewer",
+          overrideReason,
+        },
+      });
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    },
+  );
+
+  it.each([
+    {
+      code: "WORK_ITEM_ASSIGNEE_UNAVAILABLE",
+      message: "Selected assignee is no longer eligible. Refresh recommendations.",
+    },
+    new Error("Selected assignee is no longer eligible. Refresh recommendations."),
+    new Error("Selected assignee is not eligible for this work item."),
+  ])(
+    "UC131: keeps input after server denial and requires an eligible replacement (%#)",
+    async (error) => {
+      await openAssignment();
+      await chooseReviewerWithReason();
+      mocks.assign.mockRejectedValueOnce(error).mockResolvedValue({});
+      fireEvent.click(confirmAssignment());
+      expect((await screen.findByRole("alert")).textContent).toMatch(/人選已不符合分配資格/);
+      expect(confirmAssignment().disabled).toBe(true);
+      expect(screen.getByLabelText<HTMLTextAreaElement>("例外理由").value).toBe(overrideReason);
+      mocks.recommend.mockResolvedValue(
+        assignmentCandidates.map((candidate) => ({
+          ...candidate,
+          active: candidate.userId !== "bob",
+        })),
+      );
+      fireEvent.click(reloadAssignment());
+      await waitFor(() =>
+        expect(screen.queryByRole("button", { name: /Bob Chan · Team A/ })).toBeNull(),
+      );
+      expect(screen.getByLabelText<HTMLSelectElement>("分配角色").value).toBe("reviewer");
+      expect(screen.getByLabelText<HTMLTextAreaElement>("例外理由").value).toBe(overrideReason);
+      expect(confirmAssignment().disabled).toBe(true);
+      expect(mocks.assign).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
+      await waitFor(() => expect(confirmAssignment().disabled).toBe(false));
+      fireEvent.click(confirmAssignment());
+      await waitFor(() => expect(mocks.assign).toHaveBeenCalledTimes(2));
+      expect(mocks.assign.mock.calls[1][0].data).toMatchObject({
+        assigneeId: "amy",
+        assignmentTarget: "reviewer",
+        overrideReason,
+      });
+    },
+  );
+
+  it.each([
+    new Error("private ambiguous transport detail"),
+    { statusCode: 403, code: "WORK_ITEM_ACTOR_UNAVAILABLE", message: "private actor detail" },
+  ])(
+    "requires explicit reread after any mutation error, without exposing server details (%#)",
+    async (error) => {
+      await openAssignment();
+      fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
+      mocks.assign.mockRejectedValue(error);
+      fireEvent.click(confirmAssignment());
+      const alert = await screen.findByRole("alert");
+      expect(alert.textContent).toMatch(/重新讀取/);
+      expect(alert.textContent).not.toMatch(/private/);
+      expect(confirmAssignment().disabled).toBe(true);
+      // Switching assignment target or reselecting cannot bypass the reread.
+      fireEvent.change(screen.getByLabelText("分配角色"), { target: { value: "reviewer" } });
+      fireEvent.click(await screen.findByRole("button", { name: /Amy Chan · Team A/ }));
+      fireEvent.click(confirmAssignment());
+      expect(mocks.assign).toHaveBeenCalledTimes(1);
+      expect(mocks.list).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each(["queue-error", "recommendations-error", "missing", "completed", "cancelled"])(
+    "refuses confirmation and retains input when explicit recovery returns %s",
+    async (failure) => {
+      await openAssignment();
+      await chooseReviewerWithReason();
+      mocks.assign.mockRejectedValue(new Error("unknown outcome"));
+      fireEvent.click(confirmAssignment());
+      await waitFor(() => expect(mocks.assign).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(confirmAssignment().disabled).toBe(true));
+      if (failure === "queue-error") mocks.list.mockRejectedValue(new Error("private read error"));
+      if (failure === "recommendations-error")
+        mocks.recommend.mockRejectedValue(new Error("private recommendation error"));
+      if (failure === "missing") mocks.list.mockResolvedValue({ items: [], nextCursor: null });
+      if (failure === "completed" || failure === "cancelled")
+        mocks.list.mockResolvedValue({
+          items: [{ ...assignmentWork, version: 2, status: failure }],
+          nextCursor: null,
+        });
+      fireEvent.click(reloadAssignment());
+      await waitFor(() =>
+        expect(within(screen.getByRole("dialog")).getByRole("alert").textContent).toMatch(
+          /未能重新讀取|已關閉|不在目前隊列/,
+        ),
+      );
+      expect(screen.getByLabelText<HTMLTextAreaElement>("例外理由").value).toBe(overrideReason);
+      expect(screen.getByLabelText<HTMLSelectElement>("分配角色").value).toBe("reviewer");
+      fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
+      fireEvent.click(confirmAssignment());
+      expect(confirmAssignment().disabled).toBe(true);
+      expect(mocks.assign).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(/private read error|private recommendation error/)).toBeNull();
+    },
+  );
+
+  it("does not confirm a hidden selection after background eligibility changes", async () => {
+    const { client } = await openAssignment();
+    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
+    expect(confirmAssignment().disabled).toBe(false);
+    mocks.recommend.mockResolvedValue(
+      assignmentCandidates.map((candidate) => ({ ...candidate, active: false })),
+    );
+    await act(async () => {
+      await client.refetchQueries({ queryKey: ["work-item-recommendations"] });
+    });
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /Amy Chan · Team A/ })).toBeNull(),
+    );
+    expect(confirmAssignment().disabled).toBe(true);
+    mocks.recommend.mockResolvedValue(assignmentCandidates);
+    await act(async () => {
+      await client.refetchQueries({ queryKey: ["work-item-recommendations"] });
+    });
+    expect(confirmAssignment().disabled).toBe(true);
+    expect(mocks.assign).not.toHaveBeenCalled();
+  });
+
+  it("does not confirm cached recommendations after their refetch fails", async () => {
+    const { client } = await openAssignment();
+    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
+    mocks.recommend.mockRejectedValue(new Error("private recommendation failure"));
+    await act(async () => {
+      await client.refetchQueries({ queryKey: ["work-item-recommendations"] });
+    });
+    await screen.findByRole("alert");
+    expect(confirmAssignment().disabled).toBe(true);
+    fireEvent.click(confirmAssignment());
+    expect(mocks.assign).not.toHaveBeenCalled();
+  });
+
+  it("cancels before submit without assigning", async () => {
+    await openAssignment();
+    await chooseReviewerWithReason();
+    fireEvent.click(screen.getByRole("button", { name: "取消" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(mocks.assign).not.toHaveBeenCalled();
+  });
+
+  it("keeps an uncertain write locked after cancelling and reopening the same item", async () => {
+    await openAssignment();
+    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
+    mocks.assign.mockRejectedValue(new Error("response lost after a possible commit"));
+    fireEvent.click(confirmAssignment());
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", { name: "取消" }));
+    fireEvent.click(screen.getAllByTitle("分配工作項目")[0]);
+    await waitFor(() =>
+      expect(
+        screen.getByRole<HTMLButtonElement>("button", { name: /Amy Chan · Team A/ }).disabled,
+      ).toBe(false),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
+    expect(confirmAssignment().disabled).toBe(true);
+    expect(mocks.list).toHaveBeenCalledTimes(1);
+    fireEvent.click(confirmAssignment());
+    expect(mocks.assign).toHaveBeenCalledTimes(1);
+    fireEvent.click(reloadAssignment());
+    await waitFor(() =>
+      expect(
+        screen.getByRole<HTMLButtonElement>("button", { name: "重新讀取工作及建議人選" }).disabled,
+      ).toBe(false),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
+    expect(confirmAssignment().disabled).toBe(false);
+  });
+
+  it.each(["missing", "error", "completed", "cancelled"])(
+    "refuses a captured confirmation when a background queue read becomes %s",
+    async (state) => {
+      const { client } = await openAssignment();
+      fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
+      if (state === "error") mocks.list.mockRejectedValue(new Error("private queue error"));
+      else
+        mocks.list.mockResolvedValue({
+          items: state === "missing" ? [] : [{ ...assignmentWork, version: 2, status: state }],
+          nextCursor: null,
+        });
+      await act(async () => {
+        await client.refetchQueries({ queryKey: ["work-queue"] });
+      });
+      await waitFor(() => expect(confirmAssignment().disabled).toBe(true));
+      expect(screen.getByRole("dialog")).toBeTruthy();
+      fireEvent.click(confirmAssignment());
+      expect(mocks.assign).not.toHaveBeenCalled();
+    },
+  );
+
+  it("blocks same-turn duplicates and all dismissal paths while saving", async () => {
+    const pending = deferred<object>();
+    await openAssignment();
+    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
+    mocks.assign.mockReturnValue(pending.promise);
+    const confirm = confirmAssignment();
+    act(() => {
+      fireEvent.click(confirm);
+      fireEvent.click(confirm);
+    });
+    await waitFor(() => expect(mocks.assign).toHaveBeenCalledTimes(1));
+    expect(confirmAssignment().disabled).toBe(true);
+    expect(screen.getByRole<HTMLButtonElement>("button", { name: "取消" }).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "取消" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    fireEvent.pointerDown(document.body);
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByLabelText<HTMLSelectElement>("分配角色").disabled).toBe(true);
+    await act(async () => {
+      pending.resolve({});
+      await pending.promise;
+    });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("keeps confirmation locked during a reread and prevents same-turn duplicate rereads", async () => {
+    await openAssignment();
+    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
+    const pending = deferred<{ items: PersistedWorkItem[]; nextCursor: null }>();
+    mocks.list.mockReturnValue(pending.promise);
+    const reload = reloadAssignment();
+    act(() => {
+      fireEvent.click(reload);
+      fireEvent.click(reload);
+    });
+    await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+    expect(confirmAssignment().disabled).toBe(true);
+    fireEvent.click(confirmAssignment());
+    expect(mocks.assign).not.toHaveBeenCalled();
+    await act(async () => {
+      pending.resolve({ items: [{ ...assignmentWork, version: 2 }], nextCursor: null });
+      await pending.promise;
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByRole<HTMLButtonElement>("button", { name: "重新讀取工作及建議人選" }).disabled,
+      ).toBe(false),
+    );
+    expect(confirmAssignment().disabled).toBe(true);
+  });
+
+  it("discards the old actor's dialog and does not close a new dialog on late success", async () => {
+    const pending = deferred<object>();
+    const { view, renderView } = await openAssignment();
+    fireEvent.click(screen.getByRole("button", { name: /Amy Chan · Team A/ }));
+    mocks.assign.mockReturnValue(pending.promise);
+    fireEvent.click(confirmAssignment());
+    await waitFor(() => expect(mocks.assign).toHaveBeenCalledTimes(1));
+    mocks.actorId = "next-manager";
+    view.rerender(renderView());
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await screen.findAllByText(assignmentWork.title);
+    fireEvent.click(screen.getAllByTitle("分配工作項目")[0]);
+    await screen.findByRole("button", { name: /Amy Chan · Team A/ });
+    expect(confirmAssignment().disabled).toBe(true);
+    await act(async () => {
+      pending.resolve({});
+      await pending.promise;
+    });
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(confirmAssignment().disabled).toBe(true);
+    expect(mocks.assign).toHaveBeenCalledTimes(1);
+  });
+});
 afterEach(() => {
   cleanup();
   mocks.dataMode = "production";
@@ -67,6 +567,168 @@ describe("work queue in demo mode", () => {
   });
 });
 describe("work queue assignment and blockers", () => {
+  it("offers recovery for malformed filters without issuing queue or bulk reads", () => {
+    mocks.search.contextError = true;
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkQueueRoute />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByRole("alert").textContent).toContain("篩選連結無效");
+    expect(mocks.list).not.toHaveBeenCalled();
+    expect(mocks.bulk).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "清除無效篩選" }));
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({ search: expect.objectContaining({ view: "mine", q: "" }) }),
+    );
+  });
+  it("retains successful rows when the next cursor fails, and clears them across actors", async () => {
+    const item = {
+      id: "retained-work",
+      version: 1,
+      title: "Owned previous page",
+      companyName: "Scoped company",
+      companyId: "company",
+      workType: "annual_return_case",
+      caseType: "annual_return",
+      annualReturnCaseId: "case",
+      ownerId: null,
+      ownerName: null,
+      slaDueAt: "2026-10-22T00:00:00Z",
+      escalationState: "warning",
+      status: "open",
+      priority: 50,
+    };
+    mocks.list
+      .mockResolvedValueOnce({ items: [item], nextCursor: "page-2" })
+      .mockRejectedValue(new Error("private cursor error"));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const renderView = () => (
+      <QueryClientProvider client={client}>
+        <WorkQueueRoute />
+      </QueryClientProvider>
+    );
+    const view = render(renderView());
+    await screen.findAllByText("Owned previous page");
+    mocks.search.cursor = "page-2";
+    view.rerender(renderView());
+    await screen.findByText(/無法載入這一頁/);
+    expect(screen.getAllByText("Owned previous page").length).toBeGreaterThan(0);
+    expect(screen.queryByText("private cursor error")).toBeNull();
+    for (const link of screen.getAllByRole("link", { name: "Owned previous page" }))
+      expect(
+        new URL(link.getAttribute("data-return-to")!, "https://local.invalid").searchParams.get(
+          "cursor",
+        ),
+      ).toBeNull();
+    expect((screen.getAllByTitle("確認知悉升級")[0] as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getAllByTitle("分配工作項目")[0] as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      screen
+        .getByRole("region", { name: "Bulk assignment" })
+        .getAttribute("data-selection-disabled"),
+    ).toBe("true");
+    let finishRead!: (value: unknown) => void;
+    mocks.list.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishRead = resolve;
+        }),
+    );
+    const retry = screen.getByRole("button", { name: "重試" });
+    act(() => {
+      retry.click();
+      retry.click();
+    });
+    await waitFor(() =>
+      expect((screen.getAllByTitle("確認知悉升級")[0] as HTMLButtonElement).disabled).toBe(true),
+    );
+    expect(
+      (screen.queryByRole("button", { name: "重試" }) as HTMLButtonElement | null)?.disabled ??
+        true,
+    ).toBe(true);
+    await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(3));
+    await act(async () => finishRead({ items: [item], nextCursor: null }));
+    await waitFor(() =>
+      expect((screen.getAllByTitle("確認知悉升級")[0] as HTMLButtonElement).disabled).toBe(false),
+    );
+    fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    mocks.actorId = "another-actor";
+    view.rerender(renderView());
+    await waitFor(() => expect(screen.queryByText("Owned previous page")).toBeNull());
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+  it("keeps the same return context on desktop and mobile case links", async () => {
+    mocks.search.q = "香港";
+    mocks.list.mockResolvedValue({
+      items: [
+        {
+          id: "context-work",
+          version: 1,
+          title: "Context task",
+          companyName: "香港測試",
+          companyId: "c",
+          workType: "annual_return_case",
+          caseType: "annual_return",
+          annualReturnCaseId: "case",
+          ownerId: null,
+          ownerName: null,
+          slaDueAt: "2026-10-22T00:00:00Z",
+          escalationState: "none",
+          status: "open",
+          priority: 50,
+        },
+      ],
+      nextCursor: null,
+    });
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <WorkQueueRoute />
+      </QueryClientProvider>,
+    );
+    const links = await screen.findAllByRole("link", { name: "Context task" });
+    expect(links).toHaveLength(2);
+    for (const link of links)
+      expect(
+        new URL(link.getAttribute("data-return-to")!, "https://local.invalid").searchParams.get(
+          "q",
+        ),
+      ).toBe("香港");
+  });
+  it("uses the effective breached predicate for both reads and all-results snapshots", async () => {
+    mocks.search.view = "breached";
+    mocks.search.sla = "warning";
+    mocks.list.mockResolvedValue({ items: [], nextCursor: null });
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkQueueRoute />
+      </QueryClientProvider>,
+    );
+    await waitFor(() =>
+      expect(mocks.list).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ escalationState: "breach" }) }),
+      ),
+    );
+    expect(mocks.bulk).toHaveBeenLastCalledWith(
+      expect.objectContaining({ view: "breached", escalationState: "breach" }),
+    );
+  });
+  it("starts a new view from its first page", () => {
+    mocks.search.cursor = "old-view-page2";
+    mocks.list.mockResolvedValue({ items: [], nextCursor: null });
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkQueueRoute />
+      </QueryClientProvider>,
+    );
+    const destination = JSON.parse(
+      screen.getByRole("link", { name: "我的工作" }).getAttribute("data-route-search")!,
+    );
+    expect(destination.cursor).toBeUndefined();
+  });
   it("shows real identity, payment blocker with on-track SLA, and current owner/reviewer candidates", async () => {
     const userId = "20000000-0000-0000-0000-000000000001";
     const factors = {
@@ -75,37 +737,40 @@ describe("work queue assignment and blockers", () => {
       workloadPoints: 0,
       continuityBonus: 0,
     };
-    mocks.list.mockResolvedValue([
-      {
-        id: "wi",
-        version: 1,
-        title: "Review case",
-        companyName: "Scoped company",
-        companyId: "c",
-        workType: "annual_return_case",
-        caseType: "annual_return",
-        annualReturnCaseId: "case",
-        ownerId: userId,
-        ownerName: "Amy Chan",
-        ownerTeamName: "Team A",
-        slaDueAt: "2026-10-02T00:00:00Z",
-        escalationState: "none",
-        status: "open",
-        priority: 50,
-        businessContext: {
-          filingDueDate: "2026-11-01",
-          sourceVersion: "v",
-          blockers: [
-            {
-              code: "payment_not_received",
-              message: "Payment missing",
-              action: "/payments",
-              stage: "prepare",
-            },
-          ],
+    mocks.list.mockResolvedValue({
+      items: [
+        {
+          id: "wi",
+          version: 1,
+          title: "Review case",
+          companyName: "Scoped company",
+          companyId: "c",
+          workType: "annual_return_case",
+          caseType: "annual_return",
+          annualReturnCaseId: "case",
+          ownerId: userId,
+          ownerName: "Amy Chan",
+          ownerTeamName: "Team A",
+          slaDueAt: "2026-10-02T00:00:00Z",
+          escalationState: "none",
+          status: "open",
+          priority: 50,
+          businessContext: {
+            filingDueDate: "2026-11-01",
+            sourceVersion: "v",
+            blockers: [
+              {
+                code: "payment_not_received",
+                message: "Payment missing",
+                action: "/payments",
+                stage: "prepare",
+              },
+            ],
+          },
         },
-      },
-    ]);
+      ],
+      nextCursor: null,
+    });
     mocks.recommend.mockResolvedValue([
       {
         rank: 1,
@@ -142,6 +807,11 @@ describe("work queue assignment and blockers", () => {
     fireEvent.change(screen.getByPlaceholderText("搜尋案件或工作類型"), {
       target: { value: "Scoped company" },
     });
+    expect(mocks.navigate).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        search: expect.objectContaining({ q: "Scoped company", cursor: undefined }),
+      }),
+    );
     expect(screen.getAllByText("Review case").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Payment missing").length).toBeGreaterThan(0);
     expect(screen.queryByText("None")).toBeNull();
@@ -159,3 +829,408 @@ describe("work queue assignment and blockers", () => {
     );
   });
 });
+
+it("deduplicates failed queue retry and restores commands only after fresh read success", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  mocks.list.mockRejectedValue(new Error("private list failure"));
+  render(
+    <QueryClientProvider client={client}>
+      <WorkQueueRoute />
+    </QueryClientProvider>,
+  );
+  const retry = await screen.findByRole("button", { name: "重試" });
+  expect(screen.queryByText("此檢視沒有符合的工作項目。")).toBeNull();
+  expect(
+    screen.getByRole("region", { name: "Bulk assignment" }).getAttribute("data-selection-disabled"),
+  ).toBe("true");
+  let resolve!: (value: unknown) => void;
+  mocks.list.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+  expect(
+    (screen.queryByRole("button", { name: "重試" }) as HTMLButtonElement | null)?.disabled ?? true,
+  ).toBe(true);
+  await act(async () => resolve({ items: [assignmentWork], nextCursor: null }));
+  await screen.findAllByText(assignmentWork.title);
+  expect((screen.getAllByTitle("分配工作項目")[0] as HTMLButtonElement).disabled).toBe(false);
+  expect(
+    screen.getByRole("region", { name: "Bulk assignment" }).getAttribute("data-selection-disabled"),
+  ).toBe("false");
+  expect(mocks.assign).not.toHaveBeenCalled();
+  expect(mocks.navigate).not.toHaveBeenCalled();
+});
+
+it("blocks an already open acknowledgement during queue refresh and denial while retaining its draft", async () => {
+  mocks.ack.mockReset();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  mocks.list.mockResolvedValue({
+    items: [{ ...assignmentWork, escalationState: "warning" }],
+    nextCursor: null,
+  });
+  render(
+    <QueryClientProvider client={client}>
+      <WorkQueueRoute />
+    </QueryClientProvider>,
+  );
+  await screen.findAllByText(assignmentWork.title);
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), {
+    target: { value: "Unsaved review note" },
+  });
+  let reject!: (error: Error) => void;
+  mocks.list.mockImplementationOnce(
+    () =>
+      new Promise((_done, fail) => {
+        reject = fail;
+      }),
+  );
+  let refreshing!: Promise<void>;
+  act(() => {
+    refreshing = client.refetchQueries({ queryKey: ["work-queue"] });
+  });
+  const submit = screen.getByRole("button", { name: "確認知悉" });
+  await waitFor(() => expect((submit as HTMLButtonElement).disabled).toBe(true));
+  fireEvent.click(submit);
+  expect(mocks.ack).not.toHaveBeenCalled();
+  await act(async () => {
+    reject(new Error("denied"));
+    await refreshing;
+  });
+  expect((submit as HTMLButtonElement).disabled).toBe(true);
+  expect((screen.getByLabelText("確認知悉備註") as HTMLTextAreaElement).value).toBe(
+    "Unsaved review note",
+  );
+  expect(mocks.ack).not.toHaveBeenCalled();
+  mocks.list.mockResolvedValue({
+    items: [{ ...assignmentWork, escalationState: "acknowledged" }],
+    nextCursor: null,
+  });
+  await act(async () => {
+    await client.refetchQueries({ queryKey: ["work-queue"] });
+  });
+  expect((submit as HTMLButtonElement).disabled).toBe(true);
+  mocks.list.mockResolvedValue({
+    items: [{ ...assignmentWork, escalationState: "warning" }],
+    nextCursor: null,
+  });
+  await act(async () => {
+    await client.refetchQueries({ queryKey: ["work-queue"] });
+  });
+  await waitFor(() => expect((submit as HTMLButtonElement).disabled).toBe(false));
+  expect((screen.getByLabelText("確認知悉備註") as HTMLTextAreaElement).value).toBe(
+    "Unsaved review note",
+  );
+  expect(mocks.ack).not.toHaveBeenCalled();
+});
+
+async function openUnknownAcknowledgement(
+  client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: 2, retryDelay: 0 } },
+  }),
+) {
+  mocks.ack.mockReset().mockRejectedValue(new Error("private lost response"));
+  mocks.list.mockResolvedValue({
+    items: [{ ...assignmentWork, escalationState: "warning" }],
+    nextCursor: null,
+  });
+  render(
+    <QueryClientProvider client={client}>
+      <WorkQueueRoute />
+    </QueryClientProvider>,
+  );
+  await screen.findAllByText(assignmentWork.title);
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), { target: { value: "Review draft" } });
+  const submit = screen.getByRole("button", { name: "確認知悉" });
+  act(() => {
+    submit.click();
+    submit.click();
+  });
+  await screen.findByRole("button", { name: "重新核對知悉結果" });
+  return client;
+}
+
+it("reconciles an uncertain acknowledgement with independent saved-state readback and no write replay", async () => {
+  await openUnknownAcknowledgement();
+  expect(mocks.ack).toHaveBeenCalledTimes(1);
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  mocks.list.mockResolvedValue({
+    items: [{ ...assignmentWork, escalationState: "acknowledged" }],
+    nextCursor: null,
+  });
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await screen.findByText("已重新核對目前升級狀態。請核對結果及備註，再決定是否提交。");
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expect((screen.getByLabelText("確認知悉備註") as HTMLTextAreaElement).value).toBe("Review draft");
+  expect(mocks.ack).toHaveBeenCalledTimes(1);
+});
+
+it("retains uncertainty across close/reopen and ignores ordinary cached read success", async () => {
+  const client = await openUnknownAcknowledgement();
+  fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  await act(async () => {
+    await client.refetchQueries({ queryKey: ["work-queue"] });
+  });
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expect(screen.getByRole("button", { name: "重新核對知悉結果" })).toBeTruthy();
+  expect(mocks.ack).toHaveBeenCalledTimes(1);
+});
+
+it("deduplicates pending readback and allows a new explicit action only after fresh active-state recovery", async () => {
+  await openUnknownAcknowledgement();
+  let resolve!: (value: unknown) => void;
+  mocks.list.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  const retry = screen.getByRole("button", { name: "重新核對知悉結果" });
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+  expect((retry as HTMLButtonElement).disabled).toBe(true);
+  await act(async () =>
+    resolve({
+      items: [{ ...assignmentWork, version: 2, escalationState: "warning" }],
+      nextCursor: null,
+    }),
+  );
+  await screen.findByText("已重新核對目前升級狀態。請核對結果及備註，再決定是否提交。");
+  mocks.ack.mockResolvedValue({});
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), {
+    target: { value: "New explicit note" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "確認知悉" }));
+  await waitFor(() => expect(mocks.ack).toHaveBeenCalledTimes(2));
+  expect(mocks.ack.mock.calls[1][0]).toEqual({
+    data: { workItemId: assignmentWork.id, note: "New explicit note" },
+  });
+});
+
+it.each([
+  null,
+  { items: [], nextCursor: null },
+  { items: [{ ...assignmentWork, id: "another" }], nextCursor: null },
+])("keeps unavailable or missing acknowledgement readback blocked: %j", async (page) => {
+  await openUnknownAcknowledgement();
+  mocks.list.mockResolvedValue(page);
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await screen.findByText("未能核實知悉結果，請稍後重新核對；沒有重試寫入。");
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expect(mocks.ack).toHaveBeenCalledTimes(1);
+});
+
+it("keeps denied readback retryable and discards manual cache/cancellation as a substitute", async () => {
+  const client = await openUnknownAcknowledgement();
+  mocks.list.mockRejectedValueOnce(new Error("private read failure"));
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await screen.findByText("未能核實知悉結果，請稍後重新核對；沒有重試寫入。");
+  expect(screen.queryByText("private read failure")).toBeNull();
+  let resolve!: (value: unknown) => void;
+  mocks.list.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(3));
+  await act(async () => {
+    await client.cancelQueries({ queryKey: ["work-queue"] });
+    for (const query of client.getQueryCache().findAll({ queryKey: ["work-queue"] }))
+      client.setQueryData(query.queryKey, {
+        items: [{ ...assignmentWork, escalationState: "warning" }],
+        nextCursor: null,
+      });
+  });
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  await act(async () =>
+    resolve({ items: [{ ...assignmentWork, escalationState: "warning" }], nextCursor: null }),
+  );
+  await screen.findByText("已重新核對目前升級狀態。請核對結果及備註，再決定是否提交。");
+  expect(mocks.ack).toHaveBeenCalledTimes(1);
+});
+
+it("blocks a pending acknowledgement across close/reopen and latches a late write failure", async () => {
+  mocks.ack.mockReset();
+  let reject!: (error: Error) => void;
+  mocks.ack.mockImplementation(
+    () =>
+      new Promise((_done, fail) => {
+        reject = fail;
+      }),
+  );
+  mocks.list.mockResolvedValue({
+    items: [{ ...assignmentWork, escalationState: "warning" }],
+    nextCursor: null,
+  });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: 2, retryDelay: 0 } },
+  });
+  render(
+    <QueryClientProvider client={client}>
+      <WorkQueueRoute />
+    </QueryClientProvider>,
+  );
+  await screen.findAllByText(assignmentWork.title);
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), { target: { value: "Pending draft" } });
+  fireEvent.click(screen.getByRole("button", { name: "確認知悉" }));
+  await waitFor(() => expect(mocks.ack).toHaveBeenCalledTimes(1));
+  fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), { target: { value: "New draft" } });
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  await act(async () => reject(new Error("lost response")));
+  await screen.findByRole("button", { name: "重新核對知悉結果" });
+  expect((screen.getByRole("button", { name: "確認知悉" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+  expect(mocks.ack).toHaveBeenCalledTimes(1);
+});
+
+it("does not publish late acknowledgement readback after the queue session ends", async () => {
+  const client = await openUnknownAcknowledgement();
+  let resolve!: (value: unknown) => void;
+  mocks.list.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+  const before = client.getQueriesData({ queryKey: ["work-queue"] });
+  cleanup();
+  await act(async () =>
+    resolve({ items: [{ ...assignmentWork, escalationState: "acknowledged" }], nextCursor: null }),
+  );
+  expect(client.getQueriesData({ queryKey: ["work-queue"] })).toEqual(before);
+});
+
+it("discards old readback when a newer acknowledgement was submitted in another dialog", async () => {
+  const client = await openUnknownAcknowledgement();
+  const second = {
+    ...assignmentWork,
+    id: "second-ack",
+    title: "Second escalation",
+    escalationState: "warning",
+  };
+  const page = {
+    items: [{ ...assignmentWork, escalationState: "warning" }, second],
+    nextCursor: null,
+  };
+  let resolve!: (value: unknown) => void;
+  mocks.list.mockResolvedValue(page).mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+  fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  await act(async () => {
+    await client.refetchQueries({ queryKey: ["work-queue"] });
+  });
+  await openAckByTitle(second.title);
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), {
+    target: { value: "Second explicit acknowledgement" },
+  });
+  mocks.ack.mockResolvedValueOnce({});
+  fireEvent.click(screen.getByRole("button", { name: "確認知悉" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  await act(async () =>
+    resolve({ items: [{ ...assignmentWork, escalationState: "acknowledged" }], nextCursor: null }),
+  );
+  await screen.findAllByText("Second escalation");
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  expect(screen.getByRole("button", { name: "重新核對知悉結果" })).toBeTruthy();
+  expect(mocks.ack).toHaveBeenCalledTimes(2);
+});
+
+it("does not let an older item recovery overwrite a newer acknowledged item on the shared page", async () => {
+  const client = await openUnknownAcknowledgement();
+  const second = {
+    ...assignmentWork,
+    id: "second-recovery",
+    title: "Second uncertain escalation",
+    escalationState: "warning",
+  };
+  const oldPage = {
+    items: [{ ...assignmentWork, escalationState: "warning" }, second],
+    nextCursor: null,
+  };
+  fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  mocks.list.mockResolvedValue(oldPage);
+  await act(async () => {
+    await client.refetchQueries({ queryKey: ["work-queue"] });
+  });
+  await openAckByTitle(second.title);
+  fireEvent.change(screen.getByLabelText("確認知悉備註"), {
+    target: { value: "Second uncertain draft" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "確認知悉" }));
+  await screen.findByRole("button", { name: "重新核對知悉結果" });
+  fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  fireEvent.click(screen.getAllByTitle("確認知悉升級")[0]);
+  let resolveOld!: (value: unknown) => void;
+  mocks.list.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolveOld = done;
+      }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(3));
+  fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  await openAckByTitle(second.title);
+  mocks.list.mockResolvedValue({
+    items: [
+      { ...assignmentWork, escalationState: "warning" },
+      { ...second, version: 2, escalationState: "acknowledged" },
+    ],
+    nextCursor: null,
+  });
+  fireEvent.click(screen.getByRole("button", { name: "重新核對知悉結果" }));
+  await screen.findByText("已重新核對目前升級狀態。請核對結果及備註，再決定是否提交。");
+  await act(async () => resolveOld(oldPage));
+  for (const [, data] of client.getQueriesData<{ items: PersistedWorkItem[] }>({
+    queryKey: ["work-queue"],
+  }))
+    expect(data?.items.find((row) => row.id === second.id)?.escalationState).toBe("acknowledged");
+  expect(mocks.ack).toHaveBeenCalledTimes(2);
+});
+
+async function openAckByTitle(title: string) {
+  const row = (await screen.findAllByText(title))
+    .map((node) => node.closest('[role="row"]'))
+    .find(Boolean) as HTMLElement;
+  const button = within(row).getByTitle("確認知悉升級") as HTMLButtonElement;
+  await waitFor(() => expect(button.disabled).toBe(false));
+  fireEvent.click(button);
+}

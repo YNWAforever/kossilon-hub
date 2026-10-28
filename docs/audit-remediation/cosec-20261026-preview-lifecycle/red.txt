@@ -1,0 +1,163 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/features/documents/safe-preview.test.tsx (6 tests | 6 failed) 1279ms
+   × clears displayed bytes and revokes their URL on version change 178ms
+   × clears displayed bytes and revokes their URL on document change 23ms
+   × clears displayed bytes and revokes their URL on safety change 1024ms
+   × discards a late old-version result while a fresh preview remains available 19ms
+   × does not allocate a URL when download finishes after unmount 9ms
+   × removes old bytes before a failed retry and allows a subsequent explicit retry 24ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/documents/safe-preview.test.tsx > clears displayed bytes and revokes their URL on version change
+ FAIL  |unit| src/features/documents/safe-preview.test.tsx > clears displayed bytes and revokes their URL on document change
+AssertionError: expected <iframe title="付款憑證預覽" …(3)></iframe> to be null
+
+- Expected:
+null
+
++ Received:
+<iframe
+  class="mt-2 h-80 w-full border"
+  sandbox=""
+  src="blob:old-proof"
+  title="付款憑證預覽"
+/>
+
+ ❯ src/features/documents/safe-preview.test.tsx:26:41
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |unit| src/features/documents/safe-preview.test.tsx > clears displayed bytes and revokes their URL on safety change
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'blob:old-proof' ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<p>[39m
+        [0m當前文件安全或版本證據待核對，不能預覽。[0m
+      [36m</p>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/features/documents/safe-preview.test.tsx:27:41
+     25|   view.rerender(<SafeDocumentPreview document={changed} />);
+     26|   expect(screen.queryByTitle("付款憑證預覽")).toBeNull();
+     27|   await waitFor(() => expect(revokeUrl).toHaveBeenCalledWith("blob:old…
+       |                                         ^
+     28|   if (change !== "safety") {
+     29|     createUrl.mockReturnValue("blob:fresh-proof");
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |unit| src/features/documents/safe-preview.test.tsx > discards a late old-version result while a fresh preview remains available
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "預覽當前付款憑證"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "載入中…":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m載入中…[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/documents/safe-preview.test.tsx:42:25
+     40|   fireEvent.click(screen.getByRole("button", { name: "預覽當前付款憑證" }));
+     41|   view.rerender(<SafeDocumentPreview document={{ ...document, currentV…
+     42|   const button = screen.getByRole("button", { name: "預覽當前付款憑證" });
+       |                         ^
+     43|   expect((button as HTMLButtonElement).disabled).toBe(false);
+     44|   createUrl.mockReturnValue("blob:fresh-proof");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |unit| src/features/documents/safe-preview.test.tsx > does not allocate a URL when download finishes after unmount
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Blob {},
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/features/documents/safe-preview.test.tsx:60:25
+     58|   view.unmount();
+     59|   await act(async () => { finish(new Response("pdf", { headers: { "con…
+     60|   expect(createUrl).not.toHaveBeenCalled();
+       |                         ^
+     61| });
+     62|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |unit| src/features/documents/safe-preview.test.tsx > removes old bytes before a failed retry and allows a subsequent explicit retry
+AssertionError: expected <iframe title="付款憑證預覽" …(3)></iframe> to be null
+
+- Expected:
+null
+
++ Received:
+<iframe
+  class="mt-2 h-80 w-full border"
+  sandbox=""
+  src="blob:old-proof"
+  title="付款憑證預覽"
+/>
+
+ ❯ src/features/documents/safe-preview.test.tsx:70:41
+     68|   fireEvent.click(screen.getByRole("button", { name: "預覽當前付款憑證" }));
+     69|   await screen.findByRole("alert");
+     70|   expect(screen.queryByTitle("付款憑證預覽")).toBeNull();
+       |                                         ^
+     71|   expect(revokeUrl).toHaveBeenCalledWith("blob:old-proof");
+     72|   expect(download).toHaveBeenCalledTimes(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  03:06:05
+   Duration  2.68s (transform 132ms, setup 0ms, import 304ms, tests 1.28s, environment 891ms)

@@ -1,0 +1,244 @@
+✖ F16 / UC102: staff listing never contains another team (205.6331ms)
+✖ F16 / UC103: staff cannot read another team incorporation detail (46.3967ms)
+✖ F16 / UC104: staff with no team must fail closed on list (34.5147ms)
+✔ UC105: Admin may read the multi-team incorporation register (26.4778ms)
+✔ UC106: corporate change detail rejects another team (positive control) (21.4071ms)
+✔ UC107: corporate change no-team list fails closed (positive control) (13.8438ms)
+✖ Staff team-a: list and detail share the assigned-team boundary (24.4847ms)
+✖ Staff team-b: list and detail share the assigned-team boundary (29.2617ms)
+✖ Manager team-a: list and detail share the assigned-team boundary (24.1944ms)
+✖ Manager team-b: list and detail share the assigned-team boundary (38.8609ms)
+✖ invalid actor {"role":"Staff","teamId":null}: both read handlers fail closed (49.9835ms)
+✖ invalid actor {"role":"Manager","teamId":null}: both read handlers fail closed (55.0091ms)
+✖ invalid actor {"role":"Client"}: both read handlers fail closed (32.4145ms)
+✖ invalid actor {"role":"Staff","active":false}: both read handlers fail closed (22.5404ms)
+✖ invalid actor {"role":"Manager","active":false}: both read handlers fail closed (18.5917ms)
+✖ invalid actor {"role":"Admin","active":false}: both read handlers fail closed (23.7203ms)
+✔ Admin detail permits another team and a missing case remains null (25.9953ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 4
+ℹ fail 13
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1130.4291
+
+✖ failing tests:
+
+test at src\features\incorporation\incorporation-boundary.unit.cjs:53:1
+✖ F16 / UC102: staff listing never contains another team (205.6331ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'team-a',
+  +   'team-b'
+    ]
+  
+      at TestContext.<anonymous> (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\features\incorporation\incorporation-boundary.unit.cjs:56:10)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'team-a', 'team-b' ],
+    expected: [ 'team-a' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at src\features\incorporation\incorporation-boundary.unit.cjs:58:1
+✖ F16 / UC103: staff cannot read another team incorporation detail (46.3967ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\features\incorporation\incorporation-boundary.unit.cjs:60:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /Forbidden/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at src\features\incorporation\incorporation-boundary.unit.cjs:62:1
+✖ F16 / UC104: staff with no team must fail closed on list (34.5147ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\features\incorporation\incorporation-boundary.unit.cjs:64:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /Forbidden/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at src\features\incorporation\incorporation-boundary.unit.cjs:81:5
+✖ Staff team-a: list and detail share the assigned-team boundary (24.4847ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      '11111111-1111-4111-8111-111111111111',
+  +   '22222222-2222-4222-8222-222222222222'
+    ]
+  
+      at TestContext.<anonymous> (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\features\incorporation\incorporation-boundary.unit.cjs:85:14)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222' ],
+    expected: [ '11111111-1111-4111-8111-111111111111' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at src\features\incorporation\incorporation-boundary.unit.cjs:81:5
+✖ Staff team-b: list and detail share the assigned-team boundary (29.2617ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   '11111111-1111-4111-8111-111111111111',
+      '22222222-2222-4222-8222-222222222222'
+    ]
+  
+      at TestContext.<anonymous> (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\features\incorporation\incorporation-boundary.unit.cjs:85:14)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222' ],
+    expected: [ '22222222-2222-4222-8222-222222222222' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at src\features\incorporation\incorporation-boundary.unit.cjs:81:5
+✖ Manager team-a: list and detail share the assigned-team boundary (24.1944ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      '11111111-1111-4111-8111-111111111111',
+  +   '22222222-2222-4222-8222-222222222222'
+    ]
+  
+      at TestContext.<anonymous> (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\features\incorporation\incorporation-boundary.unit.cjs:85:14)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222' ],
+    expected: [ '11111111-1111-4111-8111-111111111111' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at src\features\incorporation\incorporation-boundary.unit.cjs:81:5
+✖ Manager team-b: list and detail share the assigned-team boundary (38.8609ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   '11111111-1111-4111-8111-111111111111',
+      '22222222-2222-4222-8222-222222222222'
+    ]
+  
+      at TestContext.<anonymous> (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\features\incorporation\incorporation-boundary.unit.cjs:85:14)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222' ],
+    expected: [ '22222222-2222-4222-8222-222222222222' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at src\features\incorporation\incorporation-boundary.unit.cjs:96:3
+✖ invalid actor {"role":"Staff","teamId":null}: both read handlers fail closed (49.9835ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\features\incorporation\incorporation-boundary.unit.cjs:98:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /Forbidden/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at src\features\incorporation\incorporation-boundary.unit.cjs:96:3
+✖ invalid actor {"role":"Manager","teamId":null}: both read handlers fail closed (55.0091ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\features\incorporation\incorporation-boundary.unit.cjs:98:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /Forbidden/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at src\features\incorporation\incorporation-boundary.unit.cjs:96:3
+✖ invalid actor {"role":"Client"}: both read handlers fail closed (32.4145ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\features\incorporation\incorporation-boundary.unit.cjs:98:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /Forbidden/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at src\features\incorporation\incorporation-boundary.unit.cjs:96:3
+✖ invalid actor {"role":"Staff","active":false}: both read handlers fail closed (22.5404ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\features\incorporation\incorporation-boundary.unit.cjs:98:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /Forbidden/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at src\features\incorporation\incorporation-boundary.unit.cjs:96:3
+✖ invalid actor {"role":"Manager","active":false}: both read handlers fail closed (18.5917ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\features\incorporation\incorporation-boundary.unit.cjs:98:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /Forbidden/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at src\features\incorporation\incorporation-boundary.unit.cjs:96:3
+✖ invalid actor {"role":"Admin","active":false}: both read handlers fail closed (23.7203ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\features\incorporation\incorporation-boundary.unit.cjs:98:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /Forbidden/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

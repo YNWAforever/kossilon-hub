@@ -1,0 +1,153 @@
+{
+  "run_id": "cosec-20261024-upload-98d2f4c9",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "base": "71dd6d003ffbcefc98e32eb8845e58c2c6eb217d",
+  "scope": "Disjoint browser sidecar only; no src/Git/DB/provider changes",
+  "actual_runtime": {
+    "browser": "155.0.4283.62",
+    "green_attempt": "green2",
+    "passed": 9,
+    "failed": 0,
+    "setup_attempt": "green1",
+    "setup_error": "fetch failed",
+    "setup_cases_executed": 0,
+    "baseline_attempt": "historical1",
+    "baseline_expected_failed": 1,
+    "baseline_intents": 2,
+    "baseline_documents": 2,
+    "baseline_versions": 2,
+    "console_errors": 0,
+    "page_errors": 0,
+    "http_errors": 0,
+    "external_requests": 0
+  },
+  "sourceHashes": {
+    "src/routes/portal.tsx": "0f6195bce4d1952fd9d85a22d66927cba226eb1a8072c9567d8040417102beb3",
+    "src/features/documents/upload-resume.ts": "6c91192f2a22e907446f7986d162339d706120aa5e268ad733bcb2e5990b3764",
+    "src/features/documents/server-fns.ts": "14c3f83a1e092b96ea88b51ab7e36af1b0fdeb2a6e83459774b8a7e156d68e91",
+    "src/features/documents/repository.ts": "3bbbca6dd552fb4ee247b8aa28120c89bd76db414aae4a68756c5a527d61bc2b",
+    "src/features/annual-return/outstanding.ts": "cfe826f1afc0712fd4a5dfb8fc2473681e811e29b8f60cbb291635d4e521988f"
+  },
+  "harnessHashes": {
+    "browser-upload.mjs": "dadb53736e90ab0c742f39aee03d51ecd689265b2c7b682659d86ef2df926512",
+    "browser-entry.tsx.snapshot": "17cd6367558f60ef80d5ad97c2a81343bc6a398cdcbc2d029b098160ac7afbe1"
+  },
+  "near_limit": {
+    "actual_file_bytes": 10484736,
+    "sha256": "6d4d0e29598bd3e8a8e568baa749497cd91f705148c7d08d689f1b6f36914b10",
+    "intent_count": 1,
+    "document_count": 1,
+    "version_count": 1,
+    "full_body_submissions": 2,
+    "document": {
+      "id": "98d2f4c9-0150-4150-8150-000000000200",
+      "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+      "companyName": "QA UC150 Company",
+      "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+      "category": "signature",
+      "fileName": "QA-resume.pdf",
+      "uploadStatus": "quarantined",
+      "reviewStatus": "pending",
+      "rejectionReason": null,
+      "currentVersionId": "98d2f4c9-0150-4150-8150-000000000300",
+      "reviewedVersionId": null,
+      "scanVerdictSource": null,
+      "availability": "unscanned",
+      "objectAvailability": "not_checked",
+      "uploadSource": "client",
+      "uploadedAt": "2026-10-24T00:01:00.000Z"
+    },
+    "fresh_query_client_after_reload": true,
+    "scan_calls": 0
+  },
+  "resume_semantics": "Full-file retransmission with stable logical request identity; no byte-offset/chunk resume",
+  "cleanup": "Owned fresh contexts, Edge process and loopback servers awaited closed for all attempts; owned Vite caches retained",
+  "limits": [
+    "RPC/sessionStorage transport models idempotent server; real SQL/server semantics are parent evidence",
+    "No native Auth, HTTP RPC, RLS, provider object storage or scanner",
+    "Actor B UI journal visibility is not protection against hostile same-origin scripts",
+    "No native status upgraded; BLOCKED remains",
+    "Green1 identity fetch failed before fixtures; historical error cause was not captured, so exact sandbox cause remains unproven",
+    "No passing browser run repeated"
+  ],
+  "parent_next": "Browser phase finished. Parent may run remaining local suites, freeze sources and package evidence; no rerun required unless product changes affect this scope",
+  "native_status": "BLOCKED",
+  "files": [
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-baseline-binding.json",
+      "sha256": "007de6e078bf9ca0d6c3facfb6eb1a3dc1a931bfc6a5bbcd21b103c553f7a70d"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-checkpoints-green2.jsonl",
+      "sha256": "7f73373ccded1e3e1348255d8202c64ce3065b50a7543aef8494f6c9a490ae74"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-checkpoints-historical1.jsonl",
+      "sha256": "ff32df61d51e4f288492cee035aa57a0026b7c8f09e3bd7ed0e80f5ebad254b0"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-entry.tsx.snapshot",
+      "sha256": "17cd6367558f60ef80d5ad97c2a81343bc6a398cdcbc2d029b098160ac7afbe1"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-failure-historical1-1.snapshot",
+      "sha256": "39a6f588c1bdea4297d74c8af54d5ad8037c6e27feb219c938c2bb4427ea1611"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-green1.json",
+      "sha256": "d84a4c6cac63ff1499a96a6f33d03dd5121e7ad5f7b5844de830f9cd51613579"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-green1.txt",
+      "sha256": "44238a9a2a55acd94996bcd06d91d1c90c8baf3cc40cbcf45d7be613a7b5761e"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-green2.json",
+      "sha256": "2f7482e5f6077781c631f47482d72da9189bce7a282e35e79db0e8cfd5fb703a"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-green2.txt",
+      "sha256": "a02166e0e5f8fbc3c211c3399ee95f542ded7df694fa14eb9ec2e32dac8647d4"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-historical1.json",
+      "sha256": "07dfe1c331c9936e9e57faa01ca4218a9212398ae74a9522b5d365742b72c62d"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-historical1.txt",
+      "sha256": "4dfb5be880561e632062485859944a3fce5f05e4e3141a8ee029eecd5eb22373"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-results-green1.json",
+      "sha256": "a7564a1c29ef26310b595c550767ec18ff30125625e4f9147acd37c9e418093f"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-results-green2.json",
+      "sha256": "87602311d91f2930aa7fba2c82f2bf061588616f387253c565f4fb606fe49709"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-results-historical1.json",
+      "sha256": "36587351078d173f27bb0623232f9796feef94a57224ca8cdc564352f6fc38e1"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-static-final.json",
+      "sha256": "fb2adbfaa08dc9a70aba02db5d8275ecbb00f11c223f554aee9b7a7fd6345a9e"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-static.json",
+      "sha256": "8cb9665b8f4a4527dea0a7bf7979fc9645182bcfcc0251918532db4f10ff4389"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-target-green2.json",
+      "sha256": "1c24ad34566fc58130cdd2e25488485a784704db0569a22d8659dc26f6f7eb0f"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-target-historical1.json",
+      "sha256": "8e5d2965716d0d615897e047361f592dacc28e7629ee299732190b01540ef896"
+    },
+    {
+      "path": "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/browser-upload.mjs",
+      "sha256": "dadb53736e90ab0c742f39aee03d51ecd689265b2c7b682659d86ef2df926512"
+    }
+  ]
+}

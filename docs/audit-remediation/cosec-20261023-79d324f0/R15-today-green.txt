@@ -1,0 +1,45 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+stderr | src/features/annual-return/work-views-today.test.tsx > Today incorporation and corporate change work > shows both domain links, context, first action and explicit unknown deadline/reviewer
+A component suspended inside an `act` scope, but the `act` call was not awaited. When testing React components that depend on asynchronous data, you must await the result:
+
+await act(() => ...)
+
+ ❯ |unit| src/features/annual-return/work-views-today.test.tsx (4 tests | 1 failed) 1803ms
+     × shows both domain links, context, first action and explicit unknown deadline/reviewer 1069ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-today.test.tsx > Today incorporation and corporate change work > shows both domain links, context, first action and explicit unknown deadline/reviewer
+TestingLibraryElementError: Unable to find an element with the text: 海港註冊. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div />
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div />
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/work-views-today.test.tsx:44:18
+     42|   it("shows both domain links, context, first action and explicit unkn…
+     43|     mount();
+     44|     await screen.findByText("海港註冊");
+       |                  ^
+     45|     expect(screen.getByRole("link", { name: "開啟公司註冊" }).getAttribute("…
+     46|     const change = screen.getByRole("link", { name: "開啟公司變更" }).getAtt…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 7 passed (8)
+   Start at  05:06:40
+   Duration  12.39s (transform 1.09s, setup 0ms, import 3.10s, tests 2.46s, environment 5.72s)
+

@@ -1,0 +1,10 @@
+[
+  {
+    "path": "src/features/annual-return/components/production-case-detail.tsx",
+    "sha256": "8f066e89512512e471b1d52963aea57a673fd24e4b20a756d82badde558a5049"
+  },
+  {
+    "path": "src/features/annual-return/components/production-case-detail.return-context.test.tsx",
+    "sha256": "8ba5184ea3ce1a34127bc73c7caab9eca02e9c7e0ceeaaee91f09ffd6bc5f02d"
+  }
+]

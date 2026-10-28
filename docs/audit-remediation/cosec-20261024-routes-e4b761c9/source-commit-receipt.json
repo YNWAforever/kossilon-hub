@@ -1,0 +1,10 @@
+{
+  "source_sha": "99b2dec789264003e254fa77eee362b6ef2d4189",
+  "parent_sha": "36dad48dc30a86329f0afcc2ffb46749be71e94e",
+  "paths": [
+    "src/features/auth/auth-router-recovery.test.tsx",
+    "src/routes/-case-subroutes.interaction.test.tsx",
+    "src/test/case-route-fixtures.ts"
+  ],
+  "operation": "ordinary local commit only; no push/merge/deploy"
+}

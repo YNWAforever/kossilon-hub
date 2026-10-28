@@ -1,0 +1,76 @@
+{
+  "run_id": "cosec-20261025-build-d29cd5ec",
+  "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "parent_sha": "104af5c4875d2f10b595ec330fcb2e1d07e87201",
+  "previous_candidate": "209aef6c78fe1ded6ad3a68eba4eaa9bd7304243",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "branch": "codex/cosec-20261023",
+  "phase": "UC186_SAME_SOURCE_BUILD_GATE_COMPLETED",
+  "release_gate": "NO_GO",
+  "original_uc186": "PARTIAL_SCOPED",
+  "local_core_functional_scope": "PASS",
+  "required_local_checks": "PASS_WITH_EXPLICIT_INHERITED_EVIDENCE",
+  "deployed": false,
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "checks": {
+    "unit": {
+      "result": "PASS",
+      "receipt": "../cosec-20261024-handover-exec-a30e04f1/unit-final.json",
+      "log": "../cosec-20261024-handover-exec-a30e04f1/unit-final.txt",
+      "tests": 2780,
+      "files": 288,
+      "execution": "INHERITED_SAME_SOURCE_NOT_RERUN_THIS_RUN",
+      "evidence_run": "cosec-20261024-handover-exec-a30e04f1"
+    },
+    "sql": {
+      "result": "PASS_LOCAL_INJECTED_SESSION_SUPERUSER",
+      "tests": 1,
+      "files": 1,
+      "log": "../cosec-20261024-handover-exec-a30e04f1/db/test-green-r4.txt",
+      "journey": "../cosec-20261024-handover-exec-a30e04f1/db/UC186-green-r4.jsonl",
+      "execution": "INHERITED_SAME_SOURCE_NOT_RERUN_THIS_RUN",
+      "evidence_run": "cosec-20261024-handover-exec-a30e04f1"
+    },
+    "typecheck": {
+      "result": "PASS",
+      "receipt": "../cosec-20261024-handover-exec-a30e04f1/typecheck-accepted.json",
+      "log": "../cosec-20261024-handover-exec-a30e04f1/typecheck-accepted.txt",
+      "execution": "INHERITED_SAME_SOURCE_NOT_RERUN_THIS_RUN",
+      "evidence_run": "cosec-20261024-handover-exec-a30e04f1"
+    },
+    "lint": {
+      "result": "PASS",
+      "receipt": "../cosec-20261024-handover-exec-a30e04f1/lint-accepted.json",
+      "log": "../cosec-20261024-handover-exec-a30e04f1/lint-accepted.txt",
+      "execution": "INHERITED_SAME_SOURCE_NOT_RERUN_THIS_RUN",
+      "evidence_run": "cosec-20261024-handover-exec-a30e04f1"
+    },
+    "build": {
+      "result": "PASS",
+      "execution": "EXECUTED_THIS_RUN",
+      "receipt": "build.json",
+      "log": "build.txt",
+      "duration_ms": 34670
+    }
+  },
+  "auth_runtime_verified": false,
+  "native_http_db_rls_verified": false,
+  "isolated_runtime": {
+    "executed_this_run": false,
+    "db_clients_created": 0,
+    "resources_created": 0,
+    "inherited": "../cosec-20261024-handover-exec-a30e04f1/owned-inventory.json"
+  },
+  "remaining_local": [],
+  "native_plan": "../cosec-20261024-handover-exec-a30e04f1/NATIVE-PLAN.md",
+  "coverage": "COVERAGE.md",
+  "blockers": "blockers.md",
+  "rollback": "ordinary new commit reverting 4d63818fe2562146f85e9a7b9917d8f0eb58f4c1; retain evidence; no production effects; committed future real business handovers require separately authorized compensation",
+  "evidence_manifest": "evidence-manifest.json",
+  "evidence_base": "561f1ee2e761ab2d1b8ee1bff44533ea610d7614",
+  "artifact_manifest": "artifact-manifest.json"
+}

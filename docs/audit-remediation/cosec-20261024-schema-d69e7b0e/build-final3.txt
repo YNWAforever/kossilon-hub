@@ -1,0 +1,689 @@
+vite v8.0.16 building client environment for production...
+[2Ktransforming...✓ 2820 modules transformed.
+rendering chunks...
+computing gzip size...
+.output/public/assets/sora-latin-ext-400-normal-Twk1CgKs.woff2           7.34 kB
+.output/public/assets/sora-latin-ext-700-normal-DM0oy5s8.woff2           7.44 kB
+.output/public/assets/sora-latin-ext-500-normal-B5KKQIFO.woff2           7.47 kB
+.output/public/assets/sora-latin-ext-600-normal-Cue1zdhl.woff2           7.53 kB
+.output/public/assets/manrope-vietnamese-wght-normal-usUDDRr7.woff2      8.52 kB
+.output/public/assets/manrope-greek-wght-normal-DL7QRZyv.woff2           9.44 kB
+.output/public/assets/sora-latin-ext-400-normal-BmhJC382.woff            9.67 kB
+.output/public/assets/sora-latin-ext-500-normal-DwxUJRqY.woff            9.75 kB
+.output/public/assets/sora-latin-ext-700-normal-Oc7uZIYt.woff            9.80 kB
+.output/public/assets/sora-latin-ext-600-normal-DLOJK0Ta.woff            9.82 kB
+.output/public/assets/manrope-cyrillic-wght-normal-Dvxsihut.woff2       14.50 kB
+.output/public/assets/sora-latin-400-normal-CRt88UEn.woff2              14.72 kB
+.output/public/assets/sora-latin-600-normal-Cdg4DaK0.woff2              15.00 kB
+.output/public/assets/sora-latin-500-normal-01eiPEn0.woff2              15.05 kB
+.output/public/assets/manrope-latin-ext-wght-normal-Ch3YOpNY.woff2      15.12 kB
+.output/public/assets/sora-latin-700-normal-9waGdLWo.woff2              15.12 kB
+.output/public/assets/sora-latin-400-normal-OW7qkl5a.woff               18.54 kB
+.output/public/assets/sora-latin-600-normal-1_7fyUAY.woff               18.85 kB
+.output/public/assets/sora-latin-700-normal-BKPfQAnC.woff               18.86 kB
+.output/public/assets/sora-latin-500-normal-w58xtEt9.woff               18.88 kB
+.output/public/assets/manrope-latin-wght-normal-DHIcAJRg.woff2          24.83 kB
+.output/public/assets/pdf.worker.min-CHFwMXne.mjs                    1,262.39 kB
+.output/public/assets/styles-v0nIMUXp.css                               67.93 kB │ gzip:  14.78 kB
+.output/public/assets/pdf.worker.min-C8Ts8bNu.js                         0.06 kB │ gzip:   0.08 kB
+.output/public/assets/types-CnOWm7FV.js                                  0.10 kB │ gzip:   0.10 kB
+.output/public/assets/loader-circle-BB7sPhDS.js                          0.13 kB │ gzip:   0.14 kB
+.output/public/assets/entity-id-C5sU3R-a.js                              0.15 kB │ gzip:   0.13 kB
+.output/public/assets/circle-check-B3scUBOd.js                           0.17 kB │ gzip:   0.16 kB
+.output/public/assets/download-DSE_7GkR.js                               0.22 kB │ gzip:   0.18 kB
+.output/public/assets/user-check-66KIFfAv.js                             0.23 kB │ gzip:   0.20 kB
+.output/public/assets/users-C73kYdFP.js                                  0.30 kB │ gzip:   0.22 kB
+.output/public/assets/clients-CzSVumhh.js                                0.32 kB │ gzip:   0.27 kB
+.output/public/assets/package-BM7z-BdX.js                                0.36 kB │ gzip:   0.25 kB
+.output/public/assets/text-tokens-DKf4OV6U.js                            0.38 kB │ gzip:   0.27 kB
+.output/public/assets/risk-pill-rUrhNSsS.js                              0.41 kB │ gzip:   0.32 kB
+.output/public/assets/checklist-item-label-wR6tE5iY.js                   0.42 kB │ gzip:   0.28 kB
+.output/public/assets/jsx-runtime-sLPvdpSW.js                            0.42 kB │ gzip:   0.29 kB
+.output/public/assets/sparkles-CBG226s8.js                               0.48 kB │ gzip:   0.27 kB
+.output/public/assets/identifiers-DfEgb9o-.js                            0.49 kB │ gzip:   0.37 kB
+.output/public/assets/useMutationState-DWpTczKe.js                       0.57 kB │ gzip:   0.35 kB
+.output/public/assets/labels-BkQV7YdA.js                                 0.59 kB │ gzip:   0.48 kB
+.output/public/assets/receipt-text-BzjbgwhL.js                           0.65 kB │ gzip:   0.27 kB
+.output/public/assets/deadline-pill-BLxHQ9kH.js                          0.70 kB │ gzip:   0.46 kB
+.output/public/assets/record-unavailable-DtmfKT-O.js                     0.76 kB │ gzip:   0.51 kB
+.output/public/assets/labels-CCw2oYOJ.js                                 0.79 kB │ gzip:   0.49 kB
+.output/public/assets/server-fns-B76tHTAc.js                             0.80 kB │ gzip:   0.45 kB
+.output/public/assets/route-guard-BcMsf_Jh.js                            0.88 kB │ gzip:   0.45 kB
+.output/public/assets/conversations-tC7DzugS.js                          0.96 kB │ gzip:   0.58 kB
+.output/public/assets/useInfiniteQuery-D5LtktPI.js                       1.11 kB │ gzip:   0.46 kB
+.output/public/assets/chunk-CMxvf4Kt.js                                  1.21 kB │ gzip:   0.67 kB
+.output/public/assets/work-views-C0uvUQ1I.js                             1.23 kB │ gzip:   0.76 kB
+.output/public/assets/daily-view-state-GU3ObwUO.js                       1.38 kB │ gzip:   0.73 kB
+.output/public/assets/server-fns-CdRZEfku.js                             1.42 kB │ gzip:   0.76 kB
+.output/public/assets/server-fns-DFLhJ42f.js                             1.67 kB │ gzip:   0.90 kB
+.output/public/assets/labels-Hv1O-bj9.js                                 1.81 kB │ gzip:   1.14 kB
+.output/public/assets/readiness-Cyzh7g6G.js                              2.95 kB │ gzip:   1.53 kB
+.output/public/assets/server-fns-CIwkh14j.js                             3.01 kB │ gzip:   1.54 kB
+.output/public/assets/server-fns-CCE_mG78.js                             3.37 kB │ gzip:   1.74 kB
+.output/public/assets/case-list-controls-BpZDUxHL.js                     3.83 kB │ gzip:   1.64 kB
+.output/public/assets/corporate-changes._id-CzOMMzWa.js                  4.73 kB │ gzip:   1.87 kB
+.output/public/assets/useMutation-C_QtEN_U.js                            5.60 kB │ gzip:   1.80 kB
+.output/public/assets/payments-zg4LfZMT.js                               5.85 kB │ gzip:   1.94 kB
+.output/public/assets/clients-BrBh6Q87.js                                6.75 kB │ gzip:   2.85 kB
+.output/public/assets/today-CT2a8njR.js                                  8.90 kB │ gzip:   3.24 kB
+.output/public/assets/incorporation._id-DcFzUzcw.js                      8.94 kB │ gzip:   3.50 kB
+.output/public/assets/incorporation-B2QTiSMX.js                          9.13 kB │ gzip:   3.21 kB
+.output/public/assets/knowledge-base-xWyQxl3y.js                         9.89 kB │ gzip:   4.06 kB
+.output/public/assets/whatsapp.automation-DHum9Zm_.js                   10.42 kB │ gzip:   3.88 kB
+.output/public/assets/client-form-dialog-BI1-zZ-m.js                    11.00 kB │ gzip:   3.37 kB
+.output/public/assets/routes-ASt0UGGn.js                                12.57 kB │ gzip:   4.25 kB
+.output/public/assets/client-portal-store-kVQHXyD1.js                   13.42 kB │ gzip:   4.19 kB
+.output/public/assets/operations-C2alolun.js                            15.58 kB │ gzip:   4.81 kB
+.output/public/assets/admin-B1gEW6Wr.js                                 19.32 kB │ gzip:   6.28 kB
+.output/public/assets/corporate-changes-BSx3XVO_.js                     19.38 kB │ gzip:   5.09 kB
+.output/public/assets/imports-BPPW6Bg9.js                               22.28 kB │ gzip:   7.85 kB
+.output/public/assets/annual-returns-BPLLH-JC.js                        22.40 kB │ gzip:   7.13 kB
+.output/public/assets/useQuery-DN9CrUlU.js                              23.85 kB │ gzip:   7.93 kB
+.output/public/assets/documents-4fU3uB7H.js                             24.58 kB │ gzip:   8.26 kB
+.output/public/assets/portal-DatTdH2Q.js                                26.73 kB │ gzip:   8.23 kB
+.output/public/assets/clients._id-BTLelS0S.js                           44.64 kB │ gzip:  10.09 kB
+.output/public/assets/annual-returns._id-9zZVlt7G.js                    55.57 kB │ gzip:  14.84 kB
+.output/public/assets/types-B5Okmki3.js                                 56.55 kB │ gzip:  12.96 kB
+.output/public/assets/settings-DBeo6XK8.js                              58.24 kB │ gzip:  16.27 kB
+.output/public/assets/page-header-Cht5dHaH.js                           93.25 kB │ gzip:  31.07 kB
+.output/public/assets/whatsapp-BvQE_Zeo.js                             183.08 kB │ gzip:  55.66 kB
+.output/public/assets/pdf-DfaLMhyw.js                                  427.54 kB │ gzip: 127.42 kB
+.output/public/assets/index-Bv7JcWHW.js                                493.04 kB │ gzip: 158.94 kB
+.output/public/assets/doc-parser-Bc3MhfQ9.js                           500.06 kB │ gzip: 126.77 kB
+
+✓ built in 11.68s
+vite v8.0.16 building ssr environment for production...
+[2Ktransforming...✓ 479 modules transformed.
+rendering chunks...
+computing gzip size...
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-ext-400-normal-Twk1CgKs.woff2           7.34 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-ext-700-normal-DM0oy5s8.woff2           7.44 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-ext-500-normal-B5KKQIFO.woff2           7.47 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-ext-600-normal-Cue1zdhl.woff2           7.53 kB
+node_modules/.nitro/vite/services/ssr/assets/manrope-vietnamese-wght-normal-usUDDRr7.woff2      8.52 kB
+node_modules/.nitro/vite/services/ssr/assets/manrope-greek-wght-normal-DL7QRZyv.woff2           9.44 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-ext-400-normal-BmhJC382.woff            9.67 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-ext-500-normal-DwxUJRqY.woff            9.75 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-ext-700-normal-Oc7uZIYt.woff            9.80 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-ext-600-normal-DLOJK0Ta.woff            9.82 kB
+node_modules/.nitro/vite/services/ssr/assets/manrope-cyrillic-wght-normal-Dvxsihut.woff2       14.50 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-400-normal-CRt88UEn.woff2              14.72 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-600-normal-Cdg4DaK0.woff2              15.00 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-500-normal-01eiPEn0.woff2              15.05 kB
+node_modules/.nitro/vite/services/ssr/assets/manrope-latin-ext-wght-normal-Ch3YOpNY.woff2      15.12 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-700-normal-9waGdLWo.woff2              15.12 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-400-normal-OW7qkl5a.woff               18.54 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-600-normal-1_7fyUAY.woff               18.85 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-700-normal-BKPfQAnC.woff               18.86 kB
+node_modules/.nitro/vite/services/ssr/assets/sora-latin-500-normal-w58xtEt9.woff               18.88 kB
+node_modules/.nitro/vite/services/ssr/assets/manrope-latin-wght-normal-DHIcAJRg.woff2          24.83 kB
+node_modules/.nitro/vite/services/ssr/assets/pdf.worker.min-CHFwMXne.mjs                    1,262.39 kB
+node_modules/.nitro/vite/services/ssr/assets/styles-v0nIMUXp.css                               67.93 kB │ gzip: 14.78 kB
+node_modules/.nitro/vite/services/ssr/assets/pdf.worker.min-C4v1Kq3M.js                         0.19 kB │ gzip:  0.15 kB
+node_modules/.nitro/vite/services/ssr/assets/types-9FSBSK4t.js                                  0.22 kB │ gzip:  0.18 kB
+node_modules/.nitro/vite/services/ssr/assets/types-BqZUGaQA.js                                  0.22 kB │ gzip:  0.17 kB
+node_modules/.nitro/vite/services/ssr/assets/types-CSGhkudU.js                                  0.22 kB │ gzip:  0.18 kB
+node_modules/.nitro/vite/services/ssr/assets/empty-plugin-adapters-D9UWiqvJ.js                  0.22 kB │ gzip:  0.16 kB
+node_modules/.nitro/vite/services/ssr/assets/entity-id-Cjdw0w2c.js                              0.33 kB │ gzip:  0.24 kB
+node_modules/.nitro/vite/services/ssr/assets/types-BqPnLASl.js                                  0.33 kB │ gzip:  0.22 kB
+node_modules/.nitro/vite/services/ssr/assets/rolldown-runtime-D7D4PA-g.js                       0.36 kB │ gzip:  0.25 kB
+node_modules/.nitro/vite/services/ssr/assets/createServerRpc-Bbkf7XgU.js                        0.39 kB │ gzip:  0.27 kB
+node_modules/.nitro/vite/services/ssr/assets/authorization-BnKwunKn.js                          0.42 kB │ gzip:  0.28 kB
+node_modules/.nitro/vite/services/ssr/assets/server-ChJb3yGs.js                                 0.44 kB │ gzip:  0.26 kB
+node_modules/.nitro/vite/services/ssr/assets/incorporation-CvAODXtq.js                          0.47 kB │ gzip:  0.31 kB
+node_modules/.nitro/vite/services/ssr/assets/corporate-changes-C8loVfy_.js                      0.48 kB │ gzip:  0.31 kB
+node_modules/.nitro/vite/services/ssr/assets/role-labels-WbU5asMe.js                            0.49 kB │ gzip:  0.37 kB
+node_modules/.nitro/vite/services/ssr/assets/whatsapp.automation-CJtBWwO4.js                    0.49 kB │ gzip:  0.31 kB
+node_modules/.nitro/vite/services/ssr/assets/clients-D18bJFYS.js                                0.49 kB │ gzip:  0.34 kB
+node_modules/.nitro/vite/services/ssr/assets/createSsrRpc-B4FA8hJ8.js                           0.52 kB │ gzip:  0.33 kB
+node_modules/.nitro/vite/services/ssr/assets/use-retained-page-DLUZU7ZZ.js                      0.53 kB │ gzip:  0.32 kB
+node_modules/.nitro/vite/services/ssr/assets/whatsapp-2TU-Yehu.js                               0.57 kB │ gzip:  0.36 kB
+node_modules/.nitro/vite/services/ssr/assets/session-Ahf_xuSc.js                                0.58 kB │ gzip:  0.29 kB
+node_modules/.nitro/vite/services/ssr/assets/portal-B1SKVc_1.js                                 0.58 kB │ gzip:  0.38 kB
+node_modules/.nitro/vite/services/ssr/assets/clients._id-Cu9gVQ_R.js                            0.60 kB │ gzip:  0.37 kB
+node_modules/.nitro/vite/services/ssr/assets/incorporation._id-C3M6itKZ.js                      0.60 kB │ gzip:  0.38 kB
+node_modules/.nitro/vite/services/ssr/assets/operational-read-DcmaPECS.js                       0.61 kB │ gzip:  0.36 kB
+node_modules/.nitro/vite/services/ssr/assets/admin-BlEnWZIx.js                                  0.62 kB │ gzip:  0.44 kB
+node_modules/.nitro/vite/services/ssr/assets/data-origin-CAV9ZOKP.js                            0.63 kB │ gzip:  0.37 kB
+node_modules/.nitro/vite/services/ssr/assets/reminder-cadence-DEnydG9Q.js                       0.66 kB │ gzip:  0.38 kB
+node_modules/.nitro/vite/services/ssr/assets/settings-DGO9PeOU.js                               0.67 kB │ gzip:  0.47 kB
+node_modules/.nitro/vite/services/ssr/assets/annual-returns._id-C5F66sWO.js                     0.68 kB │ gzip:  0.42 kB
+node_modules/.nitro/vite/services/ssr/assets/corporate-changes._id-Bi6HqSmN.js                  0.69 kB │ gzip:  0.43 kB
+node_modules/.nitro/vite/services/ssr/assets/authorization-BG7wlYK1.js                          0.71 kB │ gzip:  0.42 kB
+node_modules/.nitro/vite/services/ssr/assets/query-keys-CdeP1tbg.js                             0.74 kB │ gzip:  0.26 kB
+node_modules/.nitro/vite/services/ssr/assets/clients-C1Vb8rke.js                                0.74 kB │ gzip:  0.38 kB
+node_modules/.nitro/vite/services/ssr/assets/constants-Bf59a7kB.js                              0.75 kB │ gzip:  0.49 kB
+node_modules/.nitro/vite/services/ssr/assets/labels-6FlY9vfG.js                                 0.77 kB │ gzip:  0.51 kB
+node_modules/.nitro/vite/services/ssr/assets/neon-auth-cookies-gc2N1ruJ.js                      0.77 kB │ gzip:  0.49 kB
+node_modules/.nitro/vite/services/ssr/assets/types-BMWBSMV6.js                                  0.77 kB │ gzip:  0.44 kB
+node_modules/.nitro/vite/services/ssr/assets/media-intake-C2bWV4Ty.js                           0.79 kB │ gzip:  0.37 kB
+node_modules/.nitro/vite/services/ssr/assets/checklist-item-label-95wJWvM3.js                   0.79 kB │ gzip:  0.43 kB
+node_modules/.nitro/vite/services/ssr/assets/authorization-Cxwsyl9Z.js                          0.81 kB │ gzip:  0.35 kB
+node_modules/.nitro/vite/services/ssr/assets/pagination-K86NRhwH.js                             0.82 kB │ gzip:  0.48 kB
+node_modules/.nitro/vite/services/ssr/assets/date-math-CZfMdHuc.js                              0.86 kB │ gzip:  0.47 kB
+node_modules/.nitro/vite/services/ssr/assets/risk-pill-DT1h4zuT.js                              0.87 kB │ gzip:  0.55 kB
+node_modules/.nitro/vite/services/ssr/assets/operations-MXqWdBV_.js                             0.88 kB │ gzip:  0.55 kB
+node_modules/.nitro/vite/services/ssr/assets/version-conflict-6p4lro89.js                       0.89 kB │ gzip:  0.48 kB
+node_modules/.nitro/vite/services/ssr/assets/authorization-BppsOw9S.js                          0.92 kB │ gzip:  0.44 kB
+node_modules/.nitro/vite/services/ssr/assets/labels-4ufbNzpE.js                                 0.94 kB │ gzip:  0.62 kB
+node_modules/.nitro/vite/services/ssr/assets/imports-nl5dlS1O.js                                0.96 kB │ gzip:  0.60 kB
+node_modules/.nitro/vite/services/ssr/assets/phone-DQF6GMxm.js                                  1.08 kB │ gzip:  0.59 kB
+node_modules/.nitro/vite/services/ssr/assets/today-f_YSEsmx.js                                  1.08 kB │ gzip:  0.65 kB
+node_modules/.nitro/vite/services/ssr/assets/types-BzCM8ZVP.js                                  1.09 kB │ gzip:  0.48 kB
+node_modules/.nitro/vite/services/ssr/assets/errors-BSvMOarn.js                                 1.23 kB │ gzip:  0.59 kB
+node_modules/.nitro/vite/services/ssr/assets/errors-B_cKcakq.js                                 1.24 kB │ gzip:  0.61 kB
+node_modules/.nitro/vite/services/ssr/assets/documents-D_l0qeCm.js                              1.27 kB │ gzip:  0.72 kB
+node_modules/.nitro/vite/services/ssr/assets/deadline-pill-BQGkm_66.js                          1.34 kB │ gzip:  0.69 kB
+node_modules/.nitro/vite/services/ssr/assets/worker-Bnts-U6g.js                                 1.39 kB │ gzip:  0.53 kB
+node_modules/.nitro/vite/services/ssr/assets/assignment-labels-BKyZtVoW.js                      1.42 kB │ gzip:  0.77 kB
+node_modules/.nitro/vite/services/ssr/assets/register-view-state-CQgIgID0.js                    1.42 kB │ gzip:  0.69 kB
+node_modules/.nitro/vite/services/ssr/assets/daily-view-state-ByLPozOD.js                       1.43 kB │ gzip:  0.67 kB
+node_modules/.nitro/vite/services/ssr/assets/errors-C5KASJKf.js                                 1.45 kB │ gzip:  0.72 kB
+node_modules/.nitro/vite/services/ssr/assets/neon-auth-rpc-COrdYFSI.js                          1.47 kB │ gzip:  0.57 kB
+node_modules/.nitro/vite/services/ssr/assets/record-unavailable-D2sdmmk8.js                     1.50 kB │ gzip:  0.80 kB
+node_modules/.nitro/vite/services/ssr/assets/labels-CJ1hMaNu.js                                 1.51 kB │ gzip:  0.67 kB
+node_modules/.nitro/vite/services/ssr/assets/company-work-server-fns-DHxPMIFl.js                1.52 kB │ gzip:  0.70 kB
+node_modules/.nitro/vite/services/ssr/assets/work-views-other-server-Bb5Kcy9o.js                1.52 kB │ gzip:  0.69 kB
+node_modules/.nitro/vite/services/ssr/assets/skeleton-BufxvPQi.js                               1.61 kB │ gzip:  0.82 kB
+node_modules/.nitro/vite/services/ssr/assets/config-DEsYTklZ.js                                 1.78 kB │ gzip:  0.72 kB
+node_modules/.nitro/vite/services/ssr/assets/authorization-FT081gbp.js                          1.84 kB │ gzip:  0.56 kB
+node_modules/.nitro/vite/services/ssr/assets/status-pill-DiNrsngb.js                            1.84 kB │ gzip:  0.76 kB
+node_modules/.nitro/vite/services/ssr/assets/field-BTnOkuUM.js                                  1.86 kB │ gzip:  0.88 kB
+node_modules/.nitro/vite/services/ssr/assets/identifiers-B1twp33q.js                            1.87 kB │ gzip:  1.00 kB
+node_modules/.nitro/vite/services/ssr/assets/demo-unavailable-Bz9w93fl.js                       1.90 kB │ gzip:  0.95 kB
+node_modules/.nitro/vite/services/ssr/assets/client-DxHm9aOV.js                                 1.90 kB │ gzip:  0.83 kB
+node_modules/.nitro/vite/services/ssr/assets/maintenance-http-3LmCuk_F.js                       2.03 kB │ gzip:  0.94 kB
+node_modules/.nitro/vite/services/ssr/assets/authorization-aOiKOYyw.js                          2.04 kB │ gzip:  0.87 kB
+node_modules/.nitro/vite/services/ssr/assets/approved-templates-yK4bKauj.js                     2.10 kB │ gzip:  0.81 kB
+node_modules/.nitro/vite/services/ssr/assets/provider-mode-1CFPJRxX.js                          2.11 kB │ gzip:  0.99 kB
+node_modules/.nitro/vite/services/ssr/assets/start-fwibIGQ_.js                                  2.13 kB │ gzip:  0.74 kB
+node_modules/.nitro/vite/services/ssr/assets/evidence-file-types-DFZXtZYG.js                    2.16 kB │ gzip:  0.97 kB
+node_modules/.nitro/vite/services/ssr/assets/format-date-5kwl30bx.js                            2.24 kB │ gzip:  1.15 kB
+node_modules/.nitro/vite/services/ssr/assets/safe-preview-D-HKcvp5.js                           2.24 kB │ gzip:  1.14 kB
+node_modules/.nitro/vite/services/ssr/assets/hong-kong-time-DSJXU6ud.js                         2.25 kB │ gzip:  1.13 kB
+node_modules/.nitro/vite/services/ssr/assets/format-label-3RbQYCqL.js                           2.29 kB │ gzip:  1.25 kB
+node_modules/.nitro/vite/services/ssr/assets/text-tokens-DaM1c4X6.js                            2.35 kB │ gzip:  1.34 kB
+node_modules/.nitro/vite/services/ssr/assets/route-guard-BfFxoSKX.js                            2.49 kB │ gzip:  1.05 kB
+node_modules/.nitro/vite/services/ssr/assets/list-filters-8OtYRc20.js                           2.58 kB │ gzip:  1.19 kB
+node_modules/.nitro/vite/services/ssr/assets/outstanding-982ckq_v.js                            2.84 kB │ gzip:  1.26 kB
+node_modules/.nitro/vite/services/ssr/assets/doc-parser-BUXthmSN.js                             2.88 kB │ gzip:  1.29 kB
+node_modules/.nitro/vite/services/ssr/assets/create-input-CQ9JRqH7.js                           2.93 kB │ gzip:  1.16 kB
+node_modules/.nitro/vite/services/ssr/assets/case-list-query-o52Pw1eg.js                        2.96 kB │ gzip:  1.21 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-9I1t9X0X.js                             3.05 kB │ gzip:  1.08 kB
+node_modules/.nitro/vite/services/ssr/assets/dialog-CClL5i8w.js                                 3.05 kB │ gzip:  0.99 kB
+node_modules/.nitro/vite/services/ssr/assets/handoff-export-http-BYFY-PTA.js                    3.06 kB │ gzip:  1.33 kB
+node_modules/.nitro/vite/services/ssr/assets/neon-auth-proxy-CTJ_KPSm.js                        3.10 kB │ gzip:  1.20 kB
+node_modules/.nitro/vite/services/ssr/assets/payment-evidence-state-cO4bdshj.js                 3.29 kB │ gzip:  1.26 kB
+node_modules/.nitro/vite/services/ssr/assets/evidence-server-fns-DolNIJrK.js                    3.56 kB │ gzip:  1.13 kB
+node_modules/.nitro/vite/services/ssr/assets/conversations-BN--FuKW.js                          3.66 kB │ gzip:  1.67 kB
+node_modules/.nitro/vite/services/ssr/assets/maintenance-trigger-g8EB8bXb.js                    3.80 kB │ gzip:  1.42 kB
+node_modules/.nitro/vite/services/ssr/assets/permissions-Fua8e0_q.js                            3.86 kB │ gzip:  1.25 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-CzAdu74d.js                             3.87 kB │ gzip:  1.56 kB
+node_modules/.nitro/vite/services/ssr/assets/work-views-other-page-BBLHpdne.js                  3.94 kB │ gzip:  1.86 kB
+node_modules/.nitro/vite/services/ssr/assets/read-CR5k9zVD.js                                   3.94 kB │ gzip:  1.35 kB
+node_modules/.nitro/vite/services/ssr/assets/types-Co_34CWs.js                                  3.95 kB │ gzip:  1.24 kB
+node_modules/.nitro/vite/services/ssr/assets/handoff-server-fns-DMFHKyJC.js                     4.08 kB │ gzip:  1.43 kB
+node_modules/.nitro/vite/services/ssr/assets/company-work-EYEnAXRi.js                           4.14 kB │ gzip:  1.69 kB
+node_modules/.nitro/vite/services/ssr/assets/findings-CazdPE6F.js                               4.30 kB │ gzip:  1.67 kB
+node_modules/.nitro/vite/services/ssr/assets/page-header-BtXaKnNe.js                            4.41 kB │ gzip:  1.92 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-DBpMme4U.js                             4.46 kB │ gzip:  1.44 kB
+node_modules/.nitro/vite/services/ssr/assets/neon-auth-server-DfZTxqn-.js                       4.60 kB │ gzip:  1.56 kB
+node_modules/.nitro/vite/services/ssr/assets/labels-D-zGLP3h.js                                 4.84 kB │ gzip:  1.98 kB
+node_modules/.nitro/vite/services/ssr/assets/case-list-controls-CeGC4Tcf.js                     4.95 kB │ gzip:  1.62 kB
+node_modules/.nitro/vite/services/ssr/assets/intake-server-fns-f5BKhTOE.js                      4.99 kB │ gzip:  1.86 kB
+node_modules/.nitro/vite/services/ssr/assets/package-archive-3oujdPyw.js                        5.03 kB │ gzip:  1.89 kB
+node_modules/.nitro/vite/services/ssr/assets/webhook-CB_0kwg8.js                                5.08 kB │ gzip:  2.14 kB
+node_modules/.nitro/vite/services/ssr/assets/client-portal-server-fns-By_vPcfL.js               5.14 kB │ gzip:  1.89 kB
+node_modules/.nitro/vite/services/ssr/assets/follow-ups-CADhx9lr.js                             5.20 kB │ gzip:  1.66 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-T0Xxj6F1.js                             5.22 kB │ gzip:  2.17 kB
+node_modules/.nitro/vite/services/ssr/assets/handoff-server-fns-BkQrF_XQ.js                     5.44 kB │ gzip:  1.93 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-Bcoa2LIG.js                             5.64 kB │ gzip:  1.52 kB
+node_modules/.nitro/vite/services/ssr/assets/work-views-other-repository-Ccs98sPs.js            5.72 kB │ gzip:  1.78 kB
+node_modules/.nitro/vite/services/ssr/assets/repository-NkxdrBZc.js                             5.89 kB │ gzip:  1.87 kB
+node_modules/.nitro/vite/services/ssr/assets/case-scope-Cm2ac44w.js                             5.90 kB │ gzip:  1.61 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-4aZ7BwUQ.js                             5.98 kB │ gzip:  1.82 kB
+node_modules/.nitro/vite/services/ssr/assets/findings-review-D1V7lVHG.js                        6.09 kB │ gzip:  2.48 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-gDT5rni42.js                            6.21 kB │ gzip:  2.41 kB
+node_modules/.nitro/vite/services/ssr/assets/payment-evidence-BgonCGNs.js                       6.29 kB │ gzip:  2.03 kB
+node_modules/.nitro/vite/services/ssr/assets/follow-up-repository-xtLmjrY0.js                   6.35 kB │ gzip:  1.81 kB
+node_modules/.nitro/vite/services/ssr/assets/routes-CPfZlT7x.js                                 6.50 kB │ gzip:  2.43 kB
+node_modules/.nitro/vite/services/ssr/assets/media-download-Dgph-xRa.js                         6.91 kB │ gzip:  2.72 kB
+node_modules/.nitro/vite/services/ssr/assets/maintenance-trigger-runtime-T1Il0R4v.js            6.96 kB │ gzip:  2.43 kB
+node_modules/.nitro/vite/services/ssr/assets/_tanstack-start-manifest_v-B61uuxcP.js             7.44 kB │ gzip:  1.59 kB
+node_modules/.nitro/vite/services/ssr/index.js                                                  8.08 kB │ gzip:  2.96 kB
+node_modules/.nitro/vite/services/ssr/assets/corporate-changes._id-Qh6zwHH2.js                  8.32 kB │ gzip:  2.50 kB
+node_modules/.nitro/vite/services/ssr/assets/repository-DgM2a3PV.js                             8.49 kB │ gzip:  2.57 kB
+node_modules/.nitro/vite/services/ssr/assets/evidence-service-BoSNAAfh.js                       8.61 kB │ gzip:  2.37 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-BFdCfkv6.js                             8.90 kB │ gzip:  2.08 kB
+node_modules/.nitro/vite/services/ssr/assets/payments-Qdr57AHw.js                               9.01 kB │ gzip:  2.52 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-FHUn9yTa.js                             9.51 kB │ gzip:  2.38 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-Do45qK3B.js                             9.68 kB │ gzip:  2.86 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-D6WWkpdC.js                             9.76 kB │ gzip:  2.04 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-CkgIlq9d.js                            10.43 kB │ gzip:  3.08 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-DNX2Le-k.js                            10.46 kB │ gzip:  2.45 kB
+node_modules/.nitro/vite/services/ssr/assets/repository-C0gBM-yM.js                            10.50 kB │ gzip:  3.41 kB
+node_modules/.nitro/vite/services/ssr/assets/follow-up-server-fns-eWth8cWL.js                  10.90 kB │ gzip:  2.99 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-aNTf23c8.js                            11.04 kB │ gzip:  2.98 kB
+node_modules/.nitro/vite/services/ssr/assets/repository-Dtnt0DXR.js                            11.22 kB │ gzip:  3.08 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-DIdo5qey.js                            11.29 kB │ gzip:  2.86 kB
+node_modules/.nitro/vite/services/ssr/assets/work-views-DQmxLKZg.js                            11.82 kB │ gzip:  4.73 kB
+node_modules/.nitro/vite/services/ssr/assets/clients-CT_wodXS.js                               12.10 kB │ gzip:  3.85 kB
+node_modules/.nitro/vite/services/ssr/assets/knowledge-base-BX8FmS_e.js                        12.15 kB │ gzip:  4.19 kB
+node_modules/.nitro/vite/services/ssr/assets/repository-CC3C-YbV.js                            12.67 kB │ gzip:  3.29 kB
+node_modules/.nitro/vite/services/ssr/assets/intake-repository-W3fXw-xw.js                     12.79 kB │ gzip:  3.56 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-7MxdYP5R.js                            13.38 kB │ gzip:  3.54 kB
+node_modules/.nitro/vite/services/ssr/assets/repository-CVaDgZz02.js                           14.04 kB │ gzip:  4.05 kB
+node_modules/.nitro/vite/services/ssr/assets/runtime-env-C1etZh1D.js                           14.88 kB │ gzip:  5.20 kB
+node_modules/.nitro/vite/services/ssr/assets/woztell-BX7-4Zub.js                               15.00 kB │ gzip:  5.65 kB
+node_modules/.nitro/vite/services/ssr/assets/today-CRWco7AG.js                                 15.32 kB │ gzip:  4.59 kB
+node_modules/.nitro/vite/services/ssr/assets/incorporation-BHbW4ZT9.js                         15.47 kB │ gzip:  4.24 kB
+node_modules/.nitro/vite/services/ssr/assets/neon-auth-magic-link-CfGHiPbG.js                  15.49 kB │ gzip:  4.49 kB
+node_modules/.nitro/vite/services/ssr/assets/payments-CN_bwvx2.js                              16.00 kB │ gzip:  4.98 kB
+node_modules/.nitro/vite/services/ssr/assets/incorporation._id-D5P-F8hq.js                     16.06 kB │ gzip:  4.60 kB
+node_modules/.nitro/vite/services/ssr/assets/release-compatibility-CJTFpquW.js                 17.14 kB │ gzip:  6.79 kB
+node_modules/.nitro/vite/services/ssr/assets/runtime-dispatch-BaZvfYp6.js                      17.19 kB │ gzip:  5.42 kB
+node_modules/.nitro/vite/services/ssr/assets/schema-health-KO1n4gzv.js                         17.25 kB │ gzip:  6.20 kB
+node_modules/.nitro/vite/services/ssr/assets/whatsapp.automation-DFN7wr2a.js                   17.47 kB │ gzip:  5.08 kB
+node_modules/.nitro/vite/services/ssr/assets/handoff-repository-VKVWOFPH.js                    17.91 kB │ gzip:  4.60 kB
+node_modules/.nitro/vite/services/ssr/assets/storage-Y_2-w09M.js                               18.07 kB │ gzip:  6.22 kB
+node_modules/.nitro/vite/services/ssr/assets/client-form-dialog-4mkyo1KG.js                    18.63 kB │ gzip:  4.42 kB
+node_modules/.nitro/vite/services/ssr/assets/repository-D2jP6CnB.js                            20.22 kB │ gzip:  4.60 kB
+node_modules/.nitro/vite/services/ssr/assets/outbox-CJTZeat7.js                                20.31 kB │ gzip:  6.32 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-DfFgIkh9.js                            20.32 kB │ gzip:  5.46 kB
+node_modules/.nitro/vite/services/ssr/assets/routes-BVkg1mCA.js                                20.39 kB │ gzip:  5.49 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-oFNxKrFV.js                            20.53 kB │ gzip:  4.41 kB
+node_modules/.nitro/vite/services/ssr/assets/annual-return-store-6chEVGYS.js                   22.27 kB │ gzip:  5.87 kB
+node_modules/.nitro/vite/services/ssr/assets/client-portal-store-opG3kDZz.js                   22.95 kB │ gzip:  5.30 kB
+node_modules/.nitro/vite/services/ssr/assets/workflow-BcdBQK5F.js                              23.07 kB │ gzip:  7.87 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-B7VHq_uL.js                            23.53 kB │ gzip:  5.75 kB
+node_modules/.nitro/vite/services/ssr/assets/operations-4dxUva7W.js                            24.07 kB │ gzip:  6.12 kB
+node_modules/.nitro/vite/services/ssr/assets/analysis-repository-DMoyT7xm.js                   26.18 kB │ gzip:  7.44 kB
+node_modules/.nitro/vite/services/ssr/assets/apply-BzXNOvAD.js                                 26.95 kB │ gzip:  7.34 kB
+node_modules/.nitro/vite/services/ssr/assets/admin-BJXyoGZh.js                                 28.94 kB │ gzip:  7.40 kB
+node_modules/.nitro/vite/services/ssr/assets/bulk-selection-toolbar-D1yBis1f.js                29.54 kB │ gzip:  8.58 kB
+node_modules/.nitro/vite/services/ssr/assets/repository-CqZwtbIE.js                            31.21 kB │ gzip:  5.58 kB
+node_modules/.nitro/vite/services/ssr/assets/corporate-changes-DNlu1uBJ.js                     33.37 kB │ gzip:  6.77 kB
+node_modules/.nitro/vite/services/ssr/assets/workbook-CDenz1b_.js                              33.83 kB │ gzip: 11.72 kB
+node_modules/.nitro/vite/services/ssr/assets/imports-L5KWH0ST.js                               37.28 kB │ gzip: 10.60 kB
+node_modules/.nitro/vite/services/ssr/assets/repository-C2iP_S8q.js                            38.37 kB │ gzip:  9.57 kB
+node_modules/.nitro/vite/services/ssr/assets/server-fns-CoJ188gk.js                            38.84 kB │ gzip:  6.92 kB
+node_modules/.nitro/vite/services/ssr/assets/repository-CUN58Thp.js                            38.91 kB │ gzip:  9.20 kB
+node_modules/.nitro/vite/services/ssr/assets/annual-returns-DY6zzEYf.js                        39.88 kB │ gzip:  9.86 kB
+node_modules/.nitro/vite/services/ssr/assets/esm-BZ-4zqQG.js                                   42.17 kB │ gzip: 12.05 kB
+node_modules/.nitro/vite/services/ssr/assets/documents-Cwrtu-oR.js                             42.37 kB │ gzip: 11.54 kB
+node_modules/.nitro/vite/services/ssr/assets/portal-Dqp-8cDw.js                                45.24 kB │ gzip: 11.32 kB
+node_modules/.nitro/vite/services/ssr/assets/repository-bM1jZGOg.js                            48.30 kB │ gzip: 11.04 kB
+node_modules/.nitro/vite/services/ssr/assets/whatsapp-Bnn9q-FC.js                              50.37 kB │ gzip: 13.31 kB
+node_modules/.nitro/vite/services/ssr/assets/server-CCLJJUQX.js                                69.64 kB │ gzip: 17.67 kB
+node_modules/.nitro/vite/services/ssr/assets/auth-context-neon-DNT0Qt8L.js                     72.20 kB │ gzip: 19.37 kB
+node_modules/.nitro/vite/services/ssr/assets/clients._id-Boh_Mo_A.js                           78.85 kB │ gzip: 14.06 kB
+node_modules/.nitro/vite/services/ssr/assets/router-Ds4VFzzd.js                                84.24 kB │ gzip: 20.66 kB
+node_modules/.nitro/vite/services/ssr/assets/settings-B99TTkeT.js                              86.49 kB │ gzip: 19.71 kB
+node_modules/.nitro/vite/services/ssr/assets/annual-returns._id-DuAY_yay.js                    91.96 kB │ gzip: 19.71 kB
+node_modules/.nitro/vite/services/ssr/assets/repository-BhWI5Wop.js                           142.95 kB │ gzip: 35.52 kB
+
+✓ built in 3.98s
+[start] [nitro] Building [Nitro] (preset: `cloudflare-module`, compatibility: `2026-10-24`)
+[success] [nitro] Generated public .output/public
+vite v8.0.16 building nitro environment for production...
+[2Ktransforming...✓ 3118 modules transformed.
+rendering chunks...
+computing gzip size...
+.output/server/_libs/_.mjs                                           0.10 kB │ gzip:   0.09 kB
+.output/server/_libs/_2.mjs                                          0.13 kB │ gzip:   0.10 kB
+.output/server/_libs/devlop.mjs                                      0.13 kB │ gzip:   0.12 kB
+.output/server/_libs/_3.mjs                                          0.14 kB │ gzip:   0.11 kB
+.output/server/_ssr/pdf.worker.min-C4v1Kq3M.mjs                      0.20 kB │ gzip:   0.15 kB
+.output/server/_chunks/types4.mjs                                    0.22 kB │ gzip:   0.18 kB
+.output/server/_ssr/empty-plugin-adapters-D9UWiqvJ.mjs               0.23 kB │ gzip:   0.16 kB
+.output/server/_ssr/types-CSGhkudU.mjs                               0.24 kB │ gzip:   0.20 kB
+.output/server/_ssr/types-9FSBSK4t.mjs                               0.24 kB │ gzip:   0.21 kB
+.output/server/_ssr/types-BqZUGaQA.mjs                               0.25 kB │ gzip:   0.20 kB
+.output/server/_libs/bail.mjs                                        0.25 kB │ gzip:   0.19 kB
+.output/server/_tanstack-start-manifest_v.mjs                        0.31 kB │ gzip:   0.21 kB
+.output/server/_libs/escape-string-regexp.mjs                        0.33 kB │ gzip:   0.24 kB
+.output/server/_libs/isarray.mjs                                     0.35 kB │ gzip:   0.25 kB
+.output/server/_ssr/types-BqPnLASl.mjs                               0.36 kB │ gzip:   0.24 kB
+.output/server/_ssr/entity-id-Cjdw0w2c.mjs                           0.38 kB │ gzip:   0.27 kB
+.output/server/_ssr/createServerRpc-Bbkf7XgU.mjs                     0.39 kB │ gzip:   0.28 kB
+.output/server/_libs/tanstack__start-server-core.mjs                 0.40 kB │ gzip:   0.24 kB
+.output/server/_libs/is-plain-obj.mjs                                0.41 kB │ gzip:   0.24 kB
+.output/server/_ssr/rolldown-runtime-D7D4PA-g.mjs                    0.41 kB │ gzip:   0.29 kB
+.output/server/_libs/radix-ui__primitive.mjs                         0.42 kB │ gzip:   0.23 kB
+.output/server/_ssr/server-ChJb3yGs.mjs                              0.44 kB │ gzip:   0.26 kB
+.output/server/_ssr/authorization-BnKwunKn.mjs                       0.44 kB │ gzip:   0.29 kB
+.output/server/_ssr/role-labels-WbU5asMe.mjs                         0.52 kB │ gzip:   0.40 kB
+.output/server/_ssr/createSsrRpc-B4FA8hJ8.mjs                        0.53 kB │ gzip:   0.34 kB
+.output/server/_ssr/incorporation-CvAODXtq.mjs                       0.54 kB │ gzip:   0.36 kB
+.output/server/_ssr/corporate-changes-C8loVfy_.mjs                   0.56 kB │ gzip:   0.36 kB
+.output/server/_ssr/whatsapp.automation-CJtBWwO4.mjs                 0.57 kB │ gzip:   0.36 kB
+.output/server/_chunks/session.mjs                                   0.57 kB │ gzip:   0.28 kB
+.output/server/_ssr/portal-B1SKVc_1.mjs                              0.58 kB │ gzip:   0.38 kB
+.output/server/_ssr/documents-D_l0qeCm.mjs                           0.58 kB │ gzip:   0.37 kB
+.output/server/_chunks/ssr-renderer.mjs                              0.59 kB │ gzip:   0.35 kB
+.output/server/_libs/comma-separated-tokens.mjs                      0.59 kB │ gzip:   0.35 kB
+.output/server/_ssr/admin-BlEnWZIx.mjs                               0.61 kB │ gzip:   0.43 kB
+.output/server/_ssr/session-Ahf_xuSc.mjs                             0.61 kB │ gzip:   0.31 kB
+.output/server/_ssr/whatsapp-2TU-Yehu.mjs                            0.64 kB │ gzip:   0.41 kB
+.output/server/_ssr/operational-read-DcmaPECS.mjs                    0.65 kB │ gzip:   0.39 kB
+.output/server/_libs/estree-util-is-identifier-name.mjs              0.65 kB │ gzip:   0.38 kB
+.output/server/_libs/ccount.mjs                                      0.66 kB │ gzip:   0.37 kB
+.output/server/_ssr/data-origin-CAV9ZOKP.mjs                         0.67 kB │ gzip:   0.41 kB
+.output/server/_ssr/clients-D18bJFYS.mjs                             0.67 kB │ gzip:   0.42 kB
+.output/server/_ssr/clients._id-Cu9gVQ_R.mjs                         0.67 kB │ gzip:   0.42 kB
+.output/server/_ssr/incorporation._id-C3M6itKZ.mjs                   0.67 kB │ gzip:   0.43 kB
+.output/server/_libs/decode-named-character-reference+[...].mjs      0.71 kB │ gzip:   0.44 kB
+.output/server/_ssr/reminder-cadence-DEnydG9Q.mjs                    0.71 kB │ gzip:   0.41 kB
+.output/server/_libs/html-url-attributes.mjs                         0.71 kB │ gzip:   0.42 kB
+.output/server/_chunks/authorization2.mjs                            0.71 kB │ gzip:   0.42 kB
+.output/server/_ssr/authorization-BG7wlYK1.mjs                       0.74 kB │ gzip:   0.45 kB
+.output/server/_ssr/annual-returns._id-C5F66sWO.mjs                  0.75 kB │ gzip:   0.46 kB
+.output/server/_chunks/constants.mjs                                 0.75 kB │ gzip:   0.49 kB
+.output/server/_ssr/corporate-changes._id-Bi6HqSmN.mjs               0.76 kB │ gzip:   0.47 kB
+.output/server/_ssr/query-keys-CdeP1tbg.mjs                          0.77 kB │ gzip:   0.28 kB
+.output/server/_ssr/use-retained-page-DLUZU7ZZ.mjs                   0.77 kB │ gzip:   0.45 kB
+.output/server/_ssr/constants-Bf59a7kB.mjs                           0.77 kB │ gzip:   0.51 kB
+.output/server/_chunks/media-intake.mjs                              0.79 kB │ gzip:   0.37 kB
+.output/server/_ssr/labels-6FlY9vfG.mjs                              0.79 kB │ gzip:   0.54 kB
+.output/server/_ssr/types-BMWBSMV6.mjs                               0.79 kB │ gzip:   0.46 kB
+.output/server/_ssr/neon-auth-cookies-gc2N1ruJ.mjs                   0.81 kB │ gzip:   0.52 kB
+.output/server/_ssr/media-intake-C2bWV4Ty.mjs                        0.82 kB │ gzip:   0.40 kB
+.output/server/_ssr/clients-C1Vb8rke.mjs                             0.82 kB │ gzip:   0.43 kB
+.output/server/_ssr/settings-DGO9PeOU.mjs                            0.84 kB │ gzip:   0.52 kB
+.output/server/_libs/longest-streak.mjs                              0.84 kB │ gzip:   0.44 kB
+.output/server/_ssr/authorization-Cxwsyl9Z.mjs                       0.84 kB │ gzip:   0.38 kB
+.output/server/_libs/tanstack__start-client-core.mjs                 0.90 kB │ gzip:   0.41 kB
+.output/server/_ssr/pagination-K86NRhwH.mjs                          0.90 kB │ gzip:   0.54 kB
+.output/server/_ssr/date-math-CZfMdHuc.mjs                           0.91 kB │ gzip:   0.50 kB
+.output/server/_ssr/version-conflict-6p4lro89.mjs                    0.92 kB │ gzip:   0.51 kB
+.output/server/_ssr/operations-MXqWdBV_.mjs                          0.95 kB │ gzip:   0.60 kB
+.output/server/_ssr/authorization-BppsOw9S.mjs                       0.96 kB │ gzip:   0.46 kB
+.output/server/_ssr/labels-4ufbNzpE.mjs                              0.98 kB │ gzip:   0.65 kB
+.output/server/_ssr/checklist-item-label-95wJWvM3.mjs                0.99 kB │ gzip:   0.50 kB
+.output/server/_ssr/risk-pill-DT1h4zuT.mjs                           1.01 kB │ gzip:   0.61 kB
+.output/server/_ssr/imports-nl5dlS1O.mjs                             1.04 kB │ gzip:   0.65 kB
+.output/server/_chunks/phone.mjs                                     1.08 kB │ gzip:   0.59 kB
+.output/server/_ssr/phone-DQF6GMxm.mjs                               1.11 kB │ gzip:   0.61 kB
+.output/server/_ssr/today-f_YSEsmx.mjs                               1.16 kB │ gzip:   0.70 kB
+.output/server/_libs/hookable.mjs                                    1.16 kB │ gzip:   0.51 kB
+.output/server/_libs/remark-gfm.mjs                                  1.22 kB │ gzip:   0.51 kB
+.output/server/_chunks/errors2.mjs                                   1.23 kB │ gzip:   0.59 kB
+.output/server/_libs/inherits.mjs                                    1.23 kB │ gzip:   0.47 kB
+.output/server/_chunks/errors3.mjs                                   1.24 kB │ gzip:   0.61 kB
+.output/server/_ssr/errors-BSvMOarn.mjs                              1.25 kB │ gzip:   0.61 kB
+.output/server/_ssr/types-BzCM8ZVP.mjs                               1.26 kB │ gzip:   0.54 kB
+.output/server/_ssr/errors-B_cKcakq.mjs                              1.26 kB │ gzip:   0.63 kB
+.output/server/_chunks/worker.mjs                                    1.39 kB │ gzip:   0.53 kB
+.output/server/_ssr/worker-Bnts-U6g.mjs                              1.41 kB │ gzip:   0.55 kB
+.output/server/_ssr/assignment-labels-BKyZtVoW.mjs                   1.45 kB │ gzip:   0.80 kB
+.output/server/_chunks/errors.mjs                                    1.45 kB │ gzip:   0.72 kB
+.output/server/_ssr/daily-view-state-ByLPozOD.mjs                    1.48 kB │ gzip:   0.71 kB
+.output/server/_ssr/errors-C5KASJKf.mjs                              1.49 kB │ gzip:   0.75 kB
+.output/server/_ssr/neon-auth-rpc-COrdYFSI.mjs                       1.49 kB │ gzip:   0.60 kB
+.output/server/_chunks/payment-review-input.mjs                      1.51 kB │ gzip:   0.76 kB
+.output/server/_ssr/deadline-pill-BQGkm_66.mjs                       1.52 kB │ gzip:   0.77 kB
+.output/server/_ssr/labels-CJ1hMaNu.mjs                              1.54 kB │ gzip:   0.70 kB
+.output/server/_ssr/work-views-other-server-Bb5Kcy9o.mjs             1.55 kB │ gzip:   0.72 kB
+.output/server/_runtime.mjs                                          1.62 kB │ gzip:   0.77 kB
+.output/server/_ssr/company-work-server-fns-DHxPMIFl.mjs             1.62 kB │ gzip:   0.75 kB
+.output/server/_chunks/types.mjs                                     1.64 kB │ gzip:   0.74 kB
+.output/server/_ssr/register-view-state-CQgIgID0.mjs                 1.65 kB │ gzip:   0.78 kB
+.output/server/_chunks/apply-contracts.mjs                           1.72 kB │ gzip:   0.72 kB
+.output/server/_chunks/config.mjs                                    1.80 kB │ gzip:   0.72 kB
+.output/server/_ssr/record-unavailable-D2sdmmk8.mjs                  1.81 kB │ gzip:   0.88 kB
+.output/server/_chunks/authorization.mjs                             1.84 kB │ gzip:   0.56 kB
+.output/server/_ssr/config-DEsYTklZ.mjs                              1.85 kB │ gzip:   0.76 kB
+.output/server/_ssr/authorization-FT081gbp.mjs                       1.87 kB │ gzip:   0.59 kB
+.output/server/_ssr/identifiers-B1twp33q.mjs                         1.90 kB │ gzip:   1.02 kB
+.output/server/_ssr/skeleton-BufxvPQi.mjs                            1.92 kB │ gzip:   0.89 kB
+.output/server/_libs/core-util-is.mjs                                1.95 kB │ gzip:   0.61 kB
+.output/server/_chunks/client.mjs                                    1.95 kB │ gzip:   0.84 kB
+.output/server/_ssr/status-pill-DiNrsngb.mjs                         1.98 kB │ gzip:   0.82 kB
+.output/server/_libs/immediate.mjs                                   2.04 kB │ gzip:   0.81 kB
+.output/server/_ssr/authorization-aOiKOYyw.mjs                       2.07 kB │ gzip:   0.90 kB
+.output/server/_ssr/maintenance-http-3LmCuk_F.mjs                    2.07 kB │ gzip:   0.97 kB
+.output/server/_ssr/approved-templates-yK4bKauj.mjs                  2.13 kB │ gzip:   0.85 kB
+.output/server/_chunks/provider-mode.mjs                             2.15 kB │ gzip:   1.01 kB
+.output/server/_chunks/start.mjs                                     2.15 kB │ gzip:   0.72 kB
+.output/server/_ssr/start-fwibIGQ_.mjs                               2.19 kB │ gzip:   0.78 kB
+.output/server/_ssr/provider-mode-1CFPJRxX.mjs                       2.19 kB │ gzip:   1.05 kB
+.output/server/_ssr/evidence-file-types-DFZXtZYG.mjs                 2.19 kB │ gzip:   1.00 kB
+.output/server/_ssr/client-DxHm9aOV.mjs                              2.23 kB │ gzip:   0.93 kB
+.output/server/_ssr/demo-unavailable-Bz9w93fl.mjs                    2.26 kB │ gzip:   1.04 kB
+.output/server/_ssr/format-date-5kwl30bx.mjs                         2.28 kB │ gzip:   1.19 kB
+.output/server/_ssr/hong-kong-time-DSJXU6ud.mjs                      2.30 kB │ gzip:   1.16 kB
+.output/server/_ssr/field-BTnOkuUM.mjs                               2.30 kB │ gzip:   1.02 kB
+.output/server/_ssr/format-label-3RbQYCqL.mjs                        2.34 kB │ gzip:   1.29 kB
+.output/server/_chunks/text-tokens.mjs                               2.35 kB │ gzip:   1.34 kB
+.output/server/_ssr/text-tokens-DaM1c4X6.mjs                         2.39 kB │ gzip:   1.37 kB
+.output/server/_ssr/route-guard-BfFxoSKX.mjs                         2.47 kB │ gzip:   1.07 kB
+.output/server/_libs/extend.mjs                                      2.60 kB │ gzip:   0.97 kB
+.output/server/_ssr/list-filters-8OtYRc20.mjs                        2.66 kB │ gzip:   1.23 kB
+.output/server/_ssr/safe-preview-D-HKcvp5.mjs                        2.73 kB │ gzip:   1.27 kB
+.output/server/_ssr/outstanding-982ckq_v.mjs                         2.87 kB │ gzip:   1.28 kB
+.output/server/_ssr/create-input-CQ9JRqH7.mjs                        3.00 kB │ gzip:   1.23 kB
+.output/server/_chunks/doc-parser.mjs                                3.05 kB │ gzip:   1.36 kB
+.output/server/_chunks/case-list-query.mjs                           3.09 kB │ gzip:   1.24 kB
+.output/server/_ssr/doc-parser-BUXthmSN.mjs                          3.09 kB │ gzip:   1.41 kB
+.output/server/_ssr/case-list-query-o52Pw1eg.mjs                     3.11 kB │ gzip:   1.27 kB
+.output/server/_ssr/neon-auth-proxy-CTJ_KPSm.mjs                     3.13 kB │ gzip:   1.24 kB
+.output/server/_ssr/handoff-export-http-BYFY-PTA.mjs                 3.15 kB │ gzip:   1.39 kB
+.output/server/_libs/class-variance-authority+clsx.mjs               3.17 kB │ gzip:   1.24 kB
+.output/server/_ssr/server-fns-9I1t9X0X.mjs                          3.26 kB │ gzip:   1.14 kB
+.output/server/_ssr/payment-evidence-state-cO4bdshj.mjs              3.32 kB │ gzip:   1.28 kB
+.output/server/_libs/base64-js.mjs                                   3.33 kB │ gzip:   1.12 kB
+.output/server/_ssr/dialog-CClL5i8w.mjs                              3.57 kB │ gzip:   1.12 kB
+.output/server/_ssr/evidence-server-fns-DolNIJrK.mjs                 3.65 kB │ gzip:   1.18 kB
+.output/server/_chunks/conversations.mjs                             3.66 kB │ gzip:   1.67 kB
+.output/server/_ssr/conversations-BN--FuKW.mjs                       3.69 kB │ gzip:   1.70 kB
+.output/server/_ssr/read-CR5k9zVD.mjs                                3.77 kB │ gzip:   1.35 kB
+.output/server/_chunks/types3.mjs                                    3.78 kB │ gzip:   1.51 kB
+.output/server/_ssr/maintenance-trigger-g8EB8bXb.mjs                 3.84 kB │ gzip:   1.45 kB
+.output/server/_ssr/permissions-Fua8e0_q.mjs                         3.89 kB │ gzip:   1.27 kB
+.output/server/_chunks/company-work.mjs                              4.04 kB │ gzip:   1.64 kB
+.output/server/_ssr/server-fns-CzAdu74d.mjs                          4.05 kB │ gzip:   1.62 kB
+.output/server/_ssr/work-views-other-page-BBLHpdne.mjs               4.05 kB │ gzip:   1.93 kB
+.output/server/_ssr/company-work-EYEnAXRi.mjs                        4.18 kB │ gzip:   1.72 kB
+.output/server/_ssr/handoff-server-fns-DMFHKyJC.mjs                  4.25 kB │ gzip:   1.50 kB
+.output/server/_chunks/types2.mjs                                    4.26 kB │ gzip:   1.27 kB
+.output/server/_ssr/findings-CazdPE6F.mjs                            4.28 kB │ gzip:   1.70 kB
+.output/server/_ssr/types-Co_34CWs.mjs                               4.30 kB │ gzip:   1.31 kB
+.output/server/_chunks/payment-evidence-state.mjs                    4.36 kB │ gzip:   1.76 kB
+.output/server/_libs/radix-ui__react-slot.mjs                        4.39 kB │ gzip:   1.38 kB
+.output/server/_ssr/server-fns-DBpMme4U.mjs                          4.54 kB │ gzip:   1.49 kB
+.output/server/_ssr/neon-auth-server-DfZTxqn-.mjs                    4.68 kB │ gzip:   1.60 kB
+.output/server/_ssr/page-header-BtXaKnNe.mjs                         4.78 kB │ gzip:   2.03 kB
+.output/server/_libs/radix-ui__react-context+react.mjs               4.80 kB │ gzip:   1.48 kB
+.output/server/_ssr/labels-D-zGLP3h.mjs                              5.01 kB │ gzip:   2.05 kB
+.output/server/_chunks/package-archive.mjs                           5.10 kB │ gzip:   1.91 kB
+.output/server/_ssr/webhook-CB_0kwg8.mjs                             5.12 kB │ gzip:   2.17 kB
+.output/server/_ssr/package-archive-3oujdPyw.mjs                     5.13 kB │ gzip:   1.94 kB
+.output/server/_ssr/intake-server-fns-f5BKhTOE.mjs                   5.17 kB │ gzip:   1.94 kB
+.output/server/_ssr/client-portal-server-fns-By_vPcfL.mjs            5.22 kB │ gzip:   1.95 kB
+.output/server/_ssr/follow-ups-CADhx9lr.mjs                          5.23 kB │ gzip:   1.69 kB
+.output/server/_chunks/neon-auth-server.mjs                          5.29 kB │ gzip:   1.86 kB
+.output/server/_ssr/server-fns-T0Xxj6F1.mjs                          5.32 kB │ gzip:   2.22 kB
+.output/server/_ssr/handoff-server-fns-BkQrF_XQ.mjs                  5.66 kB │ gzip:   1.99 kB
+.output/server/_ssr/server-fns-Bcoa2LIG.mjs                          5.68 kB │ gzip:   1.56 kB
+.output/server/_chunks/work-views-other-repository.mjs               5.71 kB │ gzip:   1.77 kB
+.output/server/_ssr/work-views-other-repository-Ccs98sPs.mjs         5.75 kB │ gzip:   1.81 kB
+.output/server/_ssr/case-list-controls-CeGC4Tcf.mjs                  5.76 kB │ gzip:   1.69 kB
+.output/server/_chunks/repository7.mjs                               5.87 kB │ gzip:   1.85 kB
+.output/server/_ssr/repository-NkxdrBZc.mjs                          5.91 kB │ gzip:   1.89 kB
+.output/server/_chunks/schema-health.mjs                             5.92 kB │ gzip:   2.83 kB
+.output/server/_ssr/case-scope-Cm2ac44w.mjs                          5.93 kB │ gzip:   1.64 kB
+.output/server/_ssr/findings-review-D1V7lVHG.mjs                     6.21 kB │ gzip:   2.53 kB
+.output/server/_chunks/payment-evidence.mjs                          6.21 kB │ gzip:   1.96 kB
+.output/server/_ssr/server-fns-4aZ7BwUQ.mjs                          6.22 kB │ gzip:   1.90 kB
+.output/server/_ssr/server-fns-gDT5rni42.mjs                         6.23 kB │ gzip:   2.43 kB
+.output/server/_chunks/findings-review.mjs                           6.24 kB │ gzip:   2.52 kB
+.output/server/_ssr/payment-evidence-BgonCGNs.mjs                    6.32 kB │ gzip:   2.05 kB
+.output/server/_ssr/follow-up-repository-xtLmjrY0.mjs                6.38 kB │ gzip:   1.84 kB
+.output/server/_ssr/routes-CPfZlT7x.mjs                              6.44 kB │ gzip:   2.44 kB
+.output/server/_libs/ungap__structured-clone.mjs                     6.58 kB │ gzip:   1.99 kB
+.output/server/_libs/better-auth__core+better-call.mjs               6.82 kB │ gzip:   2.82 kB
+.output/server/_ssr/maintenance-trigger-runtime-T1Il0R4v.mjs         6.93 kB │ gzip:   2.45 kB
+.output/server/_chunks/media-download.mjs                            7.00 kB │ gzip:   2.74 kB
+.output/server/_ssr/media-download-Dgph-xRa.mjs                      7.04 kB │ gzip:   2.77 kB
+.output/server/_chunks/follow-ups.mjs                                7.10 kB │ gzip:   2.29 kB
+.output/server/_tanstack-start-manifest_v-B61uuxcP.mjs               7.50 kB │ gzip:   1.63 kB
+.output/server/_ssr/ssr.mjs                                          7.98 kB │ gzip:   2.97 kB
+.output/server/_chunks/repository2.mjs                               8.46 kB │ gzip:   2.53 kB
+.output/server/_ssr/repository-DgM2a3PV.mjs                          8.52 kB │ gzip:   2.60 kB
+.output/server/_chunks/evidence-service.mjs                          8.54 kB │ gzip:   2.31 kB
+.output/server/_ssr/evidence-service-BoSNAAfh.mjs                    8.65 kB │ gzip:   2.39 kB
+.output/server/_libs/tanstack__react-query.mjs                       8.71 kB │ gzip:   2.21 kB
+.output/server/_libs/markdown-table.mjs                              8.81 kB │ gzip:   2.53 kB
+.output/server/_ssr/server-fns-BFdCfkv6.mjs                          9.09 kB │ gzip:   2.15 kB
+.output/server/_ssr/corporate-changes._id-Qh6zwHH2.mjs               9.44 kB │ gzip:   2.57 kB
+.output/server/_ssr/server-fns-FHUn9yTa.mjs                          9.69 kB │ gzip:   2.45 kB
+.output/server/_ssr/server-fns-D6WWkpdC.mjs                          9.80 kB │ gzip:   2.08 kB
+.output/server/_ssr/server-fns-Do45qK3B.mjs                         10.02 kB │ gzip:   2.94 kB
+.output/server/_chunks/repository10.mjs                             10.48 kB │ gzip:   3.38 kB
+.output/server/_ssr/repository-C0gBM-yM.mjs                         10.53 kB │ gzip:   3.43 kB
+.output/server/_ssr/server-fns-DNX2Le-k.mjs                         10.56 kB │ gzip:   2.50 kB
+.output/server/_ssr/payments-Qdr57AHw.mjs                           10.58 kB │ gzip:   2.61 kB
+.output/server/_ssr/server-fns-CkgIlq9d.mjs                         10.73 kB │ gzip:   3.15 kB
+.output/server/_ssr/follow-up-server-fns-eWth8cWL.mjs               11.08 kB │ gzip:   3.06 kB
+.output/server/_chunks/repository11.mjs                             11.09 kB │ gzip:   3.01 kB
+.output/server/_ssr/repository-Dtnt0DXR.mjs                         11.17 kB │ gzip:   3.10 kB
+.output/server/_ssr/server-fns-aNTf23c8.mjs                         11.30 kB │ gzip:   3.07 kB
+.output/server/_chunks/release-catalog.mjs                          11.34 kB │ gzip:   3.45 kB
+.output/server/_ssr/server-fns-DIdo5qey.mjs                         11.40 kB │ gzip:   2.92 kB
+.output/server/_ssr/work-views-DQmxLKZg.mjs                         11.74 kB │ gzip:   4.75 kB
+.output/server/_ssr/knowledge-base-BX8FmS_e.mjs                     12.39 kB │ gzip:   4.30 kB
+.output/server/_libs/tanstack__history.mjs                          12.50 kB │ gzip:   3.70 kB
+.output/server/_chunks/repository9.mjs                              12.64 kB │ gzip:   3.24 kB
+.output/server/_ssr/repository-CC3C-YbV.mjs                         12.64 kB │ gzip:   3.30 kB
+.output/server/_chunks/intake-repository.mjs                        12.68 kB │ gzip:   3.50 kB
+.output/server/_ssr/intake-repository-W3fXw-xw.mjs                  12.83 kB │ gzip:   3.59 kB
+.output/server/_ssr/server-fns-7MxdYP5R.mjs                         13.52 kB │ gzip:   3.60 kB
+.output/server/_chunks/woztell.mjs                                  13.53 kB │ gzip:   5.08 kB
+.output/server/_ssr/clients-CT_wodXS.mjs                            13.76 kB │ gzip:   4.00 kB
+.output/server/_libs/h3.mjs                                         13.95 kB │ gzip:   4.15 kB
+.output/server/_ssr/repository-CVaDgZz02.mjs                        14.01 kB │ gzip:   4.07 kB
+.output/server/_ssr/runtime-env-C1etZh1D.mjs                        14.87 kB │ gzip:   5.22 kB
+.output/server/_chunks/runtime-env.mjs                              14.88 kB │ gzip:   5.20 kB
+.output/server/_ssr/woztell-BX7-4Zub.mjs                            15.03 kB │ gzip:   5.68 kB
+.output/server/_ssr/neon-auth-magic-link-CfGHiPbG.mjs               15.56 kB │ gzip:   4.53 kB
+.output/server/_chunks/mapping.mjs                                  16.49 kB │ gzip:   5.82 kB
+.output/server/_libs/@radix-ui/react-compose-refs+[...].mjs         16.53 kB │ gzip:   4.59 kB
+.output/server/_ssr/runtime-dispatch-BaZvfYp6.mjs                   16.85 kB │ gzip:   5.42 kB
+.output/server/_ssr/today-CRWco7AG.mjs                              16.98 kB │ gzip:   4.69 kB
+.output/server/_ssr/release-compatibility-CJTFpquW.mjs              17.05 kB │ gzip:   6.80 kB
+.output/server/_ssr/schema-health-KO1n4gzv.mjs                      17.21 kB │ gzip:   6.22 kB
+.output/server/_chunks/runtime-dispatch.mjs                         17.42 kB │ gzip:   5.39 kB
+.output/server/_ssr/incorporation-BHbW4ZT9.mjs                      17.45 kB │ gzip:   4.37 kB
+.output/server/_chunks/handoff-repository.mjs                       17.80 kB │ gzip:   4.53 kB
+.output/server/_ssr/payments-CN_bwvx2.mjs                           17.82 kB │ gzip:   5.13 kB
+.output/server/_ssr/storage-Y_2-w09M.mjs                            17.90 kB │ gzip:   6.25 kB
+.output/server/_ssr/incorporation._id-D5P-F8hq.mjs                  17.90 kB │ gzip:   4.72 kB
+.output/server/_ssr/handoff-repository-VKVWOFPH.mjs                 17.95 kB │ gzip:   4.63 kB
+.output/server/_libs/better-fetch__fetch.mjs                        18.93 kB │ gzip:   5.11 kB
+.output/server/_ssr/whatsapp.automation-DFN7wr2a.mjs                19.56 kB │ gzip:   5.21 kB
+.output/server/_libs/mdast-util-find-and-replace+[...].mjs          19.67 kB │ gzip:   6.23 kB
+.output/server/_chunks/repository8.mjs                              20.13 kB │ gzip:   4.53 kB
+.output/server/_ssr/repository-D2jP6CnB.mjs                         20.18 kB │ gzip:   4.62 kB
+.output/server/_chunks/outbox.mjs                                   20.28 kB │ gzip:   6.30 kB
+.output/server/_ssr/outbox-CJTZeat7.mjs                             20.52 kB │ gzip:   6.39 kB
+.output/server/_ssr/client-form-dialog-4mkyo1KG.mjs                 20.61 kB │ gzip:   4.55 kB
+.output/server/_ssr/server-fns-oFNxKrFV.mjs                         20.85 kB │ gzip:   4.48 kB
+.output/server/_ssr/server-fns-DfFgIkh9.mjs                         20.93 kB │ gzip:   5.59 kB
+.output/server/_ssr/annual-return-store-6chEVGYS.mjs                22.44 kB │ gzip:   5.98 kB
+.output/server/_ssr/workflow-BcdBQK5F.mjs                           22.79 kB │ gzip:   7.86 kB
+.output/server/_ssr/routes-BVkg1mCA.mjs                             22.91 kB │ gzip:   5.60 kB
+.output/server/_ssr/client-portal-store-opG3kDZz.mjs                23.17 kB │ gzip:   5.42 kB
+.output/server/_ssr/server-fns-B7VHq_uL.mjs                         23.70 kB │ gzip:   5.82 kB
+.output/server/_chunks/maintenance-trigger-runtime.mjs              23.90 kB │ gzip:   6.57 kB
+.output/server/_chunks/analysis-repository.mjs                      26.23 kB │ gzip:   7.42 kB
+.output/server/_ssr/analysis-repository-DMoyT7xm.mjs                26.28 kB │ gzip:   7.49 kB
+.output/server/_chunks/apply.mjs                                    26.87 kB │ gzip:   7.26 kB
+.output/server/_ssr/apply-BzXNOvAD.mjs                              26.99 kB │ gzip:   7.37 kB
+.output/server/_ssr/operations-4dxUva7W.mjs                         27.31 kB │ gzip:   6.21 kB
+.output/server/_chunks/repository5.mjs                              31.18 kB │ gzip:   5.54 kB
+.output/server/_ssr/repository-CqZwtbIE.mjs                         31.25 kB │ gzip:   5.62 kB
+.output/server/_ssr/bulk-selection-toolbar-D1yBis1f.mjs             32.52 kB │ gzip:   8.78 kB
+.output/server/_libs/better-auth+defu+nanostores.mjs                32.66 kB │ gzip:   9.16 kB
+.output/server/_ssr/admin-BJXyoGZh.mjs                              33.23 kB │ gzip:   7.59 kB
+.output/server/_ssr/workbook-CDenz1b_.mjs                           33.80 kB │ gzip:  11.75 kB
+.output/server/index.mjs                                            34.40 kB │ gzip:   9.41 kB
+.output/server/_libs/lucide-react.mjs                               34.64 kB │ gzip:   6.59 kB
+.output/server/_libs/character-entities.mjs                         35.30 kB │ gzip:  12.27 kB
+.output/server/_ssr/corporate-changes-DNlu1uBJ.mjs                  37.27 kB │ gzip:   6.95 kB
+.output/server/_chunks/repository12.mjs                             38.33 kB │ gzip:   9.52 kB
+.output/server/_ssr/repository-C2iP_S8q.mjs                         38.41 kB │ gzip:   9.60 kB
+.output/server/_ssr/repository-CUN58Thp.mjs                         38.83 kB │ gzip:   9.21 kB
+.output/server/_ssr/server-fns-CoJ188gk.mjs                         39.16 kB │ gzip:   6.99 kB
+.output/server/_chunks/server-fns.mjs                               40.11 kB │ gzip:  10.87 kB
+.output/server/_ssr/imports-L5KWH0ST.mjs                            41.12 kB │ gzip:  10.79 kB
+.output/server/_ssr/esm-BZ-4zqQG.mjs                                41.38 kB │ gzip:  11.98 kB
+.output/server/_chunks/repository.mjs                               44.73 kB │ gzip:  11.03 kB
+.output/server/_ssr/annual-returns-DY6zzEYf.mjs                     44.99 kB │ gzip:  10.05 kB
+.output/server/_ssr/documents-Cwrtu-oR.mjs                          46.70 kB │ gzip:  11.77 kB
+.output/server/_ssr/repository-bM1jZGOg.mjs                         48.02 kB │ gzip:  11.02 kB
+.output/server/_libs/mdast-util-to-hast+[...].mjs                   48.80 kB │ gzip:  10.17 kB
+.output/server/_ssr/portal-Dqp-8cDw.mjs                             50.59 kB │ gzip:  11.61 kB
+.output/server/_chunks/repository4.mjs                              50.72 kB │ gzip:  16.60 kB
+.output/server/_libs/micromark-extension-gfm+[...].mjs              51.23 kB │ gzip:   9.46 kB
+.output/server/_libs/sonner.mjs                                     51.97 kB │ gzip:  11.78 kB
+.output/server/_chunks/repository6.mjs                              53.79 kB │ gzip:  12.16 kB
+.output/server/_ssr/whatsapp-Bnn9q-FC.mjs                           55.21 kB │ gzip:  13.54 kB
+.output/server/_libs/lop+option+underscore.mjs                      64.51 kB │ gzip:  15.11 kB
+.output/server/_libs/mdast-util-gfm+[...].mjs                       67.15 kB │ gzip:  13.45 kB
+.output/server/_libs/tanstack__query-core.mjs                       67.94 kB │ gzip:  14.26 kB
+.output/server/_libs/hast-util-to-jsx-runtime+[...].mjs             67.96 kB │ gzip:  17.37 kB
+.output/server/_ssr/server-CCLJJUQX.mjs                             68.37 kB │ gzip:  17.58 kB
+.output/server/_libs/postgres.mjs                                   68.64 kB │ gzip:  19.54 kB
+.output/server/_ssr/auth-context-neon-DNT0Qt8L.mjs                  71.51 kB │ gzip:  19.23 kB
+.output/server/_libs/react-markdown+[...].mjs                       78.27 kB │ gzip:  18.79 kB
+.output/server/_libs/@radix-ui/react-dialog+[...].mjs               79.83 kB │ gzip:  19.45 kB
+.output/server/_libs/tailwind-merge.mjs                             85.65 kB │ gzip:  15.21 kB
+.output/server/_ssr/clients._id-Boh_Mo_A.mjs                        88.37 kB │ gzip:  14.26 kB
+.output/server/_ssr/router-Ds4VFzzd.mjs                             92.50 kB │ gzip:  20.99 kB
+.output/server/_ssr/settings-B99TTkeT.mjs                           95.84 kB │ gzip:  20.06 kB
+.output/server/_libs/zod.mjs                                       100.31 kB │ gzip:  17.39 kB
+.output/server/_ssr/annual-returns._id-DuAY_yay.mjs                103.00 kB │ gzip:  20.22 kB
+.output/server/_libs/xmldom__xmldom.mjs                            140.89 kB │ gzip:  39.44 kB
+.output/server/_chunks/repository3.mjs                             140.99 kB │ gzip:  34.88 kB
+.output/server/_ssr/repository-BhWI5Wop.mjs                        142.31 kB │ gzip:  35.45 kB
+.output/server/_libs/bluebird.mjs                                  153.63 kB │ gzip:  31.12 kB
+.output/server/_libs/dingbat-to-unicode.mjs                        153.93 kB │ gzip:  13.16 kB
+.output/server/_libs/@tanstack/react-start+[...].mjs               155.16 kB │ gzip:  39.66 kB
+.output/server/_libs/mammoth+[...].mjs                             189.63 kB │ gzip:  34.61 kB
+.output/server/_libs/mdast-util-from-markdown+[...].mjs            191.57 kB │ gzip:  36.54 kB
+.output/server/_libs/jszip+[...].mjs                               273.28 kB │ gzip:  60.96 kB
+.output/server/_libs/@tanstack/react-router+[...].mjs              755.15 kB │ gzip: 160.05 kB
+.output/server/_libs/pdfjs-dist.mjs                                760.14 kB │ gzip: 170.08 kB
+.output/server/_chunks/router.mjs                                1,182.90 kB │ gzip: 253.60 kB
+.output/server/_libs/unpdf.mjs                                   2,093.04 kB │ gzip: 549.00 kB
+
+✓ built in 2.06s
+[info] [nitro] Using auto generated worker name: `tanstack-start-ts-documents-kossilon-hub-cosec-20261023`
+[info] Generated .output/server/wrangler.json
+[info] Generated .wrangler/deploy/config.json
+[info] Generated .output/public/_headers
+[info] Generated .output/nitro.json
+[success] [nitro] You can preview this build using `npx vite preview`
+[success] [nitro] You can deploy this build using `npx nitro deploy --prebuilt`
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+[plugin rolldown:vite-resolve] Module "node:crypto" has been externalized for browser compatibility, imported by "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/annual-return/package-archive.ts". See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.
+[33m[PLUGIN_TIMINGS] [0mYour build spent significant time in plugins. Here is a breakdown:
+  - tanstack-start-core:import-protection (55%)
+  - vite-tsconfig-paths (37%)
+  - tanstack-start-core:import-protection-transform-cache (5%)
+See https://rolldown.rs/options/checks#plugintimings for more details.
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[33m[PLUGIN_TIMINGS] [0mYour build spent significant time in plugins. Here is a breakdown:
+  - vite-tsconfig-paths (42%)
+  - tanstack-start-core:import-protection (31%)
+  - tanstack-start-core:import-protection-transform-cache (14%)
+  - tanstack-router:code-splitter:compile-reference-file (4%)
+  - tanstack-start-core::server-fn:ssr (2%)
+See https://rolldown.rs/options/checks#plugintimings for more details.
+
+[warn] `inlineDynamicImports` option is ignored because the `codeSplitting` option is specified.

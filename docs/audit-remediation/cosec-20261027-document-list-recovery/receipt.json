@@ -1,0 +1,69 @@
+{
+  "baseline": "d9f2fe46ff7289cc06c7dbf4b7f6974ad2871b89",
+  "product_commit": "4b40cc34e509d762f2e3b2a02f0c053782c0d9b9",
+  "verification_state": "Final checks ran at baseline HEAD with these four files modified. Final SHA256 values match the committed files. No source/test changes after final verification. Evidence-only commit follows.",
+  "files": {
+    "src/routes/documents.tsx": "1e7fcebe894b48883dd3a4e954d1895e6e940d17934e7ff25034fc089a70dd96",
+    "src/routes/-documents-search.interaction.test.tsx": "8e73528425fdd84e01466262af6f67802f2273632021bc4a96b94ffe766caad4",
+    "src/routes/-documents-production-data.test.tsx": "29b2c6328e9a7f720505f4ce6c20bf05a1f2b4359d2b730f666f01e6e90e8f84",
+    "src/components/bulk-selection-toolbar.tsx": "c3853b90f0fb6c2ddc20cbd7fbc70cbbd6901327f67ea9d30654cd877bd353b5"
+  },
+  "commands": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "result": "2859 passed / 290 files",
+      "log": "unit.txt",
+      "scope": "Local unit/component suite; DB integration project excluded"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-documents-search.interaction.test.tsx src/routes/-documents-production-data.test.tsx",
+      "exit": 0,
+      "result": "24 passed / 2 files, included in full unit count",
+      "new_tests": 5,
+      "log": "targeted-final.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js src/routes/documents.tsx src/routes/-documents-search.interaction.test.tsx src/routes/-documents-production-data.test.tsx src/components/bulk-selection-toolbar.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/routes/documents.tsx src/routes/-documents-search.interaction.test.tsx src/routes/-documents-production-data.test.tsx src/components/bulk-selection-toolbar.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "reproduction": {
+    "result": "4 failed / 1 passed before repair",
+    "log": "red.txt"
+  },
+  "first_repaired_targeted": {
+    "result": "4 failed / 19 passed",
+    "cause": "Three seeded SSR snapshots were stale and expected idle rows; explicitly seed idle archive freshness. One rejection assertion omitted TanStack mutation context argument; now asserts actual payload argument.",
+    "log": "targeted.txt"
+  },
+  "manager_fixture_correction": "One intermediate manager test matched both filename label and row (1 failed / 23 passed); scoped to actual row text. Final selection-fieldset regression passes.",
+  "review": "Focused independent reviewer reported no findings; reviewer ran no tests.",
+  "limits": "Archive-read recovery only. Failed/full-refresh rows and controls closed; pagination cannot bypass recovery. Bulk selection commands disabled without unmounting job progress/controls. Review-write uncertainty, upload protocols, inline preview lifetimes and case-picker context remain outside scope. No persisted review/upload, native bulk/Auth/HTTP/RLS or full journey proof.",
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "build": "NOT_RUN",
+  "db_integration": "NOT_RUN",
+  "hosted_ci_acceptance": "NOT_CLAIMED",
+  "deployment": "NOT_RUN",
+  "production_changes": "NONE"
+}

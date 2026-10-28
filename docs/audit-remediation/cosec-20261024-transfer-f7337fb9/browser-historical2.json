@@ -1,0 +1,35 @@
+{
+  "kind": "browser",
+  "attempt": "historical2",
+  "started": "2026-10-24T06:26:31.080Z",
+  "finished": "2026-10-24T06:27:09.797Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "docs/audit-remediation/cosec-20261024-transfer-f7337fb9/browser-transfer.mjs",
+    "historical2"
+  ],
+  "exit_code": 1,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ]
+}

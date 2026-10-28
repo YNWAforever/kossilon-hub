@@ -1,0 +1,15 @@
+{
+  "run_id": "cosec-20261023-cont-d55d8d7e",
+  "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "port": 5180,
+  "port_bind_probe_free": true,
+  "reuse_existing_server": false,
+  "mode": "demo read only",
+  "database_url_present": false,
+  "test_database_url_present": false,
+  "native_auth_url_present": false,
+  "local_env_files": [
+    ".env.example"
+  ],
+  "utc": "2026-10-23T03:45:20.9199329Z"
+}

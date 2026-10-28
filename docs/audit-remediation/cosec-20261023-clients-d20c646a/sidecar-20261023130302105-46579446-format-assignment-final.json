@@ -1,0 +1,48 @@
+{
+  "action": "format-assignment-final",
+  "started": "2026-10-23T13:17:04.053Z",
+  "finished": "2026-10-23T13:17:04.367Z",
+  "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/prettier/bin/prettier.cjs",
+    "--write",
+    "src/components/clients/client-form-dialog.tsx",
+    "src/components/clients/client-form-dialog.test.tsx"
+  ],
+  "head": "1b8dffc256b934ed11864a07883c80d8de5f8749",
+  "exit_code": 0,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ],
+  "dotenv_files": [],
+  "before": {
+    "src/components/clients/client-form-dialog.tsx": "73ce868711f2d8ea58981776301142d7a95a497b6877f498993e388dd4ecfaf8",
+    "src/components/clients/client-form-dialog.test.tsx": "9d90a606b7e0c1353125644def7d6a804433789013e88a91f1159db7b1e7b626"
+  },
+  "after": {
+    "src/components/clients/client-form-dialog.tsx": "5b7b877f9a1df100303b8867305e9bed514818a2e273d803ef057b2b0c1ced21",
+    "src/components/clients/client-form-dialog.test.tsx": "14da1e450a00616ddfa23ba8c99a19887f24965258fdee7c579a59f0c661a474"
+  },
+  "counts": null
+}

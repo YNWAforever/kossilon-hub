@@ -1,6 +1,6 @@
 import { checklistItemText } from "@/lib/checklist-item-label";
 import { pageTitle } from "@/lib/page-title";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { parseEntityId } from "@/lib/entity-id";
 import {
   useMutation,
@@ -31,6 +31,7 @@ import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import type { DocumentSummary } from "../features/documents/repository";
 import { DocumentRecoveryPanel } from "../features/documents/document-recovery-panel";
+import { DOCUMENT_CATEGORIES, type DocumentCategory } from "../features/documents/types";
 
 import { useAnnualReturnCases } from "../lib/annual-return-store";
 import {
@@ -57,6 +58,34 @@ export const Route = createFileRoute("/documents")({
 
 function DocumentsRoute() {
   const { dataMode, actor } = Route.useRouteContext();
+  return (
+    <DocumentsSession
+      key={JSON.stringify([
+        dataMode,
+        actor?.authUserId,
+        actor?.userId,
+        actor?.role,
+        actor?.teamId,
+        actor?.active,
+      ])}
+    />
+  );
+}
+
+function DocumentsSession() {
+  const { dataMode, actor } = Route.useRouteContext();
+  const active = useRef(true);
+  const reviewSubmitting = useRef(false);
+  const reviewRecovering = useRef(false);
+  const reviewedCaseId = useRef<string | undefined>(undefined);
+  const [reviewUncertain, setReviewUncertain] = useState(false);
+  const [recoveringReview, setRecoveringReview] = useState(false);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
   const queryClient = useQueryClient();
@@ -74,13 +103,31 @@ function DocumentsRoute() {
   const [warning, setWarning] = useState<string | undefined>();
   const productionCaseId = parseEntityId(caseFilter) ?? undefined;
   const invalidCaseId = caseId !== undefined && !productionCaseId;
+  const productionFilters = {
+    ...(query.trim() ? { q: query.trim() } : {}),
+    ...(category !== "all" ? { category: category as DocumentCategory } : {}),
+    ...(source !== "all" ? { source: source as "staff" | "client" | "system" } : {}),
+    ...(status !== "all" ? { reviewStatus: status as "pending" | "verified" | "rejected" } : {}),
+  };
+  const archiveQueryKey = [
+    "documents",
+    "archive",
+    productionCaseId ?? "all",
+    { actorScope: actor, ...productionFilters },
+  ];
+  const archiveScope = JSON.stringify(archiveQueryKey);
+  const currentArchiveScope = useRef(archiveScope);
+  useEffect(() => {
+    currentArchiveScope.current = archiveScope;
+  }, [archiveScope]);
   const productionDocumentsQuery = useInfiniteQuery({
-    queryKey: ["documents", "archive", productionCaseId ?? "all", { actorScope: actor }],
+    queryKey: archiveQueryKey,
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) =>
       listDocumentPage({
         data: {
           ...(productionCaseId ? { caseId: productionCaseId } : {}),
+          ...productionFilters,
           limit: 100,
           cursor: pageParam,
         },
@@ -89,8 +136,15 @@ function DocumentsRoute() {
     enabled: dataMode === "production" && !invalidCaseId,
     retry: false,
   });
-  const productionDocuments =
-    productionDocumentsQuery.data?.pages.flatMap((p) => p.documents ?? []) ?? [];
+  const archiveReadBlocked =
+    reviewUncertain ||
+    productionDocumentsQuery.isError ||
+    (productionDocumentsQuery.isFetching && !productionDocumentsQuery.isFetchingNextPage);
+  // Cached rows must not keep preview/review/upload controls alive after a
+  // denied read or while their archive context is being refreshed.
+  const productionDocuments = archiveReadBlocked
+    ? []
+    : (productionDocumentsQuery.data?.pages.flatMap((p) => p.documents ?? []) ?? []);
   // The production section had no filter of its own: the only case <select> on
   // this screen lived inside the demo branch and listed demo cases, so in
   // production the case filter was reachable only by typing ?caseId=<uuid> into
@@ -119,15 +173,86 @@ function DocumentsRoute() {
   const reviewMutation = useMutation({
     mutationKey: evidenceMutationKey,
     mutationFn: reviewAnnualReturnEvidenceAction,
-    onSuccess: ({ caseItem }) => {
+    retry: false,
+    onSuccess: async ({ caseItem }) => {
+      if (!active.current) return;
       queryClient.setQueryData(annualReturnQueryKeys.detail(caseItem.id), caseItem);
-      void queryClient.invalidateQueries({
-        queryKey: annualReturnQueryKeys.documents(caseItem.id),
-      });
-      void queryClient.invalidateQueries({ queryKey: ["documents"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.documents(caseItem.id) }),
+        queryClient.invalidateQueries({ queryKey: ["documents"] }),
+      ]);
+      reviewSubmitting.current = false;
     },
-    onError: (error) => setWarning(error instanceof Error ? error.message : "未能覆核文件。"),
+    onError: (error) => {
+      if (!active.current) return;
+      setWarning(error instanceof Error ? error.message : "未能覆核文件。");
+      setReviewUncertain(true);
+    },
   });
+
+  async function reconcileReview() {
+    if (reviewRecovering.current || invalidCaseId) return;
+    reviewRecovering.current = true;
+    setRecoveringReview(true);
+    const scope = archiveScope;
+    const stillCurrent = () => active.current && currentArchiveScope.current === scope;
+    const pageCount = Math.max(1, productionDocumentsQuery.data?.pages.length ?? 1);
+    try {
+      await queryClient.cancelQueries({ queryKey: ["documents", "archive"] });
+      const pages: Array<Awaited<ReturnType<typeof listDocumentPage>>> = [];
+      const pageParams: Array<string | undefined> = [];
+      let cursor: string | undefined;
+      const seen = new Set<string | undefined>();
+      for (let index = 0; index < pageCount; index += 1) {
+        if (!stillCurrent()) return;
+        if (seen.has(cursor)) throw new Error("Repeated archive cursor");
+        seen.add(cursor);
+        // Independent reads cannot be satisfied by reverted query-cache data.
+        const page = await listDocumentPage({
+          data: {
+            ...(productionCaseId ? { caseId: productionCaseId } : {}),
+            ...productionFilters,
+            limit: 100,
+            cursor,
+          },
+        });
+        if (!stillCurrent()) return;
+        if (
+          !page ||
+          !Array.isArray(page.documents) ||
+          (page.nextCursor !== null && (typeof page.nextCursor !== "string" || !page.nextCursor))
+        )
+          throw new Error("Archive page unavailable");
+        if (page.nextCursor !== null && seen.has(page.nextCursor))
+          throw new Error("Repeated archive cursor");
+        pages.push(page);
+        pageParams.push(cursor);
+        if (page.nextCursor === null) break;
+        cursor = page.nextCursor;
+      }
+      await queryClient.cancelQueries({ queryKey: ["documents", "archive"] });
+      if (!stillCurrent()) return;
+      await queryClient.invalidateQueries({
+        queryKey: ["documents", "archive"],
+        refetchType: "none",
+      });
+      if (!stillCurrent()) return;
+      queryClient.setQueryData(archiveQueryKey, { pages, pageParams });
+      if (reviewedCaseId.current)
+        void queryClient.invalidateQueries({
+          queryKey: annualReturnQueryKeys.detail(reviewedCaseId.current),
+        });
+      reviewMutation.reset();
+      reviewSubmitting.current = false;
+      setWarning(undefined);
+      setReviewUncertain(false);
+    } catch {
+      // Keep all archive review controls closed; never replay a review write.
+    } finally {
+      reviewRecovering.current = false;
+      if (active.current) setRecoveringReview(false);
+    }
+  }
 
   async function handlePreview(documentId: string, fileName: string, expectedVersionId?: string) {
     try {
@@ -189,9 +314,13 @@ function DocumentsRoute() {
       actor?.active &&
       (actor.role === "Admin" || actor.role === "Manager") ? (
         <BulkSelectionToolbar
+          selectionDisabled={archiveReadBlocked || !productionDocumentsQuery.isSuccess}
           actorScope={JSON.stringify(actor)}
           resource="document"
-          filters={productionCaseId ? { caseId: productionCaseId } : {}}
+          filters={{
+            ...productionFilters,
+            ...(productionCaseId ? { caseId: productionCaseId } : {}),
+          }}
           page={productionDocuments.map((d) => ({ id: d.id, label: d.fileName }))}
           total={
             productionDocumentsQuery.hasNextPage
@@ -235,6 +364,65 @@ function DocumentsRoute() {
         </label>
       ) : null}
       {dataMode === "production" ? (
+        <section aria-label="正式文件篩選" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Input
+            aria-label="搜尋正式文件"
+            placeholder="搜尋檔案或公司名稱"
+            maxLength={120}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <Select
+            aria-label="按類別篩選正式文件"
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+          >
+            <option value="all">全部類別</option>
+            {DOCUMENT_CATEGORIES.map((value) => (
+              <option key={value} value={value}>
+                {labelValue(value)}
+              </option>
+            ))}
+          </Select>
+          <Select
+            aria-label="按來源篩選正式文件"
+            value={source}
+            onChange={(event) => setSource(event.target.value)}
+          >
+            <option value="all">全部來源</option>
+            <option value="client">客戶上載</option>
+            <option value="staff">同事上載</option>
+            <option value="system">系統產生</option>
+          </Select>
+          <Select
+            aria-label="按覆核狀態篩選正式文件"
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+          >
+            <option value="all">全部覆核狀態</option>
+            <option value="pending">待覆核</option>
+            <option value="verified">已核實</option>
+            <option value="rejected">已退回</option>
+          </Select>
+          <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-4">
+            搜尋及篩選涵蓋完整授權範圍；更改條件會由第一頁重新讀取。
+          </p>
+        </section>
+      ) : null}
+      {dataMode === "production" && reviewUncertain ? (
+        <div role="alert" className="space-y-2 text-sm text-status-yellow-text">
+          <p>文件覆核結果未能核實。請重新讀取清單後核對；沒有自動重試覆核寫入。</p>
+          <Button
+            type="button"
+            className="min-h-11"
+            disabled={recoveringReview || invalidCaseId}
+            onClick={() => void reconcileReview()}
+          >
+            重新核對文件覆核結果
+          </Button>
+        </div>
+      ) : null}
+      {dataMode === "production" ? (
         <ProductionDocumentsSection
           caseItem={productionCaseQuery.data ?? undefined}
           cases={productionCasesQuery.data ?? []}
@@ -242,25 +430,45 @@ function DocumentsRoute() {
           selectedCaseId={productionCaseId}
           onSelectCase={(next) => setCaseFilter(next)}
           documents={invalidCaseId ? [] : productionDocuments}
-          error={productionDocumentsQuery.error}
-          loading={productionDocumentsQuery.isLoading}
+          error={reviewUncertain ? null : productionDocumentsQuery.error}
+          readBlocked={reviewUncertain}
+          loading={
+            productionDocumentsQuery.isLoading ||
+            (productionDocumentsQuery.isFetching && !productionDocumentsQuery.isFetchingNextPage)
+          }
+          retrying={productionDocumentsQuery.isFetching}
+          onRetry={() => void productionDocumentsQuery.refetch({ cancelRefetch: false })}
           onDownload={handleDownload}
           onPreview={handlePreview}
-          onReview={(input) => reviewMutation.mutate({ data: input })}
-          pendingDocumentIds={pendingEvidenceIds.filter((id): id is string => Boolean(id))}
+          onReview={(input) => {
+            // Pending renders cannot serialize same-turn cross-document clicks.
+            if (reviewSubmitting.current || archiveReadBlocked) return;
+            reviewSubmitting.current = true;
+            reviewedCaseId.current = input.caseId;
+            reviewMutation.mutate({ data: input });
+          }}
+          pendingDocumentIds={
+            reviewMutation.isPending
+              ? productionDocuments.map((document) => document.id)
+              : pendingEvidenceIds.filter((id): id is string => Boolean(id))
+          }
         />
       ) : null}
       {dataMode === "production" && productionDocumentsQuery.hasNextPage ? (
         <Button
           className="min-h-11"
-          disabled={productionDocumentsQuery.isFetchingNextPage}
+          disabled={
+            reviewUncertain ||
+            productionDocumentsQuery.isFetching ||
+            productionDocumentsQuery.isError
+          }
           onClick={() => void productionDocumentsQuery.fetchNextPage({ cancelRefetch: false })}
         >
           載入更多文件
         </Button>
       ) : null}
       {productionDocumentsQuery.isFetchNextPageError ? (
-        <p role="alert">下一頁文件未能載入；保留已讀資料，請重試。</p>
+        <p role="alert">下一頁文件未能載入；請重新載入正式文件後再覆核。</p>
       ) : null}
 
       {/* The archive below is fixture-backed: getDocumentArchiveRows reads the
@@ -533,7 +741,10 @@ function ProductionDocumentsSection({
   onSelectCase,
   documents,
   error,
+  readBlocked,
   loading,
+  retrying,
+  onRetry,
   onDownload,
   onPreview,
   onReview,
@@ -546,7 +757,10 @@ function ProductionDocumentsSection({
   onSelectCase: (caseId: string) => void;
   documents: DocumentSummary[];
   error: Error | null;
+  readBlocked: boolean;
   loading: boolean;
+  retrying: boolean;
+  onRetry: () => void;
   onDownload: (documentId: string, expectedVersionId?: string) => void;
   onPreview: (documentId: string, fileName: string, expectedVersionId?: string) => void;
   onReview: (input: {
@@ -595,9 +809,20 @@ function ProductionDocumentsSection({
           <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">Neon + R2</span>
         </div>
       </div>
-      {error ? <p className="mt-4 text-sm text-status-yellow-text">無法載入正式記錄。</p> : null}
-      {loading ? <p className="mt-4 text-sm text-muted-foreground">正式記錄載入中…</p> : null}
-      {!loading && !error && documents.length === 0 ? (
+      {error ? (
+        <div role="alert" className="mt-4 space-y-2 text-sm text-status-yellow-text">
+          <p>無法載入正式記錄。</p>
+          <Button type="button" className="min-h-11" disabled={retrying} onClick={onRetry}>
+            重新載入正式文件
+          </Button>
+        </div>
+      ) : null}
+      {loading ? (
+        <p role="status" className="mt-4 text-sm text-muted-foreground">
+          正式記錄載入中…
+        </p>
+      ) : null}
+      {!readBlocked && !loading && !error && documents.length === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">此範圍內沒有正式文件。</p>
       ) : null}
       <div className="mt-4 divide-y">
@@ -631,6 +856,27 @@ function ProductionDocumentsSection({
                 <p className="mt-1 text-xs text-muted-foreground">
                   {labelValue(document.category)}
                 </p>
+                <p className="mt-1 break-all text-xs text-muted-foreground">
+                  當前版本：{document.currentVersionId ?? "未有版本"} · 上載來源：
+                  {document.uploadSource === "client"
+                    ? "客戶"
+                    : document.uploadSource === "staff"
+                      ? "同事"
+                      : document.uploadSource === "system"
+                        ? "系統"
+                        : "未記錄"}
+                </p>
+                {document.caseId ? (
+                  <Link
+                    className="text-xs underline"
+                    to="/annual-returns/$id"
+                    params={{ id: document.caseId }}
+                  >
+                    開啟文件所屬案件
+                  </Link>
+                ) : (
+                  <p className="text-xs text-muted-foreground">未關聯案件</p>
+                )}
                 {document.objectAvailability === "not_checked" ? (
                   <p className="mt-1 text-xs text-muted-foreground">
                     儲存物件尚未核對；可用受控預覽核對缺口。
@@ -796,11 +1042,15 @@ function ReviewActions({
     !pending &&
     (!noteRequired || note.trim().length > 0);
 
-  if (record.availability === "metadata_only" || record.availability === "missing_object") {
+  if (
+    !record.currentVersionId ||
+    record.availability === "metadata_only" ||
+    record.availability === "missing_object"
+  ) {
     return (
       <div className="space-y-2">
         <p className="text-sm text-status-orange-text md:text-right">
-          {record.availability === "metadata_only"
+          {!record.currentVersionId || record.availability === "metadata_only"
             ? "文件登記未有完整上載來源；物件尚未核對。"
             : "已核對但找不到儲存物件。"}
           不能預覽或批准，請先核對來源或受控補傳。

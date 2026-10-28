@@ -1,0 +1,22 @@
+[
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\auth\\auth-context-neon.tsx",
+    "Hash": "B26367470915B81EBD054D37B2DF5BB413BCA1A5264A4D7139D9273BB6B9B66F"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\routes\\__root.tsx",
+    "Hash": "332A0668781B06D1EF53AC2CAE690980C20985FB76D0CA5735436AB73AF555DB"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\routes\\login.tsx",
+    "Hash": "0E47DB2168506C4FDAE80434A6351C05EE0632DDECB97E2AAEBD5A96E8EFEACD"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\auth\\auth-context-neon.test.tsx",
+    "Hash": "534835DC769DEB9321EE673D70B125EA9A268CABFCAD61FB59CE476D6442AF44"
+  },
+  {
+    "Path": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src\\features\\auth\\auth-signout-remount.test.tsx",
+    "Hash": "6ED8EA870FA5DE65B50A4579D694A2925CE44032FDE7B15859882E0F7D5BDEA6"
+  }
+]

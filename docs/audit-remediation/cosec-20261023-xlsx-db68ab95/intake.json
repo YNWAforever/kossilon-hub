@@ -1,0 +1,10 @@
+{
+  "run_id": "cosec-20261023-xlsx-db68ab95",
+  "head": "7862c9ba9deb6a61ed181696bf087d23c6ae089c",
+  "branch": "codex/cosec-20261023",
+  "clean_start": true,
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "scope": "500 mixed XLSX bytes -> real server handler parse/stage -> preview -> apply -> retry -> independent SQL readback; native Auth/HTTP/browser/provider remain blocked",
+  "parent_delivery": "../cosec-20261023-cont-d55d8d7e/DELIVERY.md",
+  "created_utc": "2026-10-23T04:37:59.5340446Z"
+}

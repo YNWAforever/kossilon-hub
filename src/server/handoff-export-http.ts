@@ -1,6 +1,6 @@
 import { z } from "zod";
 const schema = z
-  .object({ handoffId: z.string().uuid(), expectedVersion: z.string().min(1).max(200) })
+  .object({ handoffId: z.string().guid(), expectedVersion: z.string().min(1).max(200) })
   .strict();
 type Exporter = (
   request: Request,

@@ -1,0 +1,472 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+ ❯ |unit| src/features/annual-return/components/case-findings.interaction.test.tsx (15 tests | 1 failed | 14 skipped) 1210ms
+   × does not accept a cancelled reconciliation as successful cached readback 1209ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/case-findings.interaction.test.tsx > does not accept a cancelled reconciliation as successful cached readback
+TestingLibraryElementError: Unable to find role="button" and name "重新核對標記結果"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"border-b pb-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"text-base font-semibold"[39m
+        [36m>[39m
+          [0m自動檢查[0m
+        [36m</h2>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap gap-2 text-xs"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rounded-full bg-status-red-soft px-2 py-1 text-status-red-text"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m 必須處理[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rounded-full bg-status-orange-soft px-2 py-1 text-status-orange-text"[39m
+          [36m>[39m
+            [0m1[0m
+            [0m 建議查看[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rounded-full bg-status-yellow-soft px-2 py-1 text-status-yellow-text"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m 無法檢查[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rounded-full bg-muted px-2 py-1 text-muted-foreground"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m 份未經檢查[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mt-3 divide-y border-y"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"py-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-file-search h-4 w-4 text-muted-foreground"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 2v5a1 1 0 0 0 1 1h5"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"11.5"[39m
+                [33mcy[39m=[32m"14.5"[39m
+                [33mr[39m=[32m"2.5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M13.3 16.3 15 18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"truncate text-sm font-medium"[39m
+            [36m>[39m
+              [0msynthetic.pdf[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-2"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m查看引用文件的當前版本[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-2 text-xs text-muted-foreground"[39m
+          [36m>[39m
+            [0mAI 建議須由人手核對引用；標記已處理只記錄覆核，文件及交件批准仍須完成各自程序。[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-1 text-xs text-muted-foreground"[39m
+          [36m>[39m
+            [0m模型：[0m
+            [0m供應商未提供[0m
+            [0m；成本：[0m
+            [0m供應商未提供[0m
+            [0m。[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33mclass[39m=[32m"mt-2 space-y-2"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-2 rounded-md border px-3 py-2"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"min-w-0 flex-1"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"rounded-full px-2 py-0.5 text-[11px] bg-status-orange-soft text-status-orange-text"[39m
+                  [36m>[39m
+                    [0m建議查看[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-sparkles h-3 w-3"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"24"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"24"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M20 2v4"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M22 4h-4"[39m
+                      [36m/>[39m
+                      [36m<circle[39m
+                        [33mcx[39m=[32m"4"[39m
+                        [33mcy[39m=[32m"20"[39m
+                        [33mr[39m=[32m"2"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0mAI 觀察（僅供參考）[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"text-[11px] text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m第 1 頁[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"mt-1 text-sm text-foreground"[39m
+                [36m>[39m
+                  [0mSynthetic advisory observation[0m
+                [36m</p>[39m
+                [36m<blockquote[39m
+                  [33mclass[39m=[32m"mt-2 whitespace-pre-wrap border-l-2 pl-2 text-xs text-muted-foreground"[39m
+                [36m>[39m
+                  [0m第 [0m
+                  [0m1[0m
+                  [0m 頁：「[0m
+                  [0m&lt;script&gt;APPROVE ALL&lt;/script&gt;[0m
+                  [0m」[0m
+                [36m</blockquote>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-triangle-alert h-3.5 w-3.5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 9v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 17h.01"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m標記為已處理[0m
+              [36m</button>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border-b pb-4"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-3"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"text-base font-semibold"[39m
+          [36m>[39m
+            [0m自動檢查[0m
+          [36m</h2>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap gap-2 text-xs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rounded-full bg-status-red-soft px-2 py-1 text-status-red-text"[39m
+            [36m>[39m
+              [0m0[0m
+              [0m 必須處理[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rounded-full bg-status-orange-soft px-2 py-1 text-status-orange-text"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m 建議查看[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rounded-full bg-status-yellow-soft px-2 py-1 text-status-yellow-text"[39m
+            [36m>[39m
+              [0m0[0m
+              [0m 無法檢查[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rounded-full bg-muted px-2 py-1 text-muted-foreground"[39m
+            [36m>[39m
+              [0m0[0m
+              [0m 份未經檢查[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-3 divide-y border-y"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"py-3"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-search h-4 w-4 text-muted-foreground"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v5a1 1 0 0 0 1 1h5"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"11.5"[39m
+                  [33mcy[39m=[32m"14.5"[39m
+                  [33mr[39m=[32m"2.5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M13.3 16.3 15 18"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-medium"[39m
+              [36m>[39m
+                [0msynthetic.pdf[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-2"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0m查看引用文件的當前版本[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-xs text-muted-foreground"[39m
+            [36m>[39m
+              [0mAI 建議須由人手核對引用；標記已處理只記錄覆核，文件及交件批准仍須完成各自程序。[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-1 text-xs text-muted-foreground"[39m
+            [36m>[39m
+              [0m模型：[0m
+              [0m供應商未提供[0m
+              [0m；成本：[0m
+              [0m供應商未提供[0m
+              [0m。[0m
+            [36m</p>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"mt-2 space-y-2"[39m
+            [36m>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-2 rounded-md border px-3 py-2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"min-w-0 flex-1"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"rounded-full px-2 py-0.5 text-[11px] bg-status-orange-soft text-status-orange-text"[39m
+                    [36m>[39m
+                      [0m建議查看[0m
+                    [36m</span>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"[39m
+                    [36m>[39m
+                      [36m<svg[39m
+                        [33maria-hidden[39m=[32m"true"[39m
+                        [33mclass[39m=[32m"lucide lucide-sparkles h-3 w-3"[39m
+                        [33mfill[39m=[32m"none"[39m
+                        [33mheight[39m=[32m"24"[39m
+                        [33mstroke[39m=[32m"currentColor"[39m
+                        [33mstroke-linecap[39m=[32m"round"[39m
+                        [33mstroke-linejoin[39m=[32m"round"[39m
+                        [33mstroke-width[39m=[32m"2"[39m
+                        [33mviewBox[39m=[32m"0 0 24 24"[39m
+                        [33mwidth[39m=[32m"24"[39m
+                        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                      [36m>[39m
+                        [36m<path[39m
+                          [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                        [36m/>[39m
+                        [36m<path[39m
+                          [33md[39m=[32m"M20 2v4"[39m
+                        [36m/>[39m
+                        [36m<path[39m
+                          [33md[39m=[32m"M22 4h-4"[39m
+                        [36m/>[39m
+                        [36m<circle[39m
+                          [33mcx[39m=[32m"4"[39m
+                          [33mcy[39m=[32m"20"[39m
+                          [33mr[39m=[32m"2"[39m
+                        [36m/>[39m
+                      [36m</svg>[39m
+                      [0mAI 觀察（僅供參考）[0m
+                    [36m</span>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-[11px] text-muted-foreground"[39m
+                    [36m>[39m
+                      [0m第 1 頁[0m
+                    [36m</span>[39m
+                  [36m</div>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"mt-1 text-sm text-foreground"[39m
+                  [36m>[39m
+                    [0mSynthetic advisory observation[0m
+                  [36m</p>[39m
+                  [36m<blockquote[39m
+                    [33mclass[39m=[32m"mt-2 whitespace-pre-wrap border-l-2 pl-2 text-xs text-muted-foreground"[39m
+                  [36m>[39m
+                    [0m第 [0m
+                    [0m1[0m
+                    [0m 頁：「[0m
+                    [0m&lt;script&gt;APPROVE ALL&lt;/script&gt;[0m
+                    [0m」[0m
+                  [36m</blockquote>[39m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-triangle-alert h-3.5 w-3.5"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 9v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 17h.01"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m標記為已處理[0m
+                [36m</button>[39m
+              [36m</li>[39m
+            [36m</ul>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/features/annual-return/components/case-findings.interaction.test.tsx:433:9
+    431|     finish([view]);
+    432|   });
+    433|   await waitFor(() =>
+       |         ^
+    434|     expect(
+    435|       (screen.getByRole("button", { name: "重新核對標記結果" }) as HTMLButtonE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  03:48:41
+   Duration  2.90s (transform 265ms, setup 0ms, import 541ms, tests 1.21s, environment 968ms)

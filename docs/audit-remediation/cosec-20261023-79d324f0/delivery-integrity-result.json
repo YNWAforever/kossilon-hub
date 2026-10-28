@@ -1,0 +1,6 @@
+{
+  "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+  "finished_utc": "2026-10-22T22:26:13.4360948Z",
+  "exit_code": 0,
+  "command": "node --experimental-strip-types scripts/verify-cosec-delivery.ts <run-directory> e8ecf3fad979adc4321a58eb64a90d0927e175de"
+}

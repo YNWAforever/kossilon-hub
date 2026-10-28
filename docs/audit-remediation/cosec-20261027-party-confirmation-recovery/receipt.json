@@ -1,0 +1,61 @@
+{
+  "baseline": "b3b41448403aae1b00e6d7c454fd5dde0d3b0f24",
+  "product_commit": "6681bffc3beb6a530dbd3d33290589433568dc2a",
+  "verification_state": "Final checks ran at baseline HEAD with these two files modified. Final SHA256 values match the committed files. No source/test changes after final verification. Evidence-only commit follows.",
+  "files": {
+    "src/features/annual-return/components/case-parties.tsx": "a3a88ceb75166f56a3ecf8de5ba0272b428d1095a85908cd30e8ed869c6ac076",
+    "src/features/annual-return/components/case-parties.interaction.test.tsx": "bba8e230efd3163abb02d4ef9bf3e7072103aaf698bf9b36a3d1e8a1f521a283"
+  },
+  "commands": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "result": "2835 passed / 290 files",
+      "log": "unit.txt",
+      "scope": "Local child-process-supported unit/component suite; DB integration project excluded"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/annual-return/components/case-parties.interaction.test.tsx src/features/annual-return/components/production-case-detail.interaction.test.tsx src/features/annual-return/components/case-findings.interaction.test.tsx",
+      "exit": 0,
+      "result": "40 passed / 3 files, included in full unit count",
+      "new_tests": 9,
+      "log": "targeted-final.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/case-parties.tsx src/features/annual-return/components/case-parties.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/case-parties.tsx src/features/annual-return/components/case-parties.interaction.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "reproduction": {
+    "result": "9 failed / 5 passed before repair",
+    "log": "red.txt"
+  },
+  "review": "Focused independent reviewer reported no findings; reviewer ran no tests.",
+  "limits": "Mounted-panel recovery only; changing case resets local state. Recovery invokes only existing list API, which synchronizes officer candidates, plus query invalidation for dependent findings. No confirmation replay, server/DB changes, persisted sync/confirmation/requirement-creation proof or durable command receipt claim.",
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "build": "NOT_RUN",
+  "db_integration": "NOT_RUN",
+  "hosted_ci_acceptance": "NOT_CLAIMED",
+  "deployment": "NOT_RUN",
+  "production_changes": "NONE"
+}

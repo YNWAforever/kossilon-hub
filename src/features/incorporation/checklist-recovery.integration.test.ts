@@ -1,0 +1,431 @@
+import { randomUUID } from "node:crypto";
+import { appendFileSync, closeSync, openSync, realpathSync } from "node:fs";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { getCurrentTest } from "@vitest/runner";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import { createSqlClient, type SqlClient } from "@/server/db/client";
+import { guardSqlTestLifetime } from "@/test/sql-test-lifetime";
+import { createIncorporationRepository } from "./repository";
+import { updateIncorporationChecklistItemForActor } from "./server-fns";
+import type { ChecklistItemStatus, UpdateIncorporationChecklistItemInput } from "./types";
+
+// Import/collection never constructs a SQL client, creates an artifact or inserts a fixture.
+// The parent must independently verify the disposable container, mapped TCP endpoint
+// and system identity before setting these opt-in variables. These checks bind that
+// evidence to this run; a loopback address alone is not proof of an isolated target.
+const url = process.env.TEST_DATABASE_URL;
+const run = process.env.COSEC_CHECKLIST_RUN_ID;
+const attempt = process.env.COSEC_CHECKLIST_ATTEMPT;
+const directory = process.env.COSEC_CHECKLIST_EVENTS_DIR;
+const targetId = process.env.COSEC_CHECKLIST_TARGET_ID;
+const databaseName = process.env.COSEC_CHECKLIST_DB_NAME;
+
+type StoredItem = {
+  id: string;
+  case_id: string;
+  item_label: string;
+  required: boolean;
+  status: ChecklistItemStatus;
+  note: string | null;
+  received_at: string | null;
+  verified_at: string | null;
+  created_at: string;
+  updated_at: string;
+  row_version: string;
+};
+
+function logicalState(row: StoredItem) {
+  // Existing SQL refreshes updated_at and xmin on each accepted submission.
+  // Logical retry stability covers the note and business timestamps, not write metadata.
+  const { updated_at: _updatedAt, row_version: _rowVersion, ...state } = row;
+  return state;
+}
+
+describe.skipIf(!url || !run)("UC159 committed checklist recovery on owned SQL rows", () => {
+  it("persists five rows, observes retries independently and refuses unauthorized writes", async () => {
+    if (
+      !url ||
+      run !== "cosec-20261024-checklist-59870455" ||
+      !attempt ||
+      !/^[a-z0-9-]{1,80}$/.test(attempt) ||
+      !directory ||
+      !databaseName ||
+      !/^[a-f0-9]{64}$/.test(targetId ?? "")
+    ) {
+      throw new Error("Parent-verified UC159 disposable target, run and owned artifacts required.");
+    }
+    const target = new URL(url);
+    if (
+      !["postgres:", "postgresql:"].includes(target.protocol) ||
+      target.hostname !== "127.0.0.1" ||
+      !target.port ||
+      target.pathname !== "/" + databaseName
+    ) {
+      throw new Error("UC159 URL does not match the parent's verified mapped TCP database.");
+    }
+    const folder = resolve(directory);
+    const local = relative(resolve("docs/audit-remediation", run), folder);
+    if (
+      isAbsolute(local) ||
+      local.startsWith("..") ||
+      realpathSync(folder) !== folder ||
+      realpathSync(dirname(folder)) !== dirname(folder)
+    ) {
+      throw new Error("UC159 artifact directory is outside the run or redirected.");
+    }
+    const context = getCurrentTest()?.context;
+    if (!context) throw new Error("Running test lifetime required.");
+    context.signal.throwIfAborted();
+    const pending = scenario(
+      url,
+      run,
+      databaseName,
+      targetId!,
+      resolve(folder, `sidecar-UC159-SQL-${attempt}.jsonl`),
+      context.signal,
+    );
+    onTestFinished(async () => {
+      // Drain the scenario, including raw-client cleanup, before releasing the test.
+      await pending.catch(() => undefined);
+    });
+    await pending;
+  }, 60_000);
+});
+
+async function scenario(
+  databaseUrl: string,
+  tag: string,
+  expectedDatabase: string,
+  verifiedTargetId: string,
+  path: string,
+  signal: AbortSignal,
+) {
+  // Exclusive creation refuses accidental reuse of an attempt's evidence.
+  const fd = openSync(path, "wx");
+  const record = (phase: string, values: object) =>
+    appendFileSync(fd, JSON.stringify({ runId: tag, attempt, phase, ...values }) + "\n");
+  const ids = {
+    teams: [randomUUID(), randomUUID()],
+    users: {
+      staff: randomUUID(),
+      admin: randomUUID(),
+      inactive: randomUUID(),
+      otherStaff: randomUUID(),
+    },
+    cases: [randomUUID(), randomUUID()],
+    checklist: Array.from({ length: 5 }, () => randomUUID()),
+    missingCase: randomUUID(),
+  };
+  let raw: SqlClient | undefined;
+  let observerRaw: SqlClient | undefined;
+  let fixturesCommitted = false;
+  let assertionsPassed = false;
+  const failures: unknown[] = [];
+  try {
+    record("planned-ids", { ids, verifiedTargetId, nativeAuth: false, synthetic: true });
+    signal.throwIfAborted();
+    raw = createSqlClient(databaseUrl, { max: 1, ssl: false });
+    observerRaw = createSqlClient(databaseUrl, { max: 1, ssl: false });
+    const sql = guardSqlTestLifetime(raw, () => signal);
+    const observer = guardSqlTestLifetime(observerRaw, () => signal);
+    const repository = createIncorporationRepository({ sql });
+    const observerRepository = createIncorporationRepository({ sql: observer });
+    const updateChecklistItem = vi.fn((input: UpdateIncorporationChecklistItemInput) =>
+      repository.updateChecklistItem(input),
+    );
+    const commandRepository = { getCaseTeamId: repository.getCaseTeamId, updateChecklistItem };
+    const staff: AuthenticatedActor = {
+      authUserId: `${tag}:${ids.users.staff}`,
+      userId: ids.users.staff,
+      role: "Staff",
+      teamId: ids.teams[0],
+      active: true,
+    };
+    const admin: AuthenticatedActor = {
+      ...staff,
+      authUserId: `${tag}:${ids.users.admin}`,
+      userId: ids.users.admin,
+      role: "Admin",
+      teamId: ids.teams[1],
+    };
+    const [writerIdentity] = await sql`select current_database() database, current_user db_role,
+      inet_server_addr()::text server_address, inet_server_port() server_port, pg_backend_pid() pid`;
+    const [observerIdentity] =
+      await observer`select current_database() database, current_user db_role,
+      inet_server_addr()::text server_address, inet_server_port() server_port, pg_backend_pid() pid`;
+    record("sql-identity", { verifiedTargetId, writerIdentity, observerIdentity });
+    expect(writerIdentity.database).toBe(expectedDatabase);
+    expect(observerIdentity.database).toBe(expectedDatabase);
+    expect(observerIdentity.db_role).toBe(writerIdentity.db_role);
+    expect(observerIdentity.server_address).toBe(writerIdentity.server_address);
+    expect(observerIdentity.server_port).toBe(writerIdentity.server_port);
+    expect(observerIdentity.pid).not.toBe(writerIdentity.pid);
+
+    await sql.begin(async (tx) => {
+      for (const [index, team] of ids.teams.entries()) {
+        await tx`insert into teams(id,name) values(${team},${`${tag}:team:${index}:${team}`})`;
+      }
+      for (const [name, user] of Object.entries(ids.users)) {
+        await tx`insert into users(id,name,email,role,team_id,active)
+          values(${user},${`Synthetic UC159 ${name}`},${user + "@example.test"},
+            ${name === "admin" ? "Admin" : "Staff"},
+            ${ids.teams[name === "admin" || name === "otherStaff" ? 1 : 0]},${name !== "inactive"})`;
+      }
+      for (const [index, caseId] of ids.cases.entries()) {
+        // Own explicit rows avoid active-user lookup and the global seeded template.
+        await tx`insert into incorporation_cases(id,proposed_company_name_en,proposed_company_name_zh,
+          proposed_registered_office,proposed_company_secretary,registered_capital,business_nature,
+          status,owner_id,team_id,target_completion_date)
+          values(${caseId},${`${tag}:case:${index}`},'合成清單測試','Synthetic office','Synthetic secretary',
+            10000,'Synthetic','Intake',${index === 0 ? ids.users.staff : ids.users.otherStaff},
+            ${ids.teams[index]},'2026-11-30')`;
+      }
+      for (const [index, itemId] of ids.checklist.entries()) {
+        // Distinct created_at values make the existing hydration order deterministic.
+        await tx`insert into incorporation_checklist_items(id,case_id,item_label,required,status,note,created_at)
+          values(${itemId},${ids.cases[0]},${`Synthetic UC159 document ${index}`},${index !== 4},
+            'Missing',${`Initial owned note ${index}`},
+            '2026-10-01T00:00:00Z'::timestamptz + ${index}::int * interval '1 second')`;
+      }
+    });
+    fixturesCommitted = true;
+    record("fixtures-committed", { ids });
+
+    const readRows = async () => {
+      const rows = await observer<StoredItem[]>`select id,case_id,item_label,required,status,note,
+        received_at::text,verified_at::text,created_at::text,updated_at::text,xmin::text row_version
+        from incorporation_checklist_items where id=any(${ids.checklist}::uuid[]) order by id`;
+      expect(rows).toHaveLength(5);
+      expect(rows.map((row) => row.id).sort()).toEqual([...ids.checklist].sort());
+      expect(rows.every((row) => row.case_id === ids.cases[0])).toBe(true);
+      return [...rows];
+    };
+    let previous = await readRows();
+    expect(
+      previous.every(
+        (row) => row.status === "Missing" && row.received_at === null && row.verified_at === null,
+      ),
+    ).toBe(true);
+    record("observer-baseline", { rows: previous });
+
+    // Every one of the five items traverses every transition, with committed,
+    // independent-session readback after both the first submission and its retry.
+    for (const [index, itemId] of ids.checklist.entries()) {
+      let firstReceived: string | null = null;
+      for (const [step, status] of (
+        ["Received", "Verified", "Rejected", "Missing", "Received"] as const
+      ).entries()) {
+        const note =
+          step === 3
+            ? null
+            : `文件 ${index}: ${status} (${step})\nKeep punctuation, Unicode and trailing spaces.  `;
+        const command = { caseId: ids.cases[0], itemId, status, note };
+        const who = step % 2 === 0 ? staff : admin;
+        const before = previous.find((row) => row.id === itemId)!;
+        updateChecklistItem.mockClear();
+        const returned = await updateIncorporationChecklistItemForActor(
+          who,
+          { ...command, actorId: ids.users.inactive },
+          commandRepository,
+        );
+        expect(updateChecklistItem).toHaveBeenCalledExactlyOnceWith({
+          ...command,
+          actorId: who.userId,
+        });
+        const rows = await readRows();
+        const stored = rows.find((row) => row.id === itemId)!;
+        expect(stored).toMatchObject({
+          id: itemId,
+          case_id: ids.cases[0],
+          status,
+          note,
+          item_label: before.item_label,
+          required: before.required,
+          created_at: before.created_at,
+        });
+        expect(rows.filter((row) => row.id !== itemId)).toEqual(
+          previous.filter((row) => row.id !== itemId),
+        );
+        if (status === "Received") {
+          expect(stored.received_at).toBeTruthy();
+          expect(stored.verified_at).toBeNull();
+          if (step === 0) firstReceived = stored.received_at;
+          else expect(stored.received_at).not.toBe(firstReceived);
+        } else if (status === "Verified") {
+          expect(stored.received_at).toBe(before.received_at);
+          expect(stored.verified_at).toBeTruthy();
+        } else {
+          expect(stored.received_at).toBeNull();
+          expect(stored.verified_at).toBeNull();
+        }
+        expect(returned.checklist.find((row) => row.id === itemId)).toMatchObject({
+          status,
+          note,
+          receivedAt: stored.received_at ? new Date(stored.received_at).toISOString() : null,
+          verifiedAt: stored.verified_at ? new Date(stored.verified_at).toISOString() : null,
+        });
+        expect(await observerRepository.getCase(ids.cases[0], { kind: "all" })).toEqual(returned);
+        record("committed-transition", { itemId, step, status, actorId: who.userId, rows });
+
+        const retried = await updateIncorporationChecklistItemForActor(
+          who,
+          command,
+          commandRepository,
+        );
+        const afterRetry = await readRows();
+        const retriedRow = afterRetry.find((row) => row.id === itemId)!;
+        expect(logicalState(retriedRow)).toEqual(logicalState(stored));
+        expect(afterRetry.filter((row) => row.id !== itemId)).toEqual(
+          rows.filter((row) => row.id !== itemId),
+        );
+        expect(retried).toEqual(returned);
+        expect(await observerRepository.getCase(ids.cases[0], { kind: "all" })).toEqual(returned);
+        record("same-value-retry", { itemId, step, status, rows: afterRetry });
+        previous = afterRetry;
+      }
+    }
+
+    const valid = {
+      caseId: ids.cases[0],
+      itemId: ids.checklist[0],
+      status: "Rejected",
+      note: "Must never be saved",
+    };
+    const refusal = async (
+      name: string,
+      who: AuthenticatedActor,
+      command: unknown,
+      error: RegExp,
+      repositoryCalls: number,
+    ) => {
+      const before = await readRows();
+      updateChecklistItem.mockClear();
+      await expect(
+        updateIncorporationChecklistItemForActor(who, command, commandRepository),
+      ).rejects.toThrow(error);
+      expect(updateChecklistItem).toHaveBeenCalledTimes(repositoryCalls);
+      const after = await readRows();
+      // xmin and updated_at equality also detect a SQL UPDATE that preserves values.
+      expect(after).toEqual(before);
+      record("refused-without-item-update", {
+        name,
+        actorId: who.userId,
+        expectedError: error.source,
+        repositoryCalls,
+        rows: after,
+      });
+    };
+    await refusal(
+      "Client role",
+      { ...staff, role: "Client" },
+      valid,
+      /staff access is required/,
+      0,
+    );
+    await refusal(
+      "inactive supplied actor",
+      { ...staff, active: false },
+      valid,
+      /inactive users/,
+      0,
+    );
+    await refusal(
+      "other team",
+      { ...staff, userId: ids.users.otherStaff, teamId: ids.teams[1] },
+      valid,
+      /another team/,
+      0,
+    );
+    await refusal(
+      "no database identity",
+      { ...staff, userId: null },
+      valid,
+      /database identity is required/,
+      0,
+    );
+    await refusal(
+      "missing case",
+      admin,
+      { ...valid, caseId: ids.missingCase },
+      /Incorporation case not found/,
+      0,
+    );
+    await refusal(
+      "item belongs to a different case",
+      admin,
+      { ...valid, caseId: ids.cases[1] },
+      /Checklist item not found for this case/,
+      1,
+    );
+    const [persistedInactive] =
+      await observer`select id,active from users where id=${ids.users.inactive}`;
+    expect(persistedInactive).toMatchObject({ id: ids.users.inactive, active: false });
+    record("persisted-inactive-precondition", { user: persistedInactive });
+    await refusal(
+      "repository assertActor rejects inactive persisted user despite active supplied actor",
+      {
+        ...staff,
+        userId: ids.users.inactive,
+        authUserId: `${tag}:${ids.users.inactive}`,
+        active: true,
+      },
+      valid,
+      /Incorporation actor not found or inactive/,
+      1,
+    );
+    assertionsPassed = true;
+    record("assertions-complete", { assertionsPassed });
+  } catch (error) {
+    record("scenario-failed", { assertionsPassed, fixturesCommitted, ids });
+    failures.push(error);
+  } finally {
+    try {
+      if (raw && observerRaw && fixturesCommitted) {
+        // Only this run's committed fixtures are owned. The raw clients remain
+        // usable for awaited exact-ID teardown after the signal is aborted.
+        await raw.begin(async (tx) => {
+          await tx`delete from incorporation_checklist_items
+            where id=any(${ids.checklist}::uuid[]) and case_id=${ids.cases[0]}`;
+          await tx`delete from incorporation_cases where id=any(${ids.cases}::uuid[])`;
+          await tx`delete from users where id=any(${Object.values(ids.users)}::uuid[])`;
+          await tx`delete from teams where id=any(${ids.teams}::uuid[])`;
+        });
+        const [remaining] = await observerRaw`select
+          (select count(*)::int from incorporation_checklist_items where id=any(${ids.checklist}::uuid[])) checklist,
+          (select count(*)::int from incorporation_checklist_items where case_id=any(${ids.cases}::uuid[])) checklist_by_case,
+          (select count(*)::int from incorporation_cases where id=any(${ids.cases}::uuid[])) cases,
+          (select count(*)::int from users where id=any(${Object.values(ids.users)}::uuid[])) users,
+          (select count(*)::int from teams where id=any(${ids.teams}::uuid[])) teams`;
+        record("cleanup-readback", { ids, remaining, assertionsPassed });
+        expect(remaining).toEqual({
+          checklist: 0,
+          checklist_by_case: 0,
+          cases: 0,
+          users: 0,
+          teams: 0,
+        });
+      } else {
+        record("no-committed-fixtures-to-clean", { fixturesCommitted, assertionsPassed, ids });
+      }
+    } catch (error) {
+      record("cleanup-failed", { fixturesCommitted, assertionsPassed, ids });
+      failures.push(error);
+    } finally {
+      // Preserve assertion, cleanup and close failures after awaited teardown.
+      // A throw inside finally would discard the original assertion failure.
+      const closes = await Promise.allSettled([raw?.end(), observerRaw?.end()]);
+      for (const result of closes) {
+        if (result.status === "rejected") failures.push(result.reason);
+      }
+      try {
+        closeSync(fd);
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+  }
+  if (failures.length === 1) throw failures[0];
+  if (failures.length > 1)
+    throw new AggregateError(failures, "UC159 scenario and teardown failed.");
+}

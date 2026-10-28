@@ -1,0 +1,18 @@
+
+> test
+> vitest run --project unit src/routes/-work-queue.interaction.test.tsx src/features/work-items/queue-view-state.test.ts src/features/work-items/queue-page.test.ts --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+ Test Files  3 passed (3)
+      Tests  17 passed (17)
+   Start at  05:20:44
+   Duration  5.17s (transform 1.17s, setup 0ms, import 2.38s, tests 1.02s, environment 1.04s)
+

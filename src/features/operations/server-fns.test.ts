@@ -42,6 +42,59 @@ function repository(
 }
 
 describe("buildOperationsHealth", () => {
+  it("keeps repository-filtered HTTP candidates visible without using them as scheduled health evidence", async () => {
+    const candidate: MaintenanceRunRecord = {
+      id: "http-candidate",
+      scheduledFor: NOW,
+      startedAt: NOW,
+      finishedAt: NOW,
+      durationMs: 0,
+      outcome: "succeeded",
+      failedPasses: [],
+      dispatch: null,
+      triggerSource: "scheduled",
+      executionScope: "safe-maintenance-only",
+      platformTriggerVerified: false,
+      correlationId: "candidate-correlation",
+      jobCounts: { claimed: 5, completed: 5, failed: 0, unknown: 0, skipped: 0 },
+    };
+    const repo = repository([candidate]);
+    // Matches the present real repository predicates at lines 369/382. The
+    // existing DB integration test owns SQL execution; this checks composition.
+    repo.listRecentScheduledRuns.mockResolvedValue([]);
+    const view = await buildOperationsHealth({ now: NOW }, { repository: repo });
+    expect(view.recentRuns).toEqual([candidate]);
+    expect(view.maintenance?.state).toBe("never-observed");
+    expect(view.maintenance?.lastSuccessAt).toBeNull();
+    expect(view.blockedIntegrations.map((entry) => entry.id)).toContain("deployment-runtime");
+  });
+
+  it("does not turn three synthetic safe-only native-labelled ticks into native/provider acceptance", async () => {
+    const runs: MaintenanceRunRecord[] = ["09:58", "09:53", "09:48"].map((time, index) => ({
+      id: `synthetic-native-${index}`,
+      scheduledFor: `2026-09-11T${time}:00.000Z`,
+      startedAt: `2026-09-11T${time}:00.000Z`,
+      finishedAt: `2026-09-11T${time}:04.000Z`,
+      durationMs: 4000,
+      outcome: "succeeded",
+      failedPasses: [],
+      dispatch: null,
+      triggerSource: "scheduled",
+      executionScope: "safe-maintenance-only",
+      platformTriggerVerified: true,
+      correlationId: `synthetic-correlation-${index}`,
+      jobCounts: { claimed: 5, completed: 5, failed: 0, unknown: 0, skipped: 0 },
+    }));
+    const view = await buildOperationsHealth({ now: NOW }, { repository: repository(runs) });
+    expect(view.maintenance?.state).toBe("healthy"); // Liveness, not acceptance.
+    expect(view.blockedIntegrations.map((entry) => entry.id)).toContain("deployment-runtime");
+    expect(
+      view.recentRuns?.every(
+        (entry) => entry.executionScope === "safe-maintenance-only" && entry.dispatch === null,
+      ),
+    ).toBe(true);
+    expect(view.releaseCompatibility).toBeNull();
+  });
   it("accepts exact reviewed historical schema compatibility without rewriting history or native health", async () => {
     const repo = repository([], queues(), null, {
       present: true,

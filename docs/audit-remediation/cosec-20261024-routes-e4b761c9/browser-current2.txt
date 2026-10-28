@@ -1,0 +1,84 @@
+{"attempt":"current2","passed":0,"failed":0,"setup_failed":1,"outerError":"Harness setup failed; stop before remaining cases"}
+上午8:45:15 [vite] (client) Pre-transform error: Unstubbed server boundary: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src/features/corporate-changes/server-fns
+  Plugin: vite:import-analysis
+  File: C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/corporate-changes/components/production-corporate-change-list.tsx:8:47
+  6  |  import { PageHeader } from "@/components/page-header";
+  7  |  import { CreateCorporateChangeRequestDialog } from "@/components/corporate-changes/create-corporate-change-request-di...
+  8  |  import { listCorporateChangeRequestPage } from "@/features/corporate-changes/server-fns";
+     |                                                  ^
+  9  |  import { listClientPage, listClientAssignmentOptions } from "@/features/clients/server-fns";
+  10 |  import { CaseListControls, CaseListPagination, useCaseListView } from "@/features/incorporation/components/case-list-...
+上午8:45:15 [vite] Internal server error: Unstubbed server boundary: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src/features/clients/server-fns
+  Plugin: vite:import-analysis
+  File: C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/incorporation/components/production-incorporation-list.tsx:11:44
+  8  |  import { DeadlinePill } from "@/components/deadline-pill";
+  9  |  import { CreateIncorporationCaseDialog } from "@/components/incorporation/create-incorporation-case-dialog";
+  10 |  import { listClientAssignmentOptions } from "@/features/clients/server-fns";
+     |                                               ^
+  11 |  import { listIncorporationCasePage } from "../server-fns";
+  12 |  import { CaseListControls, CaseListPagination, useCaseListView } from "./case-list-controls";
+      at ResolveIdContext.resolveId (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-routes-e4b761c9/browser-routes.mjs:36:68)
+      at EnvironmentPluginContainer.resolveId (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:30303:56)
+      at async ResolveIdContext.resolve (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:30532:13)
+      at async ResolveIdContext.viteAliasCustomResolver (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:30096:9)
+      at async EnvironmentPluginContainer.resolveId (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:30303:19)
+      at async TransformPluginContext.resolve (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:30532:13)
+      at async normalizeUrl (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:27834:22)
+      at async file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:27905:30
+      at async Promise.all (index 9)
+      at async TransformPluginContext.transform (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:27873:4)
+上午8:45:15 [vite] (client) Pre-transform error: Unstubbed server boundary: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src/features/clients/server-fns
+  Plugin: vite:import-analysis
+  File: C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/incorporation/components/production-incorporation-list.tsx:11:44
+  8  |  import { DeadlinePill } from "@/components/deadline-pill";
+  9  |  import { CreateIncorporationCaseDialog } from "@/components/incorporation/create-incorporation-case-dialog";
+  10 |  import { listClientAssignmentOptions } from "@/features/clients/server-fns";
+     |                                               ^
+  11 |  import { listIncorporationCasePage } from "../server-fns";
+  12 |  import { CaseListControls, CaseListPagination, useCaseListView } from "./case-list-controls";
+上午8:45:15 [vite] (client) Pre-transform error: Unstubbed server boundary: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src/features/clients/server-fns
+  Plugin: vite:import-analysis
+  File: C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/components/corporate-changes/create-corporate-change-request-dialog.tsx:12:26
+  3  |  import { Input, Select } from "@/components/ui/field";
+  4  |  import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/di...
+  5  |  import { getClient } from "@/features/clients/server-fns";
+     |                             ^
+  6  |  import { createCorporateChangeRequest } from "@/features/corporate-changes/server-fns";
+  7  |  import { CORPORATE_CHANGE_TYPE_LABELS } from "@/features/corporate-changes/labels";
+上午8:45:15 [vite] Internal server error: Unstubbed server boundary: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src/features/corporate-changes/server-fns
+  Plugin: vite:import-analysis
+  File: C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/corporate-changes/components/production-corporate-change-list.tsx:8:47
+  6  |  import { PageHeader } from "@/components/page-header";
+  7  |  import { CreateCorporateChangeRequestDialog } from "@/components/corporate-changes/create-corporate-change-request-di...
+  8  |  import { listCorporateChangeRequestPage } from "@/features/corporate-changes/server-fns";
+     |                                                  ^
+  9  |  import { listClientPage, listClientAssignmentOptions } from "@/features/clients/server-fns";
+  10 |  import { CaseListControls, CaseListPagination, useCaseListView } from "@/features/incorporation/components/case-list-...
+      at ResolveIdContext.resolveId (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-routes-e4b761c9/browser-routes.mjs:36:68)
+      at EnvironmentPluginContainer.resolveId (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:30303:56)
+      at async ResolveIdContext.resolve (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:30532:13)
+      at async ResolveIdContext.viteAliasCustomResolver (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:30096:9)
+      at async EnvironmentPluginContainer.resolveId (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:30303:19)
+      at async TransformPluginContext.resolve (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:30532:13)
+      at async normalizeUrl (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:27834:22)
+      at async file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:27905:30
+      at async Promise.all (index 7)
+      at async TransformPluginContext.transform (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/node_modules/vite/dist/node/chunks/node.js:27873:4)
+上午8:45:15 [vite] (client) Pre-transform error: Unstubbed server boundary: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src/features/incorporation/server-fns
+  Plugin: vite:import-analysis
+  File: C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/components/incorporation/create-incorporation-case-dialog.tsx:13:40
+  4  |  import { Input, Select } from "@/components/ui/field";
+  5  |  import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/di...
+  6  |  import { createIncorporationCase } from "@/features/incorporation/server-fns";
+     |                                           ^
+  7  |  var _jsxFileName = "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/components/incorporation/create-incorpor...
+  8  |  import { jsxDEV as _jsxDEV } from "react/jsx-dev-runtime";
+上午8:45:15 [vite] (client) Pre-transform error: Unstubbed server boundary: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src/features/clients/server-fns
+  Plugin: vite:import-analysis
+  File: C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/components/corporate-changes/create-corporate-change-request-dialog.tsx:12:26
+  3  |  import { Input, Select } from "@/components/ui/field";
+  4  |  import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/di...
+  5  |  import { getClient } from "@/features/clients/server-fns";
+     |                             ^
+  6  |  import { createCorporateChangeRequest } from "@/features/corporate-changes/server-fns";
+  7  |  import { CORPORATE_CHANGE_TYPE_LABELS } from "@/features/corporate-changes/labels";

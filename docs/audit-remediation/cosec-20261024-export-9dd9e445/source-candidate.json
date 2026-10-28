@@ -1,0 +1,60 @@
+{
+  "source_sha": "04bcf729ba3f799e30fa8321e7acc9fba621c2db",
+  "parent_sha": "89676dca7be49f4bf65afb44b036fce087934fc4",
+  "tested_head": "89676dca7be49f4bf65afb44b036fce087934fc4",
+  "tested_dirty_source": [
+    "src/components/bulk-selection-toolbar.tsx",
+    "src/components/bulk-export.interaction.test.tsx",
+    "src/features/bulk-operations/server-fns.ts",
+    "src/features/bulk-operations/result-export.test.ts",
+    "src/features/bulk-operations/payment-export.integration.test.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "paths": [
+    "src/components/bulk-selection-toolbar.tsx",
+    "src/components/bulk-export.interaction.test.tsx",
+    "src/features/bulk-operations/server-fns.ts",
+    "src/features/bulk-operations/result-export.test.ts",
+    "src/features/bulk-operations/payment-export.integration.test.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "files": [
+    {
+      "path": "src/components/bulk-selection-toolbar.tsx",
+      "bytes": 29137,
+      "sha256": "a568d87dc63f3c0d712dcb21c3a8f1e33b35a9be4e3049682cfd81c2d8da0f44",
+      "git_blob_equal": true
+    },
+    {
+      "path": "src/components/bulk-export.interaction.test.tsx",
+      "bytes": 9940,
+      "sha256": "b8ce663646107a89ae5257b136ba4448abfc5368bbc6fe612f6f5af88c7652f7",
+      "git_blob_equal": true
+    },
+    {
+      "path": "src/features/bulk-operations/server-fns.ts",
+      "bytes": 7440,
+      "sha256": "cbf3cdf3e784585d6fe3548ecaf312d1d3f3acc22b064bbbbec1adc98c95830c",
+      "git_blob_equal": true
+    },
+    {
+      "path": "src/features/bulk-operations/result-export.test.ts",
+      "bytes": 7500,
+      "sha256": "273a2a6cac3dcf58e0525cffea0f89280d4287b552c5388c33e1f939e7fe6804",
+      "git_blob_equal": true
+    },
+    {
+      "path": "src/features/bulk-operations/payment-export.integration.test.ts",
+      "bytes": 21533,
+      "sha256": "c3bb601b62d4b716c50f72f4269a01e4afd2772fa86bfc47f5dd2df19b109a61",
+      "git_blob_equal": true
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "bytes": 3058,
+      "sha256": "9ee54e9ebc0c165109099872ec6e3c2c192d514f13bad047dbfbd516efc76672",
+      "git_blob_equal": true
+    }
+  ],
+  "scope": "Tests ran before source commit; exact tested source bytes equal the committed Git blobs."
+}

@@ -1,0 +1,88 @@
+{
+  "run_id": "cosec-20261024-schema-d69e7b0e",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "source_sha": "57cc413fdd37aca1eb230fe2973757e8526f1209",
+  "parent_sha": "1a9f3fef8e419a3cc75d0d62e90795c3d8134d68",
+  "main_sha": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "production_sha_user_supplied_historical": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "phase": "LOCAL_UC189_PARTIAL_SCOPED_NATIVE_BLOCKED",
+  "release_gate": "NO_GO",
+  "deployed": false,
+  "auth_runtime_verified": false,
+  "native_http_db_rls_verified": false,
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "source_manifest": "source-candidate.json",
+  "evidence_manifest": "evidence-manifest.json",
+  "checks": {
+    "targeted": {
+      "receipt": "targeted-final2.json",
+      "log": "targeted-final2.txt",
+      "exit_code": 0,
+      "summary": {
+        "tests": 117,
+        "files": 10
+      }
+    },
+    "typecheck": {
+      "receipt": "typecheck-final2.json",
+      "log": "typecheck-final2.txt",
+      "exit_code": 0
+    },
+    "lint": {
+      "receipt": "lint-final2.json",
+      "log": "lint-final2.txt",
+      "exit_code": 0
+    },
+    "build": {
+      "receipt": "build-final3.json",
+      "log": "build-final3.txt",
+      "exit_code": 0
+    },
+    "sql": {
+      "log": "db/test-final3.txt",
+      "journal": "db/test-final3.jsonl",
+      "tests": 7,
+      "files": 1,
+      "cases": [
+        "missing",
+        "unknown",
+        "same-count-diverged",
+        "no-ledger",
+        "missing-marker",
+        "missing-index",
+        "recovery-replay"
+      ],
+      "exit_code": 0
+    }
+  },
+  "full_unit": "NOT_RUN_THIS_BATCH",
+  "browser": "NOT_RUN_THIS_BATCH; existing Operations component tests only",
+  "isolated_sql": {
+    "container_id": "b44e10f440201b685c32d257e0de9ee16ebdb9e983552f12f958aa8d37077e67",
+    "system_id": "7700125779829710888",
+    "database": "cosec_schema_d69e7b0e",
+    "removed": true,
+    "external_http_calls": 0,
+    "authentication": "disposable PostgreSQL SCRAM only; no application Auth or RLS",
+    "recovery_job": "injected no-effect job; real durable claim/run SQL; transaction rolled back",
+    "prior_target_removed": true
+  },
+  "limitations": [
+    "scheduler entry only; other mutation entrypoints not covered",
+    "migration-ID parity plus two outbox physical facts only; no full-catalog/checksum/permissions acceptance",
+    "historical schema exceptions remain fail-closed without a separately reviewed target/build policy",
+    "native same-version Auth/HTTP/platform ticks and persisted browser reload BLOCKED",
+    "no production schema, provider, backup/restore or release acceptance"
+  ],
+  "rollback": {
+    "action": "ordinary new commit reverting 57cc413fdd37aca1eb230fe2973757e8526f1209; preserve evidence and published history",
+    "database_changes": "none to deploy; no migration added",
+    "production_action": false
+  }
+}

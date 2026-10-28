@@ -90,6 +90,47 @@ describe("cronIntervalSeconds", () => {
 });
 
 describe("maintenanceHealthOf", () => {
+  it("describes an all-skipped replay as an observed non-success, keeping the previous true success", () => {
+    const health = maintenanceHealthOf({
+      runs: [
+        run({
+          outcome: "failed",
+          executionScope: "safe-maintenance-only",
+          platformTriggerVerified: true,
+          correlationId: "replay",
+          jobCounts: { claimed: 0, completed: 0, failed: 0, unknown: 0, skipped: 5 },
+        }),
+      ],
+      now: NOW,
+      toleranceSeconds: TOLERANCE,
+      lastScheduledSuccessAt: "2026-09-11T09:40:00.000Z",
+    });
+    expect(health.state).toBe("degraded");
+    expect(health.lastRunAt).toBe("2026-09-11T09:58:04.000Z");
+    expect(health.lastSuccessAt).toBe("2026-09-11T09:40:00.000Z");
+    expect(health.failedPasses).toEqual([]);
+    expect(health.summary).toMatch(/略過/);
+    expect(health.summary).toMatch(/未.*執行/);
+  });
+  it("does not describe skipped prior-unknown work as successfully performed or as known job failures", () => {
+    const health = maintenanceHealthOf({
+      runs: [
+        run({
+          outcome: "failed",
+          executionScope: "safe-maintenance-only",
+          platformTriggerVerified: true,
+          correlationId: "unknown-replay",
+          jobCounts: { claimed: 0, completed: 0, failed: 0, unknown: 5, skipped: 5 },
+        }),
+      ],
+      now: NOW,
+      toleranceSeconds: TOLERANCE,
+    });
+    expect(health.state).toBe("failing");
+    expect(health.lastSuccessAt).toBeNull();
+    expect(health.summary).toMatch(/未知/);
+    expect(health.summary).toMatch(/略過/);
+  });
   /**
    * The most important case in this file, and this repository's actual state.
    *

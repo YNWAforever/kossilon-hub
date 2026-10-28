@@ -1,0 +1,237 @@
+{
+  "schema_version": 1,
+  "original_id": "UC150",
+  "run_id": "cosec-20261024-upload-98d2f4c9",
+  "reviewed_at_utc": "2026-10-24T04:05:25.213042+00:00",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "base_sha": "71dd6d003ffbcefc98e32eb8845e58c2c6eb217d",
+  "review_status": "ACTIONABLE_FINDINGS",
+  "write_scope": "Only this independent-review.json, exclusive create. No source/fixture/other artifact edits.",
+  "method": "Product-development-execution independent read-only review. Actual current source compared with preserved baseline snapshots using difflib; new files and focused test/receipt sections inspected. No Git commands or checks executed. Graph/index not retried because metadata is unresponsive and private indexing was previously denied.",
+  "source_files": [
+    {
+      "path": "src/features/documents/repository.ts",
+      "bytes": 55472,
+      "sha256": "3bbbca6dd552fb4ee247b8aa28120c89bd76db414aae4a68756c5a527d61bc2b"
+    },
+    {
+      "path": "src/features/documents/server-fns.ts",
+      "bytes": 29097,
+      "sha256": "14c3f83a1e092b96ea88b51ab7e36af1b0fdeb2a6e83459774b8a7e156d68e91"
+    },
+    {
+      "path": "src/features/documents/upload-resume.ts",
+      "bytes": 2346,
+      "sha256": "6c91192f2a22e907446f7986d162339d706120aa5e268ad733bcb2e5990b3764"
+    },
+    {
+      "path": "src/features/documents/upload-retry.test.ts",
+      "bytes": 15411,
+      "sha256": "b8b0c86ab28cf3275400fe540352cb993ec675848f12083f92774878bceeba37"
+    },
+    {
+      "path": "src/features/documents/upload-resume.test.ts",
+      "bytes": 2919,
+      "sha256": "ef543231575020152f18166a7e3af37c12bde45f7cdaed6c5369d76ef09be844"
+    },
+    {
+      "path": "src/features/documents/upload-resume.integration.test.ts",
+      "bytes": 48345,
+      "sha256": "803c0f2bdfefeec8b244076b08a5e5311a8633394b04c42e29298b1d95b6199c"
+    },
+    {
+      "path": "src/routes/portal.tsx",
+      "bytes": 46540,
+      "sha256": "0f6195bce4d1952fd9d85a22d66927cba226eb1a8072c9567d8040417102beb3"
+    },
+    {
+      "path": "src/routes/-upload-resume.interaction.test.tsx",
+      "bytes": 11518,
+      "sha256": "d2cba7910724d7312f863894ebae22cdbde230d8bbd31c0677fec6bfc929e07b"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "bytes": 3258,
+      "sha256": "98f62ef7b6962627b29f37b88d6c6be5a2e7014392c4c4ec4ee8a4263f254b61"
+    }
+  ],
+  "baseline_comparisons": [
+    {
+      "path": "src/features/documents/repository.ts",
+      "baseline_snapshot": "repository-before.ts.snapshot",
+      "baseline_snapshot_fingerprint": {
+        "bytes": 51956,
+        "sha256": "be7a0bad596146e806a11ddf66c9a416e51be2e7472e81b2ee819d3e94a7e151"
+      },
+      "added_lines": 72,
+      "removed_lines": 2,
+      "matches_prior_UC149_source_manifest": true
+    },
+    {
+      "path": "src/features/documents/server-fns.ts",
+      "baseline_snapshot": "server-fns-before.ts.snapshot",
+      "baseline_snapshot_fingerprint": {
+        "bytes": 27307,
+        "sha256": "2c1b58ef9ee2dc79d30525bd0a402f493c8f0c9acd42782ed4eea157a683da25"
+      },
+      "added_lines": 42,
+      "removed_lines": 5,
+      "matches_prior_UC149_source_manifest": true
+    },
+    {
+      "path": "src/routes/portal.tsx",
+      "baseline_snapshot": "portal-before.tsx.snapshot",
+      "baseline_snapshot_fingerprint": {
+        "bytes": 40996,
+        "sha256": "36efebf7a5f0e748ce2a75b3b84626570e6b0c6cecd361385a7e90d3d49bc924"
+      },
+      "added_lines": 156,
+      "removed_lines": 9,
+      "matches_prior_UC149_source_manifest": true
+    }
+  ],
+  "findings": [
+    {
+      "id": "UC150-RV-01",
+      "priority": 2,
+      "title": "Handle persisted expired intents when restarting an uncommitted upload",
+      "file": "src/routes/portal.tsx",
+      "start_line": 883,
+      "end_line": 886,
+      "confidence": "high",
+      "evidence_kind": "static source trace; reviewer did not execute a reproduction",
+      "body": "After an interrupted uncommitted upload, existing expireUploads() legitimately changes its database status from created/uploaded to expired (repository.ts:1177-1182). Same-request create returns that existing intent unchanged (repository.ts:701-728). The Portal restart branch only accepts status created, so status expired skips it and calls finalize, which correctly refuses non-created intents (server-fns.ts:369). catch marks the same journal request uncertain and each retry reuses it indefinitely. Thus a normal maintenance-expired attempt cannot restart through this UI. Treat an authoritative expired status with documentId null as the explicit expired/uncommitted restart state, while preserving committed/uncertain attempts.",
+      "required_regression": "Create an unfinished attempt, have the server return status expired with documentId null on retry/reload, assert no finalize for the expired intent and explicit retry starts one fresh request; committed attempts must still replay their original receipt."
+    },
+    {
+      "id": "UC150-RV-02",
+      "priority": 2,
+      "title": "Honor the explicitly selected resume request before the per-file attempt cache",
+      "file": "src/routes/portal.tsx",
+      "start_line": 825,
+      "end_line": 827,
+      "confidence": "high",
+      "evidence_kind": "static source trace; reviewer did not execute a reproduction",
+      "body": "With two uncertain files A and B in the current mounted panel, fileAttempts retains both entries. Choose Continue this upload for B, then mistakenly reselect the original A file. uploadOne picks cached A before the resumeId-selected B, so matchesUploadFile validates A against itself, calls the RPCs for A, and clears resumeId on success. The user selected B but a different attempt was confirmed instead of showing the promised original-file mismatch. This can also silently retain the wrong checklist/category. Resolve an explicit resumeId first and validate the selected bytes against that request; only fall back to the per-file retry cache when no explicit resume is selected.",
+      "required_regression": "Without remounting, retain two uncertain attempts A/B, select B and reselect A; expect file mismatch before any further RPC and B still resumable. Then select the correct B file and assert only B request/checklist/category is sent."
+    }
+  ],
+  "receipt_fingerprints": [
+    {
+      "path": "baseline.json",
+      "bytes": 8207,
+      "sha256": "2517662a0c201dfca83803aa897c5ad0485376b6d4e43fde1bb301d9d277eab4"
+    },
+    {
+      "path": "backend-handoff.json",
+      "bytes": 4656,
+      "sha256": "132a9ed54504f344b18f7360f460d2d053440e5e7d524491e16563af3c71d51b"
+    },
+    {
+      "path": "backend-red.json",
+      "bytes": 786,
+      "sha256": "29f8a6071841b7f2c68a1c5f2ce75608d1287b591c78db9f3aaad57146ed8b83",
+      "exit_code": 1
+    },
+    {
+      "path": "backend-final-fingerprinted.json",
+      "bytes": 1537,
+      "sha256": "ef9bf45f053211fa4e3d0da366dfe8adf35ef2d4b1b42829bf753ae2a3380c15",
+      "exit_code": 0
+    },
+    {
+      "path": "resume-red.json",
+      "bytes": 754,
+      "sha256": "c1a7a3bda44db63b4e155221bf0eb5e329d98c3f038e1c0a8a9a48e3ff28dfe7",
+      "exit_code": 1
+    },
+    {
+      "path": "resume-green.json",
+      "bytes": 756,
+      "sha256": "f96af4eb893c6aaabf272c614e98a323069dee21e84b573a6612a60007ead45c",
+      "exit_code": 0
+    },
+    {
+      "path": "security-red.json",
+      "bytes": 753,
+      "sha256": "44e9783215d25315ac5b60278eca277ee57868651965ca26bc6f88e151e43712",
+      "exit_code": 1
+    },
+    {
+      "path": "targeted-final.json",
+      "bytes": 1377,
+      "sha256": "6a8de7a90b708a00609ef719356e23226388656d9bd83a3d2ac058403332b25a",
+      "exit_code": 0
+    },
+    {
+      "path": "targeted-verified.json",
+      "bytes": 1380,
+      "sha256": "b0b3f4b0257fbfe89337804ffc4338d56116fcb2d464e96ed17d60b46fb02fc7",
+      "exit_code": 1
+    },
+    {
+      "path": "targeted-verified.txt",
+      "bytes": 3584,
+      "sha256": "7b40dcf5d9370253fdf2cfa984086778fdd88fa310395650be0e2792ee5f4482"
+    },
+    {
+      "path": "typecheck-final.json",
+      "bytes": 653,
+      "sha256": "3b75591f892bb2cf42e734c8c117f31753241064ba1bb53350441de8507d7b66",
+      "exit_code": 0
+    },
+    {
+      "path": "sql-contract-correction.json",
+      "bytes": 656,
+      "sha256": "eb70fab82fce3f3799b81e9dbfe55bd8aa391296512600f2fa3cbccd57c8fa8d"
+    },
+    {
+      "path": "db/db-upload-green2.json",
+      "bytes": 102,
+      "sha256": "c3ad31ee39093a61683f89b40e41651099130ceb33d90b0443acc392d510e7a8",
+      "exit_code": 0
+    },
+    {
+      "path": "db/db-upload-green2.txt",
+      "bytes": 67479,
+      "sha256": "fc06ac35700aea6e667e384f6a906dda7881d8a2038bff313596eee06d14393c"
+    },
+    {
+      "path": "db/sidecar-UC150-SQL-green2.jsonl",
+      "bytes": 53706,
+      "sha256": "72c436b42e55265b7bd1bd8f0e964527c1b0a91463037e791aad802549816c84"
+    },
+    {
+      "path": "db/db-cleanup.json",
+      "bytes": 835,
+      "sha256": "04ce11ae8f5c8ea89b467c0c65c2ac41ba2b3db4d9924b62b7be5bf2d39f0f0d"
+    }
+  ],
+  "observed_receipt_status": {
+    "db_green2": "1 test / 1 file passed in existing raw log; three distinct TCP backend PIDs; overlapping writers and unchanged readback recorded. Reviewer opened no clients.",
+    "db_cleanup": "All recorded owned row counts 0; own container absent; own credentials removed. No reviewer cleanup performed.",
+    "targeted_final": "133 passed / 12 files, earlier seven-case UI version.",
+    "targeted_verified": "1 failed / 135 passed / 12 files; failure Invalid Chai property: toBeDisabled. Current source already uses button.disabled but a subsequent pass was not reviewed.",
+    "typecheck_final": "exit 0 in existing receipt; not rerun by reviewer.",
+    "security_red": "Preserved exit 1 before post-storage reauthorization repair.",
+    "sql_contract_correction": "Expired CREATED create is an authoritative read, not a rejection. Finalize-expiry refusal retained. This differs from finding 01, which concerns status expired persisted by maintenance."
+  },
+  "reviewed_safety_properties": [
+    "Opaque request key binds server-resolved authUserId plus normalized UUID; different actors get different keys.",
+    "Create collision checks exact scope/metadata and refuses recovery collisions without extending expiry.",
+    "Committed replay checks exact intent/document/version and declared metadata lineage; no storage PUT, new receipt or job on sequential replay.",
+    "Finalize reauthorizes both before work and after async readback/storage.",
+    "Journal contains file metadata/random request ID, no body/bytes/credentials; scope includes actor/company/case.",
+    "First concurrent PUTs may duplicate identical bytes; SQL receipt/job dedup does not establish globally one provider write.",
+    "No multipart or byte-offset resume claim. Full file re-selection and resend required."
+  ],
+  "limitations": [
+    "Static findings are not newly executed failures; parent should reproduce before patching and preserve red evidence.",
+    "No tests, builds, typecheck, lint, DB clients, Docker/provider operations, environment/secret reads, Git commands or Git mutations executed by this reviewer.",
+    "Source may be concurrently changing; review binds only the recorded nine fingerprints, not a final commit.",
+    "No browser results relied on; browser harness is a separate delegated scope.",
+    "Full-unit final checks were not reviewed. Native Auth/HTTP/RLS/R2/scanner remain BLOCKED and this review does not close those gates.",
+    "Baseline SHA association comes from existing recorded receipts and manifest matches, not fresh Git verification."
+  ],
+  "memory_basis": "MEMORY.md:1444-1445 used only for local/native evidence boundary."
+}

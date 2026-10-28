@@ -1,0 +1,20 @@
+{
+  "phase": "fixture-precision-corrected-static-only",
+  "head": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "files": [
+    {
+      "path": "src/features/whatsapp/history-pagination.integration.test.ts",
+      "sha256": "C754A5F60011B0B271A917ABE33BF46B52B52D00566C9F0D8EAD4D75BAEAC2CA"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "sha256": "D034C1A4F1CE098DADAEB3A99D04EEF0225E5B1B19E6C407094FF3127B9BC524"
+    },
+    {
+      "path": "src/features/whatsapp/repository.ts",
+      "sha256": "44EBECB4AFC7BA61EEA845E3C0D596FA0B88DBB6C8BCC0C770D0A2327B4AA681"
+    }
+  ],
+  "databaseExecutedByThisWorker": false,
+  "productionEditedByThisWorker": false
+}

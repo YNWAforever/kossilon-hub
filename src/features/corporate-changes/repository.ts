@@ -7,8 +7,18 @@ import {
 } from "@/server/db/client";
 import { createClientRepository } from "@/features/clients/repository";
 import { rethrowClientWriteError } from "@/features/clients/errors";
+import { lockStaffLifecycleShared } from "@/features/auth/staff-lifecycle";
+import { lockActiveStaffUser } from "@/features/auth/staff-state";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { CorporateChangeRequestNotFoundError } from "./errors";
+import { createCorporateChangeRequestSchema } from "./create-input";
+import type { IncorporationReadScope } from "@/features/incorporation/authorization";
+import {
+  caseListSearchPattern,
+  finishCaseListPage,
+  type PreparedCaseListQuery,
+  type CaseListPage,
+} from "@/features/incorporation/case-list-query";
 import { checklistLabelsFor, isAllowedCorporateChangeStatusTransition } from "./workflow";
 import type {
   CancelRequestInput,
@@ -36,11 +46,15 @@ function withTransaction<T>(
   client: QueryClient,
   handler: (tx: TransactionSqlClient) => Promise<T>,
 ): Promise<T> {
+  const admitted = async (tx: TransactionSqlClient): Promise<T> => {
+    await lockStaffLifecycleShared(tx);
+    return handler(tx);
+  };
   if ("begin" in client) {
-    return client.begin(handler) as Promise<T>;
+    return client.begin(admitted) as Promise<T>;
   }
 
-  return handler(client);
+  return admitted(client);
 }
 
 type RequestRow = {
@@ -161,6 +175,10 @@ const REQUEST_COLUMNS = `
 `;
 
 export interface CorporateChangeRequestRepository {
+  listRequestPage(
+    scope: IncorporationReadScope,
+    query: PreparedCaseListQuery,
+  ): Promise<CaseListPage<CorporateChangeRequestSummary>>;
   listRequests(filter: ListCorporateChangeRequestsFilter): Promise<CorporateChangeRequestSummary[]>;
   getRequest(requestId: string): Promise<CorporateChangeRequestDetail>;
   createRequest(input: CreateCorporateChangeRequestInput): Promise<CorporateChangeRequestDetail>;
@@ -184,6 +202,52 @@ export function createCorporateChangeRequestRepository(
 ): CorporateChangeRequestRepository {
   const sql = options.sql ?? (databaseUrl ? createSqlClient(databaseUrl, options) : getSqlClient());
   const ownsClient = !options.sql && Boolean(databaseUrl);
+
+  async function listRequestPage(scope: IncorporationReadScope, query: PreparedCaseListQuery) {
+    const expression = sql.unsafe(
+      query.sort === "company"
+        ? 'lower(p.company_name) collate "C"'
+        : query.sort === "due"
+          ? "coalesce(p.due_date::text, '9999-12-31')"
+          : `to_char(p.created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US')`,
+    );
+    const direction = sql.unsafe(query.sort === "created" ? "desc" : "asc");
+    const comparison = sql.unsafe(query.sort === "created" ? "<" : ">");
+    const pattern = caseListSearchPattern(query.q);
+    const rows = await sql<
+      (RequestSummaryRow & { sort_value: string; owner_name: string; due_date: string | null })[]
+    >`
+      select p.*, ${expression} sort_value from (
+        select r.id, r.company_id, r.change_type, r.status, r.owner_id, r.quoted_fee, r.created_at,
+          c.company_name, u.name owner_name,
+          (select (min(w.sla_due_at) at time zone 'Asia/Hong_Kong')::date from work_items w
+            where w.corporate_change_request_id = r.id and w.status in ('open', 'in_progress', 'blocked')
+              and (${scope.kind === "all"} or w.team_id = ${scope.teamId ?? null}::uuid)) due_date
+        from corporate_change_requests r join companies c on c.id = r.company_id join users u on u.id = r.owner_id
+        where (${scope.kind === "all"} or c.assigned_team_id = ${scope.teamId ?? null}::uuid)
+      ) p
+      where (${query.status ?? null}::text is null or p.status = ${query.status ?? null})
+        and (${query.changeType ?? null}::text is null or p.change_type = ${query.changeType ?? null})
+        and (${query.ownerId ?? null}::uuid is null or p.owner_id = ${query.ownerId ?? null}::uuid)
+        and (${pattern}::text is null or p.company_name ilike ${pattern} escape '\\')
+        and (${query.dueFrom ?? null}::date is null or p.due_date >= ${query.dueFrom ?? null}::date)
+        and (${query.dueTo ?? null}::date is null or p.due_date <= ${query.dueTo ?? null}::date)
+        and (${query.cursor === null} or (${expression}, p.id) ${comparison} (${query.cursor?.value ?? null}::text, ${query.cursor?.id ?? null}::uuid))
+      order by ${expression} ${direction}, p.id ${direction} limit ${query.limit + 1}
+    `;
+    return finishCaseListPage(rows, query, (row) => ({
+      id: row.id,
+      companyId: row.company_id,
+      changeType: row.change_type,
+      status: row.status,
+      ownerId: row.owner_id,
+      quotedFee: Number(row.quoted_fee),
+      createdAt: iso(row.created_at),
+      companyName: row.company_name,
+      ownerName: row.owner_name,
+      dueDate: row.due_date ? dateOnly(row.due_date) : null,
+    }));
+  }
 
   async function hydrateOrThrow(
     tx: TransactionSqlClient,
@@ -246,8 +310,15 @@ export function createCorporateChangeRequestRepository(
   async function createRequest(
     input: CreateCorporateChangeRequestInput,
   ): Promise<CorporateChangeRequestDetail> {
+    // Internal callers also use this repository without the RPC validator.
+    // Reject malformed transfers before a transaction can create any children.
+    if (input.changeType === "share_transfer") {
+      input = { ...createCorporateChangeRequestSchema.parse(input), actorId: input.actorId };
+    }
     try {
       return await withTransaction(sql, async (tx) => {
+        // The actor is also the request and initial work-item owner.
+        await lockActiveStaffUser(tx, input.actorId);
         const companyRows = await tx<{ id: string; assigned_team_id: string }[]>`
           select id, assigned_team_id from companies where id = ${input.companyId} for update
         `;
@@ -560,6 +631,7 @@ export function createCorporateChangeRequestRepository(
   }
 
   return {
+    listRequestPage,
     listRequests,
     getRequest,
     getCompanyTeamId,

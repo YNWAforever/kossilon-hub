@@ -1,0 +1,85 @@
+{
+  "source_sha": "b367ee3eac2c09ee468c010bcfffab69b022adb9",
+  "parent_sha": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+  "tested_head": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+  "paths": [
+    "src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx",
+    "src/components/corporate-changes/create-corporate-change-request-dialog.tsx",
+    "src/components/corporate-changes/share-transfer-validation.test.tsx",
+    "src/features/corporate-changes/create-input.test.ts",
+    "src/features/corporate-changes/create-input.ts",
+    "src/features/corporate-changes/create.test.ts",
+    "src/features/corporate-changes/create.ts",
+    "src/features/corporate-changes/repository.ts",
+    "src/features/corporate-changes/server-fns.ts",
+    "src/features/corporate-changes/share-transfer-validation.integration.test.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "files": [
+    {
+      "path": "src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx",
+      "bytes": 11650,
+      "sha256": "d7c77304e80562f7dd3d1499bf3c3523466539d28b39034cf5279bbc687dfe22"
+    },
+    {
+      "path": "src/components/corporate-changes/create-corporate-change-request-dialog.tsx",
+      "bytes": 31124,
+      "sha256": "103d9f303e6a257c9783f1c79020071f7a68b98edfbc9057553d57c11a1755af"
+    },
+    {
+      "path": "src/components/corporate-changes/share-transfer-validation.test.tsx",
+      "bytes": 6296,
+      "sha256": "8d955a9f70da6a22a7304cc95147f94828f1b5bb8b8871aeb1ba796541dd4e45"
+    },
+    {
+      "path": "src/features/corporate-changes/create-input.test.ts",
+      "bytes": 2615,
+      "sha256": "29b04ae3085ba252b7a3efea305515675d98efe008187348dff2e3d2ac9ec5cf"
+    },
+    {
+      "path": "src/features/corporate-changes/create-input.ts",
+      "bytes": 3518,
+      "sha256": "8ddcf4cfc73ac8a64bd7420cbb98d9fd83e01ce5897f4269cf23f976f9637044"
+    },
+    {
+      "path": "src/features/corporate-changes/create.test.ts",
+      "bytes": 3398,
+      "sha256": "4c7696e4949861fca68d430db7a3b6c0dc7679d8bb9dcde77d566d785fcc182d"
+    },
+    {
+      "path": "src/features/corporate-changes/create.ts",
+      "bytes": 996,
+      "sha256": "90c7fa863ee18cc7c91b631f372684e529810bcb8fe0e233f78ae9b87c9a7fcf"
+    },
+    {
+      "path": "src/features/corporate-changes/repository.ts",
+      "bytes": 27153,
+      "sha256": "fa7495b53de3e0b245f639352280c90ad4652af9f05d98614947300a2d4f00c8"
+    },
+    {
+      "path": "src/features/corporate-changes/server-fns.ts",
+      "bytes": 6652,
+      "sha256": "7bb1f06beb1aedf93fee1245240abc3736c537fe166376fd621c39c3d5d0c553"
+    },
+    {
+      "path": "src/features/corporate-changes/share-transfer-validation.integration.test.ts",
+      "bytes": 29619,
+      "sha256": "0f298ef508f7da30879d7e515e264f419a95ca821d48b5242aac309ce7453af1"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "bytes": 3340,
+      "sha256": "1a3d8020036e6ee18d55416ce228395b9e386edbb0637302e05bf88472227052"
+    }
+  ],
+  "source_freeze": "source-post-checks.json",
+  "source_files_verified": 655,
+  "all_final_checked_source_bytes_equal_committed": true,
+  "production_changes": [
+    "src/components/corporate-changes/create-corporate-change-request-dialog.tsx",
+    "src/features/corporate-changes/create-input.ts",
+    "src/features/corporate-changes/create.ts",
+    "src/features/corporate-changes/repository.ts",
+    "src/features/corporate-changes/server-fns.ts"
+  ]
+}

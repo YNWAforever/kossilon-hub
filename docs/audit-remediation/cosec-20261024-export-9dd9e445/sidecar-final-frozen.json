@@ -1,0 +1,94 @@
+{
+  "status": "PASS_FOCUSED_UI_FROZEN",
+  "no_more_edits": true,
+  "frozen_at": "2026-10-23T18:49:30.670Z",
+  "head": "89676dca7be49f4bf65afb44b036fce087934fc4",
+  "source_numstat": "+17/-4",
+  "new_test_cases": 5,
+  "new_test_lines": 261,
+  "files": [
+    {
+      "path": "src/components/bulk-selection-toolbar.tsx",
+      "sha256": "a568d87dc63f3c0d712dcb21c3a8f1e33b35a9be4e3049682cfd81c2d8da0f44",
+      "bytes": 29137,
+      "lines": 786
+    },
+    {
+      "path": "src/components/bulk-export.interaction.test.tsx",
+      "sha256": "b8ce663646107a89ae5257b136ba4448abfc5368bbc6fe612f6f5af88c7652f7",
+      "bytes": 9940,
+      "lines": 261
+    },
+    {
+      "path": "src/components/bulk-selection-toolbar.test.tsx",
+      "sha256": "8a271fafc87d5fee4374a834145e93fd3d83b1d8111690c771fc35d92f50f581",
+      "bytes": 22610,
+      "lines": 580
+    }
+  ],
+  "existing_test_unchanged": true,
+  "first_run": {
+    "passed": 1,
+    "failed": 4,
+    "product_stale_scope_red_cases": 2,
+    "harness_blob_constructor_root_causes": 1,
+    "harness_affected_cases": 2,
+    "report": "sidecar-focused-report.json",
+    "logs": [
+      "sidecar-focused-stdout.txt",
+      "sidecar-focused-stderr.txt"
+    ]
+  },
+  "final_focused_run": {
+    "started": "2026-10-23T18:48:19.442Z",
+    "finished": "2026-10-23T18:48:24.206Z",
+    "exit_code": 0,
+    "signal": null,
+    "launch_error": null,
+    "test_process_started": true,
+    "report_present": true,
+    "total_tests": 5,
+    "passed_tests": 5,
+    "failed_tests": 0,
+    "frozen_files_unchanged": true,
+    "free_ram_bytes": 2344112128,
+    "free_ram_gib": 2.183124542236328,
+    "max_workers": 1,
+    "report": "sidecar-green-report.json",
+    "logs": [
+      "sidecar-green-stdout.txt",
+      "sidecar-green-stderr.txt"
+    ]
+  },
+  "cases": [
+    {
+      "name": "UC157 saved result export interactions downloads the mocked saved-job CSV bytes with the results filename and releases its URL",
+      "status": "passed"
+    },
+    {
+      "name": "UC157 saved result export interactions shows a rejected export without making a Blob or download and recovers only after explicit retry",
+      "status": "passed"
+    },
+    {
+      "name": "UC157 saved result export interactions blocks repeated clicks while the export RPC is pending and downloads only once",
+      "status": "passed"
+    },
+    {
+      "name": "UC157 saved result export interactions discards a pending export when the selected saved job changes and permits the new job export",
+      "status": "passed"
+    },
+    {
+      "name": "UC157 saved result export interactions discards a pending export after an actor change and requires that actor to select and export again",
+      "status": "passed"
+    }
+  ],
+  "historical_note": "Earlier sidecar-green-status.json and sidecar-handoff.md preserve the first freeze before parent authorized the final focused green run. This final record supersedes their NOT_RUN status without rewriting them.",
+  "remaining_parent_gates": [
+    "full unit",
+    "type",
+    "lint",
+    "build"
+  ],
+  "no_db_auth_clients_network_provider_container": true,
+  "no_commits_push_merge_deploy_index_upload": true
+}

@@ -1,0 +1,96 @@
+{
+  "status": "FROZEN_COMPONENT_ONLY_PASS",
+  "no_more_source_or_test_edits": true,
+  "frozen_at": "2026-10-23T13:18:27.779Z",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "head": "1b8dffc256b934ed11864a07883c80d8de5f8749",
+  "branch": "codex/cosec-20261023",
+  "owned_source_files": [
+    "src/components/clients/client-form-dialog.tsx",
+    "src/components/clients/client-form-dialog.test.tsx"
+  ],
+  "frozen_sha256": {
+    "src/components/clients/client-form-dialog.tsx": "5b7b877f9a1df100303b8867305e9bed514818a2e273d803ef057b2b0c1ced21",
+    "src/components/clients/client-form-dialog.test.tsx": "14da1e450a00616ddfa23ba8c99a19887f24965258fdee7c579a59f0c661a474"
+  },
+  "source_snapshots": [
+    "snapshot-before",
+    "snapshot-prefixed-finalred",
+    "snapshot-assignment-gap-before",
+    "snapshot-assignment-gap-red",
+    "snapshot-final"
+  ],
+  "validation": [
+    {
+      "receipt": "sidecar-20261023130302105-46579446-baseline.json",
+      "exit_code": 1,
+      "total": 0,
+      "note": "Harness EPERM before collection; original failure retained"
+    },
+    {
+      "receipt": "sidecar-20261023130302105-46579446-baseline-temp-local.json",
+      "exit_code": 0,
+      "total": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    {
+      "receipt": "sidecar-20261023130302105-46579446-red.json",
+      "exit_code": 1,
+      "total": 21,
+      "passed": 6,
+      "failed": 15
+    },
+    {
+      "receipt": "sidecar-20261023130302105-46579446-red-rerender.json",
+      "exit_code": 1,
+      "total": 23,
+      "passed": 5,
+      "failed": 18
+    },
+    {
+      "receipt": "sidecar-20261023130302105-46579446-red-assignment-gap.json",
+      "exit_code": 1,
+      "total": 25,
+      "passed": 22,
+      "failed": 3
+    },
+    {
+      "receipt": "sidecar-20261023130302105-46579446-green-assignment-final.json",
+      "exit_code": 0,
+      "total": 25,
+      "passed": 25,
+      "failed": 0,
+      "pending": 0
+    },
+    {
+      "receipt": "sidecar-20261023130302105-46579446-lint-assignment-final.json",
+      "exit_code": 0,
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "receipt": "sidecar-20261023130302105-46579446-diff-check.json",
+      "exit_code": 0
+    }
+  ],
+  "acceptance": {
+    "UC135": "Required-field progression including owner/team, whitespace name/office and malformed CR then BR, associated text and exact-field focus, no RPC before valid. Empty assignments remain blank after options refresh until explicit selection; other draft inputs retained. Edit payload also requires owner/team under existing UUID schema.",
+    "UC136": "CR/BR server field rejection retains all 12 rendered inputs/selects plus default secretary in retried payload, focuses exact field, explicit manual correction, one pending retry, one successful callback/close.",
+    "UC137": "Whole-certificate BR with whitespace/lowercase accepted and passed through at mocked RPC boundary only; no assertion of real normalization.",
+    "recovery": "Same-render and pending duplicate form submissions guarded; pending cancel/Escape/Close guarded; ordinary cancel/reopen resets; generic/unknown/CR/BR/contact error recovery uses safe local messages; equivalent options/client rerenders preserve draft; edit identifiers/inactive assignments/payload preserved."
+  },
+  "boundaries": {
+    "runtime": "Real React/Radix dialog in jsdom; only server functions and toast mocked. No real backend, DB/client/container/network/provider or authenticated HTTP/session runtime.",
+    "environment": "Child tests/lint use explicit OS-variable whitelist plus CI/NO_COLOR; no DB env; no non-example dotenv files present. Own runtime temp moved, after path inspection, into ignored .worktrees/sidecar-20261023130302105-46579446-runtime-temp; no files deleted.",
+    "parent_owned": "No writes to backend/schema/SQL/registry or parent docs/evidence. Parent concurrent changes recorded in snapshot statuses. Full unit/typecheck/lint/build left for parent.",
+    "publication": "No commits, push, deploy, graph index or upload."
+  },
+  "deficiencies": [
+    "No real browser, session/HTTP, persistence, server normalization or SQL coverage claimed by this sidecar.",
+    "Full-suite/typecheck/build not run by sidecar; parent will run them after this freeze.",
+    "Existing vite-tsconfig-paths deprecation warnings appear in focused test logs.",
+    "Initial sandbox TEMP rename EPERM resolved using local scoped temp and later relocated to ignored .worktrees.",
+    "Two runner action labels (snapshot-red-rerender and format-assignment-gap) fell through to focused tests before dispatch was generalized; exact commands/results retained. They are redundant runs, not snapshots/format results. Correct snapshots and actual format receipts are separately present."
+  ]
+}

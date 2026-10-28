@@ -1,0 +1,31 @@
+
+> test
+> vitest run --project unit scripts/cosec-delivery.test.ts --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| scripts/cosec-delivery.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| scripts/cosec-delivery.test.ts [ scripts/cosec-delivery.test.ts ]
+Error: Cannot find module './cosec-delivery' imported from C:/Users/laich/Documents/kossilon-hub/cosec-20261023/scripts/cosec-delivery.test.ts
+ ❯ scripts/cosec-delivery.test.ts:3:1
+      1| import { createHash } from "node:crypto";
+      2| import { describe, expect, it } from "vitest";
+      3| import { verifyCosecDelivery, type DeliverySource } from "./cosec-deli…
+       | ^
+      4|
+      5| const sha = "1".repeat(40);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  05:54:12
+   Duration  396ms (transform 35ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

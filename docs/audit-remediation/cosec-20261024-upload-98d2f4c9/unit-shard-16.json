@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-16",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/whatsapp/approved-templates.test.ts",
+    "src/features/whatsapp/components/message-intake.interaction.test.tsx",
+    "src/features/whatsapp/components/production-inbox.interaction.test.tsx",
+    "src/features/whatsapp/components/production-inbox.pagination.test.tsx",
+    "src/features/whatsapp/config.test.ts",
+    "src/features/whatsapp/conversations.test.ts",
+    "src/features/whatsapp/fallback-templates.test.ts",
+    "src/features/whatsapp/history-pagination.test.ts",
+    "src/features/whatsapp/intake-server-fns.test.ts",
+    "src/features/whatsapp/media-download.test.ts",
+    "src/features/whatsapp/phone.test.ts",
+    "src/features/whatsapp/server-fns.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/features/whatsapp/approved-templates.test.ts",
+    "src/features/whatsapp/components/message-intake.interaction.test.tsx",
+    "src/features/whatsapp/components/production-inbox.interaction.test.tsx",
+    "src/features/whatsapp/components/production-inbox.pagination.test.tsx",
+    "src/features/whatsapp/config.test.ts",
+    "src/features/whatsapp/conversations.test.ts",
+    "src/features/whatsapp/fallback-templates.test.ts",
+    "src/features/whatsapp/history-pagination.test.ts",
+    "src/features/whatsapp/intake-server-fns.test.ts",
+    "src/features/whatsapp/media-download.test.ts",
+    "src/features/whatsapp/phone.test.ts",
+    "src/features/whatsapp/server-fns.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/features/whatsapp/components/production-inbox.pagination.test.tsx",
+      "tests": 7
+    },
+    {
+      "path": "src/features/whatsapp/components/production-inbox.interaction.test.tsx",
+      "tests": 13
+    },
+    {
+      "path": "src/features/whatsapp/components/message-intake.interaction.test.tsx",
+      "tests": 2
+    },
+    {
+      "path": "src/features/whatsapp/media-download.test.ts",
+      "tests": 11
+    },
+    {
+      "path": "src/features/whatsapp/intake-server-fns.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "src/features/whatsapp/server-fns.test.ts",
+      "tests": 20
+    },
+    {
+      "path": "src/features/whatsapp/history-pagination.test.ts",
+      "tests": 9
+    },
+    {
+      "path": "src/features/whatsapp/conversations.test.ts",
+      "tests": 17
+    },
+    {
+      "path": "src/features/whatsapp/approved-templates.test.ts",
+      "tests": 5
+    },
+    {
+      "path": "src/features/whatsapp/fallback-templates.test.ts",
+      "tests": 8
+    },
+    {
+      "path": "src/features/whatsapp/phone.test.ts",
+      "tests": 7
+    },
+    {
+      "path": "src/features/whatsapp/config.test.ts",
+      "tests": 3
+    }
+  ]
+}

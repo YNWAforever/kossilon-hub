@@ -1,0 +1,43 @@
+{
+  "head": "8a0fbdcc860981d43fb9e12f794d7b549e331435",
+  "utc": "2026-10-23T12:02:46.0368077Z",
+  "paths": [
+    "src/features/auth/staff-state.ts",
+    "src/features/auth/staff-state.test.ts",
+    "src/features/work-items/repository.ts",
+    "src/features/work-items/assignment-recovery.integration.test.ts",
+    "src/routes/work-queue.tsx",
+    "src/routes/-work-queue.interaction.test.tsx",
+    "src/test/db-integration-files.ts"
+  ],
+  "files": [
+    {
+      "path": "src/features/auth/staff-state.ts",
+      "sha256": "9525e76ac5d0d589a8cf75c317da08d194d245061cb0a5e38c760113bda8aeac"
+    },
+    {
+      "path": "src/features/auth/staff-state.test.ts",
+      "sha256": "ebd29c0ec9a76e92adc7a0995c233ccbe42ad699c065c04935e6dd95ac9dba0f"
+    },
+    {
+      "path": "src/features/work-items/repository.ts",
+      "sha256": "ad69f191702ab0bd42668dc4e7e42a7d0b987b3c0d1f38bfa2919ea4dca819c6"
+    },
+    {
+      "path": "src/features/work-items/assignment-recovery.integration.test.ts",
+      "sha256": "9f4dcb3ff9907f61765afc7790d55ae97bc5f02ca6637c1d2dee7b4e5e4a10a8"
+    },
+    {
+      "path": "src/routes/work-queue.tsx",
+      "sha256": "753f1dc9b20a9c5410403f9a0b633f509c9c3f6623ab35e13c8ba1ffb64c17e8"
+    },
+    {
+      "path": "src/routes/-work-queue.interaction.test.tsx",
+      "sha256": "8c3a008d50ca73bee1b22c623942b9e88d369c85b35d73108744f185b0a26b7b"
+    },
+    {
+      "path": "src/test/db-integration-files.ts",
+      "sha256": "0166ab88aeb7723627d9c63e788b51802182e26f442d3ec3431e78ed806b5bda"
+    }
+  ]
+}

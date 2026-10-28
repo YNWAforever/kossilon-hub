@@ -1,0 +1,29 @@
+diff --git "a/docs\\audit-remediation\\cosec-20261023-79d324f0\\src_routes___root.tsx.before.txt" b/src/routes/__root.tsx
+index 170fa24..8d16921 100644
+--- "a/docs\\audit-remediation\\cosec-20261023-79d324f0\\src_routes___root.tsx.before.txt"
++++ b/src/routes/__root.tsx
+@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
+ import { Toaster } from "@/components/ui/sonner";
+ import {
+   AuthProvider,
++  AuthSessionBoundary,
+   classifyAuthFailure,
+   readAuthWithTimeout,
+   useAuth,
+@@ -210,10 +211,12 @@ function RootComponent() {
+ 
+   return (
+     <QueryClientProvider client={queryClient}>
+-      <AuthProvider key={JSON.stringify(actor)} queryClient={queryClient}>
+-        {isPublicRoute(pathname) ? <Outlet /> : <ProtectedAppShell />}
+-        <Toaster />
+-      </AuthProvider>
++      <AuthSessionBoundary>
++        <AuthProvider key={JSON.stringify(actor)} queryClient={queryClient}>
++          {isPublicRoute(pathname) ? <Outlet /> : <ProtectedAppShell />}
++          <Toaster />
++        </AuthProvider>
++      </AuthSessionBoundary>
+     </QueryClientProvider>
+   );
+ }

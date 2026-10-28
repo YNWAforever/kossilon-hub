@@ -1,0 +1,9 @@
+{
+  "source_sha": "80a8fc31e797fe0a897bdd6a8b9f82221246a1d2",
+  "parent_sha": "c9d783478572b1e11331018d46e09e20f427b832",
+  "paths": [
+    "src/features/corporate-changes/components/production-corporate-change-detail.tsx",
+    "src/routes/-missing-record.interaction.test.tsx"
+  ],
+  "operation": "ordinary local commit only; no push/merge/deploy"
+}

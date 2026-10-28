@@ -1,0 +1,55 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+browserType.launchPersistentContext: Target page, context or browser has been closed
+Browser logs:
+
+<launching> C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --window-size=1280,900 --force-device-scale-factor=1 --user-data-dir=C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\r22-fe4a5635-profiles\zoom-1-7U3a4N --remote-debugging-pipe about:blank
+<launched> pid=41672
+[pid=41672][err] [1023/190337.892:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:136] TransactNamedPipe: 管道已結束。 (0x6D)
+[pid=41672][err] [41672:8404:1023/190338.068:ERROR:chrome\browser\component_updater\edge_optimization_guide_models_manifest_installer.cc:264] Edge LLM: catalog update failed: 5
+[pid=41672][err] [41672:8404:1023/190341.095:ERROR:components\device_event_log\device_event_log_impl.cc:257] [19:03:41.095] USB: usb_device_win.cc:66 Failed to open \\?\usb#root_hub30#4&28751a76&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}: 存取被拒。 (0x5)
+[pid=41672][err] [41672:8404:1023/190341.241:ERROR:chrome\browser\edge_pinned_sites\secondary_tile_client.cc:283] OnSecondaryTileManagerDisconnected. Probing host package health before responding to callbacks
+[pid=41672][err] [41672:8404:1023/190341.241:ERROR:chrome\browser\edge_pinned_sites\pinned_sites_cache.cc:284] Failed to retrieve pinned sites
+[pid=41672][err] [1023/190341.299:ERROR:third_party\crashpad\crashpad\client\crashpad_client_win.cc:158] crash server failed to launch
+Call log:
+  - <launching> C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --window-size=1280,900 --force-device-scale-factor=1 --user-data-dir=C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\r22-fe4a5635-profiles\zoom-1-7U3a4N --remote-debugging-pipe about:blank
+  - <launched> pid=41672
+  - [pid=41672][err] [1023/190337.892:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:136] TransactNamedPipe: 管道已結束。 (0x6D)
+  - [pid=41672][err] [41672:8404:1023/190338.068:ERROR:chrome\browser\component_updater\edge_optimization_guide_models_manifest_installer.cc:264] Edge LLM: catalog update failed: 5
+  - [pid=41672][err] [41672:8404:1023/190341.095:ERROR:components\device_event_log\device_event_log_impl.cc:257] [19:03:41.095] USB: usb_device_win.cc:66 Failed to open \\?\usb#root_hub30#4&28751a76&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}: 存取被拒。 (0x5)
+  - [pid=41672][err] [41672:8404:1023/190341.241:ERROR:chrome\browser\edge_pinned_sites\secondary_tile_client.cc:283] OnSecondaryTileManagerDisconnected. Probing host package health before responding to callbacks
+  - [pid=41672][err] [41672:8404:1023/190341.241:ERROR:chrome\browser\edge_pinned_sites\pinned_sites_cache.cc:284] Failed to retrieve pinned sites
+  - [pid=41672][err] [1023/190341.299:ERROR:third_party\crashpad\crashpad\client\crashpad_client_win.cc:158] crash server failed to launch
+  - [pid=41672] <gracefully close start>
+  - [pid=41672] <kill>
+  - [pid=41672] <will force kill>
+  - [pid=41672] taskkill stderr: ���~: �ϥΪ̦W�٩αK�X�����T�C
+  - [pid=41672] <process did exit: exitCode=3221225477, signal=null>
+  - [pid=41672] starting temporary directories cleanup
+  - [pid=41672] finished temporary directories cleanup
+  - [pid=41672] <gracefully close end>
+
+    at async file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261023-r22-fe4a5635/zoom-probe.mjs:21:21 {
+  log: [
+    '  - <launching> C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --window-size=1280,900 --force-device-scale-factor=1 --user-data-dir=C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\r22-fe4a5635-profiles\\zoom-1-7U3a4N --remote-debugging-pipe about:blank',
+    '  - <launched> pid=41672',
+    '  - [pid=41672][err] [1023/190337.892:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:136] TransactNamedPipe: 管道已結束。 (0x6D)',
+    '  - [pid=41672][err] [41672:8404:1023/190338.068:ERROR:chrome\\browser\\component_updater\\edge_optimization_guide_models_manifest_installer.cc:264] Edge LLM: catalog update failed: 5',
+    '  - [pid=41672][err] [41672:8404:1023/190341.095:ERROR:components\\device_event_log\\device_event_log_impl.cc:257] [19:03:41.095] USB: usb_device_win.cc:66 Failed to open \\\\?\\usb#root_hub30#4&28751a76&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}: 存取被拒。 (0x5)',
+    '  - [pid=41672][err] [41672:8404:1023/190341.241:ERROR:chrome\\browser\\edge_pinned_sites\\secondary_tile_client.cc:283] OnSecondaryTileManagerDisconnected. Probing host package health before responding to callbacks',
+    '  - [pid=41672][err] [41672:8404:1023/190341.241:ERROR:chrome\\browser\\edge_pinned_sites\\pinned_sites_cache.cc:284] Failed to retrieve pinned sites',
+    '  - [pid=41672][err] [1023/190341.299:ERROR:third_party\\crashpad\\crashpad\\client\\crashpad_client_win.cc:158] crash server failed to launch',
+    '  - [pid=41672] <gracefully close start>',
+    '  - [pid=41672] <kill>',
+    '  - [pid=41672] <will force kill>',
+    '  - [pid=41672] taskkill stderr: ���~: �ϥΪ̦W�٩αK�X�����T�C',
+    '  - [pid=41672] <process did exit: exitCode=3221225477, signal=null>',
+    '  - [pid=41672] starting temporary directories cleanup',
+    '  - [pid=41672] finished temporary directories cleanup',
+    '  - [pid=41672] <gracefully close end>'
+  ]
+}
+
+Node.js v24.18.0

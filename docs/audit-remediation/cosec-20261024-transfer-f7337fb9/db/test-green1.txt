@@ -1,0 +1,66 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |db| src/features/corporate-changes/share-transfer-validation.integration.test.ts (9 tests | 4 failed) 132017ms
+     ✓ service-rejections  3799ms
+     ✓ repository-rejections  3138ms
+     ✓ sql-constraints  3114ms
+     ✓ service-role-denials  3210ms
+     × control-new-holder 28932ms
+     × control-existing-holder 28700ms
+     × control-db-int-boundary 29696ms
+     ✓ rollback-third-checklist-child  3162ms
+     × rollback-work-item-child 28265ms
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)
+   Start at  14:19:57
+   Duration  132.28s (transform 843ms, setup 0ms, import 93ms, tests 132.02s, environment 0ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |db| src/features/corporate-changes/share-transfer-validation.integration.test.ts > UC166 injected actor / real SQL rejection and atomic create > control-new-holder
+ FAIL  |db| src/features/corporate-changes/share-transfer-validation.integration.test.ts > UC166 injected actor / real SQL rejection and atomic create > control-existing-holder
+ FAIL  |db| src/features/corporate-changes/share-transfer-validation.integration.test.ts > UC166 injected actor / real SQL rejection and atomic create > control-db-int-boundary
+Error: Business calendar has no reachable working interval.
+ ❯ addBusinessMinutes src/features/work-items/business-calendar.ts:122:13
+    120|
+    121|     if (scanned > MAX_MINUTES_TO_SCAN) {
+    122|       throw new Error("Business calendar has no reachable working inte…
+       |             ^
+    123|     }
+    124|   }
+ ❯ snapshotSla src/features/work-items/sla.ts:31:16
+ ❯ ensureWorkItemForEvent src/features/work-items/repository.ts:424:20
+ ❯ src/features/corporate-changes/repository.ts:381:9
+ ❯ args.<computed> src/test/sql-test-lifetime.ts:58:32
+ ❯ scope node_modules/postgres/src/index.js:260:18
+ ❯ sql.begin node_modules/postgres/src/index.js:243:14
+ ❯ Object.createRequest src/features/corporate-changes/repository.ts:313:14
+ ❯ scenario src/features/corporate-changes/share-transfer-validation.integration.test.ts:489:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |db| src/features/corporate-changes/share-transfer-validation.integration.test.ts > UC166 injected actor / real SQL rejection and atomic create > rollback-work-item-child
+AssertionError: expected undefined to be 'P0166' // Object.is equality
+
+- Expected:
+"P0166"
+
++ Received:
+undefined
+
+ ❯ scenario src/features/corporate-changes/share-transfer-validation.integration.test.ts:583:26
+    581|         after,
+    582|       });
+    583|       expect(facts.code).toBe("P0166");
+       |                          ^
+    584|       expect(facts.message).toBe(`UC166 forced ${childTable} child fai…
+    585|       const detail = JSON.parse(facts.detail ?? "null") as {
+ ❯ src/features/corporate-changes/share-transfer-validation.integration.test.ts:198:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+

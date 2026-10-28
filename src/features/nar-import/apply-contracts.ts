@@ -9,8 +9,8 @@ const date = z
   }, "Invalid calendar date");
 export const narRowInputsSchema = z
   .object({
-    templateId: z.string().uuid().optional(),
-    ownerId: z.string().uuid().optional(),
+    templateId: z.string().guid().optional(),
+    ownerId: z.string().guid().optional(),
     feeAmount: z.number().int().positive().max(100000000).optional(),
     invoiceNumber: z.string().trim().min(1).max(120).optional(),
     madeUpDate: date.optional(),
@@ -22,15 +22,15 @@ export const narRowInputsSchema = z
 export type NarRowInputs = z.infer<typeof narRowInputsSchema>;
 export const narPreviewSchema = z
   .object({
-    batchId: z.string().uuid(),
-    rowIds: z.array(z.string().uuid()).min(1).max(500),
-    inputs: z.record(z.string().uuid(), narRowInputsSchema).default({}),
+    batchId: z.string().guid(),
+    rowIds: z.array(z.string().guid()).min(1).max(500),
+    inputs: z.record(z.string().guid(), narRowInputsSchema).default({}),
     dataOrigin: z.enum(["historical", "client"]).default("historical"),
     activateCurrentYear: z.boolean().default(false),
   })
   .strict();
 export const narExecuteSchema = z
-  .object({ previewId: z.string().uuid(), idempotencyKey: z.string().trim().min(1).max(120) })
+  .object({ previewId: z.string().guid(), idempotencyKey: z.string().trim().min(1).max(120) })
   .strict();
 export type CaseValue = {
   id: string;
@@ -81,7 +81,7 @@ export type NarPreviewItem = {
 
 export const narYearConfirmationSchema = z
   .object({
-    batchId: z.string().uuid(),
+    batchId: z.string().guid(),
     expectedVersion: z.string().regex(/^[a-f0-9]{32}$/),
     returnYear: z.number().int().min(1900).max(2100),
     reason: z.string().trim().min(10).max(1000),

@@ -1,0 +1,88 @@
+{
+  "baseline": "d3e047060a3cc9a23a42d55bd0cc85e97737191c",
+  "product_commit": "2c774997591cc33dcdc1ba3ec65dcf26aaaafeed",
+  "files_sha256": {
+    "src/features/documents/document-recovery-panel.tsx": "919dabced33e71963bd22c702877f6167b08602881b1105f1a7162782a98c9a4",
+    "src/features/documents/document-recovery-panel.test.tsx": "6220ee4b2421130eb826355624e1ef8de61bf2d3eb98a37acd246cf4780552d3",
+    "src/features/documents/server-fns.ts": "20bb83086b1729fcde047700194cd531cc516edb351bc13f8933536f51d027b8",
+    "src/features/documents/server-fns.test.ts": "00cd5fcbd3e3d57080de37d907c3cd8c053fc9b6e66538cc2e4c78c8114aeb7e"
+  },
+  "checks": {
+    "red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/documents/document-recovery-panel.test.tsx src/features/documents/server-fns.test.ts",
+      "exit": 1,
+      "log": "red.txt",
+      "failed": 15,
+      "passed": 33,
+      "files": 2
+    },
+    "targeted": {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/documents/document-recovery-panel.test.tsx src/features/documents/server-fns.test.ts src/routes/-documents-search.interaction.test.tsx src/routes/-documents-production-data.test.tsx",
+      "exit": 0,
+      "log": "targeted.txt",
+      "passed": 85,
+      "files": 4
+    },
+    "unit": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "log": "unit.txt",
+      "passed": 2890,
+      "files": 290
+    },
+    "unit-interrupted": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 143,
+      "log": "unit-interrupted.txt",
+      "status": "Deliberately stopped for test typing corrections; not completed acceptance"
+    },
+    "typecheck-initial": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 2,
+      "log": "typecheck-initial.txt",
+      "status": "Two test-only mock typing errors corrected using vi.mocked"
+    },
+    "typecheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    "lint": {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/documents/document-recovery-panel.tsx src/features/documents/document-recovery-panel.test.tsx src/features/documents/server-fns.ts src/features/documents/server-fns.test.ts",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    "format": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/documents/document-recovery-panel.tsx src/features/documents/document-recovery-panel.test.tsx src/features/documents/server-fns.ts src/features/documents/server-fns.test.ts",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  },
+  "new_test_cases": 17,
+  "review": "Read-only focused review: no important findings. Later test-only vi.mocked typing corrections and no-ID assertions did not change reviewed product source.",
+  "scope": "Unit/JSDOM mocked RPC/repository/storage boundaries only; targeted tests included in full total. Final checks ran before product commit with files matching final hashes. Evidence-only commit follows. No actual DB clients/fixtures or provider operations.",
+  "receipt_guarantee": "Current own-intent authorization and matching persisted document/version lineage only; does not prove object presence, scan safety or approval.",
+  "remaining_upload_scope": [
+    "Lost intent creation response without known intent ID",
+    "Durable attempt identity/reload recovery",
+    "Real Auth/HTTP/RLS/storage/scan and complete journey verification"
+  ],
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "not_performed": [
+    "build",
+    "DB integration",
+    "hosted CI acceptance",
+    "Native execution",
+    "deployment/promotion",
+    "production Vercel/Neon changes"
+  ]
+}

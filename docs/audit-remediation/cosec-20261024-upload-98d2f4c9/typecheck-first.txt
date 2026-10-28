@@ -1,0 +1,39 @@
+src/features/documents/server-fns.ts(234,5): error TS2775: Assertions require every name in the call target to be declared with an explicit type annotation.
+src/features/documents/upload-resume.integration.test.ts(589,9): error TS2322: Type 'PrivateDocument | null' is not assignable to type 'PrivateDocument | undefined'.
+  Type 'null' is not assignable to type 'PrivateDocument | undefined'.
+src/features/documents/upload-resume.integration.test.ts(593,23): error TS18048: 'committedDocument' is possibly 'undefined'.
+src/features/documents/upload-resume.integration.test.ts(594,22): error TS18048: 'committedDocument' is possibly 'undefined'.
+src/features/documents/upload-resume.integration.test.ts(604,12): error TS18047: 'replay' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(605,12): error TS18047: 'replay' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(612,19): error TS18047: 'replay' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(613,18): error TS18047: 'replay' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(627,14): error TS18047: 'lateReplay' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(628,14): error TS18047: 'lateReplay' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(633,21): error TS18047: 'lateReplay' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(634,20): error TS18047: 'lateReplay' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(749,12): error TS2531: Object is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(749,44): error TS2531: Object is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(750,12): error TS2531: Object is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(750,58): error TS2531: Object is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(752,12): error TS18047: 'concurrentDocument' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(755,7): error TS2345: Argument of type 'PrivateDocument | null' is not assignable to parameter of type 'PrivateDocument'.
+  Type 'null' is not assignable to type 'PrivateDocument'.
+src/features/documents/upload-resume.integration.test.ts(766,12): error TS18047: 'concurrentReplay' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(766,38): error TS18047: 'concurrentDocument' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(767,12): error TS18047: 'concurrentReplay' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(767,52): error TS18047: 'concurrentDocument' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(772,19): error TS18047: 'concurrentDocument' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(773,18): error TS18047: 'concurrentDocument' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(805,12): error TS18047: 'additive' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(806,12): error TS18047: 'additive' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(858,78): error TS18047: 'additive' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(910,25): error TS18047: 'concurrentDocument' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(910,59): error TS18047: 'concurrentDocument' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(911,23): error TS18047: 'additive' is possibly 'null'.
+src/features/documents/upload-resume.integration.test.ts(911,47): error TS18047: 'additive' is possibly 'null'.
+src/features/whatsapp/intake-repository.ts(319,64): error TS18047: 'document' is possibly 'null'.
+src/features/whatsapp/intake-repository.ts(320,366): error TS18047: 'document' is possibly 'null'.
+src/features/whatsapp/intake-repository.ts(320,398): error TS18047: 'document' is possibly 'null'.
+src/features/whatsapp/intake-repository.ts(323,21): error TS18047: 'document' is possibly 'null'.
+src/features/whatsapp/intake-repository.ts(324,28): error TS18047: 'document' is possibly 'null'.
+src/features/whatsapp/intake-repository.ts(325,23): error TS18047: 'document' is possibly 'null'.

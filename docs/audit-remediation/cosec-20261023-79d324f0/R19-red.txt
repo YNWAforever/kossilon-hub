@@ -1,0 +1,717 @@
+
+> test
+> vitest run --configLoader runner --project unit src/features/clients/components/production-client-detail.interaction.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/clients/components/production-client-detail.interaction.test.tsx (13 tests | 2 failed) 2857ms
+     × shows unfinished work and scoped case links for all three businesses 1046ms
+     × keeps unsafe metadata visible with a reason and offers safe version-bound file actions 1017ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/clients/components/production-client-detail.interaction.test.tsx > production client detail > shows unfinished work and scoped case links for all three businesses
+TestingLibraryElementError: Unable to find an element with the text: 未完成案件：2. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            Acme Company Limited
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            CR CR1234567 · BR BR7654321
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+            type="button"
+          >
+            編輯客戶
+          </button>
+        </div>
+      </div>
+      <section
+        class="grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-3"
+      >
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            狀態
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-green-soft text-status-green-text ring-status-green/20"
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full bg-status-green"
+              />
+              有效
+            </span>
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            負責同事
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            Ada Chan
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            團隊
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            Team Alpha
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            成立日期
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            2020-01-15
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            周年申報基準日
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            2020-01-15
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            註冊辦事處
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            1 Harbour Road, Hong Kong
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            公司秘書
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            Kossilon Secretaries Ltd
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            最近付款
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full bg-status-yellow"
+              />
+              待付款
+            </span>
+          </div>
+        </div>
+      </section>
+      <section
+        class="rounded-lg border bg-card p-4"
+      >
+        <div
+          class="mb-3 flex items-center justify-between"
+        >
+          <h2
+            class="text-sm font-semibold"
+          >
+            高級人員
+          </h2>
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:s...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            Acme Company Limited
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            CR CR1234567 · BR BR7654321
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+            type="button"
+          >
+            編輯客戶
+          </button>
+        </div>
+      </div>
+      <section
+        class="grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-3"
+      >
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            狀態
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-green-soft text-status-green-text ring-status-green/20"
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full bg-status-green"
+              />
+              有效
+            </span>
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            負責同事
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            Ada Chan
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            團隊
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            Team Alpha
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            成立日期
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            2020-01-15
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            周年申報基準日
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            2020-01-15
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            註冊辦事處
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            1 Harbour Road, Hong Kong
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            公司秘書
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            Kossilon Secretaries Ltd
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            最近付款
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full bg-status-yellow"
+              />
+              待付款
+            </span>
+          </div>
+        </div>
+      </section>
+      <section
+        class="rounded-lg border bg-card p-4"
+      >
+        <div
+          class="mb-3 flex items-center justify-between"
+        >
+          <h2
+            class="text-sm font-semibold"
+          >
+            高級人員
+          </h2>
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:s...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/clients/components/production-client-detail.interaction.test.tsx:357:25
+    355|     renderDetail();
+    356|     await screen.findByText("Acme Company Limited");
+    357|     expect(await screen.findByText("未完成案件：2" )).toBeTruthy();
+       |                         ^
+    358|     expect(screen.getByRole("link", { name: "開啟周年申報案件 2026" })).toBeTr…
+    359|     expect(screen.getByRole("link", { name: "開啟公司註冊案件 Acme intake" }))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| src/features/clients/components/production-client-detail.interaction.test.tsx > production client detail > keeps unsafe metadata visible with a reason and offers safe version-bound file actions
+TestingLibraryElementError: Unable to find role="button" and name "預覽 safe-proof.pdf"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            Acme Company Limited
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            CR CR1234567 · BR BR7654321
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+            type="button"
+          >
+            編輯客戶
+          </button>
+        </div>
+      </div>
+      <section
+        class="grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-3"
+      >
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            狀態
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-green-soft text-status-green-text ring-status-green/20"
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full bg-status-green"
+              />
+              有效
+            </span>
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            負責同事
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            Ada Chan
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            團隊
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            Team Alpha
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            成立日期
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            2020-01-15
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            周年申報基準日
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            2020-01-15
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            註冊辦事處
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            1 Harbour Road, Hong Kong
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            公司秘書
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            Kossilon Secretaries Ltd
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            最近付款
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full bg-status-yellow"
+              />
+              待付款
+            </span>
+          </div>
+        </div>
+      </section>
+      <section
+        class="rounded-lg border bg-card p-4"
+      >
+        <div
+          class="mb-3 flex items-center justify-between"
+        >
+          <h2
+            class="text-sm font-semibold"
+          >
+            高級人員
+          </h2>
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:s...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            Acme Company Limited
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            CR CR1234567 · BR BR7654321
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+            type="button"
+          >
+            編輯客戶
+          </button>
+        </div>
+      </div>
+      <section
+        class="grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-3"
+      >
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            狀態
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-green-soft text-status-green-text ring-status-green/20"
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full bg-status-green"
+              />
+              有效
+            </span>
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            負責同事
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            Ada Chan
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            團隊
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            Team Alpha
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            成立日期
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            2020-01-15
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            周年申報基準日
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            2020-01-15
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            註冊辦事處
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            1 Harbour Road, Hong Kong
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            公司秘書
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            Kossilon Secretaries Ltd
+          </div>
+        </div>
+        <div>
+          <p
+            class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            最近付款
+          </p>
+          <div
+            class="mt-1 text-sm"
+          >
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-status-yellow-soft text-status-yellow-text ring-status-yellow/20"
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full bg-status-yellow"
+              />
+              待付款
+            </span>
+          </div>
+        </div>
+      </section>
+      <section
+        class="rounded-lg border bg-card p-4"
+      >
+        <div
+          class="mb-3 flex items-center justify-between"
+        >
+          <h2
+            class="text-sm font-semibold"
+          >
+            高級人員
+          </h2>
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:s...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/clients/components/production-client-detail.interaction.test.tsx:368:25
+    366|     serverFns.documents.mockResolvedValue({ documents: [safe, { ...saf…
+    367|     renderDetail();
+    368|     expect(await screen.findByRole("button", { name: "預覽 safe-proof.pd…
+       |                         ^
+    369|     expect(screen.getByText("legacy.pdf")).toBeTruthy();
+    370|     expect(screen.queryByRole("button", { name: "預覽 legacy.pdf" })).to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed (13)
+   Start at  05:02:20
+   Duration  5.53s (transform 414ms, setup 0ms, import 919ms, tests 2.86s, environment 1.38s)
+

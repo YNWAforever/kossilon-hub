@@ -1,0 +1,99 @@
+// UC164 local browser adapter: real routes/components; synthetic Staff context and RPC.
+// No production root/auth client, native application HTTP, DB, or RLS is exercised.
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
+import {createRootRouteWithContext,createRouter,createBrowserHistory,Outlet,RouterProvider} from '@tanstack/react-router';
+import {Route as ChangeRoute} from '/src/routes/corporate-changes.tsx';
+import {Route as ChangeDetail} from '/src/routes/corporate-changes.$id.tsx';
+
+const run='cosec-20261024-missing-d74e4679';
+const rootPath='C:/Users/laich/Documents/kossilon-hub/cosec-20261023';
+const response=await fetch('/__uc164_identity',{cache:'no-store',redirect:'error'});
+if(!response.ok)throw Error('UC164 local identity unavailable; fixtures not initialized');
+const identity=await response.json();
+if(identity.run_id!==run||identity.root!==rootPath||identity.origin!==location.origin||
+  location.hostname!=='127.0.0.1'||String(identity.port)!==location.port||
+  identity.branch!=='codex/cosec-20261023'||identity.base!=='c9d783478572b1e11331018d46e09e20f427b832'||
+  !identity.instance||identity.transport!=='local-memory-sessionStorage-stub'){
+  throw Error('Wrong UC164 target; fixtures not initialized');
+}
+
+// All fixture construction and sessionStorage access are AFTER the identity gate.
+const prefix=`${run}:${identity.instance}:`;
+const ids=['d74e4679-0164-4164-8164-000000000001','d74e4679-0164-4164-8164-000000000002'];
+const missingId='d74e4679-0164-4164-8164-000000000099';
+const privateMarker='UC164_PRIVATE_CHECKLIST_d74e4679';
+const rawMarker='UC164_RAW_ERROR_d74e4679';
+const documentId=crypto.randomUUID(),queryClientId=crypto.randomUUID();
+const boot=Number(sessionStorage.getItem(prefix+'boot')||'0')+1;
+sessionStorage.setItem(prefix+'boot',String(boot));
+const record=(id,index)=>({
+  id,companyId:'d74e4679-0164-4164-8164-000000000030',changeType:'address_change',
+  status:'Requested',ownerId:'d74e4679-0164-4164-8164-000000000010',quotedFee:1640+index,
+  currentNameEn:null,currentNameZh:null,newNameEn:null,newNameZh:null,
+  transferorShareholdingId:null,transfereeShareholdingId:null,transfereeNewShareholderName:null,
+  transfereeNewShareholderAddress:null,sharesTransferred:null,consideration:null,stampDutyAmount:null,
+  officerId:null,officerAction:null,newOfficerType:null,newOfficerName:null,
+  newOfficerIdentificationType:null,newOfficerIdentificationNumber:null,newOfficerAddress:null,
+  effectiveDate:null,currentRegisteredOffice:null,newRegisteredOffice:`UC164 synthetic office ${index}`,
+  completedAt:null,createdAt:'2026-10-24T00:00:00Z',updatedAt:'2026-10-24T00:00:00Z',
+  checklistItems:[{id:`d74e4679-0164-4164-8164-00000000004${index}`,requestId:id,
+    itemLabel:privateMarker,required:true,status:'Missing',note:null,receivedAt:null,verifiedAt:null}],
+});
+const saved=JSON.parse(sessionStorage.getItem(prefix+'records')||'null')||
+  Object.fromEntries(ids.map((id,index)=>[id,record(id,index+1)]));
+const w=window.__uc164={
+  identity,ids,missingId,privateMarker,rawMarker,documentId,queryClientId,boot,
+  nativeAuth:false,nativeApplicationHttp:false,nativeDb:false,nativeRls:false,
+  saved,reads:JSON.parse(sessionStorage.getItem(prefix+'reads')||'[]'),listReads:[],
+  mode:'normal',hold:false,pending:[],settled:0,violations:[],ready:false,
+  forbid(boundary){w.violations.push(boundary);throw Error(`UC164 unstubbed boundary: ${boundary}`)},
+  release(){w.hold=false;w.pending.splice(0).forEach(p=>p.resolve())},
+  bump(id){
+    if(!ids.includes(id))return w.forbid('write outside own synthetic fixture IDs');
+    saved[id].quotedFee=9164;
+    sessionStorage.setItem(prefix+'records',JSON.stringify(saved));
+  },
+  list(query){
+    w.listReads.push(structuredClone(query??{}));
+    // Deliberately no native pagination/authorization claim: this is a local list adapter.
+    return Promise.resolve({items:Object.values(saved).map((row,index)=>({
+      ...structuredClone(row),companyName:`QA UC164 ${index+1}`,ownerName:'UC164 synthetic Staff A',
+    })),nextCursor:null});
+  },
+  async get(id){
+    if(!ids.includes(id)&&id!==missingId)return w.forbid('detail read outside own UUID fixture IDs');
+    const mode=w.mode;
+    const read={sequence:w.reads.length+1,id,mode,documentId,queryClientId,boot,outcome:'pending'};
+    w.reads.push(read);
+    const persist=()=>sessionStorage.setItem(prefix+'reads',JSON.stringify(w.reads));
+    persist();
+    // Capture the response BEFORE holding it, so late-result assertions have a known value.
+    const result=structuredClone(saved[id]??null);
+    try{
+      if(w.hold)await new Promise(resolve=>w.pending.push({id,sequence:read.sequence,resolve}));
+      if(mode==='denied'||mode==='error'){
+        read.outcome=mode==='denied'?'synthetic-403':'synthetic-503';
+        const code=mode==='denied'?403:503;
+        throw Error(`${code} ${rawMarker} synthetic_internal_table synthetic_staff_email@example.invalid ${privateMarker}`);
+      }
+      read.outcome=mode==='missing'||result===null?'null':'record';
+      return mode==='missing'?null:result;
+    }finally{w.settled++;persist()}
+  },
+};
+const client=new QueryClient({defaultOptions:{queries:{
+  retry:false,gcTime:0,refetchOnWindowFocus:false,refetchOnReconnect:false,
+}}});
+const root=createRootRouteWithContext()({component:()=>React.createElement(
+  QueryClientProvider,{client},React.createElement(Outlet))});
+const changes=ChangeRoute.update({getParentRoute:()=>root,id:'/corporate-changes',path:'/corporate-changes'});
+const detail=ChangeDetail.update({getParentRoute:()=>changes,id:'/$id',path:'/$id'});
+const actor={authUserId:'UC164-d74e4679-local-stub-Staff-A',
+  userId:'d74e4679-0164-4164-8164-000000000010',role:'Staff',
+  teamId:'d74e4679-0164-4164-8164-000000000020',active:true};
+w.router=createRouter({routeTree:root.addChildren([changes.addChildren([detail])]),
+  history:createBrowserHistory(),context:{queryClient:client,actor,dataMode:'production'},defaultPreload:false});
+createRoot(document.getElementById('app')).render(React.createElement(RouterProvider,{router:w.router}));
+w.ready=true;

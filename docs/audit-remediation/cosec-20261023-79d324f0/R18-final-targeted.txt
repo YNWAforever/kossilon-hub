@@ -1,0 +1,15 @@
+
+> test
+> vitest run --project unit src/components/bulk-selection-toolbar.test.tsx src/features/bulk-operations/snapshot-scope.unit.test.ts src/features/bulk-operations/membership.test.ts src/features/bulk-operations/server-fns.test.ts src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+
+ Test Files  6 passed (6)
+      Tests  37 passed (37)
+   Start at  05:01:07
+   Duration  15.24s (transform 1.63s, setup 0ms, import 4.99s, tests 3.62s, environment 4.77s)
+

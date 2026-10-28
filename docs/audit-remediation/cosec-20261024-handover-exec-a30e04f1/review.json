@@ -1,0 +1,13 @@
+{
+  "scope": "UC186 local case/work handover, lifecycle admission and recovery; not native UAT",
+  "reviewer": "Rawls; read-only final safety review, no test/runtime launches",
+  "findings": [
+    {"priority":"P1","finding":"Superseded UI callback erased a newer pending operation","evidence":"targeted-delayed-red-ready.txt; panel-delayed-red.snapshot; panel-delayed-test.snapshot","fix":"Generation and operation ownership guards before reconciliation/storage changes; refuse overwriting another stored command","verification":"targeted-delayed-green.txt and unit-final.txt"},
+    {"priority":"P2","finding":"Same-team work could reference another company's parent","evidence":"db/test-green-r2.txt; test-company-red.snapshot; handover-company-red.snapshot","fix":"Company ID and case-kind qualified parent/work relationship checks","verification":"db/test-green-r4.txt"},
+    {"priority":"P2","finding":"Owner reassignment cleared blocked state during handover","evidence":"db/test-green-r3.txt; test-status-red.snapshot; handover-status-red.snapshot","fix":"Handover-only preserveStatus; normal assignment behavior unchanged","verification":"db/test-green-r4.txt"},
+    {"priority":"P2","finding":"Generic rejection helper could count an unexpected error as correct denial","fix":"39 specific message oracles, exact409/503 codes, injection-fired and actual-update flags; full row/xmin/audit assertions retained","verification":"db/test-green-r4.txt"}
+  ],
+  "remaining_actionable_scoped_findings":0,
+  "unverified": ["Native Auth/session/HTTP/RLS/browser", "deployed UAT and actual account/provider lifecycle", "whole employee daily journey, approved calendar/scheduler/recovery/performance"],
+  "release_gate":"NO_GO"
+}

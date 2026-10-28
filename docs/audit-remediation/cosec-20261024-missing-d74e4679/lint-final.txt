@@ -1,0 +1,11 @@
+
+C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\routes\-missing-record.interaction.test.tsx
+  151:50  error  Replace `()·=>·new·Promise((resolve)·=>·(release·=·resolve))` with `⏎······()·=>·new·Promise((resolve)·=>·(release·=·resolve)),⏎····`  prettier/prettier
+  202:50  error  Replace `()·=>·new·Promise((resolve)·=>·(release·=·resolve))` with `⏎······()·=>·new·Promise((resolve)·=>·(release·=·resolve)),⏎····`  prettier/prettier
+
+C:\Users\laich\Documents\kossilon-hub\cosec-20261023\src\routes\work-queue.tsx
+  49:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+✖ 3 problems (2 errors, 1 warning)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

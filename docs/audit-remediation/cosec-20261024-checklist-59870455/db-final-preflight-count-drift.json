@@ -1,0 +1,10 @@
+{
+  "observed_utc": "2026-10-23T20:33:26Z",
+  "source": "actual tool stdout before provision/client",
+  "prior_expected_count": 313,
+  "actual_count": 314,
+  "stage": "metadata preflight before runner provision",
+  "client_started": false,
+  "container_created": false,
+  "action": "preserve all current IDs and refresh exact baseline; do not remove unknown new resource"
+}

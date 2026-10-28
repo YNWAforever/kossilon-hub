@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+const root=resolve(import.meta.dirname,'../../..'),attempt=process.argv[2];
+assert.equal(process.cwd(),root);assert.match(attempt??'',/^[a-z0-9-]+$/);
+const git=(...args)=>execFileSync('git',args,{cwd:root,windowsHide:true}).toString();
+const paths=[...new Set(git('ls-files','--cached','--others','--exclude-standard','src','package.json','package-lock.json','bun.lock','vite.config.ts','tsconfig.json').trim().split(/\r?\n/))].sort();
+const files=paths.map(path=>{const b=readFileSync(join(root,path));return{path,bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')}});
+writeFileSync(join(import.meta.dirname,`source-${attempt}.json`),JSON.stringify({head:git('rev-parse','HEAD').trim(),files},null,2)+'\n',{flag:'wx'});
+console.log(`Frozen ${files.length} source/config files.`);

@@ -1,0 +1,37 @@
+{
+  "rows": 184,
+  "original_types": {
+    "R": 15,
+    "F": 35,
+    "UC": 100,
+    "LA": 34
+  },
+  "immutable_fields": [
+    "record_type",
+    "id",
+    "title",
+    "historical_result",
+    "related_finding_ids",
+    "related_task_ids",
+    "related_uc_ids",
+    "related_la_ids",
+    "native_result",
+    "source_file",
+    "original_row_json"
+  ],
+  "all_immutable_fields_equal": true,
+  "scoped_rows": [
+    "F19",
+    "R15",
+    "R22",
+    "R26",
+    "UC160"
+  ],
+  "native": {
+    "NOT_RUN": 114,
+    "BLOCKED": 70
+  },
+  "native_pass": 0,
+  "evidence_links_resolved": 1173,
+  "release_gate": "NO_GO"
+}

@@ -1,0 +1,73 @@
+{
+  "run_id": "cosec-20261024-missing-d74e4679",
+  "attempt": "green1",
+  "instance": "abe4ccad-e4a2-4761-8cf0-478a13eac798",
+  "root": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+  "origin": "http://127.0.0.1:5173",
+  "host": "127.0.0.1",
+  "port": 5173,
+  "branch": "codex/cosec-20261023",
+  "base": "c9d783478572b1e11331018d46e09e20f427b832",
+  "head": "c9d783478572b1e11331018d46e09e20f427b832",
+  "transport": "local-memory-sessionStorage-stub",
+  "started": "2026-10-24T05:13:39.755Z",
+  "configFile": false,
+  "envFile": false,
+  "envDir": false,
+  "sourceHashes": {
+    "src/routes/corporate-changes.tsx": "4423afd278142ca42564aa2b0e6149a0c951f39f9ffd20b80207633d5a410c38",
+    "src/routes/corporate-changes.$id.tsx": "8a18469afd7d1b4f4b74ed913b027bb1f3392638492836851100fc0c12c7e3f1",
+    "src/features/corporate-changes/components/production-corporate-change-detail.tsx": "3e743523787aff0c55f157b4a5c59a3fe2cbd01c9cea44a80512e4afc480ce8e",
+    "src/features/corporate-changes/components/production-corporate-change-list.tsx": "f337f1abb2fa23be9c7cda111938b1007576ee908e54526d90d9c6579474d6a3",
+    "src/features/incorporation/components/case-list-controls.tsx": "5befc3b19d8f9e9ec5d327cdc1d18d81b0122e07bc30f0e5c50d1bacb7e5a220",
+    "src/features/incorporation/case-list-query.ts": "3fff400d7bec324e3767b49f6c095a7d2e515919a1af9082ad11a8def7ee650e",
+    "src/features/annual-return/daily-view-state.ts": "7e9ab06bdb0833a360e4b5761128f46ab627a5a5f6ae33ac51e21941e842e6af",
+    "src/features/auth/route-guard.ts": "b4e7020162c089b4e8145666147ead762498b3a544a763d126b99f1156d41838",
+    "src/lib/entity-id.ts": "de5b11e4caae0f554dacc4eb03220e22e878f7ae2ef15de10046f357d58aebb8",
+    "src/components/record-unavailable.tsx": "0ed9d431c1d9aede02bc5769e87a540a2da0cd8a80296a40fd332cd248d2cc9f",
+    "package.json": "a59dd2177080ce3e77cb9414948f0d030c58bfeac96150a217cfd20784275b49"
+  },
+  "effectiveHashes": {
+    "src/routes/corporate-changes.tsx": "4423afd278142ca42564aa2b0e6149a0c951f39f9ffd20b80207633d5a410c38",
+    "src/routes/corporate-changes.$id.tsx": "8a18469afd7d1b4f4b74ed913b027bb1f3392638492836851100fc0c12c7e3f1",
+    "src/features/corporate-changes/components/production-corporate-change-detail.tsx": "3e743523787aff0c55f157b4a5c59a3fe2cbd01c9cea44a80512e4afc480ce8e",
+    "src/features/corporate-changes/components/production-corporate-change-list.tsx": "f337f1abb2fa23be9c7cda111938b1007576ee908e54526d90d9c6579474d6a3",
+    "src/features/incorporation/components/case-list-controls.tsx": "5befc3b19d8f9e9ec5d327cdc1d18d81b0122e07bc30f0e5c50d1bacb7e5a220",
+    "src/features/incorporation/case-list-query.ts": "3fff400d7bec324e3767b49f6c095a7d2e515919a1af9082ad11a8def7ee650e",
+    "src/features/annual-return/daily-view-state.ts": "7e9ab06bdb0833a360e4b5761128f46ab627a5a5f6ae33ac51e21941e842e6af",
+    "src/features/auth/route-guard.ts": "b4e7020162c089b4e8145666147ead762498b3a544a763d126b99f1156d41838",
+    "src/lib/entity-id.ts": "de5b11e4caae0f554dacc4eb03220e22e878f7ae2ef15de10046f357d58aebb8",
+    "src/components/record-unavailable.tsx": "0ed9d431c1d9aede02bc5769e87a540a2da0cd8a80296a40fd332cd248d2cc9f",
+    "package.json": "a59dd2177080ce3e77cb9414948f0d030c58bfeac96150a217cfd20784275b49"
+  },
+  "harnessHashes": {
+    "browser-missing.mjs": "cbcf8fcfd04ad2a4a64900c2685dc2a80962482c766906017a64973f6864d867",
+    "browser-entry.tsx.snapshot": "4dce26610e5c81a4016be36d79021f93e2642b91fd278cecbcd6e391da3bdade",
+    "detail-before.tsx.snapshot": "8102208bae797c18dc0458aa1dad65ef45650e2c381d364d31660647cfc07282"
+  },
+  "fixture_ids": [
+    "d74e4679-0164-4164-8164-000000000001",
+    "d74e4679-0164-4164-8164-000000000002",
+    "d74e4679-0164-4164-8164-000000000099"
+  ],
+  "historical_overlay": null,
+  "expected_baseline_failure": null,
+  "real_layers": [
+    "Edge",
+    "Vite loopback asset HTTP",
+    "TanStack Router",
+    "QueryClient",
+    "production route/detail/list components"
+  ],
+  "stubbed_layers": [
+    "root Staff auth context",
+    "RPC responses",
+    "company picker dialog",
+    "sessionStorage fixture persistence"
+  ],
+  "native_application_http": "BLOCKED",
+  "native_auth": "BLOCKED",
+  "native_db": "BLOCKED",
+  "native_rls": "BLOCKED",
+  "resource_gate": "Parent must check before invocation; this harness does not grant resource approval"
+}

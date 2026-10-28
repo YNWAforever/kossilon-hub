@@ -11,7 +11,7 @@ const spanSchema = z
   .strict();
 const schema = z
   .object({
-    documentVersionId: z.string().uuid(),
+    documentVersionId: z.string().guid(),
     sha256: z.string().regex(/^[a-f0-9]{64}$/),
     method: z.enum(["text-layer", "ocr", "manual"]),
     pageCount: z.number().int().min(0).max(200).nullable(),

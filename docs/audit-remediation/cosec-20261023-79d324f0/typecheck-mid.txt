@@ -1,0 +1,8 @@
+
+> typecheck
+> tsc --noEmit
+
+src/routes/-clients-url-context.test.tsx(158,12): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ status?: "active" | "all" | "inactive" | undefined; team?: string | undefined; cursor?: string | undefined; q?: string | undefined; includeFixtures?: boolean | undefined; returnTo?: string | undefined; }'.
+  No index signature with a parameter of type 'string' was found on type '{ status?: "active" | "all" | "inactive" | undefined; team?: string | undefined; cursor?: string | undefined; q?: string | undefined; includeFixtures?: boolean | undefined; returnTo?: string | undefined; }'.
+src/routes/-clients-url-context.test.tsx(177,42): error TS2339: Property 'q' does not exist on type 'AnySchema'.
+src/routes/-clients-url-context.test.tsx(178,42): error TS2339: Property 'cursor' does not exist on type 'AnySchema'.

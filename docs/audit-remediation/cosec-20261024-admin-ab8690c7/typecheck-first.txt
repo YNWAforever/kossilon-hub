@@ -1,0 +1,4 @@
+src/features/admin/last-admin.integration.test.ts(223,9): error TS2322: Type 'Promise<[PromiseSettledResult<{ userId: string; expectedVersion: number; }>, PromiseSettledResult<{ userId: string; expectedVersion: number; }>]>' is not assignable to type 'Promise<[PromiseSettledResult<{ userId: string; expectedVersion: number; }>]>'.
+  Type '[PromiseSettledResult<{ userId: string; expectedVersion: number; }>, PromiseSettledResult<{ userId: string; expectedVersion: number; }>]' is not assignable to type '[PromiseSettledResult<{ userId: string; expectedVersion: number; }>]'.
+    Source has 2 element(s) but target allows only 1.
+src/features/admin/last-admin.integration.test.ts(258,22): error TS2493: Tuple type '[PromiseSettledResult<{ userId: string; expectedVersion: number; }>]' of length '1' has no element at index '1'.

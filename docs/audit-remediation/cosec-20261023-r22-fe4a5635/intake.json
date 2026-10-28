@@ -1,0 +1,14 @@
+{
+  "run_id": "cosec-20261023-r22-fe4a5635",
+  "utc": "2026-10-23T11:03:07.5466855Z",
+  "head": "09d57c13761f73ae55064a59936537dc74d0738a",
+  "branch": "codex/cosec-20261023",
+  "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "remote_main": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "native_auth": false,
+  "scope": "R22 local demo full390 and real browser zoom proof; no business writes",
+  "graph": "Existing private-repo indexing rejection retained; no upload retry; read known local source paths",
+  "env_files": [
+    ".env.example"
+  ]
+}

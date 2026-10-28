@@ -1,0 +1,102 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/bulk-operations/result-export.test.ts (13 tests | 6 failed) 42ms
+     ✓ keeps unpaid/partial/full values and currency through multiple pages and CSV quoting 8ms
+     × preserves a redacted scope row as forbidden, without resource identity or private output 13ms
+     × refuses mixed saved updatedAt across pages, and allows a fresh retry 7ms
+     × refuses mixed saved payloadHash across pages, and allows a fresh retry 2ms
+     × refuses mixed saved total across pages, and allows a fresh retry 2ms
+     × refuses mixed saved jobId across pages, and allows a fresh retry 1ms
+     × refuses incomplete saved totals instead of producing a plausible partial file 2ms
+     ✓ retains a header for a genuinely empty scope 1ms
+     ✓ refuses unauthorized actor before read: {"authUserId":"synthetic-UC157","userId":"20000000-0000-4000-8000-000000000001","role":"Staff","teamId":null,"active":true} 2ms
+     ✓ refuses unauthorized actor before read: {"authUserId":"synthetic-UC157","userId":"20000000-0000-4000-8000-000000000001","role":"Client","teamId":null,"active":true} 1ms
+     ✓ refuses unauthorized actor before read: {"authUserId":"synthetic-UC157","userId":"20000000-0000-4000-8000-000000000001","role":"Admin","teamId":null,"active":false} 0ms
+     ✓ refuses unauthorized actor before read: {"authUserId":"synthetic-UC157","userId":null,"role":"Admin","teamId":null,"active":true} 0ms
+     ✓ refuses unauthorized actor before read: {"authUserId":"synthetic-UC157","userId":"20000000-0000-4000-8000-000000000001","role":"Manager","teamId":null,"active":true} 0ms
+ ✓ |unit| src/features/bulk-operations/server-fns.test.ts (5 tests) 7ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  6 failed | 12 passed (18)
+   Start at  02:36:11
+   Duration  4.42s (transform 386ms, setup 0ms, import 3.28s, tests 49ms, environment 0ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/bulk-operations/result-export.test.ts > UC157 persisted bulk export command (injected read boundary) > preserves a redacted scope row as forbidden, without resource identity or private output
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ src/features/bulk-operations/result-export.test.ts:44:29
+     42|     const getJob=vi.fn().mockResolvedValue(page([item(0),hidden]));
+     43|     const result=await exportBulkResultsForActor(actor,{jobId},{getJob…
+     44|     expect(result.exported).toBe(2);
+       |                             ^
+     45|     expect(readCsv(result.csv)[2]).toEqual(["","forbidden","access_den…
+     46|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |unit| src/features/bulk-operations/result-export.test.ts > UC157 persisted bulk export command (injected read boundary) > refuses mixed saved updatedAt across pages, and allows a fresh retry
+ FAIL  |unit| src/features/bulk-operations/result-export.test.ts > UC157 persisted bulk export command (injected read boundary) > refuses mixed saved payloadHash across pages, and allows a fresh retry
+ FAIL  |unit| src/features/bulk-operations/result-export.test.ts > UC157 persisted bulk export command (injected read boundary) > refuses mixed saved total across pages, and allows a fresh retry
+ FAIL  |unit| src/features/bulk-operations/result-export.test.ts > UC157 persisted bulk export command (injected read boundary) > refuses mixed saved jobId across pages, and allows a fresh retry
+AssertionError: promise resolved "{ …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "csv": "item,state,reason,attempts,output_json
++ \"40000000-0000-4000-8000-000000000001\",\"succeeded\",\"\",\"1\",\"{\"\"kind\"\":\"\"payment_list_export\"\",\"\"caseId\"\":\"\"synthetic-case\"\",\"\"companyName\"\":\"\"Synthetic, \\\"\"quoted\\\"\"\\ncompany\"\",\"\"invoiceNumber\"\":\"\"INV-0\"\",\"\"amount\"\":1800,\"\"currency\"\":\"\"HKD\"\",\"\"status\"\":\"\"Payment pending\"\",\"\"receivedAmount\"\":0,\"\"balance\"\":1800,\"\"paidAt\"\":null,\"\"approvalPerformed\"\":false}\"
++ \"40000000-0000-4000-8000-000000000002\",\"succeeded\",\"\",\"1\",\"{\"\"kind\"\":\"\"payment_list_export\"\",\"\"caseId\"\":\"\"synthetic-case\"\",\"\"companyName\"\":\"\"Synthetic, \\\"\"quoted\\\"\"\\ncompany\"\",\"\"invoiceNumber\"\":\"\"INV-1\"\",\"\"amount\"\":1800,\"\"currency\"\":\"\"HKD\"\",\"\"status\"\":\"\"Payment pending\"\",\"\"receivedAmount\"\":350.25,\"\"balance\"\":1449.75,\"\"paidAt\"\":null,\"\"approvalPerformed\"\":false}\"
++ ",
++   "exported": 2,
+  }
+
+ ❯ src/features/bulk-operations/result-export.test.ts:51:67
+     49|     const changed=page([item(1)],{total:2,[field]:field==="total"?3:"c…
+     50|     const getJob=vi.fn().mockResolvedValueOnce(first).mockResolvedValu…
+     51|     await expect(exportBulkResultsForActor(actor,{jobId},{getJob})).re…
+       |                                                                   ^
+     52|     getJob.mockResolvedValue(page([item(0),item(1)]));
+     53|     expect((await exportBulkResultsForActor(actor,{jobId},{getJob})).e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |unit| src/features/bulk-operations/result-export.test.ts > UC157 persisted bulk export command (injected read boundary) > refuses incomplete saved totals instead of producing a plausible partial file
+AssertionError: promise resolved "{ …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "csv": "item,state,reason,attempts,output_json
++ \"40000000-0000-4000-8000-000000000001\",\"succeeded\",\"\",\"1\",\"{\"\"kind\"\":\"\"payment_list_export\"\",\"\"caseId\"\":\"\"synthetic-case\"\",\"\"companyName\"\":\"\"Synthetic, \\\"\"quoted\\\"\"\\ncompany\"\",\"\"invoiceNumber\"\":\"\"INV-0\"\",\"\"amount\"\":1800,\"\"currency\"\":\"\"HKD\"\",\"\"status\"\":\"\"Payment pending\"\",\"\"receivedAmount\"\":0,\"\"balance\"\":1800,\"\"paidAt\"\":null,\"\"approvalPerformed\"\":false}\"
++ ",
++   "exported": 1,
+  }
+
+ ❯ src/features/bulk-operations/result-export.test.ts:57:67
+     55|   it("refuses incomplete saved totals instead of producing a plausible…
+     56|     const getJob=vi.fn().mockResolvedValue(page([item(0)],{total:2}));
+     57|     await expect(exportBulkResultsForActor(actor,{jobId},{getJob})).re…
+       |                                                                   ^
+     58|   });
+     59|   it("retains a header for a genuinely empty scope",async()=>{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+

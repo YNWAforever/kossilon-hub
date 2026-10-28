@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-13",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/documents/text-extraction.convention.test.ts",
+    "src/features/documents/text-extraction.test.ts",
+    "src/features/documents/upload-resume.test.ts",
+    "src/features/documents/upload-retry.test.ts",
+    "src/features/documents/versions.test.ts",
+    "src/features/incorporation/authorization.test.ts",
+    "src/features/incorporation/case-list-page.test.ts",
+    "src/features/incorporation/checklist-command.test.ts",
+    "src/features/incorporation/components/case-lists.test.tsx",
+    "src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx",
+    "src/features/incorporation/components/production-incorporation-detail.test.tsx",
+    "src/features/incorporation/read.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/features/documents/text-extraction.convention.test.ts",
+    "src/features/documents/text-extraction.test.ts",
+    "src/features/documents/upload-resume.test.ts",
+    "src/features/documents/upload-retry.test.ts",
+    "src/features/documents/versions.test.ts",
+    "src/features/incorporation/authorization.test.ts",
+    "src/features/incorporation/case-list-page.test.ts",
+    "src/features/incorporation/checklist-command.test.ts",
+    "src/features/incorporation/components/case-lists.test.tsx",
+    "src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx",
+    "src/features/incorporation/components/production-incorporation-detail.test.tsx",
+    "src/features/incorporation/read.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/features/incorporation/components/production-incorporation-checklist.interaction.test.tsx",
+      "tests": 9
+    },
+    {
+      "path": "src/features/documents/text-extraction.test.ts",
+      "tests": 21
+    },
+    {
+      "path": "src/features/incorporation/components/case-lists.test.tsx",
+      "tests": 8
+    },
+    {
+      "path": "src/features/documents/text-extraction.convention.test.ts",
+      "tests": 7
+    },
+    {
+      "path": "src/features/incorporation/components/production-incorporation-detail.test.tsx",
+      "tests": 4
+    },
+    {
+      "path": "src/features/incorporation/case-list-page.test.ts",
+      "tests": 25
+    },
+    {
+      "path": "src/features/documents/upload-resume.test.ts",
+      "tests": 7
+    },
+    {
+      "path": "src/features/documents/upload-retry.test.ts",
+      "tests": 36
+    },
+    {
+      "path": "src/features/incorporation/checklist-command.test.ts",
+      "tests": 27
+    },
+    {
+      "path": "src/features/incorporation/read.test.ts",
+      "tests": 15
+    },
+    {
+      "path": "src/features/incorporation/authorization.test.ts",
+      "tests": 9
+    },
+    {
+      "path": "src/features/documents/versions.test.ts",
+      "tests": 20
+    }
+  ]
+}

@@ -1,0 +1,1241 @@
+
+> test
+> vitest run --project unit src/features/annual-return/components/payment-pagination.test.tsx --maxWorkers 1 --reporter=dot
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+·xxxxxxxxxxxxxxxxxx
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > F15 / UC109: a page1 proof for case201 is actionable without paging unrelated cases
+TestingLibraryElementError: Unable to find role="button" and name "儲存憑證資料"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+      <button
+        class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+        type="button"
+      >
+        載入更多案件
+      </button>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+      <button
+        class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+        type="button"
+      >
+        載入更多案件
+      </button>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:34:23
+     32| it("F15 / UC109: a page1 proof for case201 is actionable without pagin…
+     33|   f.cases.mockResolvedValue({ cases: Array.from({ length: 200 }, (_, i…
+     34|   expect(await screen.findByRole("button", { name: "儲存憑證資料" })).toBeTr…
+       |                       ^
+     35|   expect(screen.getByRole("link", { name: "QA Case 201" }).getAttribut…
+     36|   expect(screen.queryByText(/先載入所屬案件資料；暫不可審核/)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > proof101 remains reachable without loading case pages
+TypeError: Expected container to be an Element, a Document or a DocumentFragment but got null.
+ ❯ checkContainerType node_modules/@testing-library/dom/dist/helpers.js:61:11
+ ❯ queryAllByRole node_modules/@testing-library/dom/dist/queries/role.js:34:35
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:74:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:45:44
+     43|   fireEvent.click(await screen.findByRole("button", { name: "載入更多付款憑證"…
+     44|   const proof = await screen.findByText(/proof-101.pdf/);
+     45|   expect(within(proof.closest("article")!).getByRole("button", { name:…
+       |                                            ^
+     46|   expect(screen.queryByRole("button", { name: "載入更多付款憑證" })).toBeNull(…
+     47|   expect(f.getCase).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > offers debt case links without any proof and shows trusted partial balances
+TestingLibraryElementError: Unable to find role="link" and name "No proof unpaid"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      />
+      <p>
+        沒有待覆核的付款憑證。
+      </p>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      />
+      <p>
+        沒有待覆核的付款憑證。
+      </p>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:57:24
+     55|     { ...selectedCase, id: "paid", companyName: "Fully paid", payment:…
+     56|   ], nextCursor: null }); view();
+     57|   expect((await screen.findByRole("link", { name: "No proof unpaid" })…
+       |                        ^
+     58|   expect(screen.getByRole("link", { name: "No proof overdue" })).toBeT…
+     59|   expect(screen.getByText(/餘額：HK\$1,199.99/)).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > fails closed on absent, denied or mismatched targeted case: null
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > fails closed on absent, denied or mismatched targeted case: Error: denied
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > fails closed on absent, denied or mismatched targeted case: { id: 'wrong-case', companyName: 'QA Case 201', currentStatus: 'Payment pending', readiness: { sourceVersion: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }, payment: { id: 'payment-201', amount: 1800, receivedAmount: 600, balance: 1200, status: 'Payment pending', paidAt: null, evidenceEntries: [] } }
+TestingLibraryElementError: Unable to find an element with the text: /案件資料不可用或沒有權限/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:65:24
+     63| it.each([null, new Error("denied"), { ...selectedCase, id: "wrong-case…
+     64|   if (result instanceof Error) f.getCase.mockRejectedValue(result); el…
+     65|   view(); await screen.findByText(/案件資料不可用或沒有權限/);
+       |                        ^
+     66|   expect(screen.queryByRole("button", { name: "儲存憑證資料" })).toBeNull();
+     67|   expect(screen.queryByText("QA Case 201")).toBeNull(); expect(f.downl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > reviews a proof even when the unrelated case list fails
+TestingLibraryElementError: Unable to find role="button" and name "儲存憑證資料"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <p
+        role="alert"
+      >
+        暫時無法載入付款憑證。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <p
+        role="alert"
+      >
+        暫時無法載入付款憑證。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:71:23
+     69| it("reviews a proof even when the unrelated case list fails", async ()…
+     70|   f.cases.mockRejectedValue(new Error("unavailable")); view();
+     71|   expect(await screen.findByRole("button", { name: "儲存憑證資料" })).toBeTr…
+       |                       ^
+     72|   expect(screen.queryByText("沒有待覆核的付款憑證。")).toBeNull();
+     73| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > keeps previous proofs and shows a retry error when proof pagination fails
+TestingLibraryElementError: Unable to find role="button" and name "儲存憑證資料"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+      <button
+        class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+        type="button"
+      >
+        載入更多付款憑證
+      </button>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+      <button
+        class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm min-h-11"
+        type="button"
+      >
+        載入更多付款憑證
+      </button>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:76:16
+     74| it("keeps previous proofs and shows a retry error when proof paginatio…
+     75|   f.documents.mockResolvedValueOnce({ documents: [doc], nextCursor: "n…
+     76|   await screen.findByRole("button", { name: "儲存憑證資料" });
+       |                ^
+     77|   fireEvent.click(screen.getByRole("button", { name: "載入更多付款憑證" }));
+     78|   await screen.findByText("下一頁付款憑證未能載入，請重試。");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > loads the next debt page without requiring proofs
+TestingLibraryElementError: Unable to find role="link" and name "QA Case 201"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      />
+      <p>
+        沒有待覆核的付款憑證。
+      </p>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      />
+      <p>
+        沒有待覆核的付款憑證。
+      </p>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:86:23
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > disables unsafe or unavailable proof: { uploadStatus: 'rejected' }
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > disables unsafe or unavailable proof: { scanVerdictSource: 'deterministic' }
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > disables unsafe or unavailable proof: { currentVersionId: null }
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > disables unsafe or unavailable proof: { availability: 'missing_object' }
+TestingLibraryElementError: Unable to find role="button" and name "儲存憑證資料"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:90:24
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > does not reuse another actor's cached case on denial
+TestingLibraryElementError: Unable to find role="button" and name "儲存憑證資料"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:96:57
+     94| it("does not reuse another actor's cached case on denial", async () =>…
+     95|   const client = new QueryClient({ defaultOptions: { queries: { retry:…
+     96|   const first = view("qa-team-a", client); await screen.findByRole("bu…
+       |                                                         ^
+     97|   f.getCase.mockResolvedValue(null); view("qa-team-b", client);
+     98|   await screen.findByText(/案件資料不可用或沒有權限/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > disables stale review controls during refresh then hides denied context
+TestingLibraryElementError: Unable to find role="button" and name "儲存憑證資料"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:103:16
+    101| it("disables stale review controls during refresh then hides denied co…
+    102|   const client = new QueryClient({ defaultOptions: { queries: { retry:…
+    103|   await screen.findByRole("button", { name: "儲存憑證資料" });
+       |                ^
+    104|   fireEvent.change(screen.getByLabelText("憑證金額"), { target: { value: "…
+    105|   fireEvent.change(screen.getByLabelText("憑證收款日期"), { target: { value:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > allows only one simultaneous record submission with exact source version
+TestingLibraryElementError: Unable to find role="button" and name "儲存憑證資料"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:118:31
+    116|   mutation.mockImplementation(() => new Promise(() => {})); view();
+    117|   const name = command === "record" ? "儲存憑證資料" : command === "verified…
+    118|   const button = await screen.findByRole("button", { name });
+       |                               ^
+    119|   if (command === "record") {
+    120|     fireEvent.change(screen.getByLabelText("憑證金額"), { target: { value:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > allows only one simultaneous verified submission with exact source version
+TestingLibraryElementError: Unable to find role="button" and name "批准此筆憑證金額"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:118:31
+    116|   mutation.mockImplementation(() => new Promise(() => {})); view();
+    117|   const name = command === "record" ? "儲存憑證資料" : command === "verified…
+    118|   const button = await screen.findByRole("button", { name });
+       |                               ^
+    119|   if (command === "record") {
+    120|     fireEvent.change(screen.getByLabelText("憑證金額"), { target: { value:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > allows only one simultaneous rejected submission with exact source version
+TestingLibraryElementError: Unable to find role="button" and name "退回補傳"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            文件與付款
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            付款
+          </h1>
+        </div>
+      </div>
+      <p>
+        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+      </p>
+      <section
+        class="divide-y border-y"
+      >
+        <div
+          class="p-4"
+        >
+          <p>
+            qa-proof-201.pdf
+            ：先載入所屬案件資料；暫不可審核。
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:118:31
+    116|   mutation.mockImplementation(() => new Promise(() => {})); view();
+    117|   const name = command === "record" ? "儲存憑證資料" : command === "verified…
+    118|   const button = await screen.findByRole("button", { name });
+       |                               ^
+    119|   if (command === "record") {
+    120|     fireEvent.change(screen.getByLabelText("憑證金額"), { target: { value:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/18]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  18 failed | 1 passed (19)
+   Start at  04:56:04
+   Duration  20.83s (transform 244ms, setup 0ms, import 693ms, tests 17.67s, environment 2.00s)
+

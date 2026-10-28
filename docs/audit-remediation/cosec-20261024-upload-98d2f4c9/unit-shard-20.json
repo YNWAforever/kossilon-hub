@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-20",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/routes/-case-subroutes.interaction.test.tsx",
+    "src/routes/-clients-data-mode.test.tsx",
+    "src/routes/-clients-url-context.test.tsx",
+    "src/routes/-dashboard-modes.test.tsx",
+    "src/routes/-document-rejection.interaction.test.tsx",
+    "src/routes/-documents-production-data.test.tsx",
+    "src/routes/-documents-search.interaction.test.tsx",
+    "src/routes/-final-review-restorations.test.ts",
+    "src/routes/-imports-access.test.tsx",
+    "src/routes/-login.interaction.test.tsx",
+    "src/routes/-nested-route-outlet.convention.test.ts",
+    "src/routes/-operations-dispatch-labels.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/routes/-case-subroutes.interaction.test.tsx",
+    "src/routes/-clients-data-mode.test.tsx",
+    "src/routes/-clients-url-context.test.tsx",
+    "src/routes/-dashboard-modes.test.tsx",
+    "src/routes/-document-rejection.interaction.test.tsx",
+    "src/routes/-documents-production-data.test.tsx",
+    "src/routes/-documents-search.interaction.test.tsx",
+    "src/routes/-final-review-restorations.test.ts",
+    "src/routes/-imports-access.test.tsx",
+    "src/routes/-login.interaction.test.tsx",
+    "src/routes/-nested-route-outlet.convention.test.ts",
+    "src/routes/-operations-dispatch-labels.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/routes/-case-subroutes.interaction.test.tsx",
+      "tests": 22
+    },
+    {
+      "path": "src/routes/-clients-url-context.test.tsx",
+      "tests": 21
+    },
+    {
+      "path": "src/routes/-document-rejection.interaction.test.tsx",
+      "tests": 6
+    },
+    {
+      "path": "src/routes/-login.interaction.test.tsx",
+      "tests": 23
+    },
+    {
+      "path": "src/routes/-documents-production-data.test.tsx",
+      "tests": 18
+    },
+    {
+      "path": "src/routes/-imports-access.test.tsx",
+      "tests": 6
+    },
+    {
+      "path": "src/routes/-documents-search.interaction.test.tsx",
+      "tests": 1
+    },
+    {
+      "path": "src/routes/-clients-data-mode.test.tsx",
+      "tests": 4
+    },
+    {
+      "path": "src/routes/-dashboard-modes.test.tsx",
+      "tests": 4
+    },
+    {
+      "path": "src/routes/-nested-route-outlet.convention.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "src/routes/-final-review-restorations.test.ts",
+      "tests": 6
+    },
+    {
+      "path": "src/routes/-operations-dispatch-labels.test.ts",
+      "tests": 2
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+[
+  {
+    "attempt": "initial",
+    "classification": "fixture missing staff_profiles",
+    "exit_code": 1,
+    "events": [
+      "db/UC155-empty-full-rejected-initial.jsonl",
+      "db/UC155-empty-full-verified-initial.jsonl",
+      "db/UC155-partial-full-rejected-initial.jsonl",
+      "db/UC155-partial-full-verified-initial.jsonl",
+      "db/UC155-partial-open-rejected-initial.jsonl",
+      "db/UC155-partial-open-verified-initial.jsonl"
+    ]
+  },
+  {
+    "attempt": "profiles",
+    "classification": "six passed; before raw-row assertions",
+    "exit_code": 0,
+    "events": [
+      "db/UC155-empty-full-rejected-profiles.jsonl",
+      "db/UC155-empty-full-verified-profiles.jsonl",
+      "db/UC155-partial-full-rejected-profiles.jsonl",
+      "db/UC155-partial-full-verified-profiles.jsonl",
+      "db/UC155-partial-open-rejected-profiles.jsonl",
+      "db/UC155-partial-open-verified-profiles.jsonl"
+    ]
+  },
+  {
+    "attempt": "final",
+    "classification": "new readback query used DTO column names",
+    "exit_code": 1,
+    "events": [
+      "db/UC155-empty-full-rejected-final.jsonl",
+      "db/UC155-empty-full-verified-final.jsonl",
+      "db/UC155-partial-full-rejected-final.jsonl",
+      "db/UC155-partial-full-verified-final.jsonl",
+      "db/UC155-partial-open-rejected-final.jsonl",
+      "db/UC155-partial-open-verified-final.jsonl"
+    ]
+  },
+  {
+    "attempt": "verified",
+    "classification": "new readback asserted numeric text formatting instead of numerical value and unchanged raw value",
+    "exit_code": 1,
+    "events": [
+      "db/UC155-empty-full-rejected-verified.jsonl",
+      "db/UC155-empty-full-verified-verified.jsonl",
+      "db/UC155-partial-full-rejected-verified.jsonl",
+      "db/UC155-partial-full-verified-verified.jsonl",
+      "db/UC155-partial-open-rejected-verified.jsonl",
+      "db/UC155-partial-open-verified-verified.jsonl"
+    ]
+  },
+  {
+    "attempt": "accepted",
+    "classification": "six passed; final exact bytes",
+    "exit_code": 0,
+    "events": [
+      "db/UC155-empty-full-rejected-accepted.jsonl",
+      "db/UC155-empty-full-verified-accepted.jsonl",
+      "db/UC155-partial-full-rejected-accepted.jsonl",
+      "db/UC155-partial-full-verified-accepted.jsonl",
+      "db/UC155-partial-open-rejected-accepted.jsonl",
+      "db/UC155-partial-open-verified-accepted.jsonl"
+    ]
+  }
+]

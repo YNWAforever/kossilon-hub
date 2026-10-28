@@ -1,0 +1,9 @@
+{
+  "reviewer": "Sartre / 01a16c4e-b21c-7250-b2de-39a0fa517dc4",
+  "base_sha": "c9d783478572b1e11331018d46e09e20f427b832",
+  "scope": ["src/features/corporate-changes/components/production-corporate-change-detail.tsx", "src/routes/-missing-record.interaction.test.tsx"],
+  "findings": [],
+  "conclusion": "No actionable findings in the bounded two-file diff. Malformed IDs retain the sanitized return link while still skipping detail mounting/fetching. Valid-ID authorization, missing/error handling and raw-error redaction remain unchanged. Thirteen new cases exercise actual component and domain authorization behind mocked transport/repository IO. No blocking harness defect identified.",
+  "limits": "Static review only. Reviewer did not run checks and did not independently verify RED counts. Parent-reported GREEN75/7. Return href and new QueryClient do not establish browser navigation, retained-cache behavior or server authentication middleware.",
+  "post_review_change": "Prettier line wrapping in two mockImplementationOnce calls only; no behavioral edits. Parent reruns affected checks and browser. No independent rereview claimed."
+}

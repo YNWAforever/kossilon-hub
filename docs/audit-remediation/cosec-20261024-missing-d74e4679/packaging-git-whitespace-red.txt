@@ -1,0 +1,8 @@
+docs/audit-remediation/cosec-20261024-missing-d74e4679/capture-remote-final.ps1:14: new blank line at EOF.
+docs/audit-remediation/cosec-20261024-missing-d74e4679/check-local-cleanup.ps1:14: new blank line at EOF.
+docs/audit-remediation/cosec-20261024-missing-d74e4679/commit-evidence.ps1:16: new blank line at EOF.
+docs/audit-remediation/cosec-20261024-missing-d74e4679/git-blob-verify.mjs:25: new blank line at EOF.
+docs/audit-remediation/cosec-20261024-missing-d74e4679/make-manifest.mjs:9: new blank line at EOF.
+docs/audit-remediation/cosec-20261024-missing-d74e4679/run-checks.mjs:40: new blank line at EOF.
+Exception: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\docs\audit-remediation\cosec-20261024-missing-d74e4679\commit-evidence.ps1:13
+Authored evidence whitespace error

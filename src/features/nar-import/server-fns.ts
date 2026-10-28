@@ -213,7 +213,7 @@ export const listNarImportBatches = createServerFn({ method: "GET" })
   );
 
 export const getNarImportBatchReview = createServerFn({ method: "GET" })
-  .validator(z.object({ batchId: z.string().uuid() }).strict())
+  .validator(z.object({ batchId: z.string().guid() }).strict())
   .handler(({ data }) =>
     withContext((actor, dependencies) =>
       getNarImportBatchReviewForActor(actor, data, dependencies),
@@ -225,8 +225,8 @@ export const mapNarImportCompany = createServerFn({ method: "POST" })
     z
       .object({
         externalClientId: z.string().trim().min(1).max(120),
-        companyId: z.string().uuid(),
-        expectedCompanyId: z.string().uuid().nullable().optional(),
+        companyId: z.string().guid(),
+        expectedCompanyId: z.string().guid().nullable().optional(),
         confirmed: z.literal(true),
       })
       .strict(),
@@ -263,7 +263,7 @@ const applyContext = createServerOnlyFn(async () => {
   const actor = assertImportAuthority(await requireActor(getRequest()));
   return { actor, repository: createNarApplyRepository() };
 });
-const jobSchema = z.object({ jobId: z.string().uuid() }).strict();
+const jobSchema = z.object({ jobId: z.string().guid() }).strict();
 export const previewNarApply = createServerFn({ method: "POST" })
   .validator(narPreviewSchema)
   .handler(async ({ data }) => {
@@ -283,7 +283,7 @@ export const getNarApplyJob = createServerFn({ method: "GET" })
     return c.repository.getJob(c.actor, data.jobId);
   });
 export const listNarApplyJobs = createServerFn({ method: "GET" })
-  .validator(jobHistorySchema.extend({ batchId: z.string().uuid() }).strict())
+  .validator(jobHistorySchema.extend({ batchId: z.string().guid() }).strict())
   .handler(async ({ data }) => {
     const c = await applyContext();
     const { batchId, ...history } = data;

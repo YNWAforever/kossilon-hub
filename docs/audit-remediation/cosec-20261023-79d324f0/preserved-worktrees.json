@@ -1,0 +1,26 @@
+[
+  {
+    "head": "76ad310ca8bad75a7ce44c82c9e20db734fd6eaa",
+    "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\kossilon-hub-work",
+    "branch": "codex/outbox-safety",
+    "status": []
+  },
+  {
+    "head": "38123c96ed84fae84e41f17d4dea606c7a8938d0",
+    "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree",
+    "branch": "codex/r03-role-review-package-20261005",
+    "status": []
+  },
+  {
+    "head": "c9417b925d2134d7c2aef1d45be5d52da8154e50",
+    "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r12-f25-ci-20261009",
+    "branch": "codex/staff-remediation-20261012",
+    "status": []
+  },
+  {
+    "head": "01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e",
+    "path": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+    "branch": "codex/audit-r13-dependency-gates-20261009",
+    "status": []
+  }
+]

@@ -1,0 +1,277 @@
+{
+  "run_id": "cosec-20261024-routes-e4b761c9",
+  "attempt": "green2",
+  "origin": "http://127.0.0.1:5173",
+  "sourceHashes": {
+    "src/routes/incorporation.tsx": "6f5faed2659f65f39c215b69f53016804e2a8005326b7afc91a6d6d8b1315633",
+    "src/routes/incorporation.$id.tsx": "f82d3d046b155c2c990e73199540b4cf52afe288804cba82e1c9856d54782e2f",
+    "src/routes/corporate-changes.tsx": "4423afd278142ca42564aa2b0e6149a0c951f39f9ffd20b80207633d5a410c38",
+    "src/routes/corporate-changes.$id.tsx": "8a18469afd7d1b4f4b74ed913b027bb1f3392638492836851100fc0c12c7e3f1",
+    "src/features/incorporation/components/production-incorporation-list.tsx": "fd0c8030db35fe9db5b3f11733e6f3a61d1b53dc74b75294ebac5b270fb9932d",
+    "src/features/incorporation/components/production-incorporation-detail.tsx": "6694558aa3359b258a31dbff2eb8da87f07bb053f8772ba48c650ef46eb4c01d",
+    "src/features/corporate-changes/components/production-corporate-change-list.tsx": "f337f1abb2fa23be9c7cda111938b1007576ee908e54526d90d9c6579474d6a3",
+    "src/features/corporate-changes/components/production-corporate-change-detail.tsx": "8102208bae797c18dc0458aa1dad65ef45650e2c381d364d31660647cfc07282",
+    "src/test/case-route-fixtures.ts": "8ae66c9a39cd04e0effc6feff88375fe1b699cbdfaa218a4bf6fb10e12c55819"
+  },
+  "historical_overlay": false,
+  "browser_version": "155.0.4283.62",
+  "results": [
+    {
+      "name": "UC160 /incorporation link -> detail -> Back -> Forward -> real reload",
+      "status": "passed",
+      "evidence": {
+        "detail": "/incorporation/e4b761c9-0160-4160-8160-000000000001",
+        "returnTo": "/incorporation?q=QA&sort=company&cursor=QA-page3",
+        "back_restored": true,
+        "forward_rendered": true,
+        "reads_before_reload": 2,
+        "reads_after_reload": 3,
+        "fresh_transport_value": "QA reload readback",
+        "copied_url_reloaded": true,
+        "reads": [
+          {
+            "domain": "incorporation",
+            "id": "e4b761c9-0160-4160-8160-000000000001",
+            "mode": "normal"
+          },
+          {
+            "domain": "incorporation",
+            "id": "e4b761c9-0160-4160-8160-000000000001",
+            "mode": "normal"
+          },
+          {
+            "domain": "incorporation",
+            "id": "e4b761c9-0160-4160-8160-000000000001",
+            "mode": "normal"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC160 /incorporation explicit return link and record switch",
+      "status": "passed",
+      "evidence": {
+        "exact_return": "/incorporation?q=QA&sort=company&cursor=QA-page3",
+        "other_record": "e4b761c9-0160-4160-8160-000000000002",
+        "reads": [
+          {
+            "domain": "incorporation",
+            "id": "e4b761c9-0160-4160-8160-000000000001",
+            "mode": "normal"
+          },
+          {
+            "domain": "incorporation",
+            "id": "e4b761c9-0160-4160-8160-000000000002",
+            "mode": "normal"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC160 /incorporation denied, temporary error, missing, malformed and retry",
+      "status": "passed",
+      "evidence": {
+        "evidence": [
+          {
+            "mode": "denied",
+            "retry_reads": 1
+          },
+          {
+            "mode": "error",
+            "retry_reads": 1
+          }
+        ],
+        "missing": true,
+        "malformed_transport_calls": 0
+      }
+    },
+    {
+      "name": "UC160 /incorporation leave pending detail and ignore late result",
+      "status": "passed",
+      "evidence": {
+        "late_result_cannot_replace_list": true,
+        "reads": [
+          {
+            "domain": "incorporation",
+            "id": "e4b761c9-0160-4160-8160-000000000001",
+            "mode": "normal"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC160 /incorporation duplicate navigation and out-of-order detail reads",
+      "status": "passed",
+      "evidence": {
+        "same_pending_id_transport_reads": 1,
+        "latest_record": "e4b761c9-0160-4160-8160-000000000002",
+        "first_response_released_last": true,
+        "reads": [
+          {
+            "domain": "incorporation",
+            "id": "e4b761c9-0160-4160-8160-000000000001",
+            "mode": "normal"
+          },
+          {
+            "domain": "incorporation",
+            "id": "e4b761c9-0160-4160-8160-000000000002",
+            "mode": "normal"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC160 /incorporation slash alias and empty list",
+      "status": "passed",
+      "evidence": {
+        "trailing_slash_list_rendered": true,
+        "empty_visible": true
+      }
+    },
+    {
+      "name": "UC160 /corporate-changes link -> detail -> Back -> Forward -> real reload",
+      "status": "passed",
+      "evidence": {
+        "detail": "/corporate-changes/e4b761c9-0160-4160-8160-000000000001",
+        "returnTo": "/corporate-changes?q=QA&sort=company&cursor=QA-page3",
+        "back_restored": true,
+        "forward_rendered": true,
+        "reads_before_reload": 2,
+        "reads_after_reload": 3,
+        "fresh_transport_value": "HKD 9,160",
+        "copied_url_reloaded": true,
+        "reads": [
+          {
+            "domain": "changes",
+            "id": "e4b761c9-0160-4160-8160-000000000001",
+            "mode": "normal"
+          },
+          {
+            "domain": "changes",
+            "id": "e4b761c9-0160-4160-8160-000000000001",
+            "mode": "normal"
+          },
+          {
+            "domain": "changes",
+            "id": "e4b761c9-0160-4160-8160-000000000001",
+            "mode": "normal"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC160 /corporate-changes explicit return link and record switch",
+      "status": "passed",
+      "evidence": {
+        "exact_return": "/corporate-changes?q=QA&sort=company&cursor=QA-page3",
+        "other_record": "e4b761c9-0160-4160-8160-000000000002",
+        "reads": [
+          {
+            "domain": "changes",
+            "id": "e4b761c9-0160-4160-8160-000000000001",
+            "mode": "normal"
+          },
+          {
+            "domain": "changes",
+            "id": "e4b761c9-0160-4160-8160-000000000002",
+            "mode": "normal"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC160 /corporate-changes denied, temporary error, missing, malformed and retry",
+      "status": "passed",
+      "evidence": {
+        "evidence": [
+          {
+            "mode": "denied",
+            "retry_reads": 1
+          },
+          {
+            "mode": "error",
+            "retry_reads": 1
+          }
+        ],
+        "missing": true,
+        "malformed_transport_calls": 0
+      }
+    },
+    {
+      "name": "UC160 /corporate-changes leave pending detail and ignore late result",
+      "status": "passed",
+      "evidence": {
+        "late_result_cannot_replace_list": true,
+        "reads": [
+          {
+            "domain": "changes",
+            "id": "e4b761c9-0160-4160-8160-000000000001",
+            "mode": "normal"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC160 /corporate-changes duplicate navigation and out-of-order detail reads",
+      "status": "passed",
+      "evidence": {
+        "same_pending_id_transport_reads": 1,
+        "latest_record": "e4b761c9-0160-4160-8160-000000000002",
+        "first_response_released_last": true,
+        "reads": [
+          {
+            "domain": "changes",
+            "id": "e4b761c9-0160-4160-8160-000000000001",
+            "mode": "normal"
+          },
+          {
+            "domain": "changes",
+            "id": "e4b761c9-0160-4160-8160-000000000002",
+            "mode": "normal"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC160 /corporate-changes slash alias and empty list",
+      "status": "passed",
+      "evidence": {
+        "trailing_slash_list_rendered": true,
+        "empty_visible": true
+      }
+    }
+  ],
+  "blocked_external_origins": [],
+  "page_errors": [],
+  "console_errors": [],
+  "http_errors": [],
+  "resolutions": [
+    {
+      "id": "../server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/incorporation/components/production-incorporation-list.tsx"
+    },
+    {
+      "id": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src/features/clients/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/incorporation/components/production-incorporation-list.tsx"
+    },
+    {
+      "id": "../server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/incorporation/components/production-incorporation-detail.tsx"
+    },
+    {
+      "id": "../server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/corporate-changes/components/production-corporate-change-detail.tsx"
+    },
+    {
+      "id": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src/features/corporate-changes/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/corporate-changes/components/production-corporate-change-list.tsx"
+    },
+    {
+      "id": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src/features/clients/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/features/corporate-changes/components/production-corporate-change-list.tsx"
+    }
+  ],
+  "outer_error": null,
+  "native_auth_http_db": false,
+  "cleanup": "fresh contexts closed; own server/browser closed; no database or shared resources"
+}

@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-21",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/routes/-operations.interaction.test.tsx",
+    "src/routes/-page-title.convention.test.ts",
+    "src/routes/-payments-demo.test.tsx",
+    "src/routes/-payments.interaction.test.tsx",
+    "src/routes/-portal-context-boundary.test.tsx",
+    "src/routes/-portal-identity.interaction.test.tsx",
+    "src/routes/-portal-reachability.test.tsx",
+    "src/routes/-production-authorization.test.ts",
+    "src/routes/-root-auth-recovery.test.tsx",
+    "src/routes/-root-error-contract.test.tsx",
+    "src/routes/-settings-admin-guard.test.tsx",
+    "src/routes/-settings-save.interaction.test.tsx",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/routes/-operations.interaction.test.tsx",
+    "src/routes/-page-title.convention.test.ts",
+    "src/routes/-payments-demo.test.tsx",
+    "src/routes/-payments.interaction.test.tsx",
+    "src/routes/-portal-context-boundary.test.tsx",
+    "src/routes/-portal-identity.interaction.test.tsx",
+    "src/routes/-portal-reachability.test.tsx",
+    "src/routes/-production-authorization.test.ts",
+    "src/routes/-root-auth-recovery.test.tsx",
+    "src/routes/-root-error-contract.test.tsx",
+    "src/routes/-settings-admin-guard.test.tsx",
+    "src/routes/-settings-save.interaction.test.tsx"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/routes/-settings-save.interaction.test.tsx",
+      "tests": 4
+    },
+    {
+      "path": "src/routes/-operations.interaction.test.tsx",
+      "tests": 9
+    },
+    {
+      "path": "src/routes/-payments.interaction.test.tsx",
+      "tests": 5
+    },
+    {
+      "path": "src/routes/-portal-context-boundary.test.tsx",
+      "tests": 20
+    },
+    {
+      "path": "src/routes/-portal-reachability.test.tsx",
+      "tests": 11
+    },
+    {
+      "path": "src/routes/-portal-identity.interaction.test.tsx",
+      "tests": 1
+    },
+    {
+      "path": "src/routes/-settings-admin-guard.test.tsx",
+      "tests": 3
+    },
+    {
+      "path": "src/routes/-root-auth-recovery.test.tsx",
+      "tests": 9
+    },
+    {
+      "path": "src/routes/-payments-demo.test.tsx",
+      "tests": 2
+    },
+    {
+      "path": "src/routes/-root-error-contract.test.tsx",
+      "tests": 3
+    },
+    {
+      "path": "src/routes/-page-title.convention.test.ts",
+      "tests": 3
+    },
+    {
+      "path": "src/routes/-production-authorization.test.ts",
+      "tests": 5
+    }
+  ]
+}

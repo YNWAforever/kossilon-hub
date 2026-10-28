@@ -1,0 +1,23 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/annual-return/handoff-destination.test.ts (8 tests) 40ms
+ ✓ |unit| src/features/annual-return/follow-up-server-fns.test.ts (10 tests) 28ms
+ ✓ |unit| src/features/annual-return/evidence-service.test.ts (24 tests) 21ms
+ ✓ |unit| src/features/annual-return/package-manifest.test.ts (20 tests) 15ms
+ ✓ |unit| src/features/annual-return/handoff-server-fns.test.ts (2 tests) 22ms
+ ✓ |unit| src/features/annual-return/outstanding.test.ts (18 tests) 6ms
+ ✓ |unit| src/features/annual-return/readiness.test.ts (19 tests) 7ms
+ ✓ |unit| src/features/annual-return/handoff.test.ts (17 tests) 6ms
+ ✓ |unit| src/features/annual-return/package-archive.test.ts (2 tests) 7ms
+ ✓ |unit| src/features/annual-return/permissions.test.ts (18 tests) 7ms
+ ✓ |unit| src/features/annual-return/follow-ups.test.ts (11 tests) 5ms
+ ✓ |unit| src/features/annual-return/follow-up-repository.test.ts (1 test) 3ms
+
+ Test Files  12 passed (12)
+      Tests  150 passed (150)
+   Start at  12:17:36
+   Duration  4.29s (transform 824ms, setup 0ms, import 1.80s, tests 166ms, environment 1ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

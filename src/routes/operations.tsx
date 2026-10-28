@@ -121,6 +121,13 @@ function OperationsRoute() {
   // or while a reconnect is still waiting for a fresh authorised response.
   const unavailable = healthQuery.isError || healthQuery.fetchStatus === "paused";
   const view = unavailable || healthQuery.isFetching ? undefined : healthQuery.data;
+  const readError = healthQuery.error as { status?: number; statusCode?: number } | null;
+  // Retain facts only for a known temporary 503. Access failures must not
+  // expose a cached observation, and cached healthy labels are never current.
+  const previous =
+    unavailable && (readError?.status ?? readError?.statusCode) === 503
+      ? healthQuery.data
+      : undefined;
 
   return (
     <main className="flex-1 space-y-6 p-6">
@@ -161,6 +168,48 @@ function OperationsRoute() {
             ? "連線暫停，現時狀態未知。恢復連線後會重新讀取。"
             : "無法載入系統運作狀態，現時狀態未知。請重新載入；若仍失敗，請核對登入及存取權限。"}
         </p>
+      ) : null}
+
+      {previous ? (
+        <section
+          aria-label="上次成功讀取（已過期）"
+          className="rounded-lg border bg-muted/50 p-4 text-sm"
+        >
+          <h2 className="font-semibold">上次成功讀取（已過期）</h2>
+          <p>以下是上次讀取的舊值，不能代表現時排程或供應商狀態。請重新載入核對。</p>
+          <p>已記錄：{previous.schema.appliedCount ?? "未知"}個遷移</p>
+          <p>
+            上次排程觀察：
+            {previous.maintenance?.lastRunAt
+              ? formatHongKongTimestamp(previous.maintenance.lastRunAt)
+              : "未知"}
+          </p>
+          <p>
+            當時記錄的最後成功：
+            {previous.maintenance?.lastSuccessAt
+              ? formatHongKongTimestamp(previous.maintenance.lastSuccessAt)
+              : "未知"}
+          </p>
+          {previous.queues ? (
+            <>
+              {(
+                [
+                  ["文件掃描", previous.queues.documentScans],
+                  ["文件分析", previous.queues.documentAnalysis],
+                  ["通知", previous.queues.notifications],
+                ] as const
+              ).map(([label, depth]) => (
+                <p key={label}>
+                  {label}：待處理{depth.pending}；到期{depth.dueNow}；處理中{depth.processing}
+                  ；重試中{depth.retrying}；失敗{depth.failed}
+                </p>
+              ))}
+              <p>交件待傳送：{previous.queues.handoffsAwaitingTransmission}</p>
+            </>
+          ) : (
+            <p>當時隊列數量未知。</p>
+          )}
+        </section>
       ) : null}
 
       {view ? (

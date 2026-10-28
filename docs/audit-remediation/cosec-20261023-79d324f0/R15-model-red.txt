@@ -1,0 +1,166 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/annual-return/work-views-other.test.ts (9 tests | 6 failed) 14ms
+     × opens incorporation in its own domain with deadline, owner and first next action 7ms
+     × opens corporate changes in the correct domain without inventing unknown deadline/reviewer 1ms
+     × keeps received documents on internal review rather than asking the client to resend 1ms
+     × does not turn a Ready label and verified checklist into canonical filing readiness 1ms
+     × does not call an unknown requirement set complete 1ms
+     × keeps filed-with-Registrar followup distinct from completed work 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-other.test.ts > Today other-business read projection > opens incorporation in its own domain with deadline, owner and first next action
+AssertionError: expected null to match object { business: 'incorporation', …(11) }
+
+- Expected:
+{
+  "blocker": "公司章程",
+  "business": "incorporation",
+  "caseId": "11111111-1111-4111-8111-111111111111",
+  "companyName": "海港新公司",
+  "daysRemaining": -1,
+  "dueDate": "2026-10-22",
+  "nextStep": "追收及核對缺少文件",
+  "ownerName": "Ada",
+  "readyForApproval": false,
+  "reviewerName": null,
+  "statusAt": "2026-10-22T16:30:00Z",
+  "target": "/incorporation/$id",
+}
+
++ Received:
+null
+
+ ❯ src/features/annual-return/work-views-other.test.ts:14:48
+     12| describe("Today other-business read projection", () => {
+     13|   it("opens incorporation in its own domain with deadline, owner and f…
+     14|     expect(otherWorkRow(source, "2026-10-23")).toMatchObject({
+       |                                                ^
+     15|       business: "incorporation", target: "/incorporation/$id", caseId:…
+     16|       companyName: "海港新公司", ownerName: "Ada", reviewerName: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-other.test.ts > Today other-business read projection > opens corporate changes in the correct domain without inventing unknown deadline/reviewer
+AssertionError: expected null to match object { …(4) }
+
+- Expected:
+{
+  "daysRemaining": null,
+  "dueDate": null,
+  "reviewerName": null,
+  "target": "/corporate-changes/$id",
+}
+
++ Received:
+null
+
+ ❯ src/features/annual-return/work-views-other.test.ts:23:8
+     21|   it("opens corporate changes in the correct domain without inventing …
+     22|     expect(otherWorkRow({ ...source, business: "corporate_change", due…
+     23|       .toMatchObject({ target: "/corporate-changes/$id", dueDate: null…
+       |        ^
+     24|   });
+     25|   it("keeps received documents on internal review rather than asking t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-other.test.ts > Today other-business read projection > keeps received documents on internal review rather than asking the client to resend
+AssertionError: expected null to match object { blocker: '1 份文件待內部覆核', …(2) }
+
+- Expected:
+{
+  "blocker": "1 份文件待內部覆核",
+  "nextStep": "覆核已收到文件",
+  "readyForApproval": false,
+}
+
++ Received:
+null
+
+ ❯ src/features/annual-return/work-views-other.test.ts:27:8
+     25|   it("keeps received documents on internal review rather than asking t…
+     26|     expect(otherWorkRow({ ...source, missingLabels: [], receivedCount:…
+     27|       .toMatchObject({ blocker: "1 份文件待內部覆核", nextStep: "覆核已收到文件", rea…
+       |        ^
+     28|   });
+     29|   it("does not turn a Ready label and verified checklist into canonica…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-other.test.ts > Today other-business read projection > does not turn a Ready label and verified checklist into canonical filing readiness
+AssertionError: expected null to match object { blocker: '交件資格尚待個案證據核實', …(1) }
+
+- Expected:
+{
+  "blocker": "交件資格尚待個案證據核實",
+  "readyForApproval": false,
+}
+
++ Received:
+null
+
+ ❯ src/features/annual-return/work-views-other.test.ts:31:8
+     29|   it("does not turn a Ready label and verified checklist into canonica…
+     30|     expect(otherWorkRow({ ...source, status: "Ready to file", missingL…
+     31|       .toMatchObject({ blocker: "交件資格尚待個案證據核實", readyForApproval: fals…
+       |        ^
+     32|   });
+     33|   it("does not call an unknown requirement set complete", () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-other.test.ts > Today other-business read projection > does not call an unknown requirement set complete
+AssertionError: expected null to match object { blocker: '文件需求未能判定', …(1) }
+
+- Expected:
+{
+  "blocker": "文件需求未能判定",
+  "nextStep": "確認文件需求及負責人",
+}
+
++ Received:
+null
+
+ ❯ src/features/annual-return/work-views-other.test.ts:35:8
+     33|   it("does not call an unknown requirement set complete", () => {
+     34|     expect(otherWorkRow({ ...source, requiredCount: 0, missingLabels: …
+     35|       .toMatchObject({ blocker: "文件需求未能判定", nextStep: "確認文件需求及負責人" });
+       |        ^
+     36|   });
+     37|   it.each(["Completed", "Cancelled"])("excludes closed %s work even wi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-other.test.ts > Today other-business read projection > keeps filed-with-Registrar followup distinct from completed work
+AssertionError: expected null to match object { blocker: '已提交登記處，等待結果核對', …(1) }
+
+- Expected:
+{
+  "blocker": "已提交登記處，等待結果核對",
+  "nextStep": "核對登記結果及回件",
+}
+
++ Received:
+null
+
+ ❯ src/features/annual-return/work-views-other.test.ts:42:8
+     40|   it("keeps filed-with-Registrar followup distinct from completed work…
+     41|     expect(otherWorkRow({ ...source, status: "Filed with Registrar" },…
+     42|       .toMatchObject({ blocker: "已提交登記處，等待結果核對", nextStep: "核對登記結果及回件"…
+       |        ^
+     43|   });
+     44|   it("does not expose a completed timestamp under a stale open status"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 3 passed (9)
+   Start at  05:02:32
+   Duration  605ms (transform 59ms, setup 0ms, import 88ms, tests 14ms, environment 0ms)
+

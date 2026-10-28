@@ -1,0 +1,18 @@
+{
+  "base": "c9d783478572b1e11331018d46e09e20f427b832",
+  "branch": "codex/cosec-20261023",
+  "origin": "https://github.com/YNWAforever/kossilon-hub.git",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "intake_status": "clean before owned edits, see PLAN.md",
+  "status_at_evidence_capture": " M src/features/corporate-changes/components/production-corporate-change-detail.tsx\n?? docs/audit-remediation/cosec-20261024-missing-d74e4679/PLAN.md\n?? docs/audit-remediation/cosec-20261024-missing-d74e4679/capture-evidence.mjs\n?? docs/audit-remediation/cosec-20261024-missing-d74e4679/detail-before.tsx.snapshot\n?? docs/audit-remediation/cosec-20261024-missing-d74e4679/freeze-source.mjs\n?? docs/audit-remediation/cosec-20261024-missing-d74e4679/resource-checks.jsonl\n?? docs/audit-remediation/cosec-20261024-missing-d74e4679/resource-gate.mjs\n?? docs/audit-remediation/cosec-20261024-missing-d74e4679/run-checks.mjs\n?? docs/audit-remediation/cosec-20261024-missing-d74e4679/targeted-green1.json\n?? docs/audit-remediation/cosec-20261024-missing-d74e4679/targeted-green1.txt\n?? docs/audit-remediation/cosec-20261024-missing-d74e4679/targeted-red1.json\n?? docs/audit-remediation/cosec-20261024-missing-d74e4679/targeted-red1.txt\n?? docs/audit-remediation/cosec-20261024-missing-d74e4679/test-red1.tsx.snapshot\n?? src/routes/-missing-record.interaction.test.tsx\n",
+  "worktrees": "worktree C:/Users/laich/Documents/kossilon-hub/kossilon-hub-work\nHEAD 76ad310ca8bad75a7ce44c82c9e20db734fd6eaa\nbranch refs/heads/codex/outbox-safety\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree\nHEAD 38123c96ed84fae84e41f17d4dea606c7a8938d0\nbranch refs/heads/codex/r03-role-review-package-20261005\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r12-f25-ci-20261009\nHEAD c9417b925d2134d7c2aef1d45be5d52da8154e50\nbranch refs/heads/codex/staff-remediation-20261012\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r13-dependency-audit-20261009\nHEAD 01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e\nbranch refs/heads/codex/audit-r13-dependency-gates-20261009\n\nworktree C:/Users/laich/Documents/kossilon-hub/cosec-20261023\nHEAD c9d783478572b1e11331018d46e09e20f427b832\nbranch refs/heads/codex/cosec-20261023\n\n",
+  "snapshot": {
+    "revision": "c9d783478572b1e11331018d46e09e20f427b832",
+    "path": "src/features/corporate-changes/components/production-corporate-change-detail.tsx",
+    "filename": "detail-before.tsx.snapshot",
+    "bytes": 7344,
+    "sha256": "8102208bae797c18dc0458aa1dad65ef45650e2c381d364d31660647cfc07282"
+  },
+  "production_historical_not_accessed": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "remote_main_readonly": "1c57a67213af72bff8d776694e6ed8c986b921db"
+}

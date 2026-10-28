@@ -1,0 +1,259 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+stderr | src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx > keeps removed or non-draft refreshed previews closed to approval
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["annual-returns","notifications","automation",""]
+
+ ❯ |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx (8 tests | 4 failed) 1972ms
+   × retries a failed draft read once while pending without invoking queue writes 1012ms
+   × keeps an old preview blocked after a denied refresh and requires the fresh version to be reviewed 39ms
+   × keeps removed or non-draft refreshed previews closed to approval 39ms
+   × keeps removed or non-draft refreshed previews closed to approval 45ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx > retries a failed draft read once while pending without invoking queue writes
+TestingLibraryElementError: Unable to find role="button" and name "重新載入跟進"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mstyle[39m=[32m""[39m
+[36m>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0mprivate SQL failure[0m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"p-4 text-sm text-muted-foreground"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0m未能讀取跟進範圍，請重新載入。[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mstyle[39m=[32m""[39m
+[36m>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m通訊[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mWhatsApp 追件[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+      [36m>[39m
+        [0m供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0m示範模擬[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m不會向外發送任何 WhatsApp 或電郵訊息。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0mprivate SQL failure[0m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"border bg-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"[39m
+        [36m>[39m
+          [36m<span>[39m
+            [0m公司[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m收件人[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m類別[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m狀態[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m預覽[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-right"[39m
+          [36m>[39m
+            [0m操作[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"divide-y"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"p-4 text-sm text-muted-foreground"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0m未能讀取跟進範圍，請重新載入。[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:211:28
+    209|   serverFns.listProductionFollowUpDrafts.mockRejectedValue(new Error("…
+    210|   renderAutomation();
+    211|   const retry=await screen.findByRole("button",{name:"重新載入跟進"});
+       |                            ^
+    212|   expect(screen.queryByText("沒有待處理的跟進。")).toBeNull();
+    213|   expect(screen.queryByText("private SQL failure")).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx > keeps an old preview blocked after a denied refresh and requires the fresh version to be reviewed
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:232:87
+    230|   serverFns.listProductionFollowUpDrafts.mockRejectedValue(new Error("…
+    231|   await act(async()=>{await client.refetchQueries({queryKey:["annual-r…
+    232|   expect((screen.getByRole("button",{name:"批准並加入隊列"}) as HTMLButtonEle…
+       |                                                                                       ^
+    233|   expect(screen.queryByText(drafts[0].messagePreview)).toBeNull();
+    234|   const fresh={...drafts[0],version:"fresh-version",messagePreview:"Fr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx > keeps removed or non-draft refreshed previews closed to approval
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx > keeps removed or non-draft refreshed previews closed to approval
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx:254:87
+    252|   serverFns.listProductionFollowUpDrafts.mockResolvedValue(fresh);
+    253|   await act(async()=>{await client.refetchQueries({queryKey:["annual-r…
+    254|   expect((screen.getByRole("button",{name:"批准並加入隊列"}) as HTMLButtonEle…
+       |                                                                                       ^
+    255|   expect(screen.queryByRole("button",{name:"重新查看目前草稿"})).toBeNull();
+    256|   expect(serverFns.sendProductionFollowUp).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 passed (8)
+   Start at  06:41:10
+   Duration  4.81s (transform 585ms, setup 0ms, import 1.10s, tests 1.97s, environment 1.38s)

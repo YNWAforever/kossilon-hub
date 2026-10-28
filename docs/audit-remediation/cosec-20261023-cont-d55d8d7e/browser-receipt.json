@@ -1,0 +1,32 @@
+{
+  "run_id": "cosec-20261023-cont-d55d8d7e",
+  "stats": {
+    "startTime": "2026-10-23T03:57:23.717Z",
+    "duration": 48935.75,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "projects": [
+    "mobile390",
+    "desktop1280"
+  ],
+  "each_project_personas": [
+    "Admin",
+    "Staff"
+  ],
+  "case_viewport_css_px": "640x450",
+  "channel": "msedge",
+  "installed_version": "155.0.4283.62",
+  "demo_only": true,
+  "actual_zoom": false,
+  "native_auth": false,
+  "native_client_journey": false,
+  "historical_bytes_guard_count": 9,
+  "copied_roots": [
+    "browser/attempt-02",
+    "browser/attempt-03",
+    "browser/final"
+  ]
+}

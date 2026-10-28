@@ -1,0 +1,19 @@
+{
+  "phase": "red4",
+  "startedUtc": "2026-10-23T11:58:06.2097360Z",
+  "finishedUtc": "2026-10-23T11:58:10.6462600Z",
+  "exitCode": 1,
+  "command": "C:\\Program Files\\nodejs\\node.exe node_modules/vitest/vitest.mjs run --configLoader runner --config docs/audit-remediation/cosec-20261023-assignment-86b2aa9a/sidecar-vitest.config.mts -t uncertain write locked",
+  "environment": "Cleared; only fixed Windows/runtime/PATH/TEMP/TMP/NODE_ENV/NO_COLOR whitelist. No inherited DB/provider variables. envDir points to per-run scratch.",
+  "temp": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\sidecar-assignment-86b2aa9a",
+  "hashes": [
+    {
+      "path": "src/routes/work-queue.tsx",
+      "sha256": "3ca249937e7caaea128134ca68b1ab8e6d4cf3a1199aa7b7c4dbf33288727faa"
+    },
+    {
+      "path": "src/routes/-work-queue.interaction.test.tsx",
+      "sha256": "7c2e14e238bdc5562caaa09854f80eba00c42d2aafde6d63fb6ea15c3922bf75"
+    }
+  ]
+}

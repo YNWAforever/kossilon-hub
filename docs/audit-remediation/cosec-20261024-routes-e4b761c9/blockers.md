@@ -1,0 +1,9 @@
+# UC160 blockers / release NO_GO
+
+- **Native BLOCKED / NOT_RUN preserved:** no approved same-version native site, real Staff A/B identities, server-function HTTP, actual DB/RLS and business-data reload/readback target supplied. The user explicitly requested remaining local acceptance; do not request credentials or contact production. 35F/15R/100UC/34LA original rows and native70 BLOCKED/114 NOT_RUN/0 PASS are immutable.
+- Local runtime imports real four route modules and production components, actual TanStack Router and browser history. Auth/root context, create dialogs and RPC are stubbed. Permission-rejection UI, exact IDs and fresh stub reads are local evidence only. No native provider, payment, filing, message, migration, database client or seed was exercised.
+- Full first unit run had one Auth test timing failure, retained in `unit-final.*`. Deterministic pending/rejection regression and repaired Auth9/final focused92 receipts distinguish test scheduling from product behavior. Do not overwrite this failure with a later pass; final global result is recorded separately in DELIVERY/candidate.
+- Resource gates are append-only. Intake low-memory reading is not a functional test result. A lint gate during typecheck refused launch below2GiB; no lower threshold or other-process cleanup is used. Later receipts, if successful, describe new attempts only.
+- Graph metadata remained unavailable. Previously rejected private indexing/upload remains unattempted; local known-path fallback does not upload repository data.
+
+Candidate impact: test/helper changes only; existing `43e2b97` route fix retained. Rollback uses an ordinary new commit reverting the source candidate, preserving raw evidence and published history. No production or DB rollback is involved. No push, merge, deploy, external message/provider request, payment or filing is authorized or performed.

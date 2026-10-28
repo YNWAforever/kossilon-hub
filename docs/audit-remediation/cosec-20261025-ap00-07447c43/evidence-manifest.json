@@ -1,0 +1,90 @@
+{
+  "run_id": "cosec-20261025-ap00-07447c43",
+  "files": [
+    {
+      "path": "DELIVERY.md",
+      "bytes": 3653,
+      "sha256": "b31e48868e79105874b0944bf1c78890a99d18d279e3cbb4ed248849720a76e8"
+    },
+    {
+      "path": "LOCAL-PREFILL.md",
+      "bytes": 2745,
+      "sha256": "6a03ac7390d85321f7f5c95895d1f9d1f7ee4cbbe58fc2d88f9dab162bc17655"
+    },
+    {
+      "path": "MINIMUM-INPUT.md",
+      "bytes": 3663,
+      "sha256": "50fd9e40ff425710c6e2414096ca8038b345412e5e87a233d174aee6b90997f1"
+    },
+    {
+      "path": "ap00-prefilled.json",
+      "bytes": 9048,
+      "sha256": "6a32306a3b4a78c4ff8887f13ccd156128e822d060754d4d2097015119f77867"
+    },
+    {
+      "path": "approval-request.json",
+      "bytes": 11557,
+      "sha256": "10ba676d7872a0e6baabc758fe8a62107b2778b20bdf4381010f98a93d9a5300"
+    },
+    {
+      "path": "baseline.json",
+      "bytes": 128013,
+      "sha256": "8e20f32251e9587e54bb6c6d012928aa419458254391be4296db1cefe4835944"
+    },
+    {
+      "path": "binding-register.json",
+      "bytes": 11976,
+      "sha256": "fc8fc7fbbf8d5d7c52e0c8c19278598bbea792c1a24339d88430d0d1e09b4653"
+    },
+    {
+      "path": "blockers.md",
+      "bytes": 1422,
+      "sha256": "47774df3b4c7de1cadfbee1188ff4b8c0faa1c4fbd8b2020f359601f6eec689b"
+    },
+    {
+      "path": "commit-delivery.ps1",
+      "bytes": 2093,
+      "sha256": "37077c83680b17b97da8a2a0566d2048096790487be5f1780bca8d42acc927b3"
+    },
+    {
+      "path": "document-check.json",
+      "bytes": 447,
+      "sha256": "81aca927ff5bf0103ad875df27f51ba6581ca34f92f19079ba62136005c0b37a"
+    },
+    {
+      "path": "document-check.ps1",
+      "bytes": 1953,
+      "sha256": "4487ee57980b99af4cde0448451667d3f3ada2cc6a28be7a0114246aee29f594"
+    },
+    {
+      "path": "minimum-input-template.json",
+      "bytes": 1361,
+      "sha256": "4cbc124da3e028854ac4cd8543ce803bebe3599a2476f883f438860ae0dbbe3d"
+    },
+    {
+      "path": "organize.mjs",
+      "bytes": 4865,
+      "sha256": "b85ab7a5578b762e1985abb02a481798a4891f0122842cd13883e1b65ee7c539"
+    },
+    {
+      "path": "prepare.mjs",
+      "bytes": 10129,
+      "sha256": "322813f6b06043ca124e28d08b80dd30fe21c34a5e28fd6463400ee046441ac9"
+    },
+    {
+      "path": "release-candidate.json",
+      "bytes": 1197,
+      "sha256": "206e1b8665d5d8cd456a2010da083f66d11e93d3c63c40607e444574f69e01ca"
+    },
+    {
+      "path": "role-bindings-template.json",
+      "bytes": 10258,
+      "sha256": "f8d5d852a54fda434707dc4a954a7ced27633dc279fc0bed8081766c988c2abd"
+    },
+    {
+      "path": "verify.mjs",
+      "bytes": 7970,
+      "sha256": "7ec2655787d6a1cec45a487ced84003670c23b7bbcac2e941f4b1e9386ebf18d"
+    }
+  ]
+}

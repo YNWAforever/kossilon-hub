@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-18",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/work-items/sla.test.ts",
+    "src/features/work-items/title.test.ts",
+    "src/lib/-mock-data-importers.test.ts",
+    "src/lib/ai-agent.test.ts",
+    "src/lib/annual-return-store.test.ts",
+    "src/lib/checklist-item-label.test.ts",
+    "src/lib/client-portal-store.test.ts",
+    "src/lib/daily-digest.test.ts",
+    "src/lib/date-math.test.ts",
+    "src/lib/demo-store-boundary.test.ts",
+    "src/lib/entity-id.test.ts",
+    "src/lib/error-details.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/features/work-items/sla.test.ts",
+    "src/features/work-items/title.test.ts",
+    "src/lib/-mock-data-importers.test.ts",
+    "src/lib/ai-agent.test.ts",
+    "src/lib/annual-return-store.test.ts",
+    "src/lib/checklist-item-label.test.ts",
+    "src/lib/client-portal-store.test.ts",
+    "src/lib/daily-digest.test.ts",
+    "src/lib/date-math.test.ts",
+    "src/lib/demo-store-boundary.test.ts",
+    "src/lib/entity-id.test.ts",
+    "src/lib/error-details.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/lib/demo-store-boundary.test.ts",
+      "tests": 9
+    },
+    {
+      "path": "src/lib/-mock-data-importers.test.ts",
+      "tests": 3
+    },
+    {
+      "path": "src/features/work-items/sla.test.ts",
+      "tests": 6
+    },
+    {
+      "path": "src/lib/daily-digest.test.ts",
+      "tests": 6
+    },
+    {
+      "path": "src/lib/ai-agent.test.ts",
+      "tests": 12
+    },
+    {
+      "path": "src/lib/annual-return-store.test.ts",
+      "tests": 13
+    },
+    {
+      "path": "src/lib/date-math.test.ts",
+      "tests": 11
+    },
+    {
+      "path": "src/lib/client-portal-store.test.ts",
+      "tests": 4
+    },
+    {
+      "path": "src/lib/error-details.test.ts",
+      "tests": 4
+    },
+    {
+      "path": "src/lib/checklist-item-label.test.ts",
+      "tests": 5
+    },
+    {
+      "path": "src/lib/entity-id.test.ts",
+      "tests": 15
+    },
+    {
+      "path": "src/features/work-items/title.test.ts",
+      "tests": 11
+    }
+  ]
+}

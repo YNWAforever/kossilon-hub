@@ -8,7 +8,7 @@ import {
 } from "../features/annual-return/server-fns";
 import { parseEntityId } from "@/lib/entity-id";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Download, ReceiptText } from "lucide-react";
@@ -32,6 +32,11 @@ import {
   listDocumentPage,
 } from "../features/documents/server-fns";
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from "../features/documents/types";
+import {
+  createUploadJournal,
+  matchesUploadFile,
+  type UploadAttempt,
+} from "../features/documents/upload-resume";
 
 import {
   type AnnualReturnCase,
@@ -771,6 +776,33 @@ function ScopedDocumentPanel({
   // last of them. Keyed by name+size+lastModified so re-picking the same file
   // reuses its row instead of accumulating duplicates.
   const [outcomes, setOutcomes] = useState<Record<string, UploadOutcome>>({});
+  const pendingFiles = useRef(new Set<string>());
+  const batchPending = useRef(false);
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+  const journal = useMemo(
+    () => createUploadJournal({ actorScope, companyId, caseId }),
+    [actorScope, companyId, caseId],
+  );
+  const [journalEntries, setJournalEntries] = useState<UploadAttempt[]>(() => {
+    try {
+      return journal.read();
+    } catch {
+      return [];
+    }
+  });
+  const [resumeId, setResumeId] = useState<string | null>(null);
+  const fileAttempts = useRef(new Map<string, UploadAttempt>());
+  function remember(attempt: UploadAttempt) {
+    journal.save(attempt);
+    if (alive.current) setJournalEntries(journal.read());
+    return attempt;
+  }
   const [uploading, setUploading] = useState(false);
   const productionReady = isUuid(companyId) && isUuid(caseId);
   const documentsQuery = useInfiniteQuery({
@@ -788,30 +820,106 @@ function ScopedDocumentPanel({
       : (documentsQuery.data?.pages.flatMap((page) => page.documents) ?? []);
   async function uploadOne(candidate: File): Promise<void> {
     const key = fileKey(candidate);
-    setOutcomes((current) => ({ ...current, [key]: { state: "uploading" } }));
+    if (pendingFiles.current.has(key)) return;
+    pendingFiles.current.add(key);
+    let attempt = resumeId
+      ? journalEntries.find((row) => row.uploadRequestId === resumeId)
+      : fileAttempts.current.get(key);
+    setOutcomes((current) => ({ ...current, [key]: { state: "uploading", stage: "核對檔案…" } }));
     try {
       const bytes = new Uint8Array(await candidate.arrayBuffer());
       const checksum = await sha256Hex(bytes);
+      if (!alive.current) return;
+      const metadata = {
+        fileName: candidate.name,
+        contentType: candidate.type,
+        sizeBytes: candidate.size,
+        checksum,
+      };
+      if (
+        !attempt &&
+        journal
+          .read()
+          .some(
+            (row) =>
+              row.phase !== "received" &&
+              row.phase !== "expired" &&
+              matchesUploadFile(row, metadata),
+          )
+      ) {
+        throw new Error("此檔案有未確認的上載，請選擇「繼續此上載」核對先前結果。");
+      }
+      if (attempt && !matchesUploadFile(attempt, metadata))
+        throw new Error("檔案與先前的上載不符，請重新選取原檔。");
+      attempt = remember(
+        attempt ?? {
+          ...metadata,
+          contentType: candidate.type as UploadAttempt["contentType"],
+          uploadRequestId: crypto.randomUUID(),
+          category,
+          ...(checklistItemId ? { checklistItemId } : {}),
+          phase: "prepared",
+        },
+      );
+      fileAttempts.current.set(key, attempt);
+      attempt = remember({ ...attempt, phase: "confirming" });
+      setOutcomes((current) => ({
+        ...current,
+        [key]: { state: "uploading", stage: "核對先前上載結果…" },
+      }));
       const intent = await createDocumentUploadIntent({
         data: {
           companyId,
           caseId,
-          ...(checklistItemId ? { checklistItemId } : {}),
-          category,
-          fileName: candidate.name,
-          contentType: candidate.type,
-          sizeBytes: candidate.size,
-          checksum,
+          uploadRequestId: attempt.uploadRequestId,
+          ...(attempt.checklistItemId ? { checklistItemId: attempt.checklistItemId } : {}),
+          category: attempt.category,
+          ...metadata,
         },
       });
+      if (!alive.current) return;
+      // A server-confirmed expired *uncommitted* attempt cannot later finalize.
+      // Never replace an uncertain/received request merely because time elapsed.
+      if (
+        (intent.status === "created" || intent.status === "expired") &&
+        !intent.documentId &&
+        Date.parse(intent.expiresAt) <= Date.now()
+      ) {
+        remember({ ...attempt, phase: "expired" });
+        fileAttempts.current.delete(key);
+        setResumeId(null);
+        throw new Error("上載要求已過期且未提交；按重試會建立新要求並重新傳送完整檔案。");
+      }
+      attempt = remember({ ...attempt, phase: "sending" });
+      setOutcomes((current) => ({
+        ...current,
+        [key]: { state: "uploading", stage: "傳送完整檔案或核實已收到的結果…" },
+      }));
       await finalizeDocumentUpload({
         data: { intentId: intent.id, bodyBase64: bytesToBase64(bytes) },
       });
+      remember({ ...attempt, phase: "received" });
+      setResumeId(null);
       // "Received, waiting to be scanned" -- not "done". A received file is not
       // yet readable evidence, and saying so plainly is the difference between an
       // honest state and the one this phase exists to remove.
       setOutcomes((current) => ({ ...current, [key]: { state: "received" } }));
+      // Both the batch and per-file retry must reread the saved document and
+      // the client requirement projection; a toast cannot establish receipt.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.documents(caseId) }),
+        queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.detail(caseId) }),
+        queryClient.invalidateQueries({ queryKey: ["client-portal", "case", caseId, actorScope] }),
+        queryClient.invalidateQueries({ queryKey: ["client-portal", "cases", actorScope] }),
+      ]);
     } catch (error) {
+      if (attempt && fileAttempts.current.has(key)) {
+        try {
+          remember({ ...attempt, phase: "uncertain" });
+        } catch {
+          /* Preserve the last durable identity. */
+        }
+      }
       setOutcomes((current) => ({
         ...current,
         [key]: {
@@ -819,19 +927,25 @@ function ScopedDocumentPanel({
           message: error instanceof Error ? error.message : "上載失敗。",
         },
       }));
+    } finally {
+      pendingFiles.current.delete(key);
     }
   }
 
   async function uploadAll(candidates: File[]): Promise<void> {
+    if (batchPending.current) return;
+    batchPending.current = true;
     setUploading(true);
     try {
       // Sequential on purpose: each upload sends the whole body through a single
       // Worker request, and firing a batch at once is how a large intake becomes
       // a memory failure rather than a slow one.
       for (const candidate of candidates) {
+        if (!alive.current) break;
         await uploadOne(candidate);
       }
     } finally {
+      batchPending.current = false;
       setUploading(false);
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.documents(caseId) });
     }
@@ -874,6 +988,7 @@ function ScopedDocumentPanel({
               類別
               <Select
                 className="w-full"
+                disabled={uploading || resumeId !== null}
                 value={category}
                 onChange={(event) => setCategory(event.target.value as DocumentCategory)}
               >
@@ -890,6 +1005,7 @@ function ScopedDocumentPanel({
                 <Select
                   aria-label="回應哪一項要求"
                   className="w-full"
+                  disabled={uploading || resumeId !== null}
                   value={checklistItemId}
                   onChange={(event) => setChecklistItemId(event.target.value)}
                 >
@@ -922,6 +1038,54 @@ function ScopedDocumentPanel({
               {uploading ? "上載中…" : `安全上載${files.length > 1 ? `（${files.length}）` : ""}`}
             </Button>
           </div>
+
+          <p className="mt-3 text-sm text-muted-foreground">
+            中斷後可重新選取原檔並核對先前結果。檔案會由頭重傳；返回不會撤回已送出的檔案。
+          </p>
+          {journalEntries.filter((entry) => entry.phase !== "received" && entry.phase !== "expired")
+            .length > 0 ? (
+            <div aria-label="未完成上載" className="mt-3 space-y-2 rounded-md border p-3">
+              <p className="text-sm">
+                有上載尚未確認結果。繼續時請重新選取同一檔案；先前的文件類別及要求會保留。
+              </p>
+              {journalEntries
+                .filter((entry) => entry.phase !== "received" && entry.phase !== "expired")
+                .map((entry) => (
+                  <div
+                    key={entry.uploadRequestId}
+                    className="flex items-center justify-between gap-2 text-sm"
+                  >
+                    <span>{entry.fileName}</span>
+                    <Button
+                      size="sm"
+                      type="button"
+                      disabled={uploading}
+                      onClick={() => {
+                        setResumeId(entry.uploadRequestId);
+                        setCategory(entry.category);
+                        setChecklistItemId(entry.checklistItemId ?? "");
+                        setFiles([]);
+                      }}
+                    >
+                      繼續此上載
+                    </Button>
+                  </div>
+                ))}
+              {resumeId ? (
+                <Button
+                  size="sm"
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => {
+                    setResumeId(null);
+                    setFiles([]);
+                  }}
+                >
+                  取消恢復選擇
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
 
           {files.length > 0 ? (
             <ul aria-label="上載結果" className="mt-3 space-y-1">
@@ -966,6 +1130,13 @@ function ScopedDocumentPanel({
                       : "只有文件登記，欠上載來源"}{" "}
                     / {labelValue(document.reviewStatus)}
                   </p>
+                  {document.reviewStatus === "rejected" ? (
+                    <p className="mt-1 whitespace-pre-wrap break-words text-sm text-status-orange-text">
+                      {document.rejectionReason
+                        ? `退回原因：${document.rejectionReason}`
+                        : "退回原因未有記錄，請聯絡負責同事確認需補正的內容。"}
+                    </p>
+                  ) : null}
                 </div>
                 {document.uploadStatus === "available" && document.reviewStatus === "verified" ? (
                   <Button onClick={() => handleDownload(document.id)} type="button">
@@ -1030,7 +1201,7 @@ function primaryActionLabel(action: ClientPortalRequiredAction): string {
  * dishonesty as a queued reminder rendering as delivered.
  */
 type UploadOutcome =
-  | { state: "uploading" }
+  | { state: "uploading"; stage?: string }
   | { state: "received" }
   | { state: "failed"; message: string };
 
@@ -1042,7 +1213,7 @@ function fileKey(file: File): string {
 function UploadOutcomeLabel({ outcome }: { outcome?: UploadOutcome }) {
   if (!outcome) return <span className="text-xs text-muted-foreground">等待上載</span>;
   if (outcome.state === "uploading") {
-    return <span className="text-xs text-muted-foreground">上載中…</span>;
+    return <span className="text-xs text-muted-foreground">{outcome.stage ?? "上載中…"}</span>;
   }
   if (outcome.state === "received") {
     return <span className="text-xs text-status-green-text">已收到，等待掃描</span>;

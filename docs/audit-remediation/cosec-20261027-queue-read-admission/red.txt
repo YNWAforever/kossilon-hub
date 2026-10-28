@@ -1,0 +1,244 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+[tanstack-router] These exports from "/workspace/kossilon-hub/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/routes/-work-queue.interaction.test.tsx
+[tanstack-router] These exports from "/workspace/kossilon-hub/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+ ❯ |unit| src/routes/-work-queue.interaction.test.tsx (32 tests | 3 failed) 6480ms
+     × retains successful rows when the next cursor fails, and clears them across actors 79ms
+   × deduplicates failed queue retry and restores commands only after fresh read success 18ms
+   × blocks an already open acknowledgement during queue refresh and denial while retaining its draft 1105ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > retains successful rows when the next cursor fails, and clears them across actors
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/routes/-work-queue.interaction.test.tsx:609:79
+    607|         ),
+    608|       ).toBeNull();
+    609|     expect((screen.getAllByTitle("確認知悉升級")[0] as HTMLButtonElement).di…
+       |                                                                               ^
+    610|     expect((screen.getAllByTitle("分配工作項目")[0] as HTMLButtonElement).di…
+    611|     expect(screen.getByRole("region", {name: "Bulk assignment"}).getAt…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > deduplicates failed queue retry and restores commands only after fresh read success
+AssertionError: expected 'false' to be 'true' // Object.is equality
+
+Expected: "true"
+Received: "false"
+
+ ❯ src/routes/-work-queue.interaction.test.tsx:795:103
+    793|   const retry = await screen.findByRole("button", {name:"重試"});
+    794|   expect(screen.queryByText("此檢視沒有符合的工作項目。")).toBeNull();
+    795|   expect(screen.getByRole("region",{name:"Bulk assignment"}).getAttrib…
+       |                                                                                                       ^
+    796|   let resolve!: (value: unknown)=>void;
+    797|   mocks.list.mockImplementationOnce(()=>new Promise(done=>{resolve=don…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > blocks an already open acknowledgement during queue refresh and denial while retaining its draft
+AssertionError: expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mdata-scroll-locked[39m=[32m"1"[39m
+    [33mstyle[39m=[32m"pointer-events: none;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+      [33mdata-radix-focus-guard[39m=[32m""[39m
+      [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mdata-aria-hidden[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"min-w-0 flex-1 p-4 md:p-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+            [36m>[39m
+              [0m今日工作[0m
+            [36m</p>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+            [36m>[39m
+              [0m工作隊列[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+            [36m>[39m
+              [0m分配、工作量及 SLA 管控[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁今日到期[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁有風險[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-amber-700"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁已逾時[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums text-destructive"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-h-20 border-r border-border px-4 py-4 last:border-r-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs font-medium uppercase text-muted-foreground"[39m
+            [36m>[39m
+              [0m本頁未分配[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"mt-2 text-2xl font-semibold tabular-nums"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [0m排序[0m
+            [36m<select[39m
+              [33maria-label[39m=[32m"工作排序"[39m
+              [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"deadline"[39m
+              [36m>[39m
+                [0mSLA 到期[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"priority"[39m
+              [36m>[39m
+                [0m優先次序[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"工作隊列檢視"[39m
+            [33mclass[39m=[32m"flex min-w-0 gap-1"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m我的工作[0m
+            [36m</a>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m團隊隊列[0m
+            [36m</a>[39m
+            [36m<a[39m
+              [33mdata-route-search[39m=[32m"{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\"}"[39m
+              [33mhref[39m=[32m"#"[39m
+            [36m>[39m
+              [0m已逾時[0m
+            [36m</a>[39m
+          [36m</nav>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"relative block w-full lg:w-80"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=...
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/routes/-work-queue.interaction.test.tsx:822:68
+    820|   act(()=>{refreshing=client.refetchQueries({queryKey:["work-queue"]})…
+    821|   const submit=screen.getByRole("button",{name:"確認知悉"});
+    822|   await waitFor(()=>expect((submit as HTMLButtonElement).disabled).toB…
+       |                                                                    ^
+    823|   fireEvent.click(submit);
+    824|   expect(mocks.ack).not.toHaveBeenCalled();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 29 passed (32)
+   Start at  05:52:16
+   Duration  8.70s (transform 787ms, setup 0ms, import 1.21s, tests 6.48s, environment 850ms)

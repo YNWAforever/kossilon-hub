@@ -14,7 +14,22 @@ const serverFns = vi.hoisted(() => ({
   getWhatsAppIntegrationStatus: vi.fn(),
 }));
 
-vi.mock("../server-fns", () => serverFns);
+// Existing provider-state fixtures use arrays; adapt only the RPC boundary to
+// the page envelope. Pagination behavior has its own real-component cases.
+vi.mock("../server-fns", () => ({
+  getWhatsAppIntegrationStatus: serverFns.getWhatsAppIntegrationStatus,
+  listWhatsAppConversationPage: async (args: unknown) => ({
+    items: await serverFns.listWhatsAppConversations(args),
+    nextCursor: null,
+  }),
+  listWhatsAppConversationMessagePage: async (args: unknown) => ({
+    items: await serverFns.listWhatsAppConversationMessages(args),
+    nextCursor: null,
+  }),
+}));
+vi.mock("@/features/auth/auth-context-neon", () => ({
+  useAuth: () => ({ session: { id: "unit-staff", role: "Staff", team: "unit-team" } }),
+}));
 vi.mock("./message-intake", () => ({ MessageIntake: () => null }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,

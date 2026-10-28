@@ -1,0 +1,12 @@
+{
+  "run_id": "cosec-20261023-cont-d55d8d7e",
+  "scope": "R26.4 500-row isolated SQL persistence/preview/apply/replay/cancel/readback; no native Auth/provider/deployment",
+  "tested_product_source": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+  "parent_delivery": "cosec-20261023-79d324f0",
+  "base_head": "717ee08cfdfb6dc819d2105d8152b153207c9e03",
+  "branch": "codex/cosec-20261023",
+  "created_utc": "2026-10-23T03:31:22.3824061Z",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "native_auth_target": "awaiting user input",
+  "clean_start": true
+}

@@ -1,0 +1,566 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/admin/production-staff-admin.interaction.test.tsx (7 tests | 1 failed) 1433ms
+     × UC186 provides an explicit preview for lawful owner/reviewer handover 1088ms
+     ✓ UC186 warns that a truncated preview and the work queue are not the complete handover scope 86ms
+     ✓ UC186 opens the correct 'incorporation' responsibility, keeping removal blocked 71ms
+     ✓ UC186 opens the correct 'corporate_change' responsibility, keeping removal blocked 60ms
+     ✓ shows concrete handover before disabling and never calls a provider invite 39ms
+     ✓ does not display a failed read as an empty roster 26ms
+     ✓ requires a current handover preview and sends the displayed staff revision without auto retry 62ms
+ ❯ |unit| src/features/work-items/assignment.test.ts (8 tests | 1 failed) 10ms
+     × UC186 permits a qualified team colleague when the work has no required skill, retaining duty separation 6ms
+     ✓ ranks eligible staff and explains score factors 1ms
+     ✓ excludes inactive, unavailable, wrong-team, wrong-role, unskilled, and conflicted staff 0ms
+     ✓ excludes the opposite assignment role when duties must be separated 0ms
+     ✓ weights breached and at-risk work more heavily than ordinary work 0ms
+     ✓ penalizes capacity utilization and rewards case continuity 0ms
+     ✓ breaks exact ties by stable staff id 0ms
+     ✓ does not mutate input candidates 0ms
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 13 passed (15)
+   Start at  22:14:13
+   Duration  33.51s (transform 456ms, setup 0ms, import 8.96s, tests 1.44s, environment 21.93s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/admin/production-staff-admin.interaction.test.tsx > verified staff maintenance UI > UC186 provides an explicit preview for lawful owner/reviewer handover
+TestingLibraryElementError: Unable to find role="button" and name "預覽責任交接"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m管理[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m用戶管理[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m員工與團隊管理[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0m邀請未啟用。請由 Auth 管理員核實供應商身份及設定；已有帳戶可於此維護。[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0m只維護已核實綁定的既有身份。最後登入：沒有可靠紀錄時顯示未知。[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"員工篩選"[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-3"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m搜尋[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"搜尋員工"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m角色[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"按角色篩選"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"all"[39m
+            [36m>[39m
+              [0m全部[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Admin"[39m
+            [36m>[39m
+              [0m管理員[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Manager"[39m
+            [36m>[39m
+              [0m經理[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Staff"[39m
+            [36m>[39m
+              [0m同事[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Client"[39m
+            [36m>[39m
+              [0m客戶[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m團隊[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"按團隊篩選"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"all"[39m
+            [36m>[39m
+              [0m全部[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"10000000-0000-0000-0000-000000000001"[39m
+            [36m>[39m
+              [0mAnnual return[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m狀態[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"按狀態篩選"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"all"[39m
+            [36m>[39m
+              [0m全部[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"true"[39m
+            [36m>[39m
+              [0m有效[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"false"[39m
+            [36m>[39m
+              [0m停用[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"divide-y border-y"[39m
+      [36m>[39m
+        [36m<article[39m
+          [33mclass[39m=[32m"space-y-2 p-4"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+          [36m>[39m
+            [0mMei Lam[0m
+            [0m · [0m
+            [0mAnnual return[0m
+          [36m</h2>[39m
+          [36m<p>[39m
+            [0m同事[0m
+            [0m · [0m
+            [0m有效[0m
+            [0m · 未交案件 [0m
+            [0m1[0m
+            [0m · 未交工作 [0m
+            [0m0[0m
+            [0m · 最後登入：未知[0m
+          [36m</p>[39m
+          [36m<details[39m
+            [33mopen[39m=[32m""[39m
+          [36m>[39m
+            [36m<summary>[39m
+              [0m維護帳戶／轉交預覽[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-3 py-3"[39m
+            [36m>[39m
+              [36m<label>[39m
+                [0m帳戶角色[0m
+                [36m<select[39m
+                  [33maria-label[39m=[32m"Mei Lam 的帳戶角色"[39m
+                  [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"Admin"[39m
+                  [36m>[39m
+                    [0m管理員[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"Manager"[39m
+                  [36m>[39m
+                    [0m經理[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"Staff"[39m
+                  [36m>[39m
+                    [0m同事[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"Client"[39m
+                  [36m>[39m
+                    [0m客戶[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+              [36m</label>[39m
+              [36m<label>[39m
+                [0m所屬團隊[0m
+                [36m<select[39m
+                  [33maria-label[39m=[32m"Mei Lam 的所屬團隊"[39m
+                  [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0m未有團隊[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"10000000-0000-0000-0000-000000000001"[39m
+                  [36m>[39m
+                    [0mAnnual return[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"block"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33maria-label[39m=[32m"Mei Lam 的帳戶有效狀態"[39m
+                  [33mchecked[39m=[32m""[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+                [36m/>[39m
+                [0m帳戶有效[0m
+              [36m</label>[39m
+              [36m<div>[39m
+                [36m<p>[39m
+                  [0m當前未交案件：[0m
+                  [0m1[0m
+                  [0m；工作：[0m
+                  [0m0[0m
+                  [0m。[0m
+                [36m</p>[39m
+                [36m<p>[39m
+                  [36m<a[39m
+                    [33mhref[39m=[32m"/annual-returns/case"[39m
+                  [36m>[39m
+                    [0mOutstanding company[0m
+                    [0m · [0m
+                    [0m即將開始[0m
+                  [36m</a>[39m
+                [36m</p>[39m
+                [36m<a[39m
+                  [33mhref[39m=[32m"/work-queue"[39m
+                [36m>[39m
+                  [0m開啟工作隊列（只處理已建立的工作項）[0m
+                [36m</a>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m套用帳戶變更[0m
+              [36m</button>[39m
+              [36m<h3>[39m
+                [0m最近50筆帳戶紀錄[0m
+              [36m</h3>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+        [36m</article>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"flex-1 space-y-6 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-start justify-between gap-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0 space-y-1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium text-muted-foreground"[39m
+          [36m>[39m
+            [0m管理[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"font-display text-2xl font-semibold text-foreground"[39m
+          [36m>[39m
+            [0m用戶管理[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+          [36m>[39m
+            [0m員工與團隊管理[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0m邀請未啟用。請由 Auth 管理員核實供應商身份及設定；已有帳戶可於此維護。[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0m只維護已核實綁定的既有身份。最後登入：沒有可靠紀錄時顯示未知。[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"員工篩選"[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-3"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m搜尋[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"搜尋員工"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m角色[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"按角色篩選"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"all"[39m
+            [36m>[39m
+              [0m全部[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Admin"[39m
+            [36m>[39m
+              [0m管理員[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Manager"[39m
+            [36m>[39m
+              [0m經理[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Staff"[39m
+            [36m>[39m
+              [0m同事[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Client"[39m
+            [36m>[39m
+              [0m客戶[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m團隊[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"按團隊篩選"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"all"[39m
+            [36m>[39m
+              [0m全部[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"10000000-0000-0000-0000-000000000001"[39m
+            [36m>[39m
+              [0mAnnual return[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m狀態[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"按狀態篩選"[39m
+            [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"all"[39m
+            [36m>[39m
+              [0m全部[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"true"[39m
+            [36m>[39m
+              [0m有效[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"false"[39m
+            [36m>[39m
+              [0m停用[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"divide-y border-y"[39m
+      [36m>[39m
+        [36m<article[39m
+          [33mclass[39m=[32m"space-y-2 p-4"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+          [36m>[39m
+            [0mMei Lam[0m
+            [0m · [0m
+            [0mAnnual return[0m
+          [36m</h2>[39m
+          [36m<p>[39m
+            [0m同事[0m
+            [0m · [0m
+            [0m有效[0m
+            [0m · 未交案件 [0m
+            [0m1[0m
+            [0m · 未交工作 [0m
+            [0m0[0m
+            [0m · 最後登入：未知[0m
+          [36m</p>[39m
+          [36m<details[39m
+            [33mopen[39m=[32m""[39m
+          [36m>[39m
+            [36m<summary>[39m
+              [0m維護帳戶／轉交預覽[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-3 py-3"[39m
+            [36m>[39m
+              [36m<label>[39m
+                [0m帳戶角色[0m
+                [36m<select[39m
+                  [33maria-label[39m=[32m"Mei Lam 的帳戶角色"[39m
+                  [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"Admin"[39m
+                  [36m>[39m
+                    [0m管理員[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"Manager"[39m
+                  [36m>[39m
+                    [0m經理[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"Staff"[39m
+                  [36m>[39m
+                    [0m同事[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"Client"[39m
+                  [36m>[39m
+                    [0m客戶[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+              [36m</label>[39m
+              [36m<label>[39m
+                [0m所屬團隊[0m
+                [36m<select[39m
+                  [33maria-label[39m=[32m"Mei Lam 的所屬團隊"[39m
+                  [33mclass[39m=[32m"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm ml-2"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0m未有團隊[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"10000000-0000-0000-0000-000000000001"[39m
+                  [36m>[39m
+                    [0mAnnual return[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+              [36m</label>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"block"[39m
+              [36m>[39m
+                [36m<input[39m
+                  [33maria-label[39m=[32m"Mei Lam 的帳戶有效狀態"[39m
+                  [33mchecked[39m=[32m""[39m
+                  [33mtype[39m=[32m"checkbox"[39m
+                [36m/>[39m
+                [0m帳戶有效[0m
+              [36m</label>[39m
+              [36m<div>[39m
+                [36m<p>[39m
+                  [0m當前未交案件：[0m
+                  [0m1[0m
+                  [0m；工作：[0m
+                  [0m0[0m
+                  [0m。[0m
+                [36m</p>[39m
+                [36m<p>[39m
+                  [36m<a[39m
+                    [33mhref[39m=[32m"/annual-returns/case"[39m
+                  [36m>[39m
+                    [0mOutstanding company[0m
+                    [0m · [0m
+                    [0m即將開始[0m
+                  [36m</a>[39m
+                [36m</p>[39m
+                [36m<a[39m
+                  [33mhref[39m=[32m"/work-queue"[39m
+                [36m>[39m
+                  [0m開啟工作隊列（只處理已建立的工作項）[0m
+                [36m</a>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m套用帳戶變更[0m
+              [36m</button>[39m
+              [36m<h3>[39m
+                [0m最近50筆帳戶紀錄[0m
+              [36m</h3>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+        [36m</article>[39m
+      [36m</section>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/admin/production-staff-admin.interaction.test.tsx:77:25
+     75|     details.open = true;
+     76|     fireEvent(details, new Event("toggle"));
+     77|     expect(await screen.findByRole("button", { name: "預覽責任交接" })).toBe…
+       |                         ^
+     78|   });
+     79|   it("UC186 warns that a truncated preview and the work queue are not …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| src/features/work-items/assignment.test.ts > assignment recommendations > UC186 permits a qualified team colleague when the work has no required skill, retaining duty separation
+AssertionError: expected [] to deeply equal [ 'amy-user' ]
+
+- Expected
++ Received
+
+- [
+-   "amy-user",
+- ]
++ []
+
+ ❯ src/features/work-items/assignment.test.ts:45:7
+     43|         (r) => r.userId,
+     44|       ),
+     45|     ).toEqual([plain.userId]);
+       |       ^
+     46|     expect(
+     47|       rankAssignmentCandidates({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+

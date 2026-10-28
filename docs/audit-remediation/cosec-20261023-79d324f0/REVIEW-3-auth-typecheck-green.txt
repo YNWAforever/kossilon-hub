@@ -1,0 +1,1 @@
+TypeScript 5.9.3: checked syntax and semantics of 4 owned files using repository configuration; diagnostics=0; no emit.

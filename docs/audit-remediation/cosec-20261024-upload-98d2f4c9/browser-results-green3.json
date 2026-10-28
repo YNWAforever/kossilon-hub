@@ -1,0 +1,1566 @@
+{
+  "run_id": "cosec-20261024-upload-98d2f4c9",
+  "attempt": "green3",
+  "origin": "http://127.0.0.1:5173",
+  "sourceHashes": {
+    "src/routes/portal.tsx": "ff12286d4fdf3bc94d6cb5256fdc59c619a0e092f0d364cbfb794f45bf899133",
+    "src/features/documents/upload-resume.ts": "6c91192f2a22e907446f7986d162339d706120aa5e268ad733bcb2e5990b3764",
+    "src/features/documents/server-fns.ts": "14c3f83a1e092b96ea88b51ab7e36af1b0fdeb2a6e83459774b8a7e156d68e91",
+    "src/features/documents/repository.ts": "3bbbca6dd552fb4ee247b8aa28120c89bd76db414aae4a68756c5a527d61bc2b",
+    "src/features/annual-return/outstanding.ts": "cfe826f1afc0712fd4a5dfb8fc2473681e811e29b8f60cbb291635d4e521988f"
+  },
+  "harnessHashes": {
+    "browser-upload.mjs": "dadb53736e90ab0c742f39aee03d51ecd689265b2c7b682659d86ef2df926512",
+    "browser-entry.tsx.snapshot": "17cd6367558f60ef80d5ad97c2a81343bc6a398cdcbc2d029b098160ac7afbe1"
+  },
+  "historical_overlay": false,
+  "browser_version": "155.0.4283.62",
+  "results": [
+    {
+      "name": "UC150 near-limit PDF finalize commit/response loss/retry/single saved document",
+      "status": "passed",
+      "evidence": {
+        "actual_file_bytes": 10484736,
+        "sha256": "6d4d0e29598bd3e8a8e568baa749497cd91f705148c7d08d689f1b6f36914b10",
+        "intent_count": 1,
+        "document_count": 1,
+        "version_count": 1,
+        "full_body_submissions": 2,
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:39.767Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:39.768Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:39.791Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "37c5254b-c4a0-4527-b606-cba194b3f14d",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 10484736,
+              "checksum": "6d4d0e29598bd3e8a8e568baa749497cd91f705148c7d08d689f1b6f36914b10"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:40.834Z"
+          },
+          {
+            "name": "local.intent_committed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "uploadRequestId": "37c5254b-c4a0-4527-b606-cba194b3f14d"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:40.834Z"
+          },
+          {
+            "name": "finalizeDocumentUpload",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "body_encoding": "base64",
+              "body_base64_length": 13979648,
+              "decoded_size_bytes": 10484736,
+              "checksum": "6d4d0e29598bd3e8a8e568baa749497cd91f705148c7d08d689f1b6f36914b10",
+              "pdf_magic": "%PDF-1.4"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:41.608Z"
+          },
+          {
+            "name": "local.document_committed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "versionId": "98d2f4c9-0150-4150-8150-000000000300"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:41.608Z"
+          },
+          {
+            "name": "local.finalize_response_lost",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:41.608Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:41.609Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "37c5254b-c4a0-4527-b606-cba194b3f14d",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 10484736,
+              "checksum": "6d4d0e29598bd3e8a8e568baa749497cd91f705148c7d08d689f1b6f36914b10"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:41.692Z"
+          },
+          {
+            "name": "local.intent_replayed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "uploadRequestId": "37c5254b-c4a0-4527-b606-cba194b3f14d"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:41.692Z"
+          },
+          {
+            "name": "finalizeDocumentUpload",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "body_encoding": "base64",
+              "body_base64_length": 13979648,
+              "decoded_size_bytes": 10484736,
+              "checksum": "6d4d0e29598bd3e8a8e568baa749497cd91f705148c7d08d689f1b6f36914b10",
+              "pdf_magic": "%PDF-1.4"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:42.855Z"
+          },
+          {
+            "name": "local.document_replayed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "versionId": "98d2f4c9-0150-4150-8150-000000000300"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:42.855Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:42.856Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:42.856Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:42.856Z"
+          }
+        ],
+        "document": {
+          "id": "98d2f4c9-0150-4150-8150-000000000200",
+          "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+          "companyName": "QA UC150 Company",
+          "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+          "category": "signature",
+          "fileName": "QA-resume.pdf",
+          "uploadStatus": "quarantined",
+          "reviewStatus": "pending",
+          "rejectionReason": null,
+          "currentVersionId": "98d2f4c9-0150-4150-8150-000000000300",
+          "reviewedVersionId": null,
+          "scanVerdictSource": null,
+          "availability": "unscanned",
+          "objectAvailability": "not_checked",
+          "uploadSource": "client",
+          "uploadedAt": "2026-10-24T00:01:00.000Z"
+        },
+        "fresh_query_client_after_reload": true,
+        "scan_calls": 0
+      }
+    },
+    {
+      "name": "UC150 create commit/response loss/retry preserves request identity",
+      "status": "passed",
+      "evidence": {
+        "lost_create_committed_intents": 1,
+        "no_finalize_before_retry": true,
+        "final_state": {
+          "run_id": "cosec-20261024-upload-98d2f4c9",
+          "documents": [
+            {
+              "id": "98d2f4c9-0150-4150-8150-000000000200",
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "companyName": "QA UC150 Company",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "uploadStatus": "quarantined",
+              "reviewStatus": "pending",
+              "rejectionReason": null,
+              "currentVersionId": "98d2f4c9-0150-4150-8150-000000000300",
+              "reviewedVersionId": null,
+              "scanVerdictSource": null,
+              "availability": "unscanned",
+              "objectAvailability": "not_checked",
+              "uploadSource": "client",
+              "uploadedAt": "2026-10-24T00:01:00.000Z"
+            }
+          ],
+          "intents": [
+            {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "648333d1-9517-4b4d-be94-e887a03d39f1",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "id": "98d2f4c9-0150-4150-8150-000000000100",
+              "requestedByAuthUserId": "QA-UC150-Client",
+              "status": "quarantined",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "currentVersionId": "98d2f4c9-0150-4150-8150-000000000300",
+              "expiresAt": "2099-01-01T00:00:00.000Z"
+            }
+          ],
+          "versions": [
+            {
+              "id": "98d2f4c9-0150-4150-8150-000000000300",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "sizeBytes": 1024
+            }
+          ],
+          "linkedDocumentId": "98d2f4c9-0150-4150-8150-000000000200",
+          "checklistStatus": "Received",
+          "nextIntent": 101,
+          "nextDocument": 201,
+          "nextVersion": 301,
+          "commitCount": 1,
+          "scanCalls": 0,
+          "loseCreateResponses": 0,
+          "loseFinalizeResponses": 0,
+          "mode": "normal"
+        },
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.502Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.502Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.527Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "648333d1-9517-4b4d-be94-e887a03d39f1",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.656Z"
+          },
+          {
+            "name": "local.intent_committed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "uploadRequestId": "648333d1-9517-4b4d-be94-e887a03d39f1"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.656Z"
+          },
+          {
+            "name": "local.intent_response_lost",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.656Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.657Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "648333d1-9517-4b4d-be94-e887a03d39f1",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.753Z"
+          },
+          {
+            "name": "local.intent_replayed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "uploadRequestId": "648333d1-9517-4b4d-be94-e887a03d39f1"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.753Z"
+          },
+          {
+            "name": "finalizeDocumentUpload",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "body_encoding": "base64",
+              "body_base64_length": 1368,
+              "decoded_size_bytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "pdf_magic": "%PDF-1.4"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.754Z"
+          },
+          {
+            "name": "local.document_committed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "versionId": "98d2f4c9-0150-4150-8150-000000000300"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.754Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.755Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.755Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:43.755Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC150 reload journal/reselect changed lastModified/Received requirement preserves original binding",
+      "status": "passed",
+      "evidence": {
+        "fresh_query_client": true,
+        "old_lastModified": 150,
+        "new_lastModified": 151,
+        "original_binding_preserved": true,
+        "real_router_return_and_reopen": true,
+        "final_state": {
+          "run_id": "cosec-20261024-upload-98d2f4c9",
+          "documents": [
+            {
+              "id": "98d2f4c9-0150-4150-8150-000000000200",
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "companyName": "QA UC150 Company",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "uploadStatus": "quarantined",
+              "reviewStatus": "pending",
+              "rejectionReason": null,
+              "currentVersionId": "98d2f4c9-0150-4150-8150-000000000300",
+              "reviewedVersionId": null,
+              "scanVerdictSource": null,
+              "availability": "unscanned",
+              "objectAvailability": "not_checked",
+              "uploadSource": "client",
+              "uploadedAt": "2026-10-24T00:01:00.000Z"
+            }
+          ],
+          "intents": [
+            {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "2b5d6829-442d-4983-b932-84bf34b87079",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "id": "98d2f4c9-0150-4150-8150-000000000100",
+              "requestedByAuthUserId": "QA-UC150-Client",
+              "status": "quarantined",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "currentVersionId": "98d2f4c9-0150-4150-8150-000000000300",
+              "expiresAt": "2099-01-01T00:00:00.000Z"
+            }
+          ],
+          "versions": [
+            {
+              "id": "98d2f4c9-0150-4150-8150-000000000300",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "sizeBytes": 1024
+            }
+          ],
+          "linkedDocumentId": "98d2f4c9-0150-4150-8150-000000000200",
+          "checklistStatus": "Received",
+          "nextIntent": 101,
+          "nextDocument": 201,
+          "nextVersion": 301,
+          "commitCount": 1,
+          "scanCalls": 0,
+          "loseCreateResponses": 0,
+          "loseFinalizeResponses": 0,
+          "mode": "normal"
+        },
+        "journal_metadata_only": {
+          "kossilon:upload-resume:v1:{\"actorScope\":\"{\\\"authUserId\\\":\\\"QA-UC150-Client\\\",\\\"role\\\":\\\"Client\\\",\\\"userId\\\":null,\\\"teamId\\\":null,\\\"active\\\":true}\",\"companyId\":\"98d2f4c9-0150-4150-8150-000000000003\",\"caseId\":\"98d2f4c9-0150-4150-8150-000000000004\"}": [
+            {
+              "uploadRequestId": "2b5d6829-442d-4983-b932-84bf34b87079",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "category": "signature",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "phase": "received"
+            }
+          ]
+        },
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.197Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.197Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.220Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "2b5d6829-442d-4983-b932-84bf34b87079",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.339Z"
+          },
+          {
+            "name": "local.intent_committed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "uploadRequestId": "2b5d6829-442d-4983-b932-84bf34b87079"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.339Z"
+          },
+          {
+            "name": "finalizeDocumentUpload",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "body_encoding": "base64",
+              "body_base64_length": 1368,
+              "decoded_size_bytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "pdf_magic": "%PDF-1.4"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.341Z"
+          },
+          {
+            "name": "local.document_committed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "versionId": "98d2f4c9-0150-4150-8150-000000000300"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.341Z"
+          },
+          {
+            "name": "local.finalize_response_lost",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.341Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.342Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.560Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.561Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.567Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "2b5d6829-442d-4983-b932-84bf34b87079",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.702Z"
+          },
+          {
+            "name": "local.intent_replayed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "uploadRequestId": "2b5d6829-442d-4983-b932-84bf34b87079"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.702Z"
+          },
+          {
+            "name": "finalizeDocumentUpload",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "body_encoding": "base64",
+              "body_base64_length": 1368,
+              "decoded_size_bytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "pdf_magic": "%PDF-1.4"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.703Z"
+          },
+          {
+            "name": "local.document_replayed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "versionId": "98d2f4c9-0150-4150-8150-000000000300"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.703Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.703Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.703Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.703Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:44.703Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC150 mismatched bytes refused before RPC; cancelling resume selection retains journal",
+      "status": "passed",
+      "evidence": {
+        "same_name_same_size_different_hash": true,
+        "no_additional_upload_rpc": true,
+        "cancel_keeps_uncertain_identity": true,
+        "journal": [
+          {
+            "uploadRequestId": "da3e07d6-a11c-4127-a1f4-27f56c987a6d",
+            "fileName": "QA-resume.pdf",
+            "contentType": "application/pdf",
+            "sizeBytes": 1024,
+            "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+            "category": "signature",
+            "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+            "phase": "uncertain"
+          }
+        ],
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:45.207Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:45.207Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:45.228Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "da3e07d6-a11c-4127-a1f4-27f56c987a6d",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:45.323Z"
+          },
+          {
+            "name": "local.intent_committed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "uploadRequestId": "da3e07d6-a11c-4127-a1f4-27f56c987a6d"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:45.323Z"
+          },
+          {
+            "name": "finalizeDocumentUpload",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "body_encoding": "base64",
+              "body_base64_length": 1368,
+              "decoded_size_bytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "pdf_magic": "%PDF-1.4"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:45.324Z"
+          },
+          {
+            "name": "local.document_committed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "versionId": "98d2f4c9-0150-4150-8150-000000000300"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:45.324Z"
+          },
+          {
+            "name": "local.finalize_response_lost",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:45.324Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:45.324Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:45.505Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:45.505Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:45.512Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:45.619Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC150 same-tick duplicate submission holds one intent and one active transfer",
+      "status": "passed",
+      "evidence": {
+        "one_held_request": true,
+        "truthful_stage_labels_only": true,
+        "full_file_resend_disclosed": true,
+        "final_state": {
+          "run_id": "cosec-20261024-upload-98d2f4c9",
+          "documents": [
+            {
+              "id": "98d2f4c9-0150-4150-8150-000000000200",
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "companyName": "QA UC150 Company",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "uploadStatus": "quarantined",
+              "reviewStatus": "pending",
+              "rejectionReason": null,
+              "currentVersionId": "98d2f4c9-0150-4150-8150-000000000300",
+              "reviewedVersionId": null,
+              "scanVerdictSource": null,
+              "availability": "unscanned",
+              "objectAvailability": "not_checked",
+              "uploadSource": "client",
+              "uploadedAt": "2026-10-24T00:01:00.000Z"
+            }
+          ],
+          "intents": [
+            {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "d90de4a0-518c-40cf-bde7-d6098fb2d1ed",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "id": "98d2f4c9-0150-4150-8150-000000000100",
+              "requestedByAuthUserId": "QA-UC150-Client",
+              "status": "quarantined",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "currentVersionId": "98d2f4c9-0150-4150-8150-000000000300",
+              "expiresAt": "2099-01-01T00:00:00.000Z"
+            }
+          ],
+          "versions": [
+            {
+              "id": "98d2f4c9-0150-4150-8150-000000000300",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "sizeBytes": 1024
+            }
+          ],
+          "linkedDocumentId": "98d2f4c9-0150-4150-8150-000000000200",
+          "checklistStatus": "Received",
+          "nextIntent": 101,
+          "nextDocument": 201,
+          "nextVersion": 301,
+          "commitCount": 1,
+          "scanCalls": 0,
+          "loseCreateResponses": 0,
+          "loseFinalizeResponses": 0,
+          "mode": "normal"
+        },
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.024Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.024Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.045Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "d90de4a0-518c-40cf-bde7-d6098fb2d1ed",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.108Z"
+          },
+          {
+            "name": "local.intent_committed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "uploadRequestId": "d90de4a0-518c-40cf-bde7-d6098fb2d1ed"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.108Z"
+          },
+          {
+            "name": "local.intent_response_held",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.108Z"
+          },
+          {
+            "name": "finalizeDocumentUpload",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "body_encoding": "base64",
+              "body_base64_length": 1368,
+              "decoded_size_bytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "pdf_magic": "%PDF-1.4"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.120Z"
+          },
+          {
+            "name": "local.document_committed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "versionId": "98d2f4c9-0150-4150-8150-000000000300"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.120Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.121Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.121Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.121Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.122Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC150 departure while intent held prevents late finalize; return resumes same identity",
+      "status": "passed",
+      "evidence": {
+        "late_response_no_finalize": true,
+        "journal_survives_route_departure": true,
+        "final_state": {
+          "run_id": "cosec-20261024-upload-98d2f4c9",
+          "documents": [
+            {
+              "id": "98d2f4c9-0150-4150-8150-000000000200",
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "companyName": "QA UC150 Company",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "uploadStatus": "quarantined",
+              "reviewStatus": "pending",
+              "rejectionReason": null,
+              "currentVersionId": "98d2f4c9-0150-4150-8150-000000000300",
+              "reviewedVersionId": null,
+              "scanVerdictSource": null,
+              "availability": "unscanned",
+              "objectAvailability": "not_checked",
+              "uploadSource": "client",
+              "uploadedAt": "2026-10-24T00:01:00.000Z"
+            }
+          ],
+          "intents": [
+            {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "852cd8eb-e605-445a-889c-43a0d5efa73f",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "id": "98d2f4c9-0150-4150-8150-000000000100",
+              "requestedByAuthUserId": "QA-UC150-Client",
+              "status": "quarantined",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "currentVersionId": "98d2f4c9-0150-4150-8150-000000000300",
+              "expiresAt": "2099-01-01T00:00:00.000Z"
+            }
+          ],
+          "versions": [
+            {
+              "id": "98d2f4c9-0150-4150-8150-000000000300",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "sizeBytes": 1024
+            }
+          ],
+          "linkedDocumentId": "98d2f4c9-0150-4150-8150-000000000200",
+          "checklistStatus": "Received",
+          "nextIntent": 101,
+          "nextDocument": 201,
+          "nextVersion": 301,
+          "commitCount": 1,
+          "scanCalls": 0,
+          "loseCreateResponses": 0,
+          "loseFinalizeResponses": 0,
+          "mode": "normal"
+        },
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.478Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.478Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.499Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "852cd8eb-e605-445a-889c-43a0d5efa73f",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.587Z"
+          },
+          {
+            "name": "local.intent_committed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "uploadRequestId": "852cd8eb-e605-445a-889c-43a0d5efa73f"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.588Z"
+          },
+          {
+            "name": "local.intent_response_held",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.588Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.707Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.721Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "852cd8eb-e605-445a-889c-43a0d5efa73f",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.819Z"
+          },
+          {
+            "name": "local.intent_replayed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "uploadRequestId": "852cd8eb-e605-445a-889c-43a0d5efa73f"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.819Z"
+          },
+          {
+            "name": "finalizeDocumentUpload",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "body_encoding": "base64",
+              "body_base64_length": 1368,
+              "decoded_size_bytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23",
+              "pdf_magic": "%PDF-1.4"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.820Z"
+          },
+          {
+            "name": "local.document_committed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "documentId": "98d2f4c9-0150-4150-8150-000000000200",
+              "versionId": "98d2f4c9-0150-4150-8150-000000000300"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.820Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.821Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.821Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.821Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:46.821Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UC150 actor B cannot see actor A unfinished journal; A can reopen it",
+      "status": "passed",
+      "evidence": {
+        "a_journal_preserved": true,
+        "b_pending_journal_hidden": true,
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:47.153Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:47.153Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:47.178Z"
+          },
+          {
+            "name": "createDocumentUploadIntent",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "uploadRequestId": "0ec9a918-c113-435e-9429-427c9efd626d",
+              "checklistItemId": "98d2f4c9-0150-4150-8150-000000000007",
+              "category": "signature",
+              "fileName": "QA-resume.pdf",
+              "contentType": "application/pdf",
+              "sizeBytes": 1024,
+              "checksum": "af94af30df31ccab63678eb9ebcb02d538f55d38dbf0ac2d1f01206a0c391a23"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:47.307Z"
+          },
+          {
+            "name": "local.intent_committed",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100",
+              "uploadRequestId": "0ec9a918-c113-435e-9429-427c9efd626d"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:47.307Z"
+          },
+          {
+            "name": "local.intent_response_lost",
+            "data": {
+              "intentId": "98d2f4c9-0150-4150-8150-000000000100"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:47.307Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:47.308Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-ClientB",
+            "at": "2026-10-24T04:11:47.558Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-ClientB",
+            "at": "2026-10-24T04:11:47.558Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-ClientB",
+            "at": "2026-10-24T04:11:47.567Z"
+          }
+        ],
+        "limitation": "Injected local actor and transport boundaries only; not native Auth/RLS or browser-storage isolation against hostile same-origin scripts"
+      }
+    },
+    {
+      "name": "UC150 local refusal and read errors are explicit; list retry refetches",
+      "status": "passed",
+      "evidence": {
+        "refused_no_document_read": true,
+        "document_read_error_explicit": true,
+        "list_retry_reads": 1,
+        "no_upload_writes": true,
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Denied",
+            "at": "2026-10-24T04:11:48.210Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Denied",
+            "at": "2026-10-24T04:11:48.211Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:48.385Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:48.385Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:48.397Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:48.566Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:48.566Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:48.571Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:48.744Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:48.790Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:48.859Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:48.872Z"
+          }
+        ],
+        "limitation": "Local root actor/stub refusal; native permissions remain blocked"
+      }
+    },
+    {
+      "name": "UC150 empty states and cancelled file selection/return produce no upload requests",
+      "status": "passed",
+      "evidence": {
+        "empty_documents": true,
+        "empty_case_list": true,
+        "selection_cancelled": true,
+        "real_router_back": true,
+        "no_upload_requests": true,
+        "reads": [
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:49.213Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:49.214Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:49.236Z"
+          },
+          {
+            "name": "getClientPortalCase",
+            "data": {
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004"
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:49.345Z"
+          },
+          {
+            "name": "listDocumentPage",
+            "data": {
+              "companyId": "98d2f4c9-0150-4150-8150-000000000003",
+              "caseId": "98d2f4c9-0150-4150-8150-000000000004",
+              "limit": 100
+            },
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:49.349Z"
+          },
+          {
+            "name": "listClientPortalCases",
+            "data": {},
+            "actor": "QA-UC150-Client",
+            "at": "2026-10-24T04:11:49.512Z"
+          }
+        ]
+      }
+    }
+  ],
+  "blocked_external_origins": [],
+  "page_errors": [],
+  "console_errors": [],
+  "http_errors": [],
+  "resolutions": [
+    {
+      "id": "../features/annual-return/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/portal.tsx",
+      "boundary": "annual"
+    },
+    {
+      "id": "../features/annual-return/client-portal-server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/portal.tsx",
+      "boundary": "portal"
+    },
+    {
+      "id": "../features/documents/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/portal.tsx",
+      "boundary": "documents"
+    }
+  ],
+  "outer_error": null,
+  "outer_failure": null,
+  "native_auth_http_rpc_db_storage_scanner": false,
+  "scan_calls": 0,
+  "byte_offset_or_chunk_resume": false,
+  "cleanup": "Own fresh browser contexts closed; own loopback server/browser closed; no DB/provider/shared resources",
+  "limitation": "SessionStorage transport deliberately models idempotent commit/replay. This verifies Portal request identity and UI readback; real repository/server behavior requires separate SQL/unit evidence."
+}

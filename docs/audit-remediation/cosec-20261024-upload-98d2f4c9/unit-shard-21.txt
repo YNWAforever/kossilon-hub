@@ -1,0 +1,30 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/routes/-settings-save.interaction.test.tsx (4 tests) 1043ms
+     ✓ binds the draft to its observed revision across another admin's refetch  640ms
+ ✓ |unit| src/routes/-operations.interaction.test.tsx (9 tests) 703ms
+     ✓ labels and converts UTC run, queue and verification timestamps across HK midnight  441ms
+ ✓ |unit| src/routes/-payments.interaction.test.tsx (5 tests) 473ms
+ ✓ |unit| src/routes/-portal-context-boundary.test.tsx (20 tests) 564ms
+     ✓ rejects empty without any case/picker/document query  339ms
+ ✓ |unit| src/routes/-portal-reachability.test.tsx (11 tests) 609ms
+     ✓ links to a case's portal from the production case detail  334ms
+ ✓ |unit| src/routes/-portal-identity.interaction.test.tsx (1 test) 234ms
+ ✓ |unit| src/routes/-settings-admin-guard.test.tsx (3 tests) 305ms
+ ✓ |unit| src/routes/-root-auth-recovery.test.tsx (9 tests) 122ms
+ ✓ |unit| src/routes/-payments-demo.test.tsx (2 tests) 80ms
+ ✓ |unit| src/routes/-root-error-contract.test.tsx (3 tests) 47ms
+ ✓ |unit| src/routes/-page-title.convention.test.ts (3 tests) 30ms
+ ✓ |unit| src/routes/-production-authorization.test.ts (5 tests) 14ms
+
+ Test Files  12 passed (12)
+      Tests  75 passed (75)
+   Start at  12:20:49
+   Duration  24.67s (transform 4.60s, setup 0ms, import 9.79s, tests 4.22s, environment 7.99s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+stderr | src/routes/-settings-save.interaction.test.tsx > actual settings save feedback > retains failed input, exposes a live error, and retries only on an explicit click
+Encountered two children with the same key, `11111111-1111-4111-8111-111111111111:1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+

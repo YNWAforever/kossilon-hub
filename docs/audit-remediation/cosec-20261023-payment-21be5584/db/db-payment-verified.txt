@@ -1,0 +1,189 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Users/laich/Documents/kossilon-hub/cosec-20261023[39m
+
+ [31m❯[39m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[33m 4680[2mms[22m[39m
+[31m     [31m×[31m empty-full: verified commits before the opposite decision[39m[33m 606[2mms[22m[39m
+[31m     [31m×[31m empty-full: rejected commits before the opposite decision[39m[33m 899[2mms[22m[39m
+[31m     [31m×[31m partial-full: verified commits before the opposite decision[39m[33m 880[2mms[22m[39m
+[31m     [31m×[31m partial-full: rejected commits before the opposite decision[39m[33m 767[2mms[22m[39m
+[31m     [31m×[31m partial-open: verified commits before the opposite decision[39m[33m 776[2mms[22m[39m
+[31m     [31m×[31m partial-open: rejected commits before the opposite decision[39m[33m 750[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m6 failed[39m[22m[90m (6)[39m
+[2m   Start at [22m 20:39:06
+[2m   Duration [22m 5.76s[2m (transform 646ms, setup 0ms, import 918ms, tests 4.68s, environment 0ms)[22m
+
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 6 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mempty-full: verified commits before the opposite decision
+[31m[1mAssertionError[22m: expected { …(8) } to match object { …(6) }
+(2 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,7 +1,7 @@[39m
+[2m  {[22m
+[32m-   "amount": "1800.00",[39m
+[31m+   "amount": "1800",[39m
+[2m    "case_id": "1b74bbf6-1a93-4ca3-9365-f3e79a807dd2",[22m
+[2m    "company_id": "616ea099-7d28-42be-82be-a2922522b04a",[22m
+[2m    "id": "ed49d55f-8417-405c-9d07-ccfcbe901b38",[22m
+[2m    "payment_proof_document_id": "e7f2a3f0-faaa-4388-8580-f58c45042215",[22m
+[2m    "status": "Payment received",[22m
+
+[36m [2m❯[22m scenario src/features/annual-return/payment-conflict.integration.test.ts:[2m354:33[22m[39m
+    [90m352|[39m       before.entries.filter((entry) => entry.document_id !== base.docu…
+    [90m353|[39m     )[33m;[39m
+    [90m354|[39m     [34mexpect[39m(after[33m.[39mstoredPayment)[33m.[39m[34mtoMatchObject[39m({
+    [90m   |[39m                                 [31m^[39m
+    [90m355|[39m       id[33m:[39m ids[33m.[39mpayment[33m,[39m
+    [90m356|[39m       company_id[33m:[39m ids[33m.[39mcompany[33m,[39m
+[90m [2m❯[22m src/features/annual-return/payment-conflict.integration.test.ts:[2m82:11[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mempty-full: rejected commits before the opposite decision
+[31m[1mAssertionError[22m: expected { …(8) } to match object { …(6) }
+(2 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,7 +1,7 @@[39m
+[2m  {[22m
+[32m-   "amount": "1800.00",[39m
+[31m+   "amount": "1800",[39m
+[2m    "case_id": "c20a9b69-06b6-4628-994c-a4901238bfee",[22m
+[2m    "company_id": "f4cf1ec2-ec18-4398-b84f-f4f3d0fa60ab",[22m
+[2m    "id": "50d83777-14f0-4ce4-84bf-6ef9a7d28d06",[22m
+[2m    "payment_proof_document_id": null,[22m
+[2m    "status": "Payment pending",[22m
+
+[36m [2m❯[22m scenario src/features/annual-return/payment-conflict.integration.test.ts:[2m354:33[22m[39m
+    [90m352|[39m       before.entries.filter((entry) => entry.document_id !== base.docu…
+    [90m353|[39m     )[33m;[39m
+    [90m354|[39m     [34mexpect[39m(after[33m.[39mstoredPayment)[33m.[39m[34mtoMatchObject[39m({
+    [90m   |[39m                                 [31m^[39m
+    [90m355|[39m       id[33m:[39m ids[33m.[39mpayment[33m,[39m
+    [90m356|[39m       company_id[33m:[39m ids[33m.[39mcompany[33m,[39m
+[90m [2m❯[22m src/features/annual-return/payment-conflict.integration.test.ts:[2m82:11[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mpartial-full: verified commits before the opposite decision
+[31m[1mAssertionError[22m: expected { …(8) } to match object { …(6) }
+(2 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,7 +1,7 @@[39m
+[2m  {[22m
+[32m-   "amount": "1800.00",[39m
+[31m+   "amount": "1800",[39m
+[2m    "case_id": "ca1d0e79-ec4f-42f9-b482-9362e6cfdc2e",[22m
+[2m    "company_id": "ab85b5b8-dafd-4dd6-873e-23d395495ccb",[22m
+[2m    "id": "6a051e45-637f-44c9-bded-c6df136ad407",[22m
+[2m    "payment_proof_document_id": "7a835e1c-320c-422e-9932-282de6e25f5b",[22m
+[2m    "status": "Payment received",[22m
+
+[36m [2m❯[22m scenario src/features/annual-return/payment-conflict.integration.test.ts:[2m354:33[22m[39m
+    [90m352|[39m       before.entries.filter((entry) => entry.document_id !== base.docu…
+    [90m353|[39m     )[33m;[39m
+    [90m354|[39m     [34mexpect[39m(after[33m.[39mstoredPayment)[33m.[39m[34mtoMatchObject[39m({
+    [90m   |[39m                                 [31m^[39m
+    [90m355|[39m       id[33m:[39m ids[33m.[39mpayment[33m,[39m
+    [90m356|[39m       company_id[33m:[39m ids[33m.[39mcompany[33m,[39m
+[90m [2m❯[22m src/features/annual-return/payment-conflict.integration.test.ts:[2m82:11[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mpartial-full: rejected commits before the opposite decision
+[31m[1mAssertionError[22m: expected { …(8) } to match object { …(6) }
+(2 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,7 +1,7 @@[39m
+[2m  {[22m
+[32m-   "amount": "1800.00",[39m
+[31m+   "amount": "1800",[39m
+[2m    "case_id": "24b7293e-2df2-4e75-8760-de82c931b1ed",[22m
+[2m    "company_id": "5f961cda-d6fb-4bd6-9216-3c3da24bf84b",[22m
+[2m    "id": "02a45ee9-9bb1-4396-b9f5-a3b41c7d95af",[22m
+[2m    "payment_proof_document_id": null,[22m
+[2m    "status": "Payment pending",[22m
+
+[36m [2m❯[22m scenario src/features/annual-return/payment-conflict.integration.test.ts:[2m354:33[22m[39m
+    [90m352|[39m       before.entries.filter((entry) => entry.document_id !== base.docu…
+    [90m353|[39m     )[33m;[39m
+    [90m354|[39m     [34mexpect[39m(after[33m.[39mstoredPayment)[33m.[39m[34mtoMatchObject[39m({
+    [90m   |[39m                                 [31m^[39m
+    [90m355|[39m       id[33m:[39m ids[33m.[39mpayment[33m,[39m
+    [90m356|[39m       company_id[33m:[39m ids[33m.[39mcompany[33m,[39m
+[90m [2m❯[22m src/features/annual-return/payment-conflict.integration.test.ts:[2m82:11[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mpartial-open: verified commits before the opposite decision
+[31m[1mAssertionError[22m: expected { …(8) } to match object { …(6) }
+(2 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,7 +1,7 @@[39m
+[2m  {[22m
+[32m-   "amount": "1800.00",[39m
+[31m+   "amount": "1800",[39m
+[2m    "case_id": "745b2205-4916-487b-9447-4eb24904efec",[22m
+[2m    "company_id": "dfe8520b-1c07-4217-a8d3-444ae53395ac",[22m
+[2m    "id": "5b714fd3-5676-40ca-ad3d-1e45dded324f",[22m
+[2m    "payment_proof_document_id": null,[22m
+[2m    "status": "Payment pending",[22m
+
+[36m [2m❯[22m scenario src/features/annual-return/payment-conflict.integration.test.ts:[2m354:33[22m[39m
+    [90m352|[39m       before.entries.filter((entry) => entry.document_id !== base.docu…
+    [90m353|[39m     )[33m;[39m
+    [90m354|[39m     [34mexpect[39m(after[33m.[39mstoredPayment)[33m.[39m[34mtoMatchObject[39m({
+    [90m   |[39m                                 [31m^[39m
+    [90m355|[39m       id[33m:[39m ids[33m.[39mpayment[33m,[39m
+    [90m356|[39m       company_id[33m:[39m ids[33m.[39mcompany[33m,[39m
+[90m [2m❯[22m src/features/annual-return/payment-conflict.integration.test.ts:[2m82:11[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/annual-return/payment-conflict.integration.test.ts[2m > [22mUC155 opposite payment decisions on independent SQL sessions[2m > [22mpartial-open: rejected commits before the opposite decision
+[31m[1mAssertionError[22m: expected { …(8) } to match object { …(6) }
+(2 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,7 +1,7 @@[39m
+[2m  {[22m
+[32m-   "amount": "1800.00",[39m
+[31m+   "amount": "1800",[39m
+[2m    "case_id": "a147e318-87b0-4662-9b39-5f55c5656e55",[22m
+[2m    "company_id": "0f2311c2-e7fd-4bad-80d0-836c234ae1e5",[22m
+[2m    "id": "a006881e-c430-44a4-872a-250c6c6c9a77",[22m
+[2m    "payment_proof_document_id": null,[22m
+[2m    "status": "Payment pending",[22m
+
+[36m [2m❯[22m scenario src/features/annual-return/payment-conflict.integration.test.ts:[2m354:33[22m[39m
+    [90m352|[39m       before.entries.filter((entry) => entry.document_id !== base.docu…
+    [90m353|[39m     )[33m;[39m
+    [90m354|[39m     [34mexpect[39m(after[33m.[39mstoredPayment)[33m.[39m[34mtoMatchObject[39m({
+    [90m   |[39m                                 [31m^[39m
+    [90m355|[39m       id[33m:[39m ids[33m.[39mpayment[33m,[39m
+    [90m356|[39m       company_id[33m:[39m ids[33m.[39mcompany[33m,[39m
+[90m [2m❯[22m src/features/annual-return/payment-conflict.integration.test.ts:[2m82:11[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯[22m[39m
+

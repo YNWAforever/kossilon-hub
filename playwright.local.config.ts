@@ -26,6 +26,7 @@ export default defineConfig({
     "performance.spec.ts",
     "audit-release-demo.spec.ts",
     "audit-persona-local.spec.ts",
+    "continuation-reflow.spec.ts",
   ],
   fullyParallel: false,
   workers: 1,

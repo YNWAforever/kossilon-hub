@@ -1,0 +1,454 @@
+
+> test
+> vitest run --project unit src/features/bulk-operations/snapshot-scope.unit.test.ts src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/bulk-operations/snapshot-scope.unit.test.ts (4 tests | 4 failed) 35ms
+     × retains the displayed restriction (1 cases) alongside authorization 6ms
+     × retains the displayed restriction (0 cases) alongside authorization 1ms
+     × rejects draft case restrictions for other resources instead of silently discarding them 6ms
+     × returns persisted operation, actor and progress timestamps without promoting unknown results 21ms
+ ❯ |unit| src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx (3 tests | 3 failed) 1555ms
+   × F13/F35: snapshots only distinct displayed draft cases, excluding delivered and unknown rows 447ms
+   × does not expose a global snapshot while drafts are loading or unavailable 22ms
+   × an empty draft set sends an empty restriction rather than unrestricted filters 1083ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/bulk-operations/snapshot-scope.unit.test.ts > draft snapshot SQL contract > retains the displayed restriction (1 cases) alongside authorization
+ FAIL  |unit| src/features/bulk-operations/snapshot-scope.unit.test.ts > draft snapshot SQL contract > retains the displayed restriction (0 cases) alongside authorization
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "draftCaseIds"
+    ],
+    "path": [
+      "filters"
+    ],
+    "message": "Unrecognized key(s) in object: 'draftCaseIds'"
+  }
+]
+ ❯ Object.get error [as error] node_modules/zod/v3/types.js:39:31
+ ❯ ZodObject.parse node_modules/zod/v3/types.js:114:22
+ ❯ Object.createSnapshot src/features/bulk-operations/repository.ts:205:33
+    203|   ) {
+    204|     assertBulkManager(actor);
+    205|     const data = snapshotSchema.parse(input);
+       |                                 ^
+    206|     const verified = await currentActor(sql, actor);
+    207|     const rows = await resources(sql, verified, data.resource, data.fi…
+ ❯ src/features/bulk-operations/snapshot-scope.unit.test.ts:31:66
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |unit| src/features/bulk-operations/snapshot-scope.unit.test.ts > draft snapshot SQL contract > rejects draft case restrictions for other resources instead of silently discarding them
+AssertionError: expected [Function] to throw error including 'Unsupported filters' but got '[\n  {\n    "code": "unrecognized_key…'
+
+- Expected
++ Received
+
+- Unsupported filters
++ [
++   {
++     "code": "unrecognized_keys",
++     "keys": [
++       "draftCaseIds"
++     ],
++     "path": [
++       "filters"
++     ],
++     "message": "Unrecognized key(s) in object: 'draftCaseIds'"
++   }
++ ]
+
+ ❯ src/features/bulk-operations/snapshot-scope.unit.test.ts:42:143
+     40|   it("rejects draft case restrictions for other resources instead of s…
+     41|     const { sql } = recorder();
+     42|     await expect(createBulkOperationsRepository({ sql }).createSnapsho…
+       |                                                                                                                                               ^
+     43|   });
+     44|   it("returns persisted operation, actor and progress timestamps witho…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |unit| src/features/bulk-operations/snapshot-scope.unit.test.ts > draft snapshot SQL contract > returns persisted operation, actor and progress timestamps without promoting unknown results
+AssertionError: expected { …(8) } to match object { operation: 'follow_up_draft', …(7) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "counts": {
+      "unknown": 2,
+    },
+-   "createdAt": "2026-10-23T00:00:00Z",
+-   "createdBy": "20000000-0000-0000-0000-000000000001",
+-   "operation": "follow_up_draft",
+-   "payloadHash": "trusted-payload-hash",
+    "retryableFailedCount": 0,
+    "state": "partial",
+-   "updatedAt": "2026-10-23T00:00:05Z",
+  }
+
+ ❯ src/features/bulk-operations/snapshot-scope.unit.test.ts:47:17
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx > F13/F35: snapshots only distinct displayed draft cases, excluding delivered and unknown rows
+AssertionError: expected "vi.fn()" to be called with arguments: [ { data: { …(2) } } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+      "data": {
+-       "filters": {
+-         "draftCaseIds": [
+-           "40000000-0000-0000-0000-000000000001",
+-         ],
+-       },
++       "filters": {},
+        "resource": "annual_return_case",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx:37:24
+     35|   fireEvent.click(screen.getByText("選取全部篩選結果"));
+     36|   await waitFor(() => expect(api.snapshot).toHaveBeenCalledOnce());
+     37|   expect(api.snapshot).toHaveBeenCalledWith({ data: { resource: "annua…
+       |                        ^
+     38|   expect(screen.queryByLabelText("選取 Draft company") === null).toBe(fa…
+     39|   expect(api.send).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx > does not expose a global snapshot while drafts are loading or unavailable
+AssertionError: expected <button type="button" …(2)></button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"
+  disabled=""
+  type="button"
+>
+  選取全部篩選結果
+</button>
+
+ ❯ src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx:44:42
+     42|   api.drafts.mockRejectedValue(new Error("drafts unavailable"));
+     43|   setup();
+     44|   expect(screen.queryByText("選取全部篩選結果")).toBeNull();
+       |                                          ^
+     45|   await screen.findByRole("alert");
+     46|   expect(screen.queryByText("選取全部篩選結果")).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx > an empty draft set sends an empty restriction rather than unrestricted filters
+AssertionError: expected "vi.fn()" to be called with arguments: [ { data: { …(2) } } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+      "data": {
+-       "filters": {
+-         "draftCaseIds": [],
+-       },
++       "filters": {},
+        "resource": "annual_return_case",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <main
+        class="flex-1 space-y-6 p-6"
+      >
+        <div
+          class="flex flex-wrap items-start justify-between gap-3"
+        >
+          <div
+            class="min-w-0 space-y-1"
+          >
+            <p
+              class="text-sm font-medium text-muted-foreground"
+            >
+              通訊
+            </p>
+            <h1
+              class="font-display text-2xl font-semibold text-foreground"
+            >
+              WhatsApp 追件
+            </h1>
+          </div>
+        </div>
+        <p
+          class="text-sm text-muted-foreground"
+        >
+          供應商設定不代表連線正常。批准後會將已檢查的草稿加入發送隊列；只有回執才確認已送達。
+        </p>
+        <section
+          aria-label="批量日常維護"
+          class="rounded-lg border bg-card text-sm"
+        >
+          <details
+            class="group"
+          >
+            <summary
+              class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-4 py-2 font-medium hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden"
+            >
+              <span
+                class="flex items-center gap-2"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-layers h-4 w-4 text-muted-foreground"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"
+                  />
+                  <path
+                    d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"
+                  />
+                  <path
+                    d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"
+                  />
+                </svg>
+                批量日常維護
+                <span
+                  class="text-xs font-normal text-muted-foreground"
+                >
+                  管理員及經理
+                </span>
+              </span>
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chevron-down h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m6 9 6 6 6-6"
+                />
+              </svg>
+            </summary>
+            <div
+              class="border-t px-4 py-4"
+            >
+              <div
+                class="space-y-3 text-muted-foreground [&_label]:text-foreground"
+              >
+                <label>
+                  操作
+                  <select
+                    aria-label="批量操作"
+                    class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+                  >
+                    <option
+                      value="follow_up_draft"
+                    >
+                      追件草稿（不派送）
+                    </option>
+                  </select>
+                </label>
+                <p>
+                  草稿須另作單筆批准；清單不包含文件內容，不代表已付款、已派送或已交件。
+                </p>
+                <p>
+                  每頁
+                  0
+                  ；已載入
+                  0
+                  ；全部
+                  0
+                </p>
+                <div
+                  class="flex flex-wrap gap-3"
+                >
+                  <button
+                    class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"
+                    disabled=""
+                    type="button"
+                  >
+                    選取已載入紀錄
+                  </button>
+                  <button
+                    class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"
+                    type="button"
+                  >
+                    選取全部篩選結果
+                  </button>
+                  <button
+                    class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 text-xs"
+                    type="button"
+                  >
+                    清空選取
+                  </button>
+                </div>
+                <p>
+                  已選取
+                  1
+                  筆
+                </p>
+                <p>
+                  已固定全部
+                  1
+                  ；排除
+                  0
+                  。其後新增紀錄不在本次範圍。
+                </p>
+                <details>
+                  <summary>
+                    核對已載入紀錄與排除項
+                  </summary>
+                  <div
+                    class="max-h-60 overflow-auto"
+                  />
+                </details>
+                <button
+                  class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-8 px-3 text-xs"
+                  type="button"
+                >
+                  預覽批量維護
+                </button>
+              </div>
+              <div
+                class="mt-4 border-t pt-4"
+              >
+                <div
+                  class="space-y-2 border-t pt-3"
+                >
+                  <label>
+                    已保存工作
+                    <select
+                      aria-label="已保存工作"
+                      class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+                    >
+                      <option
+                        value=""
+                      >
+                        選擇工作以恢復進度
+                      </option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </details>
+        </section>
+        <div
+          class="border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"
+          role="status"
+        >
+          <p
+            class="font-medium"
+          >
+            示範模擬
+          </p>
+          <p>
+            不會向外發送任何 WhatsApp 或電郵訊息。
+          </p>
+        </div>
+        <section
+          class="border bg-card"
+        >
+          <div
+            class="hidden grid-cols-[1.2fr_1fr_160px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid"
+          >
+            <span>
+              公司
+            </span>
+            <span>
+              收件人
+            </span>
+            <span>
+              類別
+            </span>
+            <span>
+              狀態
+            </span>
+            <span>
+              預覽
+            </span>
+            <span
+              class="text-right"
+            >
+              操作
+            </span>
+          </div>
+          <div
+            class="divide-y"
+          >
+            <p
+              class="p-4 text-sm text-muted-foreground"
+            >
+              沒有待處理的跟進。
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
+ ❯ src/features/annual-return/components/production-whatsapp-automation.bulk.test.tsx:55:44
+     53|   await screen.findByText("沒有待處理的跟進。");
+     54|   fireEvent.click(screen.getByText("選取全部篩選結果"));
+     55|   await waitFor(() => expect(api.snapshot).toHaveBeenCalledWith({ data…
+       |                                            ^
+     56| });
+     57|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed (7)
+   Start at  04:56:53
+   Duration  5.70s (transform 670ms, setup 0ms, import 2.09s, tests 1.59s, environment 1.44s)
+

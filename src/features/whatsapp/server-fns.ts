@@ -1,6 +1,7 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
+import { documentScopeForStaffActor } from "@/features/documents/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import {
   assertAnnualReturnActionAllowed,
@@ -8,7 +9,15 @@ import {
 } from "@/features/annual-return/permissions";
 import type { ProviderMode } from "@/server/provider-mode";
 import { missingWhatsAppEnvVars, WHATSAPP_LIVE_PROVIDER_ENV_KEYS } from "./config";
-import type { WhatsAppConversation, WhatsAppConversationMessage } from "./conversations";
+import {
+  CONVERSATION_PAGE_SIZE,
+  CONVERSATION_MESSAGE_PAGE_SIZE,
+  conversationMessageOccurredAt,
+  normalizeTimestampText,
+  type WhatsAppConversation,
+  type WhatsAppConversationMessage,
+  type WhatsAppHistoryPage,
+} from "./conversations";
 import type {
   InboundWhatsAppMessageRecord,
   WhatsAppRepository,
@@ -37,7 +46,7 @@ const templateCategories = [
 ] as const satisfies readonly WhatsAppTemplateCategory[];
 
 const jsonObjectSchema = z
-  .record(z.unknown())
+  .record(z.string(), z.unknown())
   .refine((value) => value !== null && !Array.isArray(value), {
     message: "payload must be a JSON object.",
   });
@@ -52,18 +61,37 @@ export const processWhatsAppInboundWebhookInputSchema = z.object({
 // input, so the schema states exactly that rather than the rule being skipped.
 export const noInputSchema = z.undefined().or(z.object({}).strict());
 
+const timestampSchema = z
+  .string()
+  .min(1)
+  .max(80)
+  .refine(
+    (value) => Number.isFinite(Date.parse(normalizeTimestampText(value))),
+    "Invalid cursor timestamp.",
+  );
+const historyCursorSchema = z
+  .object({
+    at: timestampSchema,
+    id: z.string().guid(),
+    scope: z.string().min(1).max(1000),
+    asOf: timestampSchema.optional(),
+  })
+  .strict();
 export const listWhatsAppConversationsInputSchema = z.object({
   limit: z.number().int().min(1).max(500).optional(),
+  search: z.string().trim().max(200).optional(),
+  cursor: historyCursorSchema.optional(),
 });
 
 export const listWhatsAppConversationMessagesInputSchema = z.object({
-  contactId: z.string().uuid(),
+  contactId: z.string().guid(),
   limit: z.number().int().min(1).max(500).optional(),
+  cursor: historyCursorSchema.optional(),
 });
 
 // No `actorId`: identity is derived from the request, never accepted from it.
 export const queueWhatsAppTemplateMessageInputSchema = z.object({
-  caseId: z.string().uuid(),
+  caseId: z.string().guid(),
   toPhone: z.string().min(3),
   toWhatsAppId: z.string().min(1).nullable().optional(),
   contactName: z.string().min(1).nullable().optional(),
@@ -306,6 +334,76 @@ export async function listWhatsAppConversationMessagesForActor(
   return dependencies.repository.listConversationMessages({ ...input, actor });
 }
 
+function historyScope(actor: AuthenticatedActor, filter: string) {
+  documentScopeForStaffActor(actor, "access");
+  return JSON.stringify([
+    actor.authUserId,
+    actor.userId,
+    actor.role,
+    actor.teamId,
+    actor.active,
+    filter,
+  ]);
+}
+
+export async function listWhatsAppConversationPageForActor(
+  actor: AuthenticatedActor,
+  input: z.input<typeof listWhatsAppConversationsInputSchema>,
+  dependencies: WhatsAppInboxDependencies,
+): Promise<WhatsAppHistoryPage<WhatsAppConversation>> {
+  const data = listWhatsAppConversationsInputSchema.parse(input);
+  const search = data.search ?? "";
+  const scope = historyScope(actor, `conversations:${search}`);
+  if (data.cursor && data.cursor.scope !== scope)
+    throw new Error("Inbox cursor scope changed; refresh the list.");
+  const limit = data.limit ?? CONVERSATION_PAGE_SIZE;
+  const asOf = data.cursor?.asOf ?? new Date().toISOString();
+  const rows = await dependencies.repository.listConversations({
+    ...data,
+    search,
+    actor,
+    asOf,
+    limit: limit + 1,
+  });
+  const items = rows.slice(0, limit);
+  const last = items.at(-1);
+  return {
+    items,
+    nextCursor:
+      rows.length > limit && last
+        ? { at: last.lastMessageAt, id: last.contactId, scope, asOf }
+        : null,
+  };
+}
+
+export async function listWhatsAppConversationMessagePageForActor(
+  actor: AuthenticatedActor,
+  input: z.input<typeof listWhatsAppConversationMessagesInputSchema>,
+  dependencies: WhatsAppInboxDependencies,
+): Promise<WhatsAppHistoryPage<WhatsAppConversationMessage>> {
+  const data = listWhatsAppConversationMessagesInputSchema.parse(input);
+  const scope = historyScope(actor, `messages:${data.contactId}`);
+  if (data.cursor && data.cursor.scope !== scope)
+    throw new Error("Message cursor scope changed; reload the conversation.");
+  const limit = data.limit ?? CONVERSATION_MESSAGE_PAGE_SIZE;
+  const asOf = data.cursor?.asOf ?? new Date().toISOString();
+  const rows = await dependencies.repository.listConversationMessages({
+    ...data,
+    actor,
+    asOf,
+    limit: limit + 1,
+  });
+  const items = rows.slice(0, limit);
+  const last = items.at(-1);
+  return {
+    items,
+    nextCursor:
+      rows.length > limit && last
+        ? { at: conversationMessageOccurredAt(last), id: last.id, scope, asOf }
+        : null,
+  };
+}
+
 // Staff is asserted before a connection is acquired, so an unauthorised caller
 // never reaches the pool. The *ForActor functions assert again on the actor they
 // are handed — they are the seam the unit tests drive, and have to stand on their
@@ -345,6 +443,22 @@ export const listWhatsAppConversationMessages = createServerFn({ method: "GET" }
   .handler(({ data }) =>
     withWhatsAppInboxRepository((repository, actor) =>
       listWhatsAppConversationMessagesForActor(actor, data, { repository }),
+    ),
+  );
+
+export const listWhatsAppConversationPage = createServerFn({ method: "GET" })
+  .validator(listWhatsAppConversationsInputSchema)
+  .handler(({ data }) =>
+    withWhatsAppInboxRepository((repository, actor) =>
+      listWhatsAppConversationPageForActor(actor, data, { repository }),
+    ),
+  );
+
+export const listWhatsAppConversationMessagePage = createServerFn({ method: "GET" })
+  .validator(listWhatsAppConversationMessagesInputSchema)
+  .handler(({ data }) =>
+    withWhatsAppInboxRepository((repository, actor) =>
+      listWhatsAppConversationMessagePageForActor(actor, data, { repository }),
     ),
   );
 

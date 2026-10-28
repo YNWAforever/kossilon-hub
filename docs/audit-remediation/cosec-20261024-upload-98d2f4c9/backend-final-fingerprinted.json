@@ -1,0 +1,50 @@
+{
+  "attempt": "final-fingerprinted",
+  "started": "2026-10-24T03:52:50.902Z",
+  "finished": "2026-10-24T03:52:55.478Z",
+  "command": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/documents/upload-retry.test.ts",
+    "src/features/documents/server-fns.test.ts",
+    "src/features/documents/repository.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "exit_code": 0,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ],
+  "source_before": {
+    "src/features/documents/repository.ts": "3bbbca6dd552fb4ee247b8aa28120c89bd76db414aae4a68756c5a527d61bc2b",
+    "src/features/documents/server-fns.ts": "8e80c3bb875b44ab4778b59f1cd0f30e1be8c86c926d1301c5fe0e9b5848f11a",
+    "src/features/documents/upload-retry.test.ts": "7a583986c4c31eda44a62e606cd98d1eef0864fe089f38394c1981e5b969a3b2"
+  },
+  "source_after": {
+    "src/features/documents/repository.ts": "3bbbca6dd552fb4ee247b8aa28120c89bd76db414aae4a68756c5a527d61bc2b",
+    "src/features/documents/server-fns.ts": "8e80c3bb875b44ab4778b59f1cd0f30e1be8c86c926d1301c5fe0e9b5848f11a",
+    "src/features/documents/upload-retry.test.ts": "7a583986c4c31eda44a62e606cd98d1eef0864fe089f38394c1981e5b969a3b2"
+  }
+}

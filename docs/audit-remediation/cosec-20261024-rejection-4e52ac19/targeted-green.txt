@@ -1,0 +1,20 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/routes/-document-rejection.interaction.test.tsx (5 tests) 905ms
+   ✓ shows the actionable returned reason to the client, including after fresh-cache reopen  622ms
+ ✓ |unit| src/features/documents/rejection-projection.test.ts (7 tests) 6ms
+ ✓ |unit| src/routes/-portal-identity.interaction.test.tsx (1 test) 200ms
+ ✓ |unit| src/features/documents/server-fns.test.ts (26 tests) 20ms
+ ✓ |unit| src/features/annual-return/evidence-server-fns.test.ts (5 tests) 22ms
+ ✓ |unit| src/features/annual-return/evidence-service.test.ts (24 tests) 20ms
+ ✓ |unit| src/features/annual-return/client-portal-server-fns.test.ts (10 tests) 7ms
+ ✓ |unit| src/features/documents/repository.test.ts (2 tests) 3ms
+
+ Test Files  8 passed (8)
+      Tests  80 passed (80)
+   Start at  10:45:10
+   Duration  7.28s (transform 1.14s, setup 0ms, import 2.50s, tests 1.18s, environment 2.12s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

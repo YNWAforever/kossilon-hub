@@ -1,0 +1,6843 @@
+{
+  "project": "full390",
+  "zoom": 1,
+  "width": 390,
+  "height": 844,
+  "checkpoints": [
+    {
+      "name": "Admin-overview",
+      "path": "/",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Admin-client-unavailable",
+      "path": "/clients",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Admin-empty-search",
+      "path": "/annual-returns",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Admin-filtered-board",
+      "path": "/annual-returns",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Admin-case",
+      "path": "/annual-returns/ar-delta",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Admin-reload",
+      "path": "/annual-returns/ar-delta",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Admin-return",
+      "path": "/annual-returns",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 259,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Admin-read-only-users",
+      "path": "/admin",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Staff-overview",
+      "path": "/",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Staff-client-unavailable",
+      "path": "/clients",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Staff-empty-search",
+      "path": "/annual-returns",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Staff-filtered-board",
+      "path": "/annual-returns",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Staff-case",
+      "path": "/annual-returns/ar-delta",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Staff-reload",
+      "path": "/annual-returns/ar-delta",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Staff-return",
+      "path": "/annual-returns",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 259,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Staff-direct-route-denial",
+      "path": "/admin",
+      "metrics": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "outerWidth": 516,
+        "outerHeight": 844,
+        "devicePixelRatio": 1,
+        "visualScale": 1,
+        "visualWidth": 390,
+        "rootZoom": "1",
+        "bodyZoom": "1",
+        "rootTransform": "none",
+        "bodyTransform": "none"
+      },
+      "cssVisualViewport": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "pageX": 0,
+        "pageY": 0,
+        "clientWidth": 390,
+        "clientHeight": 844,
+        "scale": 1,
+        "zoom": 1
+      }
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/login"
+    },
+    {
+      "method": "GET",
+      "path": "/src/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/@tanstack-start/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/@id/virtual:tanstack-start-dev-client-entry"
+    },
+    {
+      "method": "GET",
+      "path": "/@react-refresh"
+    },
+    {
+      "method": "GET",
+      "path": "/@vite/client"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/vite/dist/client/env.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/plugin/default-entry/client.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react-dom_client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react_jsx-dev-runtime.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/chunk-Cf1989ZW.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/hydrateStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/StartClient.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react-dom.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/index.dev.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react_jsx-runtime.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/hydrateStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/utils.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/awaited.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/CatchBoundary.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ClientOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useMatch.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLoaderData.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLoaderDeps.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useParams.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useSearch.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useNavigate.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouteContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/link.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/route.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/fileRoute.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/lazyRouteComponent.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/not-found.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ScriptOnce.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Match.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Matches.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/router.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/RouterProvider.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ScrollRestoration.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useBlocker.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouterState.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLocation.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useCanGoBack.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Asset.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/headContentUtils.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Scripts.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/HeadContent.dev.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core_isServer.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/nonRouteComponentContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/matchContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_react-router_n_@tanstack_react-store.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/routerContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/renderRouteNotFound.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/scroll-restoration.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/ServerFunctionSerializationAdapter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core_ssr_client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/start.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/empty-plugin-adapters.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/router.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Transitioner.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/routerStores.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/HeadContent.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_history.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/utils-BgoR6ZmQ.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/RawStream-uHAXOAr2.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/manifest-B9BXHOub.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/makeSerovalPlugin-BIOC7oR4.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/headers-DSemfqUy.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/constants.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/createClientRpc.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/router-core/dist/esm/scroll-restoration-script/client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/seroval.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/serialization-adapters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getStartOptions.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/serverFnFetcher.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_react-query.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/runtime/data-mode.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routeTree.gen.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/useServerFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/Hydrate.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getDefaultSerovalPlugins.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/frame-decoder.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/safeObjectMerge.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createServerFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createMiddleware.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createCsrfMiddleware.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getRouterInstance.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getGlobalStartContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getStartContextServerOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/createIsomorphicFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/envOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/checklist-templates/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/service-subscriptions/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/__root.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/index.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/admin.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/clients.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/corporate-changes.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/documents.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/imports.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/incorporation.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/login.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/operations.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/payments.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/portal.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/settings.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/today.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/whatsapp.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/work-queue.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/clients.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/corporate-changes.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/incorporation.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/whatsapp.automation.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/page-title.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/board-filters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-payment-review.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/register-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/daily-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/dashboard/dashboard-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/dashboard/demo-dashboard-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/button.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/field.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/status-pill.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/lucide-react.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/zod.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/annual-return-store.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/hong-kong-time.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/role-labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/auth-context-neon.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/route-guard.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/work-views.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/entity-id.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/class-variance-authority.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/utils.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/status.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@radix-ui_react-slot.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/lovable-error-reporting.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/error-details.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/app-sidebar.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/app-mobile-nav.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/sonner.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/neon-auth-rpc.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/query-scope.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/app-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/clsx.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/tailwind-merge.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/dist-D5dSJ_UI.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/checklist-item-label.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/date-math.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/outstanding.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/readiness.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/neon-auth-client.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/session.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/sonner.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/client-rpc.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/nav-content.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/sheet.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/plugins/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/title.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/format-date.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/demo-unavailable.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/page-header.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/bulk-selection-toolbar.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/dialog.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/assignment-labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/use-retained-page.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/queue-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/version.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/broadcast-channel.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/equality.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/focus-manager.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/online-manager.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/parser.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/query.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/session-refresh.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/vanilla.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/additional-fields/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/anonymous/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/anonymous/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/custom-session/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/device-authorization/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/email-otp/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/email-otp/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/generic-oauth/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/generic-oauth/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/jwt/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/last-login-method/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/magic-link/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/multi-session/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/multi-session/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/constants.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oidc-provider/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/one-tap/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/one-time-token/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/phone-number/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/phone-number/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/siwe/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/two-factor/error-code.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/two-factor/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/username/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/username/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/plugins/infer-plugin.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/skeleton.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/safe-preview.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/safety.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/query-keys.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/payment-review-input.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/format-label.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/findings.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/package-manifest.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/permissions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/case-history.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/whatsapp/phone.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/workflow.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/whatsapp-reminders.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/data-origin.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@radix-ui_react-dialog.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/package.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/nanostores.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/corporate-changes/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/navigation.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/config.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/proxy.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/string.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/access/statement.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/has-permission.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/cookies/cookie-utils.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/url.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/url.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/access/statement.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/permission.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/versions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/requirements.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/fetch-plugins.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/session-atom.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/defu.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-fetch/fetch/dist/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/is-atom.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/access/access.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/whatsapp/approved-templates.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/wildcard.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/error/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/env-impl.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/color-depth.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/logger.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/membership.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/error/codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/better-call/dist/error.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/live-scanner.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/local-r2.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/scanner.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/storage.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/version-conflict.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/list-filters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/analysis-checks.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/text-extraction.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/ocr-provider.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource/sora/files/sora-latin-700-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource/sora/files/sora-latin-600-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/index.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/kpi-card.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/deadline-pill.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/daily-digest.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/clients.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/components/demo-client-notice.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/components/production-client-register.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/clients/client-form-dialog.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/identifiers.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/risk-pill.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-command-center.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/checklist-templates/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/create-case-dialog.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/demo-case-detail.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-case-detail.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/checklist-item-label.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/client-portal-store.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/case-findings.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/case-handoff.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/case-parties.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/scoped-pickers.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-case-actions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/findings-review.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/handoff-server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/handoff.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/evidence-contract.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/annual-returns/ar-delta"
+    },
+    {
+      "method": "GET",
+      "path": "/src/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/@tanstack-start/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/@id/virtual:tanstack-start-dev-client-entry"
+    },
+    {
+      "method": "GET",
+      "path": "/@react-refresh"
+    },
+    {
+      "method": "GET",
+      "path": "/@vite/client"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/vite/dist/client/env.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/plugin/default-entry/client.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react-dom_client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react_jsx-dev-runtime.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/chunk-Cf1989ZW.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/hydrateStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/StartClient.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react-dom.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/index.dev.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react_jsx-runtime.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/hydrateStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/utils.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/awaited.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/CatchBoundary.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ClientOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useMatch.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLoaderData.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLoaderDeps.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useParams.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useSearch.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useNavigate.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouteContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/link.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/route.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/fileRoute.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/lazyRouteComponent.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/not-found.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ScriptOnce.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Match.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Matches.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/router.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/RouterProvider.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ScrollRestoration.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useBlocker.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouterState.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLocation.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useCanGoBack.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Asset.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/headContentUtils.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Scripts.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/HeadContent.dev.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/ServerFunctionSerializationAdapter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core_ssr_client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/start.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/empty-plugin-adapters.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/router.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core_isServer.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/nonRouteComponentContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/routerContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/matchContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_react-router_n_@tanstack_react-store.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/renderRouteNotFound.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/scroll-restoration.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Transitioner.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/routerStores.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/HeadContent.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_history.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/constants.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/createClientRpc.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/headers-DSemfqUy.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/utils-BgoR6ZmQ.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/makeSerovalPlugin-BIOC7oR4.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/serialization-adapters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_react-query.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/runtime/data-mode.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routeTree.gen.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/RawStream-uHAXOAr2.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/manifest-B9BXHOub.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/router-core/dist/esm/scroll-restoration-script/client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getStartOptions.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/serverFnFetcher.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/seroval.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/useServerFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/Hydrate.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/checklist-templates/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/service-subscriptions/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/__root.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/index.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/admin.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/clients.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/corporate-changes.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/documents.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/imports.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/incorporation.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/login.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/operations.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/payments.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/portal.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/settings.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/today.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/whatsapp.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/work-queue.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/clients.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/corporate-changes.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/incorporation.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/whatsapp.automation.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getDefaultSerovalPlugins.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/frame-decoder.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/safeObjectMerge.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createServerFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createMiddleware.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createCsrfMiddleware.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getRouterInstance.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getGlobalStartContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/page-title.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/dashboard/dashboard-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/dashboard/demo-dashboard-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/board-filters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/register-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/lovable-error-reporting.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/error-details.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/app-sidebar.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/app-mobile-nav.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/button.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/sonner.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/auth-context-neon.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/neon-auth-rpc.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/route-guard.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/query-scope.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/role-labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/lucide-react.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/status-pill.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/field.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-payment-review.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/daily-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/title.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/format-date.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/demo-unavailable.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/page-header.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/bulk-selection-toolbar.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/dialog.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/assignment-labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/utils.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/use-retained-page.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/queue-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getStartContextServerOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/createIsomorphicFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/envOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/annual-return-store.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/hong-kong-time.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/zod.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/nav-content.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/sheet.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@radix-ui_react-slot.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/class-variance-authority.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/sonner.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/client-rpc.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/neon-auth-client.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/session.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/status.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/work-views.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/entity-id.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/skeleton.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/safe-preview.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/safety.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/query-keys.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/payment-review-input.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/format-label.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/corporate-changes/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/checklist-item-label.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@radix-ui_react-dialog.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/membership.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/clsx.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/tailwind-merge.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/permissions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/case-history.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/whatsapp/phone.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/workflow.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/whatsapp-reminders.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/readiness.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/data-origin.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/app-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/dist-D5dSJ_UI.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/navigation.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/plugins/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/date-math.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/outstanding.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/live-scanner.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/local-r2.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/scanner.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/storage.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/version-conflict.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/list-filters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/whatsapp/approved-templates.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/findings.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/package-manifest.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/version.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/broadcast-channel.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/equality.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/focus-manager.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/online-manager.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/parser.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/query.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/session-refresh.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/vanilla.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/additional-fields/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/anonymous/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/anonymous/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/custom-session/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/device-authorization/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/email-otp/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/email-otp/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/generic-oauth/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/generic-oauth/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/jwt/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/last-login-method/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/magic-link/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/multi-session/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/multi-session/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/constants.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oidc-provider/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/one-tap/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/one-time-token/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/phone-number/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/phone-number/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/siwe/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/two-factor/error-code.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/two-factor/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/username/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/username/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/plugins/infer-plugin.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/analysis-checks.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/text-extraction.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/versions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/requirements.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/package.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/nanostores.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/config.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/proxy.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/string.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/access/statement.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/has-permission.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/cookies/cookie-utils.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/url.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/url.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/access/statement.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/permission.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/ocr-provider.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/fetch-plugins.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/session-atom.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/defu.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-fetch/fetch/dist/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/is-atom.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/access/access.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/wildcard.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/error/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/error/codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/better-call/dist/error.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/env-impl.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/color-depth.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/logger.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/risk-pill.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-command-center.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/demo-case-detail.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-case-detail.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/checklist-templates/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/create-case-dialog.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/checklist-item-label.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/client-portal-store.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/case-findings.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/case-handoff.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/case-parties.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/scoped-pickers.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-case-actions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/findings-review.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/handoff-server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/handoff.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/evidence-contract.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource/sora/files/sora-latin-700-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource/sora/files/sora-latin-600-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/admin.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/admin/production-staff-admin.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/admin/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/admin/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/admin/auth-provider.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/login"
+    },
+    {
+      "method": "GET",
+      "path": "/src/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/@tanstack-start/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/@id/virtual:tanstack-start-dev-client-entry"
+    },
+    {
+      "method": "GET",
+      "path": "/@react-refresh"
+    },
+    {
+      "method": "GET",
+      "path": "/@vite/client"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/vite/dist/client/env.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/plugin/default-entry/client.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react-dom_client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react_jsx-dev-runtime.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/chunk-Cf1989ZW.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/hydrateStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/StartClient.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react-dom.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/index.dev.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react_jsx-runtime.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/hydrateStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/utils.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/awaited.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/CatchBoundary.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ClientOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useMatch.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLoaderData.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLoaderDeps.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useParams.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useSearch.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useNavigate.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouteContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/link.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/route.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/fileRoute.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/lazyRouteComponent.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/not-found.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ScriptOnce.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Match.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Matches.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/router.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/RouterProvider.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ScrollRestoration.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useBlocker.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouterState.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLocation.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useCanGoBack.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Asset.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/headContentUtils.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Scripts.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/HeadContent.dev.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/ServerFunctionSerializationAdapter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core_ssr_client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/start.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/empty-plugin-adapters.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/router.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core_isServer.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/nonRouteComponentContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/routerContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/matchContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_react-router_n_@tanstack_react-store.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/renderRouteNotFound.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/scroll-restoration.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Transitioner.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/routerStores.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/HeadContent.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_history.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/headers-DSemfqUy.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/utils-BgoR6ZmQ.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/makeSerovalPlugin-BIOC7oR4.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/serialization-adapters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/constants.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/createClientRpc.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_react-query.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/runtime/data-mode.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routeTree.gen.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/RawStream-uHAXOAr2.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/manifest-B9BXHOub.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/router-core/dist/esm/scroll-restoration-script/client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/seroval.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/useServerFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/Hydrate.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/checklist-templates/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/service-subscriptions/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getStartOptions.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/serverFnFetcher.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/__root.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/index.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/admin.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/clients.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/corporate-changes.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/documents.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/imports.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/incorporation.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/login.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/operations.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/payments.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/portal.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/settings.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/today.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/whatsapp.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/work-queue.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/clients.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/corporate-changes.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/incorporation.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/whatsapp.automation.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/safeObjectMerge.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createServerFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createMiddleware.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createCsrfMiddleware.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getRouterInstance.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getDefaultSerovalPlugins.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getGlobalStartContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/frame-decoder.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/page-title.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/dashboard/dashboard-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/dashboard/demo-dashboard-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/board-filters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/register-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/lovable-error-reporting.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/error-details.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/app-sidebar.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/app-mobile-nav.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/button.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/sonner.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/auth-context-neon.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/neon-auth-rpc.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/route-guard.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/query-scope.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-payment-review.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/role-labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/lucide-react.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/status-pill.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/field.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/daily-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/title.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/format-date.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/demo-unavailable.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/page-header.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/bulk-selection-toolbar.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/dialog.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/assignment-labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/utils.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/use-retained-page.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/queue-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getStartContextServerOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/createIsomorphicFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/envOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/annual-return-store.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/hong-kong-time.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/nav-content.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/zod.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/sheet.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@radix-ui_react-slot.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/class-variance-authority.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/sonner.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/neon-auth-client.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/session.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/client-rpc.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/skeleton.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/safe-preview.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/safety.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/query-keys.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/payment-review-input.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/format-label.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/status.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/work-views.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/entity-id.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/corporate-changes/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/checklist-item-label.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/membership.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@radix-ui_react-dialog.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/clsx.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/tailwind-merge.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/permissions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/case-history.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/whatsapp/phone.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/workflow.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/whatsapp-reminders.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/readiness.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/data-origin.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/app-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/navigation.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/dist-D5dSJ_UI.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/plugins/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/live-scanner.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/local-r2.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/scanner.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/storage.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/version-conflict.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/list-filters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/date-math.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/outstanding.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/whatsapp/approved-templates.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/findings.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/package-manifest.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/version.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/broadcast-channel.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/equality.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/focus-manager.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/online-manager.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/parser.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/query.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/session-refresh.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/vanilla.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/additional-fields/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/anonymous/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/anonymous/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/custom-session/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/device-authorization/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/email-otp/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/email-otp/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/generic-oauth/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/generic-oauth/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/jwt/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/last-login-method/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/magic-link/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/multi-session/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/multi-session/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/constants.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oidc-provider/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/one-tap/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/one-time-token/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/phone-number/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/phone-number/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/siwe/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/two-factor/error-code.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/two-factor/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/username/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/username/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/plugins/infer-plugin.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/analysis-checks.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/text-extraction.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/versions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/requirements.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/package.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/nanostores.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/config.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/proxy.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/string.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/access/statement.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/has-permission.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/cookies/cookie-utils.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/url.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/url.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/access/statement.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/permission.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/ocr-provider.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/fetch-plugins.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/session-atom.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/defu.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-fetch/fetch/dist/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/is-atom.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/access/access.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/wildcard.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/error/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/env-impl.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/color-depth.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/logger.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/error/codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/better-call/dist/error.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource/sora/files/sora-latin-700-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource/sora/files/sora-latin-600-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/index.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/kpi-card.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/deadline-pill.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/daily-digest.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/clients.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/components/demo-client-notice.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/components/production-client-register.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/clients/client-form-dialog.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/identifiers.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/risk-pill.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-command-center.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/checklist-templates/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/create-case-dialog.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/demo-case-detail.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-case-detail.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/checklist-item-label.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/client-portal-store.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/case-findings.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/case-handoff.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/case-parties.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/scoped-pickers.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-case-actions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/findings-review.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/handoff-server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/handoff.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/evidence-contract.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/annual-returns/ar-delta"
+    },
+    {
+      "method": "GET",
+      "path": "/src/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/@tanstack-start/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/@id/virtual:tanstack-start-dev-client-entry"
+    },
+    {
+      "method": "GET",
+      "path": "/@react-refresh"
+    },
+    {
+      "method": "GET",
+      "path": "/@vite/client"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/vite/dist/client/env.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/plugin/default-entry/client.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react-dom_client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react_jsx-dev-runtime.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/chunk-Cf1989ZW.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/hydrateStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/StartClient.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react-dom.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/index.dev.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react_jsx-runtime.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/hydrateStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/utils.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/awaited.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/CatchBoundary.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ClientOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useMatch.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLoaderData.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLoaderDeps.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useParams.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useSearch.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useNavigate.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouteContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/link.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/route.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/fileRoute.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/lazyRouteComponent.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/not-found.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ScriptOnce.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Match.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Matches.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/router.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/RouterProvider.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ScrollRestoration.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useBlocker.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouterState.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLocation.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useCanGoBack.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Asset.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/headContentUtils.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Scripts.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/HeadContent.dev.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/ServerFunctionSerializationAdapter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core_ssr_client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/start.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/empty-plugin-adapters.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/router.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core_isServer.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/nonRouteComponentContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/routerContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/matchContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_react-router_n_@tanstack_react-store.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/renderRouteNotFound.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/scroll-restoration.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Transitioner.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/routerStores.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/HeadContent.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_history.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/constants.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/createClientRpc.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/headers-DSemfqUy.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/utils-BgoR6ZmQ.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/makeSerovalPlugin-BIOC7oR4.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/serialization-adapters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_react-query.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/runtime/data-mode.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routeTree.gen.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/RawStream-uHAXOAr2.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/manifest-B9BXHOub.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/router-core/dist/esm/scroll-restoration-script/client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getStartOptions.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/serverFnFetcher.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/seroval.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/useServerFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/Hydrate.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/checklist-templates/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/service-subscriptions/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/__root.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/index.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/admin.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/clients.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/corporate-changes.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/documents.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/imports.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/incorporation.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/login.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/operations.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/payments.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/portal.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/settings.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/today.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/whatsapp.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/work-queue.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/clients.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/corporate-changes.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/incorporation.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/whatsapp.automation.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getDefaultSerovalPlugins.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/frame-decoder.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/safeObjectMerge.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createServerFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createMiddleware.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createCsrfMiddleware.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getRouterInstance.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getGlobalStartContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/lovable-error-reporting.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/error-details.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/app-sidebar.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/app-mobile-nav.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/button.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/sonner.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/auth-context-neon.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/neon-auth-rpc.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/route-guard.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/query-scope.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/page-title.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/dashboard/dashboard-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/dashboard/demo-dashboard-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/board-filters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/register-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-payment-review.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/role-labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/lucide-react.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/status-pill.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/field.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/daily-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/title.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/format-date.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/demo-unavailable.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/page-header.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/bulk-selection-toolbar.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/dialog.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/assignment-labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/utils.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/use-retained-page.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/queue-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getStartContextServerOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/createIsomorphicFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/envOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/nav-content.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/sheet.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@radix-ui_react-slot.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/class-variance-authority.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/sonner.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/neon-auth-client.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/session.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/client-rpc.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/annual-return-store.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/hong-kong-time.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/zod.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/skeleton.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/safe-preview.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/safety.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/query-keys.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/payment-review-input.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/format-label.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/status.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/work-views.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/entity-id.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/corporate-changes/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/checklist-item-label.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@radix-ui_react-dialog.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/membership.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/clsx.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/tailwind-merge.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/navigation.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/dist-D5dSJ_UI.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/plugins/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/app-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/permissions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/case-history.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/whatsapp/phone.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/workflow.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/whatsapp-reminders.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/readiness.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/data-origin.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/live-scanner.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/local-r2.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/scanner.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/storage.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/version-conflict.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/list-filters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/date-math.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/outstanding.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/additional-fields/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/anonymous/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/anonymous/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/custom-session/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/device-authorization/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/email-otp/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/email-otp/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/generic-oauth/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/generic-oauth/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/jwt/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/last-login-method/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/magic-link/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/multi-session/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/multi-session/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/constants.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oidc-provider/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/one-tap/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/one-time-token/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/phone-number/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/phone-number/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/siwe/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/two-factor/error-code.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/two-factor/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/username/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/username/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/plugins/infer-plugin.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/version.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/broadcast-channel.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/equality.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/focus-manager.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/online-manager.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/parser.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/query.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/session-refresh.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/vanilla.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/whatsapp/approved-templates.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/findings.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/package-manifest.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/analysis-checks.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/text-extraction.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/access/statement.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/has-permission.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/cookies/cookie-utils.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/url.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/url.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/access/statement.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/permission.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/nanostores.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/package.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/config.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/proxy.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/string.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/versions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/requirements.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/ocr-provider.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/access/access.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/wildcard.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/error/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/fetch-plugins.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/session-atom.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/defu.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-fetch/fetch/dist/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/is-atom.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/env-impl.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/color-depth.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/logger.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/error/codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/better-call/dist/error.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/risk-pill.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-command-center.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/demo-case-detail.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-case-detail.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/checklist-templates/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/create-case-dialog.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/checklist-item-label.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/client-portal-store.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/case-findings.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/case-handoff.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/case-parties.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/scoped-pickers.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-case-actions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/findings-review.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/handoff-server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/handoff.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/evidence-contract.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource/sora/files/sora-latin-700-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource/sora/files/sora-latin-600-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/admin"
+    },
+    {
+      "method": "GET",
+      "path": "/src/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/@tanstack-start/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/@id/virtual:tanstack-start-dev-client-entry"
+    },
+    {
+      "method": "GET",
+      "path": "/@react-refresh"
+    },
+    {
+      "method": "GET",
+      "path": "/@vite/client"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/vite/dist/client/env.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/plugin/default-entry/client.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react-dom_client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react_jsx-dev-runtime.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/chunk-Cf1989ZW.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/hydrateStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/StartClient.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react-dom.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/index.dev.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/react_jsx-runtime.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/hydrateStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/utils.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/awaited.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/CatchBoundary.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ClientOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useMatch.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLoaderData.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLoaderDeps.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useParams.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useSearch.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useNavigate.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouteContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/link.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/route.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/fileRoute.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/lazyRouteComponent.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/not-found.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ScriptOnce.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Match.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Matches.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/router.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/RouterProvider.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/ScrollRestoration.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useBlocker.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useRouterState.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useLocation.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/useCanGoBack.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Asset.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/headContentUtils.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Scripts.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/HeadContent.dev.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client/ServerFunctionSerializationAdapter.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core_ssr_client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/start.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/empty-plugin-adapters.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/router.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core_isServer.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_router-core.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/nonRouteComponentContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/routerContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/matchContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_react-router_n_@tanstack_react-store.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/renderRouteNotFound.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/scroll-restoration.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/routerStores.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/Transitioner.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-router/dist/esm/HeadContent.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_history.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/constants.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/createClientRpc.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/headers-DSemfqUy.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/utils-BgoR6ZmQ.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/makeSerovalPlugin-BIOC7oR4.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/serialization-adapters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/RawStream-uHAXOAr2.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/manifest-B9BXHOub.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@tanstack_react-query.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/runtime/data-mode.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routeTree.gen.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/router-core/dist/esm/scroll-restoration-script/client.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getStartOptions.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/serverFnFetcher.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/seroval.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/useServerFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start-client/dist/esm/Hydrate.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/checklist-templates/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/service-subscriptions/errors.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/__root.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/index.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/admin.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/clients.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/corporate-changes.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/documents.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/imports.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/incorporation.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/login.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/operations.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/payments.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/portal.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/settings.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/today.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/whatsapp.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/work-queue.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/annual-returns.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/clients.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/corporate-changes.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/incorporation.$id.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/whatsapp.automation.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getDefaultSerovalPlugins.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/frame-decoder.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/safeObjectMerge.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createServerFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createMiddleware.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createCsrfMiddleware.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/createStart.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getRouterInstance.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getGlobalStartContext.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/styles.css"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/lovable-error-reporting.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/error-details.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/app-sidebar.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/app-mobile-nav.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/button.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/sonner.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/auth-context-neon.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/neon-auth-rpc.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/route-guard.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/query-scope.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/page-title.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/dashboard/dashboard-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/dashboard/demo-dashboard-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/board-filters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/register-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/role-labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/lucide-react.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/status-pill.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/field.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/components/production-payment-review.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/daily-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/title.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/format-date.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/demo-unavailable.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/page-header.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/bulk-selection-toolbar.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/dialog.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/assignment-labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/utils.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/use-retained-page.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/work-items/queue-view-state.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/getStartContextServerOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/createIsomorphicFn.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-fn-stubs/dist/esm/envOnly.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/nav-content.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/sheet.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@radix-ui_react-slot.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/class-variance-authority.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/sonner.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/neon-auth-client.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/session.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/react-start/dist/esm/client-rpc.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/annual-return-store.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/hong-kong-time.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/zod.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/corporate-changes/labels.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/checklist-item-label.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/work-views.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/entity-id.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/ui/skeleton.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/safe-preview.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/safety.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/query-keys.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/payment-review-input.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/format-label.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/status.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/@radix-ui_react-dialog.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/membership.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/clsx.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/tailwind-merge.js"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/navigation.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/dist-D5dSJ_UI.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@tanstack/start-client-core/dist/esm/client-rpc/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/plugins/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/auth/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/permissions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/case-history.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/whatsapp/phone.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/workflow.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/whatsapp-reminders.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/readiness.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/clients/data-origin.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/app-data.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/date-math.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/outstanding.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/live-scanner.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/local-r2.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/scanner.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/storage.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/version-conflict.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/list-filters.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/authorization.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/bulk-operations/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/version.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/broadcast-channel.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/equality.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/focus-manager.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/online-manager.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/parser.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/query.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/session-refresh.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/vanilla.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/additional-fields/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/anonymous/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/anonymous/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/custom-session/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/device-authorization/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/email-otp/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/email-otp/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/generic-oauth/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/generic-oauth/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/jwt/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/last-login-method/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/magic-link/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/multi-session/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/multi-session/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/constants.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oauth-popup/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/oidc-provider/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/one-tap/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/one-time-token/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/phone-number/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/phone-number/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/siwe/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/two-factor/error-code.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/two-factor/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/username/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/username/client.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/plugins/infer-plugin.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/whatsapp/approved-templates.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/findings.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/package-manifest.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/analysis-checks.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/text-extraction.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/package.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/nanostores.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/config.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/proxy.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/string.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/error-codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/access/statement.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/admin/has-permission.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/cookies/cookie-utils.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/url.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/utils/url.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/access/statement.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/organization/permission.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/versions.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/annual-return/requirements.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/documents/ocr-provider.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/fetch-plugins.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/client/session-atom.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/.vite/deps/defu.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-fetch/fetch/dist/index.js"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/plugins/access/access.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/is-atom.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/dist/utils/wildcard.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/error/index.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/env-impl.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/color-depth.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/env/logger.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/@better-auth/core/dist/error/codes.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/better-auth/node_modules/better-call/dist/error.mjs"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/admin.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/admin/production-staff-admin.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/admin/server-fns.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/admin/types.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/src/features/admin/auth-provider.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource/sora/files/sora-latin-700-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource/sora/files/sora-latin-600-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2"
+    },
+    {
+      "method": "GET",
+      "path": "/src/routes/index.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/kpi-card.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/components/deadline-pill.tsx"
+    },
+    {
+      "method": "GET",
+      "path": "/src/lib/daily-digest.ts"
+    }
+  ],
+  "denied": [],
+  "pageErrors": [],
+  "browser": "155.0.4283.62",
+  "nativeAuth": false,
+  "businessWrites": false
+}

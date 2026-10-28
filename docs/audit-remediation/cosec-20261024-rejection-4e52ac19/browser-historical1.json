@@ -1,0 +1,35 @@
+{
+  "kind": "browser",
+  "attempt": "historical1",
+  "started": "2026-10-24T03:03:09.309Z",
+  "finished": "2026-10-24T03:03:17.243Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "docs/audit-remediation/cosec-20261024-rejection-4e52ac19/browser-rejection.mjs",
+    "historical1"
+  ],
+  "exit_code": 1,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR"
+  ]
+}

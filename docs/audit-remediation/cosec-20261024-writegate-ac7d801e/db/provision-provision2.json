@@ -1,0 +1,31 @@
+{
+  "run": "cosec-20261024-writegate-ac7d801e",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+  "containerId": "0789aa90aa1233d210170281713fdd1804c6db881b7aa84ec3c315d5cd120211",
+  "image": "sha256:f4c66b820c6f974249089d3d16d86a3698eae11e8746eb6644b2271031e91232",
+  "host": "127.0.0.1",
+  "port": 52709,
+  "database": "cosec_writegate_ac7d801e",
+  "user": "cosec_runner",
+  "tmpfs": {
+    "/var/lib/postgresql/data": "rw,noexec,nosuid,size=1g"
+  },
+  "mounts": [],
+  "labels": {
+    "codex.repo": "kossilon-hub",
+    "codex.root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+    "codex.run": "cosec-20261024-writegate-ac7d801e"
+  },
+  "identity": {
+    "user": "cosec_runner",
+    "database": "cosec_writegate_ac7d801e",
+    "readOnly": "on",
+    "systemId": "7700137624581926950",
+    "serverPort": 5432,
+    "dataDirectory": "/var/lib/postgresql/data/pgdata",
+    "serverAddress": "172.17.0.2/32"
+  },
+  "counts": {},
+  "configuration": {}
+}

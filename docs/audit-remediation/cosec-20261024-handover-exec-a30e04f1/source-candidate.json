@@ -1,0 +1,65 @@
+{
+  "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "parent_sha": "104af5c4875d2f10b595ec330fcb2e1d07e87201",
+  "tested_head": "104af5c4875d2f10b595ec330fcb2e1d07e87201",
+  "tested_worktree_content_equal": true,
+  "source_freeze": "source-post-checks.json",
+  "source_files_verified": 674,
+  "paths": [
+    "src/features/admin/handover-execution.integration.test.ts",
+    "src/features/admin/handover.ts",
+    "src/features/admin/production-staff-admin.interaction.test.tsx",
+    "src/features/admin/production-staff-admin.tsx",
+    "src/features/admin/repository.ts",
+    "src/features/admin/server-fns.test.ts",
+    "src/features/admin/server-fns.ts",
+    "src/features/admin/staff-handover-panel.interaction.test.tsx",
+    "src/features/admin/staff-handover-panel.tsx",
+    "src/features/admin/types.ts",
+    "src/features/annual-return/repository.ts",
+    "src/features/annual-return/server-fns.ts",
+    "src/features/auth/staff-lifecycle.ts",
+    "src/features/bulk-operations/repository.ts",
+    "src/features/corporate-changes/repository.ts",
+    "src/features/documents/maintenance.ts",
+    "src/features/incorporation/repository.ts",
+    "src/features/nar-import/apply.ts",
+    "src/features/work-items/repository.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "scope": "UC186 lawful cross-business case/work owner/reviewer handover and lifecycle admission",
+  "checks": {
+    "unit": {
+      "result": "PASS",
+      "receipt": "unit-final.json",
+      "log": "unit-final.txt",
+      "tests": 2780,
+      "files": 288
+    },
+    "typecheck": {
+      "result": "PASS",
+      "receipt": "typecheck-accepted.json",
+      "log": "typecheck-accepted.txt"
+    },
+    "lint": {
+      "result": "PASS",
+      "receipt": "lint-accepted.json",
+      "log": "lint-accepted.txt"
+    },
+    "build": {
+      "result": "NOT_RUN_RESOURCE",
+      "receipt": "resource-checks.jsonl",
+      "stage": "build-accepted",
+      "free_bytes": 1535733760,
+      "minimum_gib": 3
+    },
+    "sql": {
+      "result": "PASS_LOCAL_INJECTED_SESSION_SUPERUSER",
+      "tests": 1,
+      "files": 1,
+      "log": "db/test-green-r4.txt",
+      "journey": "db/UC186-green-r4.jsonl"
+    }
+  },
+  "red_source_provenance": "Separate SQL/UI RED snapshots and freezes retained; RED versions are not claimed to be the final candidate"
+}

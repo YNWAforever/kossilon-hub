@@ -1,0 +1,16 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+[TypeError: fetch failed] {
+  [cause]: Error: connect EACCES 127.0.0.1:5173
+      at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1706:16) {
+    errno: -4092,
+    code: 'EACCES',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 5173
+  }
+}
+
+Node.js v24.18.0

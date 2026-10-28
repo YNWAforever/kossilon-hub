@@ -1,0 +1,133 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/annual-return/work-views-other-page.test.ts (8 tests | 8 failed) 28ms
+     × passes R14 team scope to the read and returns domain links with a bounded continuation 11ms
+     × refuses unauthorized identity before any read 8ms
+     × refuses unauthorized identity before any read 1ms
+     × refuses unauthorized identity before any read 2ms
+     × refuses unauthorized identity before any read 1ms
+     × rejects malformed and cross-actor cursors before any read 1ms
+     × rejects oversized pages and client-supplied team scope 1ms
+     × propagates a failed read instead of reporting empty work 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-other-page.test.ts > scoped bounded Today read boundary > passes R14 team scope to the read and returns domain links with a bounded continuation
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ src/features/annual-return/work-views-other-page.test.ts:19:23
+     17|     const repo = repository([source, { ...source, id: "22222222-2222-4…
+     18|     const page = await otherWorkPageForActor(actor, { view: "chaseToda…
+     19|     expect(repo.list).toHaveBeenCalledWith(expect.objectContaining({ i…
+       |                       ^
+     20|     expect(page.rows).toHaveLength(1);
+     21|     expect(page.rows[0].target).toBe("/incorporation/$id");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-other-page.test.ts > scoped bounded Today read boundary > refuses unauthorized identity before any read
+ FAIL  |unit| src/features/annual-return/work-views-other-page.test.ts > scoped bounded Today read boundary > refuses unauthorized identity before any read
+ FAIL  |unit| src/features/annual-return/work-views-other-page.test.ts > scoped bounded Today read boundary > refuses unauthorized identity before any read
+ FAIL  |unit| src/features/annual-return/work-views-other-page.test.ts > scoped bounded Today read boundary > refuses unauthorized identity before any read
+AssertionError: promise resolved "{ rows: [], nextCursor: null }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "nextCursor": null,
++   "rows": [],
+  }
+
+ ❯ src/features/annual-return/work-views-other-page.test.ts:29:93
+     27|   ])("refuses unauthorized identity before any read", async (identity)…
+     28|     const repo = repository();
+     29|     await expect(otherWorkPageForActor(identity, { view: "chaseToday" …
+       |                                                                                             ^
+     30|     expect(repo.list).not.toHaveBeenCalled();
+     31|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-other-page.test.ts > scoped bounded Today read boundary > rejects malformed and cross-actor cursors before any read
+AssertionError: promise resolved "{ rows: [], nextCursor: null }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "nextCursor": null,
++   "rows": [],
+  }
+
+ ❯ src/features/annual-return/work-views-other-page.test.ts:36:109
+     34|     const page = await otherWorkPageForActor(actor, { view: "chaseToda…
+     35|     const next = repository();
+     36|     await expect(otherWorkPageForActor(actor, { view: "chaseToday", cu…
+       |                                                                                                             ^
+     37|     await expect(otherWorkPageForActor({ ...actor, authUserId: "other"…
+     38|     expect(next.list).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-other-page.test.ts > scoped bounded Today read boundary > rejects oversized pages and client-supplied team scope
+AssertionError: promise resolved "{ rows: [], nextCursor: null }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "nextCursor": null,
++   "rows": [],
+  }
+
+ ❯ src/features/annual-return/work-views-other-page.test.ts:42:102
+     40|   it("rejects oversized pages and client-supplied team scope", async (…
+     41|     const repo = repository();
+     42|     await expect(otherWorkPageForActor(actor, { view: "chaseToday", li…
+       |                                                                                                      ^
+     43|     await expect(otherWorkPageForActor(actor, { view: "chaseToday", te…
+     44|     expect(repo.list).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |unit| src/features/annual-return/work-views-other-page.test.ts > scoped bounded Today read boundary > propagates a failed read instead of reporting empty work
+AssertionError: promise resolved "{ rows: [], nextCursor: null }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "nextCursor": null,
++   "rows": [],
+  }
+
+ ❯ src/features/annual-return/work-views-other-page.test.ts:48:90
+     46|   it("propagates a failed read instead of reporting empty work", async…
+     47|     const repo = { list: vi.fn(async () => { throw new Error("read una…
+     48|     await expect(otherWorkPageForActor(actor, { view: "chaseToday" }, …
+       |                                                                                          ^
+     49|   });
+     50| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  05:03:39
+   Duration  690ms (transform 63ms, setup 0ms, import 99ms, tests 28ms, environment 0ms)
+

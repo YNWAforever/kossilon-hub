@@ -1,0 +1,15 @@
+{
+  "original_rows_preserved": 184,
+  "counts": [
+    "F:35",
+    "LA:34",
+    "R:15",
+    "UC:100"
+  ],
+  "native": [
+    "BLOCKED:70",
+    "NOT_RUN:114"
+  ],
+  "appended_only": "UC164",
+  "native_pass": 0
+}

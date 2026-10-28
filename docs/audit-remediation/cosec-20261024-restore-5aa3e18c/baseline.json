@@ -1,0 +1,25 @@
+{
+  "base": "b5bcdaef300999ff30f8372456827c7651cd4080",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "origin": "https://github.com/YNWAforever/kossilon-hub.git",
+  "intake_status": "clean before owned edits, verified in PLAN.md and intake command",
+  "status_at_capture": "?? docs/audit-remediation/cosec-20261024-restore-5aa3e18c/capture-evidence.mjs\n?? docs/audit-remediation/cosec-20261024-restore-5aa3e18c/freeze-source.mjs\n?? docs/audit-remediation/cosec-20261024-restore-5aa3e18c/git-blob-verify.mjs\n?? docs/audit-remediation/cosec-20261024-restore-5aa3e18c/isolated-db-runner.mjs\n?? docs/audit-remediation/cosec-20261024-restore-5aa3e18c/repository.before.snapshot\n?? docs/audit-remediation/cosec-20261024-restore-5aa3e18c/resource-gate.mjs\n?? docs/audit-remediation/cosec-20261024-restore-5aa3e18c/run-checks.mjs\n?? docs/audit-remediation/cosec-20261024-restore-5aa3e18c/runbook.before.snapshot\n",
+  "worktrees": "worktree C:/Users/laich/Documents/kossilon-hub/kossilon-hub-work\nHEAD 76ad310ca8bad75a7ce44c82c9e20db734fd6eaa\nbranch refs/heads/codex/outbox-safety\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree\nHEAD 38123c96ed84fae84e41f17d4dea606c7a8938d0\nbranch refs/heads/codex/r03-role-review-package-20261005\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r12-f25-ci-20261009\nHEAD c9417b925d2134d7c2aef1d45be5d52da8154e50\nbranch refs/heads/codex/staff-remediation-20261012\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r13-dependency-audit-20261009\nHEAD 01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e\nbranch refs/heads/codex/audit-r13-dependency-gates-20261009\n\nworktree C:/Users/laich/Documents/kossilon-hub/cosec-20261023\nHEAD b5bcdaef300999ff30f8372456827c7651cd4080\nbranch refs/heads/codex/cosec-20261023\n\n",
+  "main_readonly": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "production_historical_not_accessed": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "snapshots": [
+    {
+      "path": "src/features/annual-return/repository.ts",
+      "snapshot": "repository.before.snapshot",
+      "bytes": 109921,
+      "sha256": "4151184009659051eb3bc4d49353eb7d68e02b241cc7b67f24736ddaed5bd7e4"
+    },
+    {
+      "path": "docs/runbooks/backup-restore.md",
+      "snapshot": "runbook.before.snapshot",
+      "bytes": 1443,
+      "sha256": "b50277e86ff5c965d6cbb562d456309e0c3ba97d85c9d32cda1c8e75461d29da"
+    }
+  ]
+}

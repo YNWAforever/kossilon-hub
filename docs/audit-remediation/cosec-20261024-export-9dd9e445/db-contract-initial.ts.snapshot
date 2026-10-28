@@ -1,0 +1,466 @@
+import { createHash, randomUUID } from "node:crypto";
+import {
+  appendFileSync,
+  closeSync,
+  openSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { getCurrentTest } from "@vitest/runner";
+import { describe, expect, it, onTestFinished } from "vitest";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import { createSqlClient } from "@/server/db/client";
+import { guardSqlTestLifetime } from "@/test/sql-test-lifetime";
+import { createAnnualReturnRepository } from "@/features/annual-return/repository";
+import { createDocumentRepository } from "@/features/documents/repository";
+import { createPaymentEvidenceService } from "@/features/annual-return/payment-evidence";
+import { createBulkOperationsRepository } from "./repository";
+import { exportBulkResultsForActor } from "./server-fns";
+import { runBulkAssignmentChunk } from "./worker";
+
+const url = process.env.TEST_DATABASE_URL,
+  run = process.env.KOSSILON_PAYMENT_EXPORT_RUN_ID;
+const directory = process.env.KOSSILON_PAYMENT_EXPORT_EVENTS_DIR,
+  attempt = process.env.KOSSILON_PAYMENT_EXPORT_ATTEMPT;
+function errorFacts(error: unknown) {
+  const e = error as { message?: string; statusCode?: number } | undefined;
+  return { message: e?.message, statusCode: e?.statusCode };
+}
+function csvRows(text: string) {
+  const rows: string[][] = [];
+  let row: string[] = [],
+    cell = "",
+    quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') {
+      if (quoted && text[i + 1] === '"') {
+        cell += '"';
+        i++;
+      } else quoted = !quoted;
+    } else if (c === "," && !quoted) {
+      row.push(cell);
+      cell = "";
+    } else if (c === "\n" && !quoted) {
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+    } else cell += c;
+  }
+  expect(quoted).toBe(false);
+  expect(row).toEqual([]);
+  return rows;
+}
+describe.skipIf(!url || !run)("UC157 actual saved payment export, scope and reread", () => {
+  it("previews 103 current payments, exports two pages, redacts lost scope, rejects changing progress and resumes after cancellation", async () => {
+    if (
+      !url ||
+      !run ||
+      !/^cosec-20261024-export-[a-f0-9]{8}$/.test(run) ||
+      !directory ||
+      !attempt ||
+      !/^[a-z0-9-]+$/.test(attempt) ||
+      !/^[a-f0-9]{64}$/.test(process.env.KOSSILON_PAYMENT_EXPORT_TARGET_ID ?? "")
+    )
+      throw Error("Fresh verified UC157 target required");
+    const target = new URL(url);
+    expect(target.hostname).toBe("127.0.0.1");
+    expect(target.pathname).toBe("/" + process.env.KOSSILON_PAYMENT_EXPORT_DB_NAME);
+    const folder = resolve(directory),
+      local = relative(resolve("docs/audit-remediation", run), folder);
+    if (
+      isAbsolute(local) ||
+      local.startsWith("..") ||
+      realpathSync(folder) !== folder ||
+      realpathSync(dirname(folder)) !== dirname(folder)
+    )
+      throw Error("Redirected artifacts");
+    const context = getCurrentTest()?.context;
+    if (!context) throw Error("Test lifetime required");
+    const pending = scenario(url, run, folder, attempt, context.signal);
+    onTestFinished(async () => {
+      await pending.catch(() => undefined);
+    });
+    await pending;
+  }, 120_000);
+});
+async function scenario(
+  databaseUrl: string,
+  tag: string,
+  folder: string,
+  attemptId: string,
+  signal: AbortSignal,
+) {
+  const fd = openSync(resolve(folder, `UC157-${attemptId}.jsonl`), "wx");
+  const record = (phase: string, values: object) =>
+    appendFileSync(fd, JSON.stringify({ runId: tag, phase, ...values }) + "\n");
+  const ids = {
+    team: randomUUID(),
+    users: [randomUUID(), randomUUID()],
+    profiles: [randomUUID(), randomUUID()],
+    companies: Array.from({ length: 104 }, () => randomUUID()),
+    cases: Array.from({ length: 104 }, () => randomUUID()),
+    payments: Array.from({ length: 104 }, () => randomUUID()),
+  };
+  const actor = (index = 0): AuthenticatedActor => ({
+    userId: ids.users[index],
+    authUserId: `${tag}:${ids.users[index]}`,
+    role: "Admin",
+    teamId: ids.team,
+    active: true,
+  });
+  record("planned-ids", {
+    ids,
+    synthetic: true,
+    nativeAuth: false,
+    scanner: "local contract stub; no external provider or storage",
+  });
+  const raw = createSqlClient(databaseUrl, { ssl: false, max: 1 }),
+    readRaw = createSqlClient(databaseUrl, { ssl: false, max: 1 });
+  const sql = guardSqlTestLifetime(raw, () => signal),
+    read = guardSqlTestLifetime(readRaw, () => signal);
+  const repo = createBulkOperationsRepository({ sql }),
+    reader = createBulkOperationsRepository({ sql: read });
+  const cases = createAnnualReturnRepository({ sql }),
+    docs = createDocumentRepository({ sql }),
+    paymentService = createPaymentEvidenceService({ sql });
+  const moneySnapshot = async (phase: string) => {
+    const payments =
+      await read`select id,company_id,case_id,invoice_number,amount::text,currency,status,paid_at::text,payment_proof_document_id,updated_at::text from payments where id=any(${ids.payments}::uuid[]) order by id`;
+    const entries =
+      await read`select id,payment_id,document_id,proof_version_id,status,amount::text,reviewed_by,reviewed_at::text from payment_evidence_entries where case_id=any(${ids.cases}::uuid[]) order by id`;
+    const audits =
+      await read`select id,case_id,actor_id,action,result,metadata from annual_return_audit_events where case_id=any(${ids.cases}::uuid[]) order by id`;
+    const [outbox] =
+      await read`select count(*)::int count from notification_outbox where work_item_id in(select id from work_items where company_id=any(${ids.companies}::uuid[]))`;
+    const snapshot = {
+      payments: [...payments],
+      entries: [...entries],
+      audits: [...audits],
+      outbox: outbox.count,
+    };
+    record(phase, snapshot);
+    return snapshot;
+  };
+  const saveCsv = (name: string, csv: string) => {
+    const path = resolve(folder, `UC157-${attemptId}-${name}.csv`);
+    writeFileSync(path, csv, { flag: "wx" });
+    const bytes = readFileSync(path);
+    expect(bytes.toString()).toBe(csv);
+    record("csv-artifact", {
+      name,
+      path: relative(resolve(folder, ".."), path).replaceAll("\\", "/"),
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      bytes: bytes.length,
+    });
+    return csvRows(bytes.toString()).slice(1);
+  };
+  try {
+    await sql.begin(async (tx) => {
+      await tx`insert into teams(id,name) values(${ids.team},${tag})`;
+      for (const [i, id] of ids.users.entries()) {
+        await tx`insert into users(id,name,email,role,team_id,active) values(${id},${"Synthetic UC157 admin " + i},${id + "@example.test"},'Admin',${ids.team},true)`;
+        await tx`insert into staff_profiles(id,user_id,auth_user_id,role,team_id,active) values(${ids.profiles[i]},${id},${actor(i).authUserId},'Admin',${ids.team},true)`;
+      }
+      await tx`insert into companies ${tx(ids.companies.map((id, i) => ({ id, company_name: i === 103 ? "PRIVATE_FIXTURE_SHOULD_NOT_EXPORT" : `Synthetic UC157, "company" ${i}\nlocal`, cr_number: id, br_number: id, incorporation_date: "2020-01-01", annual_return_basis_date: "2026-01-01", registered_office: "Synthetic", company_secretary: "Synthetic", status: "active", assigned_owner_id: ids.users[0], assigned_team_id: ids.team, data_origin: i === 103 ? "fixture" : "client" })))}`;
+      await tx`insert into annual_return_cases ${tx(ids.cases.map((id, i) => ({ id, company_id: ids.companies[i], return_year: 2026, made_up_date: "2026-01-01", filing_due_date: "2026-02-12", current_status: "Payment pending", risk_level: "green", owner_id: ids.users[0] })))}`;
+      await tx`insert into payments ${tx(ids.payments.map((id, i) => ({ id, company_id: ids.companies[i], case_id: ids.cases[i], invoice_number: i === 103 ? "PRIVATE_FIXTURE_INVOICE" : `UC157-${id}`, amount: i === 103 ? 9999 : 1800, due_date: "2026-02-12" })))}`;
+    });
+    const [writerPid] = await sql<{ pid: number }[]>`select pg_backend_pid() pid`,
+      [readerPid] = await read<{ pid: number }[]>`select pg_backend_pid() pid`;
+    expect(writerPid.pid).not.toBe(readerPid.pid);
+    record("physical-sessions", { writerPid: writerPid.pid, readerPid: readerPid.pid });
+    for (const [index, amount] of [
+      [1, "350.25"],
+      [2, "1800.00"],
+    ] as const) {
+      const bytes = Buffer.from(`%PDF-1.4\n${tag}:${ids.cases[index]}\n%%EOF`),
+        checksum = createHash("sha256").update(bytes).digest("hex");
+      const intent = await docs.createUploadIntent({
+        companyId: ids.companies[index],
+        caseId: ids.cases[index],
+        requestedByAuthUserId: actor().authUserId,
+        category: "payment",
+        fileName: `local-${index}.pdf`,
+        contentType: "application/pdf",
+        expectedSizeBytes: bytes.length,
+        checksum,
+        objectKey: `${tag}/${ids.cases[index]}.pdf`,
+        expiresAt: new Date(Date.now() + 300_000).toISOString(),
+      });
+      record("intent-created", { index, intentId: intent.id, checksum, byteSize: bytes.length });
+      const document = await docs.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: ids.users[0],
+        source: "staff",
+      });
+      record("document-created", { index, documentId: document.id, intentId: intent.id });
+      await docs.recordScanResult(
+        intent.id,
+        {
+          status: "clean",
+          providerReference: tag + ":local-stub",
+          verifiedChecksum: checksum,
+          verifiedByteSize: bytes.length,
+        },
+        { verdictSource: "provider" },
+      );
+      const proofVersionId = (await docs.getDocument(document.id))!.currentVersionId!;
+      const base = {
+        caseId: ids.cases[index],
+        paymentId: ids.payments[index],
+        documentId: document.id,
+        proofVersionId,
+      };
+      record("proof-version", base);
+      await paymentService.record({
+        ...base,
+        expectedVersion: (await cases.getCase(base.caseId))!.readiness!.sourceVersion!,
+        amount,
+        receivedOn: "2026-10-01",
+        actorId: ids.users[0],
+      });
+      await paymentService.review({
+        ...base,
+        expectedVersion: (await cases.getCase(base.caseId))!.readiness!.sourceVersion!,
+        decision: "verified",
+        actorId: ids.users[0],
+      });
+    }
+    const before = await moneySnapshot("money-before-export");
+    expect(before.outbox).toBe(0);
+    const snapshot = await repo.createSnapshot(actor(), {
+      resource: "annual_return_case",
+      filters: { draftCaseIds: ids.cases },
+    });
+    record("selection-snapshot", snapshot);
+    expect(snapshot.count).toBe(103);
+    const preview = await repo.previewAction(actor(), {
+      resource: "annual_return_case",
+      selection: { mode: "filtered_snapshot", snapshotId: snapshot.snapshotId, excludedIds: [] },
+      action: { kind: "payment_list_export" },
+    });
+    record("preview", preview);
+    expect(preview).toMatchObject({ count: 103, eligibleCount: 103 });
+    const key = randomUUID();
+    const job = await repo.execute(actor(), { previewId: preview.previewId, idempotencyKey: key });
+    record("job-created", job);
+    const replay = await repo.execute(actor(), {
+      previewId: preview.previewId,
+      idempotencyKey: key,
+    });
+    expect(replay.jobId).toBe(job.jobId);
+    record("same-key-replay", replay);
+    for (let n = 0; n < 3; n++) {
+      const chunk = await runBulkAssignmentChunk({
+        repository: repo,
+        actor: actor(),
+        jobId: job.jobId,
+      });
+      record("worker-chunk", chunk);
+      if (!chunk.claimed || chunk.processed < 100) break;
+    }
+    const saved = await reader.getJob(actor(), { jobId: job.jobId });
+    record("saved-job", saved);
+    expect(saved).toMatchObject({ total: 103, state: "completed", counts: { succeeded: 103 } });
+    let pages = 0;
+    const exported = await exportBulkResultsForActor(
+      actor(),
+      { jobId: job.jobId },
+      {
+        getJob: async (a, input) => {
+          pages++;
+          return reader.getJob(a, input);
+        },
+      },
+    );
+    expect(pages).toBe(2);
+    expect(exported.exported).toBe(103);
+    const rows = saveCsv("complete", exported.csv),
+      outputs = rows.map((row) => JSON.parse(row[4]));
+    expect(new Set(rows.map((row) => row[0]))).toEqual(new Set(ids.cases.slice(0, 103)));
+    expect(exported.csv).not.toContain("PRIVATE_FIXTURE");
+    expect(outputs.every((o) => o.currency === "HKD" && o.approvalPerformed === false)).toBe(true);
+    const totals = {
+      invoice: outputs.reduce((sum, o) => sum + o.amount, 0),
+      received: outputs.reduce((sum, o) => sum + o.receivedAmount, 0),
+      balance: outputs.reduce((sum, o) => sum + o.balance, 0),
+    };
+    expect(totals).toEqual({ invoice: 185400, received: 2150.25, balance: 183249.75 });
+    const partial = outputs.find((o) => o.caseId === ids.cases[1]),
+      full = outputs.find((o) => o.caseId === ids.cases[2]);
+    expect(partial).toMatchObject({
+      amount: 1800,
+      receivedAmount: 350.25,
+      balance: 1449.75,
+      status: "Payment pending",
+      paidAt: null,
+    });
+    expect(full).toMatchObject({
+      amount: 1800,
+      receivedAmount: 1800,
+      balance: 0,
+      status: "Payment received",
+    });
+    record("complete-export", {
+      jobId: job.jobId,
+      pages,
+      exported: exported.exported,
+      totals,
+      partial,
+      full,
+    });
+    expect(await moneySnapshot("money-after-export")).toEqual(before);
+    // A saved scope item becomes non-client data: preserve the disposition row,
+    // never disclose its old identity or financial output in a later download.
+    await sql`update companies set data_origin='fixture' where id=${ids.companies[0]}`;
+    const redacted = await exportBulkResultsForActor(actor(), { jobId: job.jobId }, reader);
+    const redactedRows = saveCsv("redacted", redacted.csv);
+    expect(redacted.exported).toBe(103);
+    expect(redactedRows.filter((row) => row[0] === "")).toEqual([
+      ["", "forbidden", "access_denied", "1", ""],
+    ]);
+    expect(redacted.csv).not.toContain(ids.cases[0]);
+    expect(redacted.csv).not.toContain(`UC157-${ids.payments[0]}`);
+    record("redacted-export", {
+      exported: redacted.exported,
+      forbidden: 1,
+      disclosedOutputs: redactedRows.filter((row) => row[4]).length,
+    });
+    await sql`update companies set data_origin='client' where id=${ids.companies[0]}`;
+    for (const candidate of [
+      { ...actor(), role: "Staff" as const },
+      { ...actor(), active: false },
+      actor(1),
+    ]) {
+      let error: unknown;
+      try {
+        await exportBulkResultsForActor(candidate, { jobId: job.jobId }, reader);
+      } catch (e) {
+        error = e;
+      }
+      record("role-denied", { actor: candidate, error: errorFacts(error) });
+      expect(errorFacts(error).message).toMatch(/Forbidden/);
+    }
+    await sql`update staff_profiles set active=false where id=${ids.profiles[0]}`;
+    let inactiveError: unknown;
+    try {
+      await exportBulkResultsForActor(actor(), { jobId: job.jobId }, reader);
+    } catch (e) {
+      inactiveError = e;
+    }
+    record("persisted-identity-denied", { error: errorFacts(inactiveError) });
+    expect(errorFacts(inactiveError).message).toMatch(/Forbidden/);
+    await sql`update staff_profiles set active=true where id=${ids.profiles[0]}`;
+    const nextPreview = await repo.previewAction(actor(), {
+      resource: "annual_return_case",
+      selection: { mode: "filtered_snapshot", snapshotId: snapshot.snapshotId, excludedIds: [] },
+      action: { kind: "payment_list_export" },
+    });
+    const nextJob = await repo.execute(actor(), {
+      previewId: nextPreview.previewId,
+      idempotencyKey: randomUUID(),
+    });
+    record("concurrent-job-created", nextJob);
+    let advanced = false,
+      changedError: unknown;
+    try {
+      await exportBulkResultsForActor(
+        actor(),
+        { jobId: nextJob.jobId },
+        {
+          getJob: async (a, input) => {
+            if (input.cursor !== undefined && !advanced) {
+              advanced = true;
+              const step = await runBulkAssignmentChunk({
+                repository: repo,
+                actor: actor(),
+                jobId: nextJob.jobId,
+                chunkSize: 1,
+              });
+              record("progress-between-pages", step);
+            }
+            return reader.getJob(a, input);
+          },
+        },
+      );
+    } catch (e) {
+      changedError = e;
+    }
+    record("changing-export-refused", { advanced, error: errorFacts(changedError) });
+    expect(advanced).toBe(true);
+    expect(errorFacts(changedError).statusCode).toBe(409);
+    const cancellation = await repo.cancel(actor(), nextJob.jobId);
+    record("cancelled", cancellation);
+    expect(cancellation.cancelledCount).toBe(102);
+    const cancelled = await exportBulkResultsForActor(actor(), { jobId: nextJob.jobId }, reader);
+    const cancelledRows = saveCsv("cancelled", cancelled.csv);
+    expect(cancelled.exported).toBe(103);
+    expect(cancelledRows.filter((row) => row[1] === "succeeded")).toHaveLength(1);
+    expect(cancelledRows.filter((row) => row[1] === "cancelled" && row[4] === "")).toHaveLength(
+      102,
+    );
+    const resumed = await runBulkAssignmentChunk({
+      repository: repo,
+      actor: actor(),
+      jobId: nextJob.jobId,
+    });
+    expect(resumed).toMatchObject({ claimed: false, processed: 0 });
+    const retry = await exportBulkResultsForActor(actor(), { jobId: nextJob.jobId }, reader);
+    expect(retry).toEqual(cancelled);
+    record("cancelled-retry", { exported: retry.exported, resumed, unchanged: true });
+    expect(await moneySnapshot("money-final")).toEqual(before);
+  } finally {
+    try {
+      const jobs =
+          await raw`select id from bulk_operation_jobs where actor_user_id=any(${ids.users}::uuid[])`,
+        previews =
+          await raw`select id from bulk_operation_previews where actor_user_id=any(${ids.users}::uuid[])`,
+        snapshots =
+          await raw`select id from bulk_selection_snapshots where actor_user_id=any(${ids.users}::uuid[])`;
+      record("cleanup-owned-tree", {
+        ids,
+        jobIds: jobs.map((j) => j.id),
+        previewIds: previews.map((p) => p.id),
+        snapshotIds: snapshots.map((s) => s.id),
+      });
+      await raw.begin(async (tx) => {
+        await tx`delete from bulk_operation_job_items where job_id in(select id from bulk_operation_jobs where actor_user_id=any(${ids.users}::uuid[]))`;
+        await tx`delete from bulk_operation_jobs where actor_user_id=any(${ids.users}::uuid[])`;
+        await tx`delete from bulk_operation_previews where actor_user_id=any(${ids.users}::uuid[])`;
+        await tx`delete from bulk_selection_snapshots where actor_user_id=any(${ids.users}::uuid[])`;
+        await tx`delete from notification_outbox where work_item_id in(select id from work_items where company_id=any(${ids.companies}::uuid[]))`;
+        await tx`delete from assignment_events where work_item_id in(select id from work_items where company_id=any(${ids.companies}::uuid[]))`;
+        await tx`delete from escalation_events where work_item_id in(select id from work_items where company_id=any(${ids.companies}::uuid[]))`;
+        await tx`delete from work_items where company_id=any(${ids.companies}::uuid[])`;
+        await tx`delete from payment_evidence_entries where case_id=any(${ids.cases}::uuid[])`;
+        await tx`update payments set payment_proof_document_id=null where id=any(${ids.payments}::uuid[])`;
+        await tx`delete from document_versions where document_id in(select id from documents where company_id=any(${ids.companies}::uuid[]))`;
+        await tx`delete from document_scan_jobs where intent_id in(select id from document_upload_intents where company_id=any(${ids.companies}::uuid[]))`;
+        await tx`delete from document_upload_intents where company_id=any(${ids.companies}::uuid[])`;
+        await tx`delete from documents where company_id=any(${ids.companies}::uuid[])`;
+        await tx`delete from annual_return_audit_events where company_id=any(${ids.companies}::uuid[])`;
+        await tx`delete from timeline_events where company_id=any(${ids.companies}::uuid[])`;
+        await tx`delete from payments where id=any(${ids.payments}::uuid[])`;
+        await tx`delete from annual_return_cases where id=any(${ids.cases}::uuid[])`;
+        await tx`delete from companies where id=any(${ids.companies}::uuid[])`;
+        await tx`delete from staff_profiles where id=any(${ids.profiles}::uuid[])`;
+        await tx`delete from users where id=any(${ids.users}::uuid[])`;
+        await tx`delete from teams where id=${ids.team}`;
+      });
+      const [remaining] =
+        await raw`select (select count(*)::int from companies where id=any(${ids.companies}::uuid[])) companies,(select count(*)::int from annual_return_cases where id=any(${ids.cases}::uuid[])) cases,(select count(*)::int from payments where id=any(${ids.payments}::uuid[])) payments,(select count(*)::int from staff_profiles where id=any(${ids.profiles}::uuid[])) profiles,(select count(*)::int from users where id=any(${ids.users}::uuid[])) users,(select count(*)::int from teams where id=${ids.team}) teams`;
+      record("cleanup", { remaining });
+      expect(Object.values(remaining).every((n) => n === 0)).toBe(true);
+    } finally {
+      try {
+        await Promise.all([raw.end(), readRaw.end()]);
+      } finally {
+        closeSync(fd);
+      }
+    }
+  }
+}

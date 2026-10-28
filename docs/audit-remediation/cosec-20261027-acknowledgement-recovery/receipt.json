@@ -1,0 +1,111 @@
+{
+  "baseline": "2dc7950b820a4a86411dd30754e11b6d7adec991",
+  "product_commit": "5bc98b7840267329a81e4bdf7a945d2ce78472dd",
+  "files_sha256": {
+    "src/routes/work-queue.tsx": "8923df8900101be5bb6034a88e2ef2ed8d3d4f5c995a02009d99606ecb480023",
+    "src/routes/-work-queue.interaction.test.tsx": "cfcb994836c660933129a643dc443282988c5fec045d2a9eded0ba1f9b1f7193"
+  },
+  "checks": {
+    "red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-work-queue.interaction.test.tsx",
+      "exit": 1,
+      "log": "red.txt",
+      "failed": 6,
+      "passed": 32,
+      "files": 1
+    },
+    "targeted-initial": {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-work-queue.interaction.test.tsx src/routes/-today.interaction.test.tsx src/routes/-work-queue-case-links.test.tsx",
+      "exit": 0,
+      "log": "targeted-initial.txt",
+      "passed": 49,
+      "files": 3
+    },
+    "epoch-fixture": {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-work-queue.interaction.test.tsx src/routes/-today.interaction.test.tsx src/routes/-work-queue-case-links.test.tsx",
+      "exit": 1,
+      "log": "epoch-fixture.txt",
+      "failed": 1,
+      "passed": 52,
+      "files": 3,
+      "cause": "Cross-dialog test selected responsive row control by index before awaiting fresh admission"
+    },
+    "review-fixture": {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-work-queue.interaction.test.tsx -t 'older item recovery'",
+      "exit": 1,
+      "log": "review-fixture.txt",
+      "failed": 1,
+      "skipped": 42,
+      "cause": "Same indexed row/admission fixture; corrected using titled desktop row and enabled control"
+    },
+    "review-red": {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-work-queue.interaction.test.tsx -t 'older item recovery|newer acknowledgement'",
+      "exit": 1,
+      "log": "review-red.txt",
+      "failed": 1,
+      "passed": 1,
+      "skipped": 41,
+      "cause": "Actual older cross-item recovery overwrote newer acknowledged state before generation guard"
+    },
+    "targeted": {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-work-queue.interaction.test.tsx src/routes/-today.interaction.test.tsx src/routes/-work-queue-case-links.test.tsx",
+      "exit": 0,
+      "log": "targeted.txt",
+      "passed": 54,
+      "files": 3
+    },
+    "unit": {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit",
+      "exit": 0,
+      "log": "unit.txt",
+      "passed": 2917,
+      "files": 290
+    },
+    "typecheck": {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    "lint": {
+      "command": "node node_modules/eslint/bin/eslint.js src/routes/work-queue.tsx src/routes/-work-queue.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    "format": {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/routes/work-queue.tsx src/routes/-work-queue.interaction.test.tsx",
+      "exit": 0,
+      "log": "format.txt"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  },
+  "new_test_cases": 11,
+  "review": "Review identified cross-item shared-page recovery race. Reproduced RED and fixed with latest-recovery generation. Final focused review: no remaining important findings.",
+  "scope": "Unit project and JSDOM/mock RPC only; targeted tests included in full total. Final verification ran on files matching final product hashes before commit. No source changes afterward; evidence-only commit follows.",
+  "readback_limit": "Current filtered page must contain exactly one matching nonolder valid item. Current escalation state is not exact receipt of original note/actor; absence is not proof of success. No durable/cross-reload or server-wide snapshot protocol.",
+  "further_local_passes_justified": true,
+  "remaining_local_candidates": [
+    {
+      "path": "src/features/annual-return/components/production-case-detail.tsx:ownerMutation",
+      "finding": "Owner mutation inherits retry defaults and only renders error without independent result reconciliation; separate local candidate."
+    },
+    "Other mutation families and cross-tab navigation semantics need scoped review; no exhaustive inventory or reproduced cross-tab defect claimed.",
+    "Upload durable identity/reload/lost-intent recovery remains separate; no protocol invented."
+  ],
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "not_performed": [
+    "build",
+    "DB integration",
+    "hosted CI acceptance",
+    "Native execution or Native-only gates",
+    "deploy/promote",
+    "production Vercel/Neon changes"
+  ]
+}

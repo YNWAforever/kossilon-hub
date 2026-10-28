@@ -1,0 +1,24 @@
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-6bonUY
+[WebServer] (node:36676) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+Running 2 tests using 1 worker
+
+(node:44704) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-6bonUY
+[WebServer] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+  ok 1 [mobile390] › e2e\continuation-reflow.spec.ts:17:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow (21.1s)
+(node:6764) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-6bonUY
+  ok 2 [desktop1280] › e2e\continuation-reflow.spec.ts:17:1 › LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return and 640 CSS px reflow (15.5s)
+[local-browser-evidence] historical bytes unchanged: 9
+
+  2 passed (52.9s)

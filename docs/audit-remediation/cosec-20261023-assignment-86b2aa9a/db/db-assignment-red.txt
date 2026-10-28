@@ -1,0 +1,145 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Users/laich/Documents/kossilon-hub/cosec-20261023[39m
+
+ [31m❯[39m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts [2m([22m[2m5 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 595[2mms[22m[39m
+[31m     [31m×[31m UC130 two managers on independent connections: owner[39m[32m 141[2mms[22m[39m
+[31m     [31m×[31m UC130 two managers on independent connections: reviewer[39m[32m 112[2mms[22m[39m
+[31m     [31m×[31m UC131 server rechecks the selected staff: users[39m[32m 117[2mms[22m[39m
+[31m     [31m×[31m UC131 server rechecks the selected staff: profile[39m[32m 98[2mms[22m[39m
+[31m     [31m×[31m UC131 server rechecks the selected staff: both[39m[32m 126[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m5 failed[39m[22m[90m (5)[39m
+[2m   Start at [22m 19:51:21
+[2m   Duration [22m 1.81s[2m (transform 718ms, setup 0ms, import 1.04s, tests 595ms, environment 0ms)[22m
+
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 5 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC130 two managers on independent connections: owner
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC130 two managers on independent connections: owner
+[31m[1mAssertionError[22m: expected [] to deeply equal [ Array(1) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   "0943a0ec-035b-4daa-b0c9-992a0d703cdd",[39m
+[32m- ][39m
+[31m+ [][39m
+
+[36m [2m❯[22m readback src/features/work-items/assignment-recovery.integration.test.ts:[2m187:50[22m[39m
+    [90m185|[39m         { caseIds[33m:[39m [ids[33m.[39m[35mcase[39m][33m,[39m includeFixtures[33m:[39m [35mtrue[39m }[33m,[39m
+    [90m186|[39m       )[33m;[39m
+    [90m187|[39m       [34mexpect[39m(queue[33m.[39mitems[33m.[39m[34mmap[39m((item) [33m=>[39m item[33m.[39mid))[33m.[39m[34mtoEqual[39m([ids[33m.[39mwork])[33m;[39m
+    [90m   |[39m                                                  [31m^[39m
+    [90m188|[39m       [34mexpect[39m(queue[33m.[39mitems[[34m0[39m][33m.[39mversion)[33m.[39m[34mtoBe[39m(current[33m?.[39mversion)[33m;[39m
+    [90m189|[39m       [34mexpect[39m(outbox[33m.[39mcount)[33m.[39m[34mtoBe[39m([34m0[39m)[33m;[39m
+[90m [2m❯[22m withFixture src/features/work-items/assignment-recovery.integration.test.ts:[2m204:20[22m[39m
+[90m [2m❯[22m execute src/features/work-items/assignment-recovery.integration.test.ts:[2m79:3[22m[39m
+[90m [2m❯[22m src/features/work-items/assignment-recovery.integration.test.ts:[2m88:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC130 two managers on independent connections: reviewer
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC130 two managers on independent connections: reviewer
+[31m[1mAssertionError[22m: expected [] to deeply equal [ Array(1) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   "4fde9732-3467-42ca-a4b6-27ba9ffc285f",[39m
+[32m- ][39m
+[31m+ [][39m
+
+[36m [2m❯[22m readback src/features/work-items/assignment-recovery.integration.test.ts:[2m187:50[22m[39m
+    [90m185|[39m         { caseIds[33m:[39m [ids[33m.[39m[35mcase[39m][33m,[39m includeFixtures[33m:[39m [35mtrue[39m }[33m,[39m
+    [90m186|[39m       )[33m;[39m
+    [90m187|[39m       [34mexpect[39m(queue[33m.[39mitems[33m.[39m[34mmap[39m((item) [33m=>[39m item[33m.[39mid))[33m.[39m[34mtoEqual[39m([ids[33m.[39mwork])[33m;[39m
+    [90m   |[39m                                                  [31m^[39m
+    [90m188|[39m       [34mexpect[39m(queue[33m.[39mitems[[34m0[39m][33m.[39mversion)[33m.[39m[34mtoBe[39m(current[33m?.[39mversion)[33m;[39m
+    [90m189|[39m       [34mexpect[39m(outbox[33m.[39mcount)[33m.[39m[34mtoBe[39m([34m0[39m)[33m;[39m
+[90m [2m❯[22m withFixture src/features/work-items/assignment-recovery.integration.test.ts:[2m204:20[22m[39m
+[90m [2m❯[22m execute src/features/work-items/assignment-recovery.integration.test.ts:[2m79:3[22m[39m
+[90m [2m❯[22m src/features/work-items/assignment-recovery.integration.test.ts:[2m88:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC131 server rechecks the selected staff: users
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC131 server rechecks the selected staff: users
+[31m[1mAssertionError[22m: expected [] to deeply equal [ Array(1) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   "bfe2a96f-52c3-4bd2-ac5e-2dd8d3f4e507",[39m
+[32m- ][39m
+[31m+ [][39m
+
+[36m [2m❯[22m readback src/features/work-items/assignment-recovery.integration.test.ts:[2m187:50[22m[39m
+    [90m185|[39m         { caseIds[33m:[39m [ids[33m.[39m[35mcase[39m][33m,[39m includeFixtures[33m:[39m [35mtrue[39m }[33m,[39m
+    [90m186|[39m       )[33m;[39m
+    [90m187|[39m       [34mexpect[39m(queue[33m.[39mitems[33m.[39m[34mmap[39m((item) [33m=>[39m item[33m.[39mid))[33m.[39m[34mtoEqual[39m([ids[33m.[39mwork])[33m;[39m
+    [90m   |[39m                                                  [31m^[39m
+    [90m188|[39m       [34mexpect[39m(queue[33m.[39mitems[[34m0[39m][33m.[39mversion)[33m.[39m[34mtoBe[39m(current[33m?.[39mversion)[33m;[39m
+    [90m189|[39m       [34mexpect[39m(outbox[33m.[39mcount)[33m.[39m[34mtoBe[39m([34m0[39m)[33m;[39m
+[90m [2m❯[22m withFixture src/features/work-items/assignment-recovery.integration.test.ts:[2m204:20[22m[39m
+[90m [2m❯[22m execute src/features/work-items/assignment-recovery.integration.test.ts:[2m79:3[22m[39m
+[90m [2m❯[22m src/features/work-items/assignment-recovery.integration.test.ts:[2m95:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC131 server rechecks the selected staff: profile
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC131 server rechecks the selected staff: profile
+[31m[1mAssertionError[22m: expected [] to deeply equal [ Array(1) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   "6f1d4104-648c-4f80-803a-e50526c90fe2",[39m
+[32m- ][39m
+[31m+ [][39m
+
+[36m [2m❯[22m readback src/features/work-items/assignment-recovery.integration.test.ts:[2m187:50[22m[39m
+    [90m185|[39m         { caseIds[33m:[39m [ids[33m.[39m[35mcase[39m][33m,[39m includeFixtures[33m:[39m [35mtrue[39m }[33m,[39m
+    [90m186|[39m       )[33m;[39m
+    [90m187|[39m       [34mexpect[39m(queue[33m.[39mitems[33m.[39m[34mmap[39m((item) [33m=>[39m item[33m.[39mid))[33m.[39m[34mtoEqual[39m([ids[33m.[39mwork])[33m;[39m
+    [90m   |[39m                                                  [31m^[39m
+    [90m188|[39m       [34mexpect[39m(queue[33m.[39mitems[[34m0[39m][33m.[39mversion)[33m.[39m[34mtoBe[39m(current[33m?.[39mversion)[33m;[39m
+    [90m189|[39m       [34mexpect[39m(outbox[33m.[39mcount)[33m.[39m[34mtoBe[39m([34m0[39m)[33m;[39m
+[90m [2m❯[22m withFixture src/features/work-items/assignment-recovery.integration.test.ts:[2m204:20[22m[39m
+[90m [2m❯[22m execute src/features/work-items/assignment-recovery.integration.test.ts:[2m79:3[22m[39m
+[90m [2m❯[22m src/features/work-items/assignment-recovery.integration.test.ts:[2m95:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC131 server rechecks the selected staff: both
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/work-items/assignment-recovery.integration.test.ts[2m > [22mUC130/UC131 real SQL assignment conflicts and stale staff choices[2m > [22mUC131 server rechecks the selected staff: both
+[31m[1mAssertionError[22m: expected [] to deeply equal [ Array(1) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   "76320776-dc9f-4b59-890c-483f3d7f40f8",[39m
+[32m- ][39m
+[31m+ [][39m
+
+[36m [2m❯[22m readback src/features/work-items/assignment-recovery.integration.test.ts:[2m187:50[22m[39m
+    [90m185|[39m         { caseIds[33m:[39m [ids[33m.[39m[35mcase[39m][33m,[39m includeFixtures[33m:[39m [35mtrue[39m }[33m,[39m
+    [90m186|[39m       )[33m;[39m
+    [90m187|[39m       [34mexpect[39m(queue[33m.[39mitems[33m.[39m[34mmap[39m((item) [33m=>[39m item[33m.[39mid))[33m.[39m[34mtoEqual[39m([ids[33m.[39mwork])[33m;[39m
+    [90m   |[39m                                                  [31m^[39m
+    [90m188|[39m       [34mexpect[39m(queue[33m.[39mitems[[34m0[39m][33m.[39mversion)[33m.[39m[34mtoBe[39m(current[33m?.[39mversion)[33m;[39m
+    [90m189|[39m       [34mexpect[39m(outbox[33m.[39mcount)[33m.[39m[34mtoBe[39m([34m0[39m)[33m;[39m
+[90m [2m❯[22m withFixture src/features/work-items/assignment-recovery.integration.test.ts:[2m204:20[22m[39m
+[90m [2m❯[22m execute src/features/work-items/assignment-recovery.integration.test.ts:[2m79:3[22m[39m
+[90m [2m❯[22m src/features/work-items/assignment-recovery.integration.test.ts:[2m95:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯[22m[39m
+

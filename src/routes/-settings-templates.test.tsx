@@ -117,5 +117,6 @@ describe("/settings checklist templates, by data mode", () => {
 
     expect(html).toContain("Production template");
     expect(html).toContain("新增模板");
+    expect(html).not.toContain("20 宗案件");
   });
 });

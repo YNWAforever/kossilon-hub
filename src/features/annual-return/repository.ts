@@ -5,6 +5,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import { lockActiveStaffUser } from "@/features/auth/staff-state";
+import { lockStaffLifecycleShared } from "@/features/auth/staff-lifecycle";
 import { assertCaseAssignmentVersion } from "./assignment-version";
 import { assertCaseAssignmentTarget } from "./assignment-target";
 import {
@@ -28,6 +29,7 @@ import { verifiedPaymentCredit } from "./payment-evidence-state";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { enqueueNotification } from "@/features/notifications/outbox";
 import type postgres from "postgres";
+import { assertApplicationWriteSchema } from "@/server/application-schema";
 import {
   buildReminderDraft,
   calculateFilingDueDate,
@@ -691,11 +693,15 @@ function withTransaction<T>(
   client: QueryClient,
   handler: (tx: TransactionSqlClient) => Promise<T>,
 ): Promise<T> {
+  const admitted = async (tx: TransactionSqlClient): Promise<T> => {
+    await lockStaffLifecycleShared(tx);
+    return handler(tx);
+  };
   if ("begin" in client) {
-    return client.begin(handler) as Promise<T>;
+    return client.begin(admitted) as Promise<T>;
   }
 
-  return handler(client);
+  return admitted(client);
 }
 
 export function createAnnualReturnRepository(
@@ -2863,6 +2869,9 @@ export function createAnnualReturnRepository(
   }
 
   async function syncCasePartiesFromOfficers(caseId: string): Promise<{ created: number }> {
+    // This write is also reached from a GET. Admission must follow the actual
+    // effect, rather than relying on the request method to identify mutations.
+    await assertApplicationWriteSchema(sql);
     const rows = await sql<{ id: string }[]>`
       insert into case_parties (case_id, officer_id, party_type, display_name)
       select c.id, o.id, o.officer_type, o.name

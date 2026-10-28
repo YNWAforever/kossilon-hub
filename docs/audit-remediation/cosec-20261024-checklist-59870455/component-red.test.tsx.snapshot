@@ -1,0 +1,143 @@
+// @vitest-environment jsdom
+import type { ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { IncorporationCase, ChecklistItemStatus } from "../types";
+
+const api = vi.hoisted(() => ({
+  completeIncorporationCase: vi.fn(), getIncorporationCase: vi.fn(),
+  updateIncorporationCaseStatus: vi.fn(), updateIncorporationChecklistItem: vi.fn(),
+}));
+vi.mock("../server-fns", () => api);
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children }: { children: ReactNode }) => <a href="/incorporation">{children}</a>,
+  useNavigate: () => vi.fn(),
+}));
+import { ProductionIncorporationDetail } from "./production-incorporation-detail";
+
+const caseId = "15900000-0000-4000-8000-000000000001";
+const otherId = "15900000-0000-4000-8000-000000000002";
+function fixture(id = caseId): IncorporationCase {
+  return {
+    id, proposedCompanyNameEn: "UC159 local component contract", proposedCompanyNameZh: null,
+    proposedRegisteredOffice: "Local only", proposedCompanySecretary: "Local only", registeredCapital: 10000,
+    businessNature: "Local contract", status: "Intake", ownerId: "local-owner", ownerName: "Local owner",
+    teamId: "local-team", teamName: "Local team", targetCompletionDate: "2026-11-30", companyId: null,
+    completedAt: null, createdAt: "2026-10-24T00:00:00Z",
+    checklist: Array.from({ length: 5 }, (_, i) => ({
+      id: `${id}-item-${i}`, caseId: id, itemLabel: i < 2 ? "NNC1 incorporation form" : `Local document ${i + 1}`,
+      required: true, status: "Missing", note: `Preserve note ${i}`, receivedAt: null, verifiedAt: null,
+    })),
+  };
+}
+function deferred<T>() {
+  let resolve!: (value: T) => void, reject!: (error: Error) => void;
+  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+}
+function mount(id = caseId) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } } });
+  const view = render(<QueryClientProvider client={client}><ProductionIncorporationDetail caseId={id} /></QueryClientProvider>);
+  return { ...view, client };
+}
+function selects() { return screen.getAllByRole("combobox") as HTMLSelectElement[]; }
+let saved: IncorporationCase;
+beforeEach(() => {
+  vi.resetAllMocks(); saved = fixture();
+  api.getIncorporationCase.mockImplementation(async ({ data }: { data: { id: string } }) =>
+    structuredClone(data.id === caseId ? saved : fixture(data.id)));
+  api.updateIncorporationChecklistItem.mockImplementation(async ({ data }: { data: { itemId: string; status: ChecklistItemStatus; note: string | null } }) => {
+    saved = { ...saved, checklist: saved.checklist.map(item => item.id === data.itemId ? { ...item, status: data.status, note: data.note } : item) };
+    return structuredClone(saved);
+  });
+});
+afterEach(cleanup);
+
+describe("UC159 five-item checklist component contract (mocked RPC)", () => {
+  it("gives all five controls unique document names even when labels repeat", async () => {
+    mount(); await screen.findAllByRole("combobox");
+    const names = selects().map(select => select.getAttribute("aria-label"));
+    expect(names.every(Boolean)).toBe(true); expect(new Set(names).size).toBe(5);
+    expect(names[0]).toContain("NNC1"); expect(names[1]).toContain("NNC1");
+  });
+
+  it("saves five choices and reads them again using a fresh query cache after reopening", async () => {
+    const view = mount(); await screen.findAllByRole("combobox");
+    const values: ChecklistItemStatus[] = ["Received", "Verified", "Rejected", "Received", "Verified"];
+    for (let i = 0; i < 5; i++) {
+      const select = selects()[i]; select.focus(); fireEvent.change(select, { target: { value: values[i] } });
+      await waitFor(() => expect(saved.checklist[i].status).toBe(values[i]));
+      await waitFor(() => expect(select.value).toBe(values[i]));
+      await waitFor(() => expect(select.disabled).toBe(false));
+      expect(document.activeElement).toBe(select);
+      expect(api.updateIncorporationChecklistItem).toHaveBeenNthCalledWith(i + 1, { data: { caseId, itemId: saved.checklist[i].id, status: values[i], note: `Preserve note ${i}` } });
+    }
+    view.unmount(); view.client.clear(); mount(); await screen.findAllByRole("combobox");
+    expect(selects().map(select => select.value)).toEqual(values);
+    expect(api.updateIncorporationChecklistItem).toHaveBeenCalledTimes(5);
+  });
+
+  it("keeps the saving control keyboard-focusable and refuses repeated pending changes", async () => {
+    const request = deferred<IncorporationCase>(); api.updateIncorporationChecklistItem.mockReturnValue(request.promise);
+    mount(); await screen.findAllByRole("combobox"); const select = selects()[0]; select.focus();
+    fireEvent.change(select, { target: { value: "Received" } });
+    await waitFor(() => expect(api.updateIncorporationChecklistItem).toHaveBeenCalledTimes(1));
+    expect(select.disabled).toBe(false); expect(select.getAttribute("aria-disabled")).toBe("true");
+    expect(select.value).toBe("Received"); expect(document.activeElement).toBe(select);
+    fireEvent.change(select, { target: { value: "Verified" } });
+    expect(api.updateIncorporationChecklistItem).toHaveBeenCalledTimes(1); expect(select.value).toBe("Received");
+    saved.checklist[0].status = "Received";
+    await act(async () => request.resolve(structuredClone(saved)));
+    await waitFor(() => expect(select.getAttribute("aria-disabled")).not.toBe("true"));
+    expect(document.activeElement).toBe(select);
+  });
+
+  it("retains a failed choice with a linked error and retries only after an explicit action", async () => {
+    api.updateIncorporationChecklistItem.mockRejectedValueOnce(new Error("Forbidden: local rejection"));
+    mount(); await screen.findAllByRole("combobox"); const select = selects()[2]; select.focus();
+    fireEvent.change(select, { target: { value: "Rejected" } });
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("未能保存");
+    expect(select.getAttribute("aria-describedby")?.split(" ")).toContain(alert.id);
+    expect(select.getAttribute("aria-invalid")).toBe("true");
+    expect(select.value).toBe("Rejected"); expect(saved.checklist[2].status).toBe("Missing");
+    expect(document.activeElement).toBe(select); expect(api.updateIncorporationChecklistItem).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: /重試.*Local document 3/ }));
+    await waitFor(() => expect(saved.checklist[2].status).toBe("Rejected"));
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(api.updateIncorporationChecklistItem).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not steal focus when the user moves away during a save", async () => {
+    const request = deferred<IncorporationCase>(); api.updateIncorporationChecklistItem.mockReturnValue(request.promise);
+    mount(); await screen.findAllByRole("combobox"); fireEvent.change(selects()[0], { target: { value: "Verified" } });
+    const back = screen.getByRole("link", { name: "返回工作列表" }); back.focus();
+    saved.checklist[0].status = "Verified"; await act(async () => request.resolve(structuredClone(saved)));
+    await waitFor(() => expect(selects()[0].value).toBe("Verified")); expect(document.activeElement).toBe(back);
+  });
+
+  it("requires the returned case/item/status to confirm a save before announcing it", async () => {
+    api.updateIncorporationChecklistItem.mockResolvedValue(fixture(otherId));
+    mount(); await screen.findAllByRole("combobox"); fireEvent.change(selects()[1], { target: { value: "Verified" } });
+    expect((await screen.findByRole("alert")).textContent).toContain("未能保存");
+    expect(saved.checklist[1].status).toBe("Missing");
+    expect(screen.queryByText("已保存")).toBeNull();
+  });
+
+  it("does not carry a late failed choice into a different reopened case", async () => {
+    const request = deferred<IncorporationCase>(); api.updateIncorporationChecklistItem.mockReturnValue(request.promise);
+    const view = mount(); await screen.findAllByRole("combobox"); fireEvent.change(selects()[0], { target: { value: "Verified" } });
+    view.unmount(); view.client.clear(); mount(otherId); await screen.findAllByRole("combobox");
+    await act(async () => request.reject(new Error("old case failed")));
+    expect(selects().map(select => select.value)).toEqual(Array(5).fill("Missing"));
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("explains an empty checklist without inventing controls or saved status", async () => {
+    saved.checklist = []; mount();
+    expect(await screen.findByText("此案件暫未有清單項目。" )).toBeTruthy();
+    expect(screen.queryByRole("combobox")).toBeNull(); expect(api.updateIncorporationChecklistItem).not.toHaveBeenCalled();
+  });
+});

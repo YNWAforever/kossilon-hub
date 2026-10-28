@@ -1,0 +1,9 @@
+{
+  "run_id": "cosec-20261023-xlsx-db68ab95",
+  "actorId": "419900da-e87a-412e-9d1b-89090ea5aa17",
+  "calendarId": "7f39e820-0906-4291-8b78-a13053ca0d04",
+  "policyId": "3d9074cf-ddf7-47df-8947-5516d6a7057f",
+  "synthetic": true,
+  "production_seed": false,
+  "cleanup": "immutable versions retained unchanged until exact owned container removal"
+}

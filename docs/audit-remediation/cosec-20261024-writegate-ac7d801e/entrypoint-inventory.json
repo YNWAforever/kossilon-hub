@@ -1,0 +1,1069 @@
+{
+  "base": "495fc88061a874b285e0fd7131b042243ab74b92",
+  "source_only": true,
+  "post_functions": 74,
+  "post_modules": 17,
+  "get_functions": 67,
+  "modules": [
+    {
+      "file": "src/features/admin/server-fns.ts",
+      "post_functions": [
+        "updateStaff"
+      ],
+      "sha256": "6f5599545d67fe4dde2088b6308c3902286572fdca3affaac1b4853737ca553e",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/annual-return/evidence-server-fns.ts",
+      "post_functions": [
+        "reviewAnnualReturnEvidenceAction",
+        "acceptAnnualReturnFilingReceiptAction"
+      ],
+      "sha256": "45da65859f17592f1f5b6fb9edd7052f848398a019f9a7469de6af6012898a56",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/annual-return/follow-up-server-fns.ts",
+      "post_functions": [
+        "sendProductionFollowUp"
+      ],
+      "sha256": "8f18d9794965c6211993ba937aad570f8d553a34c3ca176d6a8bdb5effa44040",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/annual-return/handoff-server-fns.ts",
+      "post_functions": [
+        "runHandoffCommand"
+      ],
+      "sha256": "653579cc97cf6a9aeede83dcb41a15ce58bb8513684515641218ad6fc16ebbb1",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "post_functions": [
+        "createAnnualReturnCase",
+        "assignAnnualReturnCaseOwner",
+        "confirmAnnualReturnCaseParty",
+        "resolveAnnualReturnCaseFinding",
+        "addAnnualReturnCaseNote",
+        "updateAnnualReturnStatus",
+        "recordAnnualReturnReminder",
+        "queueAnnualReturnWhatsAppReminderMessage",
+        "updateAnnualReturnChecklistItem",
+        "updateAnnualReturnPayment",
+        "recordAnnualReturnPaymentEvidence",
+        "reviewAnnualReturnPaymentEvidence",
+        "updateAnnualReturnFilingProof"
+      ],
+      "sha256": "7072bbd8a52a7e7f76e0c23a8430d6b8a767435655afaf9b99c85f8c7bd682f9",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "post_functions": [
+        "createBulkSelectionSnapshot",
+        "previewBulkAssignment",
+        "previewBulkMaintenance",
+        "executeBulkAssignment",
+        "resumeBulkJob",
+        "cancelBulkJob",
+        "retryFailedBulkItems",
+        "reconcileUnknownBulkItems"
+      ],
+      "sha256": "cbf3cdf3e784585d6fe3548ecaf312d1d3f3acc22b064bbbbec1adc98c95830c",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/checklist-templates/server-fns.ts",
+      "post_functions": [
+        "createChecklistTemplate",
+        "updateChecklistTemplate",
+        "duplicateChecklistTemplate",
+        "deleteChecklistTemplate"
+      ],
+      "sha256": "b94a260b672205ce0577f2fe5a91c7e748e803dd185c351b5f0a89e3b69928d0",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "post_functions": [
+        "createClient",
+        "updateClient",
+        "addClientContact",
+        "updateClientContact",
+        "removeClientContact",
+        "appointClientOfficer",
+        "ceaseClientOfficer",
+        "recordClientShareholding",
+        "ceaseClientShareholding",
+        "recordClientController",
+        "updateClientControllerParticulars",
+        "ceaseClientController",
+        "recordClientInspectionRequest",
+        "resolveClientInspectionRequest"
+      ],
+      "sha256": "d25f95c046290ae4becef5f517596e8de1f37827e277ac9044e55c6f4753e37a",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/corporate-changes/server-fns.ts",
+      "post_functions": [
+        "createCorporateChangeRequest",
+        "updateCorporateChangeChecklistItemStatus",
+        "transitionCorporateChangeRequestStatus",
+        "cancelCorporateChangeRequest",
+        "completeCorporateChangeRequest"
+      ],
+      "sha256": "7bb1f06beb1aedf93fee1245240abc3736c537fe166376fd621c39c3d5d0c553",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/documents/server-fns.ts",
+      "post_functions": [
+        "createDocumentUploadIntent",
+        "finalizeDocumentUpload",
+        "scanQuarantinedDocument",
+        "reviewDocument",
+        "cleanupExpiredUploads"
+      ],
+      "sha256": "14c3f83a1e092b96ea88b51ab7e36af1b0fdeb2a6e83459774b8a7e156d68e91",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/incorporation/server-fns.ts",
+      "post_functions": [
+        "createIncorporationCase",
+        "updateIncorporationChecklistItem",
+        "updateIncorporationCaseStatus",
+        "completeIncorporationCase"
+      ],
+      "sha256": "37dd21c9fed4619ddd75cbf83e31e7782d0ff103c725abe41e172d54657e3535",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "post_functions": [
+        "stageNarImportBatch",
+        "mapNarImportCompany",
+        "previewNarApply",
+        "executeNarApply",
+        "resumeNarApplyJob",
+        "cancelNarApplyJob",
+        "confirmNarBatchYear"
+      ],
+      "sha256": "a1d47feabd2b927b212860a25b27a435cddd0507242f1a204382845cbdd7bd10",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/notifications/runtime-dispatch.ts",
+      "post_functions": [
+        "dispatchDueNotifications"
+      ],
+      "sha256": "f296f9050b775fb5d95540163b5dd2522e8f3a2f74d82a6392f9b7ec88d2efbb",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/service-subscriptions/server-fns.ts",
+      "post_functions": [
+        "addServiceSubscription",
+        "renewServiceSubscription",
+        "cancelServiceSubscription"
+      ],
+      "sha256": "ab66c1508b8e9397ed5b0ebffdc4038f09d617f56f5f6a5eda0e891dfc31200b",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/whatsapp/intake-server-fns.ts",
+      "post_functions": [
+        "mapWhatsAppMessage",
+        "intakeWhatsAppMedia"
+      ],
+      "sha256": "13965274e38ed8ba5e3a48a83b101b18e7372959f4e50c65bafead5a42f1537e",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/whatsapp/server-fns.ts",
+      "post_functions": [
+        "queueWhatsAppTemplateMessage"
+      ],
+      "sha256": "e48f62e7d309b9d58b900bf250dea0113bd861bdf209bf45e7d8386a183d4ac2",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    },
+    {
+      "file": "src/features/work-items/server-fns.ts",
+      "post_functions": [
+        "assignWorkItem",
+        "acknowledgeWorkItemEscalation"
+      ],
+      "sha256": "37d9207d7ae2d0653516c637f04fba60e4d5c7b5721a3c18562636a842e39301",
+      "authority_root": "requireActor via module/context helpers; static review only"
+    }
+  ],
+  "functions": [
+    {
+      "file": "src/features/admin/server-fns.ts",
+      "name": "listStaff",
+      "method": "GET",
+      "line": 50
+    },
+    {
+      "file": "src/features/admin/server-fns.ts",
+      "name": "updateStaff",
+      "method": "POST",
+      "line": 56
+    },
+    {
+      "file": "src/features/admin/server-fns.ts",
+      "name": "previewReassignment",
+      "method": "GET",
+      "line": 71
+    },
+    {
+      "file": "src/features/admin/server-fns.ts",
+      "name": "listAdminTeams",
+      "method": "GET",
+      "line": 77
+    },
+    {
+      "file": "src/features/admin/server-fns.ts",
+      "name": "listStaffAudit",
+      "method": "GET",
+      "line": 83
+    },
+    {
+      "file": "src/features/annual-return/client-portal-server-fns.ts",
+      "name": "listClientPortalCases",
+      "method": "GET",
+      "line": 176
+    },
+    {
+      "file": "src/features/annual-return/client-portal-server-fns.ts",
+      "name": "getClientPortalCase",
+      "method": "GET",
+      "line": 180
+    },
+    {
+      "file": "src/features/annual-return/evidence-server-fns.ts",
+      "name": "reviewAnnualReturnEvidenceAction",
+      "method": "POST",
+      "line": 85
+    },
+    {
+      "file": "src/features/annual-return/evidence-server-fns.ts",
+      "name": "acceptAnnualReturnFilingReceiptAction",
+      "method": "POST",
+      "line": 92
+    },
+    {
+      "file": "src/features/annual-return/follow-up-server-fns.ts",
+      "name": "listProductionFollowUpDrafts",
+      "method": "GET",
+      "line": 296
+    },
+    {
+      "file": "src/features/annual-return/follow-up-server-fns.ts",
+      "name": "sendProductionFollowUp",
+      "method": "POST",
+      "line": 325
+    },
+    {
+      "file": "src/features/annual-return/handoff-server-fns.ts",
+      "name": "getCaseHandoffs",
+      "method": "GET",
+      "line": 132
+    },
+    {
+      "file": "src/features/annual-return/handoff-server-fns.ts",
+      "name": "runHandoffCommand",
+      "method": "POST",
+      "line": 142
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "listAnnualReturnCases",
+      "method": "GET",
+      "line": 760
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "getAnnualReturnCase",
+      "method": "GET",
+      "line": 768
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "getAnnualReturnDashboardMetrics",
+      "method": "GET",
+      "line": 776
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "listAnnualReturnCaseRequirements",
+      "method": "GET",
+      "line": 802
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "getAnnualReturnWorkViews",
+      "method": "GET",
+      "line": 832
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "getAnnualReturnWorkPage",
+      "method": "GET",
+      "line": 868
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "getAnnualReturnWorkMetrics",
+      "method": "GET",
+      "line": 875
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "listAnnualReturnCasePage",
+      "method": "GET",
+      "line": 887
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "getAnnualReturnBoardTotals",
+      "method": "GET",
+      "line": 895
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "listCompaniesEligibleForCase",
+      "method": "GET",
+      "line": 903
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "listAssignableStaff",
+      "method": "GET",
+      "line": 920
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "createAnnualReturnCase",
+      "method": "POST",
+      "line": 936
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "assignAnnualReturnCaseOwner",
+      "method": "POST",
+      "line": 944
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "listAnnualReturnCaseNotes",
+      "method": "GET",
+      "line": 951
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "listAnnualReturnCaseHistory",
+      "method": "GET",
+      "line": 959
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "listAnnualReturnCaseParties",
+      "method": "GET",
+      "line": 980
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "confirmAnnualReturnCaseParty",
+      "method": "POST",
+      "line": 988
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "listAnnualReturnCaseFindings",
+      "method": "GET",
+      "line": 996
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "resolveAnnualReturnCaseFinding",
+      "method": "POST",
+      "line": 1006
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "addAnnualReturnCaseNote",
+      "method": "POST",
+      "line": 1026
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "updateAnnualReturnStatus",
+      "method": "POST",
+      "line": 1033
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "recordAnnualReturnReminder",
+      "method": "POST",
+      "line": 1049
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "queueAnnualReturnWhatsAppReminderMessage",
+      "method": "POST",
+      "line": 1069
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "updateAnnualReturnChecklistItem",
+      "method": "POST",
+      "line": 1097
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "updateAnnualReturnPayment",
+      "method": "POST",
+      "line": 1104
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "recordAnnualReturnPaymentEvidence",
+      "method": "POST",
+      "line": 1149
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "reviewAnnualReturnPaymentEvidence",
+      "method": "POST",
+      "line": 1159
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "updateAnnualReturnFilingProof",
+      "method": "POST",
+      "line": 1169
+    },
+    {
+      "file": "src/features/annual-return/server-fns.ts",
+      "name": "buildAnnualReturnReminderDraft",
+      "method": "GET",
+      "line": 1176
+    },
+    {
+      "file": "src/features/annual-return/work-views-other-server.ts",
+      "name": "getOtherBusinessWorkPage",
+      "method": "GET",
+      "line": 5
+    },
+    {
+      "file": "src/features/auth/neon-auth-rpc.ts",
+      "name": "getNeonAuthClientConfiguration",
+      "method": "GET",
+      "line": 3
+    },
+    {
+      "file": "src/features/auth/neon-auth-rpc.ts",
+      "name": "getAuthenticatedActor",
+      "method": "GET",
+      "line": 10
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "name": "createBulkSelectionSnapshot",
+      "method": "POST",
+      "line": 48
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "name": "previewBulkAssignment",
+      "method": "POST",
+      "line": 54
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "name": "previewBulkMaintenance",
+      "method": "POST",
+      "line": 60
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "name": "executeBulkAssignment",
+      "method": "POST",
+      "line": 66
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "name": "getBulkJob",
+      "method": "GET",
+      "line": 72
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "name": "listBulkJobs",
+      "method": "GET",
+      "line": 78
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "name": "resumeBulkJob",
+      "method": "POST",
+      "line": 84
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "name": "cancelBulkJob",
+      "method": "POST",
+      "line": 91
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "name": "retryFailedBulkItems",
+      "method": "POST",
+      "line": 97
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "name": "reconcileUnknownBulkItems",
+      "method": "POST",
+      "line": 103
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "name": "listBulkAssignees",
+      "method": "GET",
+      "line": 109
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "name": "getBulkSnapshotMembership",
+      "method": "GET",
+      "line": 122
+    },
+    {
+      "file": "src/features/bulk-operations/server-fns.ts",
+      "name": "exportBulkResults",
+      "method": "GET",
+      "line": 190
+    },
+    {
+      "file": "src/features/checklist-templates/server-fns.ts",
+      "name": "listChecklistTemplates",
+      "method": "GET",
+      "line": 176
+    },
+    {
+      "file": "src/features/checklist-templates/server-fns.ts",
+      "name": "listActiveAnnualReturnTemplates",
+      "method": "GET",
+      "line": 182
+    },
+    {
+      "file": "src/features/checklist-templates/server-fns.ts",
+      "name": "createChecklistTemplate",
+      "method": "POST",
+      "line": 188
+    },
+    {
+      "file": "src/features/checklist-templates/server-fns.ts",
+      "name": "updateChecklistTemplate",
+      "method": "POST",
+      "line": 196
+    },
+    {
+      "file": "src/features/checklist-templates/server-fns.ts",
+      "name": "previewChecklistTemplateMigration",
+      "method": "GET",
+      "line": 220
+    },
+    {
+      "file": "src/features/checklist-templates/server-fns.ts",
+      "name": "duplicateChecklistTemplate",
+      "method": "POST",
+      "line": 236
+    },
+    {
+      "file": "src/features/checklist-templates/server-fns.ts",
+      "name": "deleteChecklistTemplate",
+      "method": "POST",
+      "line": 244
+    },
+    {
+      "file": "src/features/clients/company-work-server-fns.ts",
+      "name": "listCompanyWorkPage",
+      "method": "GET",
+      "line": 15
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "listClients",
+      "method": "GET",
+      "line": 254
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "listClientPage",
+      "method": "GET",
+      "line": 285
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "listClientAssignmentOptions",
+      "method": "GET",
+      "line": 293
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "getClient",
+      "method": "GET",
+      "line": 299
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "createClient",
+      "method": "POST",
+      "line": 318
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "updateClient",
+      "method": "POST",
+      "line": 327
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "addClientContact",
+      "method": "POST",
+      "line": 338
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "updateClientContact",
+      "method": "POST",
+      "line": 349
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "removeClientContact",
+      "method": "POST",
+      "line": 360
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "appointClientOfficer",
+      "method": "POST",
+      "line": 371
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "ceaseClientOfficer",
+      "method": "POST",
+      "line": 382
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "recordClientShareholding",
+      "method": "POST",
+      "line": 393
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "ceaseClientShareholding",
+      "method": "POST",
+      "line": 404
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "recordClientController",
+      "method": "POST",
+      "line": 415
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "updateClientControllerParticulars",
+      "method": "POST",
+      "line": 426
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "ceaseClientController",
+      "method": "POST",
+      "line": 437
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "recordClientInspectionRequest",
+      "method": "POST",
+      "line": 448
+    },
+    {
+      "file": "src/features/clients/server-fns.ts",
+      "name": "resolveClientInspectionRequest",
+      "method": "POST",
+      "line": 459
+    },
+    {
+      "file": "src/features/corporate-changes/server-fns.ts",
+      "name": "createCorporateChangeRequest",
+      "method": "POST",
+      "line": 60
+    },
+    {
+      "file": "src/features/corporate-changes/server-fns.ts",
+      "name": "updateCorporateChangeChecklistItemStatus",
+      "method": "POST",
+      "line": 76
+    },
+    {
+      "file": "src/features/corporate-changes/server-fns.ts",
+      "name": "transitionCorporateChangeRequestStatus",
+      "method": "POST",
+      "line": 98
+    },
+    {
+      "file": "src/features/corporate-changes/server-fns.ts",
+      "name": "cancelCorporateChangeRequest",
+      "method": "POST",
+      "line": 110
+    },
+    {
+      "file": "src/features/corporate-changes/server-fns.ts",
+      "name": "completeCorporateChangeRequest",
+      "method": "POST",
+      "line": 120
+    },
+    {
+      "file": "src/features/corporate-changes/server-fns.ts",
+      "name": "listCorporateChangeRequests",
+      "method": "GET",
+      "line": 146
+    },
+    {
+      "file": "src/features/corporate-changes/server-fns.ts",
+      "name": "listCorporateChangeRequestPage",
+      "method": "GET",
+      "line": 159
+    },
+    {
+      "file": "src/features/corporate-changes/server-fns.ts",
+      "name": "getCorporateChangeRequest",
+      "method": "GET",
+      "line": 170
+    },
+    {
+      "file": "src/features/documents/server-fns.ts",
+      "name": "previewDocumentRecovery",
+      "method": "GET",
+      "line": 562
+    },
+    {
+      "file": "src/features/documents/server-fns.ts",
+      "name": "createDocumentUploadIntent",
+      "method": "POST",
+      "line": 570
+    },
+    {
+      "file": "src/features/documents/server-fns.ts",
+      "name": "finalizeDocumentUpload",
+      "method": "POST",
+      "line": 578
+    },
+    {
+      "file": "src/features/documents/server-fns.ts",
+      "name": "scanQuarantinedDocument",
+      "method": "POST",
+      "line": 593
+    },
+    {
+      "file": "src/features/documents/server-fns.ts",
+      "name": "downloadDocument",
+      "method": "GET",
+      "line": 601
+    },
+    {
+      "file": "src/features/documents/server-fns.ts",
+      "name": "listDocuments",
+      "method": "GET",
+      "line": 625
+    },
+    {
+      "file": "src/features/documents/server-fns.ts",
+      "name": "listDocumentPage",
+      "method": "GET",
+      "line": 645
+    },
+    {
+      "file": "src/features/documents/server-fns.ts",
+      "name": "reviewDocument",
+      "method": "POST",
+      "line": 653
+    },
+    {
+      "file": "src/features/documents/server-fns.ts",
+      "name": "cleanupExpiredUploads",
+      "method": "POST",
+      "line": 691
+    },
+    {
+      "file": "src/features/incorporation/server-fns.ts",
+      "name": "listIncorporationCases",
+      "method": "GET",
+      "line": 117
+    },
+    {
+      "file": "src/features/incorporation/server-fns.ts",
+      "name": "listIncorporationCasePage",
+      "method": "GET",
+      "line": 128
+    },
+    {
+      "file": "src/features/incorporation/server-fns.ts",
+      "name": "getIncorporationCase",
+      "method": "GET",
+      "line": 139
+    },
+    {
+      "file": "src/features/incorporation/server-fns.ts",
+      "name": "createIncorporationCase",
+      "method": "POST",
+      "line": 150
+    },
+    {
+      "file": "src/features/incorporation/server-fns.ts",
+      "name": "updateIncorporationChecklistItem",
+      "method": "POST",
+      "line": 178
+    },
+    {
+      "file": "src/features/incorporation/server-fns.ts",
+      "name": "updateIncorporationCaseStatus",
+      "method": "POST",
+      "line": 187
+    },
+    {
+      "file": "src/features/incorporation/server-fns.ts",
+      "name": "completeIncorporationCase",
+      "method": "POST",
+      "line": 198
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "name": "stageNarImportBatch",
+      "method": "POST",
+      "line": 200
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "name": "listNarImportBatches",
+      "method": "GET",
+      "line": 206
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "name": "getNarImportBatchReview",
+      "method": "GET",
+      "line": 215
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "name": "mapNarImportCompany",
+      "method": "POST",
+      "line": 223
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "name": "previewNarApply",
+      "method": "POST",
+      "line": 267
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "name": "executeNarApply",
+      "method": "POST",
+      "line": 273
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "name": "getNarApplyJob",
+      "method": "GET",
+      "line": 279
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "name": "listNarApplyJobs",
+      "method": "GET",
+      "line": 285
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "name": "getNarApplyOptions",
+      "method": "GET",
+      "line": 292
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "name": "resumeNarApplyJob",
+      "method": "POST",
+      "line": 298
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "name": "cancelNarApplyJob",
+      "method": "POST",
+      "line": 305
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "name": "previewNarCompensation",
+      "method": "GET",
+      "line": 311
+    },
+    {
+      "file": "src/features/nar-import/server-fns.ts",
+      "name": "confirmNarBatchYear",
+      "method": "POST",
+      "line": 318
+    },
+    {
+      "file": "src/features/notifications/runtime-dispatch.ts",
+      "name": "dispatchDueNotifications",
+      "method": "POST",
+      "line": 129
+    },
+    {
+      "file": "src/features/operations/server-fns.ts",
+      "name": "getOperationsHealth",
+      "method": "GET",
+      "line": 234
+    },
+    {
+      "file": "src/features/service-subscriptions/server-fns.ts",
+      "name": "listServiceSubscriptions",
+      "method": "GET",
+      "line": 78
+    },
+    {
+      "file": "src/features/service-subscriptions/server-fns.ts",
+      "name": "addServiceSubscription",
+      "method": "POST",
+      "line": 88
+    },
+    {
+      "file": "src/features/service-subscriptions/server-fns.ts",
+      "name": "renewServiceSubscription",
+      "method": "POST",
+      "line": 99
+    },
+    {
+      "file": "src/features/service-subscriptions/server-fns.ts",
+      "name": "cancelServiceSubscription",
+      "method": "POST",
+      "line": 110
+    },
+    {
+      "file": "src/features/whatsapp/intake-server-fns.ts",
+      "name": "previewWhatsAppMessage",
+      "method": "GET",
+      "line": 64
+    },
+    {
+      "file": "src/features/whatsapp/intake-server-fns.ts",
+      "name": "mapWhatsAppMessage",
+      "method": "POST",
+      "line": 70
+    },
+    {
+      "file": "src/features/whatsapp/intake-server-fns.ts",
+      "name": "intakeWhatsAppMedia",
+      "method": "POST",
+      "line": 78
+    },
+    {
+      "file": "src/features/whatsapp/server-fns.ts",
+      "name": "listWhatsAppConversations",
+      "method": "GET",
+      "line": 433
+    },
+    {
+      "file": "src/features/whatsapp/server-fns.ts",
+      "name": "listWhatsAppConversationMessages",
+      "method": "GET",
+      "line": 441
+    },
+    {
+      "file": "src/features/whatsapp/server-fns.ts",
+      "name": "listWhatsAppConversationPage",
+      "method": "GET",
+      "line": 449
+    },
+    {
+      "file": "src/features/whatsapp/server-fns.ts",
+      "name": "listWhatsAppConversationMessagePage",
+      "method": "GET",
+      "line": 457
+    },
+    {
+      "file": "src/features/whatsapp/server-fns.ts",
+      "name": "getWhatsAppIntegrationStatus",
+      "method": "GET",
+      "line": 468
+    },
+    {
+      "file": "src/features/whatsapp/server-fns.ts",
+      "name": "queueWhatsAppTemplateMessage",
+      "method": "POST",
+      "line": 489
+    },
+    {
+      "file": "src/features/work-items/server-fns.ts",
+      "name": "listWorkQueue",
+      "method": "GET",
+      "line": 223
+    },
+    {
+      "file": "src/features/work-items/server-fns.ts",
+      "name": "listWorkQueuePage",
+      "method": "GET",
+      "line": 242
+    },
+    {
+      "file": "src/features/work-items/server-fns.ts",
+      "name": "recommendWorkItemAssignees",
+      "method": "GET",
+      "line": 258
+    },
+    {
+      "file": "src/features/work-items/server-fns.ts",
+      "name": "assignWorkItem",
+      "method": "POST",
+      "line": 266
+    },
+    {
+      "file": "src/features/work-items/server-fns.ts",
+      "name": "acknowledgeWorkItemEscalation",
+      "method": "POST",
+      "line": 274
+    }
+  ],
+  "custom_entries": [
+    {
+      "path": "/api/handoffs/export",
+      "authority": "createDocumentContextForRequest -> requireActor POST"
+    },
+    {
+      "path": "/api/webhooks/whatsapp",
+      "authority": "verified HMAC -> assertApplicationWriteSchema before writer"
+    },
+    {
+      "path": "runFirmMaintenance",
+      "authority": "input parse -> assertApplicationWriteSchema before production factories"
+    }
+  ],
+  "outside_business_db_scope": [
+    "Neon Auth proxy/session/login/recovery infrastructure",
+    "offline scripts with their own migration/isolation gates"
+  ],
+  "limitations": "Inventory is not 74 executed mutation journeys, native HTTP/Auth/RLS, full-schema/checksum/privilege or concurrent-DDL proof"
+}

@@ -1,0 +1,7 @@
+
+> typecheck
+> tsc --noEmit
+
+src/features/work-items/assignment-recovery.integration.test.ts(6,32): error TS6133: 'SqlClient' is declared but its value is never read.
+src/features/work-items/assignment-recovery.integration.test.ts(122,46): error TS6133: 'foreignManager' is declared but its value is never read.
+src/features/work-items/assignment-recovery.integration.test.ts(122,62): error TS6133: 'inactiveManager' is declared but its value is never read.

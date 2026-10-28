@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-19",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/lib/format-date.test.ts",
+    "src/lib/format-label.test.ts",
+    "src/lib/hong-kong-time.test.ts",
+    "src/lib/knowledge-base.test.ts",
+    "src/lib/reminder-cadence.test.ts",
+    "src/lib/serialization-adapters.test.ts",
+    "src/lib/text-tokens.test.ts",
+    "src/lib/use-retained-page.test.tsx",
+    "src/routes/-admin-guard.test.tsx",
+    "src/routes/-annual-returns-data-mode.test.tsx",
+    "src/routes/-annual-returns-table-layout.test.ts",
+    "src/routes/-annual-returns-workflow.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/lib/format-date.test.ts",
+    "src/lib/format-label.test.ts",
+    "src/lib/hong-kong-time.test.ts",
+    "src/lib/knowledge-base.test.ts",
+    "src/lib/reminder-cadence.test.ts",
+    "src/lib/serialization-adapters.test.ts",
+    "src/lib/text-tokens.test.ts",
+    "src/lib/use-retained-page.test.tsx",
+    "src/routes/-admin-guard.test.tsx",
+    "src/routes/-annual-returns-data-mode.test.tsx",
+    "src/routes/-annual-returns-table-layout.test.ts",
+    "src/routes/-annual-returns-workflow.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/routes/-annual-returns-workflow.test.ts",
+      "tests": 9
+    },
+    {
+      "path": "src/lib/knowledge-base.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "src/routes/-annual-returns-data-mode.test.tsx",
+      "tests": 8
+    },
+    {
+      "path": "src/routes/-admin-guard.test.tsx",
+      "tests": 3
+    },
+    {
+      "path": "src/lib/use-retained-page.test.tsx",
+      "tests": 1
+    },
+    {
+      "path": "src/lib/hong-kong-time.test.ts",
+      "tests": 7
+    },
+    {
+      "path": "src/lib/format-date.test.ts",
+      "tests": 6
+    },
+    {
+      "path": "src/lib/text-tokens.test.ts",
+      "tests": 9
+    },
+    {
+      "path": "src/lib/serialization-adapters.test.ts",
+      "tests": 4
+    },
+    {
+      "path": "src/routes/-annual-returns-table-layout.test.ts",
+      "tests": 4
+    },
+    {
+      "path": "src/lib/format-label.test.ts",
+      "tests": 6
+    },
+    {
+      "path": "src/lib/reminder-cadence.test.ts",
+      "tests": 9
+    }
+  ]
+}

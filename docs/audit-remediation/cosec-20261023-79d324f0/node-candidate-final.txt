@@ -1,0 +1,29 @@
+✔ F16 / UC102: staff listing never contains another team (236.3441ms)
+✔ F16 / UC103: staff cannot read another team incorporation detail (37.2979ms)
+✔ F16 / UC104: staff with no team must fail closed on list (28.8126ms)
+✔ UC105: Admin may read the multi-team incorporation register (34.357ms)
+✔ UC106: corporate change detail rejects another team (positive control) (28.7303ms)
+✔ UC107: corporate change no-team list fails closed (positive control) (23.8455ms)
+✔ Staff team-a: list and detail share the assigned-team boundary (33.2659ms)
+✔ Staff team-b: list and detail share the assigned-team boundary (21.358ms)
+✔ Manager team-a: list and detail share the assigned-team boundary (20.973ms)
+✔ Manager team-b: list and detail share the assigned-team boundary (22.9834ms)
+✔ invalid actor {"role":"Staff","teamId":null}: both read handlers fail closed (24.6098ms)
+✔ invalid actor {"role":"Manager","teamId":null}: both read handlers fail closed (22.5265ms)
+✔ invalid actor {"role":"Client"}: both read handlers fail closed (24.7084ms)
+✔ invalid actor {"role":"Staff","active":false}: both read handlers fail closed (24.0577ms)
+✔ invalid actor {"role":"Manager","active":false}: both read handlers fail closed (24.4984ms)
+✔ invalid actor {"role":"Admin","active":false}: both read handlers fail closed (28.5422ms)
+✔ Admin detail permits another team and a missing case remains null (16.9526ms)
+✔ search/page handler forwards only validated filters with the authenticated scope (18.9045ms)
+✔ Admin explicitly narrows the list to a requested team (17.2096ms)
+✔ owner/page filters cannot grant access to a foreign team (18.1507ms)
+✔ list rejects an unrecognized scope override and invalid page bounds (16.2738ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 988.1284

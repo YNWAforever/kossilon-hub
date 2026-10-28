@@ -1,0 +1,662 @@
+
+> test
+> vitest run --project unit src/features/work-items/queue-view-state.test.ts src/routes/-work-queue.interaction.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > offers recovery for malformed filters without issuing queue or bulk reads
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["work-queue","[\"[\\\"admin\\\",\\\"admin\\\",\\\"Admin\\\",null,true]\",{\"view\":\"team\",\"sort\":\"deadline\"}]",null]
+
+stderr | src/routes/-work-queue.interaction.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+ ❯ |unit| src/routes/-work-queue.interaction.test.tsx (7 tests | 1 failed) 1086ms
+     × offers recovery for malformed filters without issuing queue or bulk reads 426ms
+ ❯ |unit| src/features/work-items/queue-view-state.test.ts (11 tests | 5 failed) 22ms
+     × round-trips search, owner, SLA, status, priority, sort and the third-page boundary 13ms
+     × round-trips a real JSON cursor and a numeric search through the actual router parser 2ms
+     × rejects repeated filters instead of widening ?view=team&q=a&q=b 1ms
+     × rejects repeated filters instead of widening ?owner=all&owner=unassigned 1ms
+     × rejects repeated filters instead of widening ?status=open&status=blocked 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > offers recovery for malformed filters without issuing queue or bulk reads
+TestingLibraryElementError: Unable to find an accessible element with the role "alert"
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  <main
+    class="min-w-0 flex-1 p-4 md:p-6"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="text-sm font-medium text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="text-sm text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="text-xs font-medium uppercase text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-2xl font-semibold tabular-nums"
+  />
+
+  Name "":
+  <p
+    class="text-xs font-medium uppercase text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-2xl font-semibold tabular-nums text-amber-700"
+  />
+
+  Name "":
+  <p
+    class="text-xs font-medium uppercase text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-2xl font-semibold tabular-nums text-destructive"
+  />
+
+  Name "":
+  <p
+    class="text-xs font-medium uppercase text-muted-foreground"
+  />
+
+  Name "":
+  <p
+    class="mt-2 text-2xl font-semibold tabular-nums"
+  />
+
+  Name "":
+  <p
+    class="px-4 text-sm text-muted-foreground"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "工作隊列":
+  <h1
+    class="font-display text-2xl font-semibold text-foreground"
+  />
+
+  --------------------------------------------------
+  combobox:
+
+  Name "工作排序":
+  <select
+    aria-label="工作排序"
+    class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+  />
+
+  Name "按負責同事篩選":
+  <select
+    aria-label="按負責同事篩選"
+    class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+  />
+
+  Name "按工作類型篩選":
+  <select
+    aria-label="按工作類型篩選"
+    class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+  />
+
+  Name "按 SLA 狀態篩選":
+  <select
+    aria-label="按 SLA 狀態篩選"
+    class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+  />
+
+  Name "按優先次序篩選":
+  <select
+    aria-label="按優先次序篩選"
+    class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+  />
+
+  Name "按狀態篩選":
+  <select
+    aria-label="按狀態篩選"
+    class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+  />
+
+  --------------------------------------------------
+  option:
+
+  Name "SLA 到期":
+  <option
+    value="deadline"
+  />
+
+  Name "優先次序":
+  <option
+    value="priority"
+  />
+
+  Name "全部負責同事":
+  <option
+    value="all"
+  />
+
+  Name "未分配":
+  <option
+    value="unassigned"
+  />
+
+  Name "全部工作類型":
+  <option
+    value="all"
+  />
+
+  Name "全部 SLA 狀態":
+  <option
+    value="all"
+  />
+
+  Name "正常":
+  <option
+    value="none"
+  />
+
+  Name "有風險":
+  <option
+    value="warning"
+  />
+
+  Name "已逾時":
+  <option
+    value="breach"
+  />
+
+  Name "已確認知悉":
+  <option
+    value="acknowledged"
+  />
+
+  Name "全部優先次序":
+  <option
+    value="all"
+  />
+
+  Name "高（70 或以上）":
+  <option
+    value="high"
+  />
+
+  Name "一般":
+  <option
+    value="normal"
+  />
+
+  Name "全部狀態":
+  <option
+    value="all"
+  />
+
+  Name "待處理":
+  <option
+    value="open"
+  />
+
+  Name "處理中":
+  <option
+    value="in_progress"
+  />
+
+  Name "受阻":
+  <option
+    value="blocked"
+  />
+
+  --------------------------------------------------
+  navigation:
+
+  Name "工作隊列檢視":
+  <nav
+    aria-label="工作隊列檢視"
+    class="flex min-w-0 gap-1"
+  />
+
+  --------------------------------------------------
+  link:
+
+  Name "我的工作":
+  <a
+    data-route-search="{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\",\"contextError\":true}"
+    href="#"
+  />
+
+  Name "團隊隊列":
+  <a
+    data-route-search="{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\",\"contextError\":true}"
+    href="#"
+  />
+
+  Name "已逾時":
+  <a
+    data-route-search="{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\",\"contextError\":true}"
+    href="#"
+  />
+
+  --------------------------------------------------
+  textbox:
+
+  Name "搜尋工作隊列":
+  <input
+    class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm w-full pl-9"
+    placeholder="搜尋案件或工作類型"
+    value=""
+  />
+
+  --------------------------------------------------
+  region:
+
+  Name "Bulk assignment":
+  <section
+    aria-label="Bulk assignment"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="min-w-0 flex-1 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            今日工作
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            工作隊列
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            分配、工作量及 SLA 管控
+          </p>
+        </div>
+      </div>
+      <div
+        class="mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4"
+      >
+        <div
+          class="min-h-20 border-r border-border px-4 py-4 last:border-r-0"
+        >
+          <p
+            class="text-xs font-medium uppercase text-muted-foreground"
+          >
+            本頁今日到期
+          </p>
+          <p
+            class="mt-2 text-2xl font-semibold tabular-nums"
+          >
+            0
+          </p>
+        </div>
+        <div
+          class="min-h-20 border-r border-border px-4 py-4 last:border-r-0"
+        >
+          <p
+            class="text-xs font-medium uppercase text-muted-foreground"
+          >
+            本頁有風險
+          </p>
+          <p
+            class="mt-2 text-2xl font-semibold tabular-nums text-amber-700"
+          >
+            0
+          </p>
+        </div>
+        <div
+          class="min-h-20 border-r border-border px-4 py-4 last:border-r-0"
+        >
+          <p
+            class="text-xs font-medium uppercase text-muted-foreground"
+          >
+            本頁已逾時
+          </p>
+          <p
+            class="mt-2 text-2xl font-semibold tabular-nums text-destructive"
+          >
+            0
+          </p>
+        </div>
+        <div
+          class="min-h-20 border-r border-border px-4 py-4 last:border-r-0"
+        >
+          <p
+            class="text-xs font-medium uppercase text-muted-foreground"
+          >
+            本頁未分配
+          </p>
+          <p
+            class="mt-2 text-2xl font-semibold tabular-nums"
+          >
+            0
+          </p>
+        </div>
+      </div>
+      <div
+        class="mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between"
+      >
+        <label>
+          排序
+          <select
+            aria-label="工作排序"
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+          >
+            <option
+              value="deadline"
+            >
+              SLA 到期
+            </option>
+            <option
+              value="priority"
+            >
+              優先次序
+            </option>
+          </select>
+        </label>
+        <nav
+          aria-label="工作隊列檢視"
+          class="flex min-w-0 gap-1"
+        >
+          <a
+            data-route-search="{\"view\":\"mine\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\",\"contextError\":true}"
+            href="#"
+          >
+            我的工作
+          </a>
+          <a
+            data-route-search="{\"view\":\"team\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\",\"contextError\":true}"
+            href="#"
+          >
+            團隊隊列
+          </a>
+          <a
+            data-route-search="{\"view\":\"breached\",\"owner\":\"all\",\"workType\":\"all\",\"sla\":\"all\",\"priority\":\"all\",\"status\":\"all\",\"q\":\"\",\"sort\":\"deadline\",\"contextError\":true}"
+            href="#"
+          >
+            已逾時
+          </a>
+        </nav>
+        <label
+          class="relative block w-full lg:w-80"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-search pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m21 21-4.34-4.34"
+            />
+            <circle
+              cx="11"
+              cy="11"
+              r="8"
+            />
+          </svg>
+          <span
+            class="sr-only"
+          >
+            搜尋工作隊列
+          </span>
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm w-full pl-9"
+            placeholder="搜尋案件或工作類型"
+            value=""
+          />
+        </label>
+      </div>
+      <div
+        class="grid gap-2 border-b border-border py-3 sm:grid-cols-2 xl:grid-cols-5"
+      >
+        <select
+          aria-label="按負責同事篩選"
+          class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+        >
+          <option
+            value="all"
+          >
+            全部負責同事
+          </option>
+          <option
+            value="unassigned"
+          >
+            未分配
+          </option>
+        </select>
+        <select
+          aria-label="按工作類型篩選"
+          class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+        >
+          <option
+            value="all"
+          >
+            全部工作類型
+          </option>
+        </select>
+        <select
+          aria-label="按 SLA 狀態篩選"
+          class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+        >
+          <option
+            value="all"
+          >
+            全部 SLA 狀態
+          </option>
+          <option
+            value="none"
+          >
+            正常
+          </option>
+          <option
+            value="warning"
+          >
+            有風險
+          </option>
+          <option
+            value="breach"
+          >
+            已逾時
+          </option>
+          <option
+            value="acknowledged"
+          >
+            已確認知悉
+          </option>
+        </select>
+        <select
+          aria-label="按優先次序篩選"
+          class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+        >
+          <option
+            value="all"
+          >
+            全部優先次序
+          </option>
+          <option
+            value="high"
+          >
+            高（70 或以上）
+          </option>
+          <option
+            value="normal"
+          >
+            一般
+          </option>
+        </select>
+        <select
+          aria-label="按狀態篩選"
+          class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full"
+        >
+          <option
+            value="all"
+          >
+            全部狀態
+          </option>
+          <option
+            value="open"
+          >
+            待處理
+          </option>
+          <option
+            value="in_progress"
+          >
+            處理中
+          </option>
+          <option
+            value="blocked"
+          >
+            受阻
+          </option>
+        </select>
+      </div>
+      <div
+        class="border-b border-border px-3 py-10 text-center text-sm text-muted-foreground"
+      >
+        工作隊列載入中…
+      </div>
+      <section
+        aria-label="Bulk assignment"
+      >
+        work_item
+      </section>
+    </main>
+    <p
+      class="px-4 text-sm text-muted-foreground"
+    >
+      本頁最多 50 項；排序及範圍變更後由第一頁重新讀取。
+    </p>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/routes/-work-queue.interaction.test.tsx:71:19
+     69|     mocks.search.contextError = true;
+     70|     render(<QueryClientProvider client={new QueryClient()}><WorkQueueR…
+     71|     expect(screen.getByRole("alert").textContent).toContain("篩選連結無效");
+       |                   ^
+     72|     expect(mocks.list).not.toHaveBeenCalled();
+     73|     expect(mocks.bulk).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |unit| src/features/work-items/queue-view-state.test.ts > UC124 work queue URL and safe return > round-trips search, owner, SLA, status, priority, sort and the third-page boundary
+AssertionError: expected { view: 'team', …(7) } to deeply equal { view: 'team', …(8) }
+
+- Expected
++ Received
+
+@@ -1,7 +1,6 @@
+  {
+-   "cursor": "{\"third\":\"page\"}",
+    "owner": "20000000-0000-0000-0000-000000000001",
+    "priority": "high",
+    "q": "覆核文件 香港",
+    "sla": "warning",
+    "sort": "priority",
+
+ ❯ src/features/work-items/queue-view-state.test.ts:11:96
+      9|     const path = queueReturnPath(state);
+     10|     expect(caseReturnPath(path)).toBe(path);
+     11|     expect(queueViewSearch(defaultParseSearch(new URL(path, "https://l…
+       |                                                                                                ^
+     12|   });
+     13|   it("round-trips a real JSON cursor and a numeric search through the …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |unit| src/features/work-items/queue-view-state.test.ts > UC124 work queue URL and safe return > round-trips a real JSON cursor and a numeric search through the actual router parser
+AssertionError: expected '' to be '123' // Object.is equality
+
+- Expected
++ Received
+
+- 123
+
+ ❯ src/features/work-items/queue-view-state.test.ts:17:23
+     15|     const state = queueViewSearch({ view: "team", q: "123", cursor });
+     16|     const decoded = queueViewSearch(defaultParseSearch(new URL(queueRe…
+     17|     expect(decoded.q).toBe("123");
+       |                       ^
+     18|     expect(decoded.cursor).toBe(cursor);
+     19|     expect(queueViewSearch(defaultParseSearch("?q=123")).q).toBe("123"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |unit| src/features/work-items/queue-view-state.test.ts > UC124 work queue URL and safe return > rejects repeated filters instead of widening ?view=team&q=a&q=b
+ FAIL  |unit| src/features/work-items/queue-view-state.test.ts > UC124 work queue URL and safe return > rejects repeated filters instead of widening ?owner=all&owner=unassigned
+ FAIL  |unit| src/features/work-items/queue-view-state.test.ts > UC124 work queue URL and safe return > rejects repeated filters instead of widening ?status=open&status=blocked
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/features/work-items/queue-view-state.test.ts:22:67
+     20|   });
+     21|   it.each(["?view=team&q=a&q=b", "?owner=all&owner=unassigned", "?stat…
+     22|     expect(queueViewSearch(defaultParseSearch(raw)).contextError).toBe…
+       |                                                                   ^
+     23|   });
+     24|   it.each(["https://outside.invalid/work-queue", "//outside.invalid", …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 12 passed (18)
+   Start at  05:25:03
+   Duration  4.27s (transform 674ms, setup 0ms, import 1.58s, tests 1.11s, environment 1.05s)
+

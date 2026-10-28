@@ -1,0 +1,23 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/annual-return/components/case-findings.interaction.test.tsx (3 tests) 274ms
+ ✓ |unit| src/features/annual-return/components/demo-case-detail.interaction.test.tsx (6 tests) 245ms
+ ✓ |unit| src/features/admin/production-staff-admin.interaction.test.tsx (3 tests) 252ms
+ ✓ |unit| src/features/annual-return/components/case-handoff.interaction.test.tsx (3 tests) 242ms
+ ✓ |unit| src/components/ui/field.test.tsx (3 tests) 238ms
+ ✓ |unit| src/components/ui/skeleton.test.tsx (2 tests) 95ms
+ ✓ |unit| src/components/ui/field.convention.test.ts (2 tests) 56ms
+ ✓ |unit| src/features/annual-return/case-history.test.ts (32 tests) 10ms
+ ✓ |unit| src/features/annual-return/client-portal-server-fns.test.ts (10 tests) 9ms
+ ✓ |unit| src/features/admin/server-fns.test.ts (4 tests) 7ms
+ ✓ |unit| src/features/annual-return/board-filters.test.ts (13 tests) 7ms
+ ✓ |unit| src/features/annual-return/board-metrics.test.ts (8 tests) 4ms
+
+ Test Files  12 passed (12)
+      Tests  89 passed (89)
+   Start at  12:16:38
+   Duration  17.75s (transform 1.42s, setup 0ms, import 4.85s, tests 1.44s, environment 8.46s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

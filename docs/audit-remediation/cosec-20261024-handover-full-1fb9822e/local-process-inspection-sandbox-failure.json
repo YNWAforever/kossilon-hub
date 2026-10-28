@@ -1,0 +1,1 @@
+{"operation":"read-only Get-CimInstance Win32_Process, owned-run filter","result":"NOT_VERIFIED","error":"用戶端無法存取 CIM 資源。","side_effects":"No process stopped or cleanup performed; no final receipt was written. Retry only through normal approved sandbox escalation."}

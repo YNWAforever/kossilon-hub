@@ -1,0 +1,22 @@
+{
+  "agent_id": "01a16d46-227e-71d0-8c12-f6a25c16031a",
+  "scope": "Bounded static review only; reviewer ran no tests, DB/container actions or network calls",
+  "original_findings": [
+    {"severity":"P2","finding":"Outer test transaction could mask loss of repository transaction creation","resolution":"Normal client Proxy instruments the begin opened by repository; explicit entered assertion and independent uncommitted snapshot control; final real SQL passed"},
+    {"severity":"P2","finding":"Failed app client closure could still permit disposal seal","resolution":"All closures must fulfill with full PID accounting; actual backend absence checked before seal and before removal; no false seal on closure failure; final real SQL and disposal passed"},
+    {"severity":"P2","finding":"Migration-to-test provenance not bound; followup also found catalog dependency endpoint gap","resolution":"Successful migration target-bound SHA256 provenance before/after migration, before child launch and after child output; both catalog dependencies included in final test fingerprints; third fresh target passed"},
+    {"severity":"P2","finding":"Rejected racer complete user/profile rows could change without being detected","resolution":"Compare complete loser rows/xmin and audit against pre-race baseline; retain all old events and exact one-event increment"},
+    {"severity":"P3","finding":"Exact audit omitted dedicated old/new team columns","resolution":"Read and assert both team columns on all three expected events"}
+  ],
+  "first_reviewed_test_sha256_prefix": "0c0e242d3fce",
+  "second_reviewed_test_sha256_prefix": "5e7cb94e6471",
+  "second_reviewed_runner_sha256_prefix": "3bd5bf6b0007",
+  "final_reviewed_runner_sha256_prefix": "991a8a6c035b",
+  "followups": [
+    "Findings 1,2,4,5 addressed statically; finding3 required post-child migration provenance check and catalog dependency fingerprint inclusion",
+    "Finding3 closed statically after both final changes; no mutations, checks or runtime performed by reviewer"
+  ],
+  "remaining_findings": 0,
+  "production_defect_identified": false,
+  "full_native_acceptance": false
+}

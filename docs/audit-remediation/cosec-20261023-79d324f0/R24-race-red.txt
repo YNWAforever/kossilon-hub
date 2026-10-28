@@ -1,0 +1,55 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/auth/auth-context-neon.test.tsx (21 tests | 1 failed | 20 skipped) 89ms
+     × prevents an older pending sign-in from restoring an actor after sign-out 86ms
+ ❯ |unit| src/routes/-root-auth-recovery.test.tsx (9 tests | 1 failed | 8 skipped) 67ms
+     × drops selection when the verified route actor changes before session hydration catches up 65ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-root-auth-recovery.test.tsx > verified root auth recovery > drops selection when the verified route actor changes before session hydration catches up
+AssertionError: expected <button></button> to be null
+
+- Expected:
+null
+
++ Received:
+<button>
+  A case selected
+</button>
+
+ ❯ src/routes/-root-auth-recovery.test.tsx:114:51
+    112|     mocks.context = { ...mocks.context, actor: { ...actor, authUserId:…
+    113|     view.rerender(<Root />);
+    114|     expect(screen.queryByText("A case selected")).toBeNull();
+       |                                                   ^
+    115|     expect(screen.getByText("Select case")).toBeTruthy();
+    116|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| src/features/auth/auth-context-neon.test.tsx > Neon session recovery > prevents an older pending sign-in from restoring an actor after sign-out
+AssertionError: expected 'staff-A' to be 'none' // Object.is equality
+
+Expected: "none"
+Received: "staff-A"
+
+ ❯ src/features/auth/auth-context-neon.test.tsx:362:55
+    360|     authClient.getSession.mockResolvedValue({ data: { user: verifiedUs…
+    361|     await act(async () => { resolveLogin({ error: null }); });
+    362|     expect(screen.getByTestId("session").textContent).toBe("none");
+       |                                                       ^
+    363|     expect(screen.getByText("failed")).toBeTruthy();
+    364|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 28 skipped (30)
+   Start at  04:58:00
+   Duration  6.88s (transform 863ms, setup 0ms, import 2.12s, tests 156ms, environment 3.76s)
+

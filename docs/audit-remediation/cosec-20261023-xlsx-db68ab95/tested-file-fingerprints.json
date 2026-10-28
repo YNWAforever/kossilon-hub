@@ -1,0 +1,26 @@
+[
+  {
+    "path": "src/test/xlsx-fixture.ts",
+    "sha256": "c4a6c0194fd361350368facf48948c828b0047259d49aa412a5cd247493b2a22"
+  },
+  {
+    "path": "src/features/nar-import/xlsx/workbook.test.ts",
+    "sha256": "3d0b5f4ce2646533707c1ce75f3fdf214865123d8f1fe3ede209f35ab30351bf"
+  },
+  {
+    "path": "src/features/nar-import/mixed-xlsx-fixture.ts",
+    "sha256": "ca43e65eea9aa53d7a18dd34c3f80d7e24fde808f8c754d70b9dfaca2ebe1ed0"
+  },
+  {
+    "path": "src/features/nar-import/mixed-xlsx-fixture.test.ts",
+    "sha256": "d1a655e2d6694a9af06619504723a422d242cb45b76a3e64ed4beee2299a9a54"
+  },
+  {
+    "path": "src/features/nar-import/mixed-xlsx.integration.test.ts",
+    "sha256": "b91233087a9b6e0fccb32715fd519c992b223362b3af4d529eb27b616896f09b"
+  },
+  {
+    "path": "src/test/db-integration-files.ts",
+    "sha256": "d58547229dbf1262ba6ff66dfc5101df8fbdc94774f14ee376819d816104412f"
+  }
+]

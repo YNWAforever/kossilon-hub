@@ -1,0 +1,1143 @@
+{
+  "run_id": "cosec-20261024-transfer-f7337fb9",
+  "attempt": "historical4",
+  "instance": "0dbd8313-c16f-45ca-91d8-58361d83ae09",
+  "started": "2026-10-24T06:30:51.890Z",
+  "finished": "2026-10-24T06:31:19.982Z",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "origin": "http://127.0.0.1:5173",
+  "head": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+  "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+  "sourceHashes": {
+    "src/components/corporate-changes/create-corporate-change-request-dialog.tsx": "103d9f303e6a257c9783f1c79020071f7a68b98edfbc9057553d57c11a1755af",
+    "src/features/corporate-changes/create.ts": "90c7fa863ee18cc7c91b631f372684e529810bcb8fe0e233f78ae9b87c9a7fcf",
+    "src/features/corporate-changes/create-input.ts": "8ddcf4cfc73ac8a64bd7420cbb98d9fd83e01ce5897f4269cf23f976f9637044",
+    "src/features/corporate-changes/read.ts": "69fbd579e47eca5d922940b8d2f30243cb79ae5746e869e523ae60feb20c555d",
+    "src/features/corporate-changes/authorization.ts": "801c0c692ec0d0161ec4001c93cbd04db8c11dad2169f34cbe81dabc1176a0aa",
+    "src/features/corporate-changes/errors.ts": "ef845b6fa9ed2a8edee58ff0d6d790823db0260f107ba15f9dcde9450db5ea1f",
+    "src/features/corporate-changes/types.ts": "a7cb9ed2dab56f4f391d0747615a514f6a4d296530f121c64632e95d62980b00",
+    "src/features/corporate-changes/labels.ts": "10c29af974b5d9eaa0a6e47b3a0d3a00090494117acb78c34d1d08e708935555",
+    "src/features/clients/labels.ts": "4b37d8bc680dd7db0f8d4dc583e98485892c7a2d309b43dbd40864b9c16c6d63",
+    "src/features/incorporation/authorization.ts": "670b44a8e45d622ed3f72901803f63fbdc1a3b491bd9653499e3d0e949676c21",
+    "src/features/incorporation/case-list-query.ts": "3fff400d7bec324e3767b49f6c095a7d2e515919a1af9082ad11a8def7ee650e",
+    "src/features/auth/types.ts": "2b5eabe13d61dfdc2f54851bf372cdccc86ebf6696005274916bd68097b3dafa",
+    "src/components/ui/button.tsx": "d68a22b18a3ae0cfae981ebabc572ac79dbceba119e5dc5e80002ccb4ac7ab4c",
+    "src/components/ui/field.tsx": "122b315856afe4379e57cd1ef66631b7f4803aad10d5930bc3f9ae9a3fa534e4",
+    "src/components/ui/dialog.tsx": "e3a6de153fb15597ea95be9c4549211a297c060267787915599e3d680d476bd9",
+    "src/lib/utils.ts": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27",
+    "src/styles.css": "6d94bcd836b2e30be72db10ec1a5575a011c2edeafd495e7a723239c8d83e060",
+    "package.json": "a59dd2177080ce3e77cb9414948f0d030c58bfeac96150a217cfd20784275b49"
+  },
+  "effectiveHashes": {
+    "src/components/corporate-changes/create-corporate-change-request-dialog.tsx": "712f041912cbe1397eef3e91fd25b11bb37d4d2ddac0d10ce92e05451e538225",
+    "src/features/corporate-changes/create.ts": "90c7fa863ee18cc7c91b631f372684e529810bcb8fe0e233f78ae9b87c9a7fcf",
+    "src/features/corporate-changes/create-input.ts": "8ddcf4cfc73ac8a64bd7420cbb98d9fd83e01ce5897f4269cf23f976f9637044",
+    "src/features/corporate-changes/read.ts": "69fbd579e47eca5d922940b8d2f30243cb79ae5746e869e523ae60feb20c555d",
+    "src/features/corporate-changes/authorization.ts": "801c0c692ec0d0161ec4001c93cbd04db8c11dad2169f34cbe81dabc1176a0aa",
+    "src/features/corporate-changes/errors.ts": "ef845b6fa9ed2a8edee58ff0d6d790823db0260f107ba15f9dcde9450db5ea1f",
+    "src/features/corporate-changes/types.ts": "a7cb9ed2dab56f4f391d0747615a514f6a4d296530f121c64632e95d62980b00",
+    "src/features/corporate-changes/labels.ts": "10c29af974b5d9eaa0a6e47b3a0d3a00090494117acb78c34d1d08e708935555",
+    "src/features/clients/labels.ts": "4b37d8bc680dd7db0f8d4dc583e98485892c7a2d309b43dbd40864b9c16c6d63",
+    "src/features/incorporation/authorization.ts": "670b44a8e45d622ed3f72901803f63fbdc1a3b491bd9653499e3d0e949676c21",
+    "src/features/incorporation/case-list-query.ts": "3fff400d7bec324e3767b49f6c095a7d2e515919a1af9082ad11a8def7ee650e",
+    "src/features/auth/types.ts": "2b5eabe13d61dfdc2f54851bf372cdccc86ebf6696005274916bd68097b3dafa",
+    "src/components/ui/button.tsx": "d68a22b18a3ae0cfae981ebabc572ac79dbceba119e5dc5e80002ccb4ac7ab4c",
+    "src/components/ui/field.tsx": "122b315856afe4379e57cd1ef66631b7f4803aad10d5930bc3f9ae9a3fa534e4",
+    "src/components/ui/dialog.tsx": "e3a6de153fb15597ea95be9c4549211a297c060267787915599e3d680d476bd9",
+    "src/lib/utils.ts": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27",
+    "src/styles.css": "6d94bcd836b2e30be72db10ec1a5575a011c2edeafd495e7a723239c8d83e060",
+    "package.json": "a59dd2177080ce3e77cb9414948f0d030c58bfeac96150a217cfd20784275b49"
+  },
+  "harnessHashes": {
+    "browser-transfer.mjs": "0a642a7049496f2e697c1802987241daefd9a5cfab5e0d780ff3d023a44a2768",
+    "browser-entry.tsx.snapshot": "99dace959e101718cb890a593234b832ae15392d3f7caf4faf5ebf7406d68a25",
+    "create-corporate-change-request-dialog.tsx.before.snapshot": "712f041912cbe1397eef3e91fd25b11bb37d4d2ddac0d10ce92e05451e538225"
+  },
+  "loadedSourceHashes": {
+    "src/styles.css": "6d94bcd836b2e30be72db10ec1a5575a011c2edeafd495e7a723239c8d83e060",
+    "src/components/corporate-changes/create-corporate-change-request-dialog.tsx": "712f041912cbe1397eef3e91fd25b11bb37d4d2ddac0d10ce92e05451e538225",
+    "src/features/corporate-changes/create.ts": "90c7fa863ee18cc7c91b631f372684e529810bcb8fe0e233f78ae9b87c9a7fcf",
+    "src/features/corporate-changes/read.ts": "69fbd579e47eca5d922940b8d2f30243cb79ae5746e869e523ae60feb20c555d",
+    "src/features/corporate-changes/authorization.ts": "801c0c692ec0d0161ec4001c93cbd04db8c11dad2169f34cbe81dabc1176a0aa",
+    "src/features/corporate-changes/types.ts": "a7cb9ed2dab56f4f391d0747615a514f6a4d296530f121c64632e95d62980b00",
+    "src/features/corporate-changes/create-input.ts": "8ddcf4cfc73ac8a64bd7420cbb98d9fd83e01ce5897f4269cf23f976f9637044",
+    "src/features/corporate-changes/errors.ts": "ef845b6fa9ed2a8edee58ff0d6d790823db0260f107ba15f9dcde9450db5ea1f",
+    "src/components/ui/button.tsx": "d68a22b18a3ae0cfae981ebabc572ac79dbceba119e5dc5e80002ccb4ac7ab4c",
+    "src/features/clients/labels.ts": "4b37d8bc680dd7db0f8d4dc583e98485892c7a2d309b43dbd40864b9c16c6d63",
+    "src/components/ui/dialog.tsx": "e3a6de153fb15597ea95be9c4549211a297c060267787915599e3d680d476bd9",
+    "src/features/incorporation/authorization.ts": "670b44a8e45d622ed3f72901803f63fbdc1a3b491bd9653499e3d0e949676c21",
+    "src/features/corporate-changes/labels.ts": "10c29af974b5d9eaa0a6e47b3a0d3a00090494117acb78c34d1d08e708935555",
+    "src/components/ui/field.tsx": "122b315856afe4379e57cd1ef66631b7f4803aad10d5930bc3f9ae9a3fa534e4",
+    "src/features/incorporation/case-list-query.ts": "3fff400d7bec324e3767b49f6c095a7d2e515919a1af9082ad11a8def7ee650e",
+    "src/lib/utils.ts": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27"
+  },
+  "historical_overlay": {
+    "scope": "UI ONLY, final schema/service",
+    "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+    "observed_failure_count": 6
+  },
+  "browser_version": "155.0.4283.62",
+  "results": [
+    {
+      "case_id": "missing-new",
+      "name": "Missing and whitespace new holder: blur explanation, bypass focus, zero RPC",
+      "status": "failed",
+      "error": "Error: expect(locator).toHaveAttribute(expected) failed\n\nLocator:  locator('#corp-change-transferee-new-name')\nExpected: \"true\"\nReceived: \"\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveAttribute\" locator('#corp-change-transferee-new-name') with timeout 5000ms\n  - waiting for locator('#corp-change-transferee-new-name')\n    14 × locator resolved to <input value=\"\" required=\"\" id=\"corp-change-transferee-new-name\" class=\"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full\"/>\n       - unexpected value \"null\"\n\n    at captureRawStack (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toHaveAttribute (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at fieldError (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261024-transfer-f7337fb9\\browser-transfer.mjs:194:25)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261024-transfer-f7337fb9\\browser-transfer.mjs:272:30\n    at async test (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261024-transfer-f7337fb9\\browser-transfer.mjs:254:24)\n    at async file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-transfer-f7337fb9/browser-transfer.mjs:265:3",
+      "url": "http://127.0.0.1:5173/corporate-changes?run=cosec-20261024-transfer-f7337fb9&instance=0dbd8313-c16f-45ca-91d8-58361d83ae09&attempt=historical4&case=missing-new",
+      "dom": "UC166 local adapter: Staff actor fixture; native Auth/HTTP/DB/RLS unproven.\n\n新增公司變更申請\n\n記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。\n\n公司\n選擇公司\nQA UC166 Company\n變更類別\n更改公司名稱\n股份轉讓\n高級人員委任／辭任／資料變更\n更改註冊辦事處地址\n報價（HKD）\n轉讓人股權\n選擇股權\nQA UC166 Transferor\nQA UC166 Existing\n承讓人\n現有股東\n新股東\n新股東名稱\n新股東地址\n轉讓股數\n代價（HKD）\n印花稅（HKD）\n取消\n建立申請\nClose",
+      "state": {
+        "identity": {
+          "run_id": "cosec-20261024-transfer-f7337fb9",
+          "attempt": "historical4",
+          "instance": "0dbd8313-c16f-45ca-91d8-58361d83ae09",
+          "root": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+          "origin": "http://127.0.0.1:5173",
+          "host": "127.0.0.1",
+          "port": 5173,
+          "branch": "codex/cosec-20261023",
+          "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "head": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "transport": "local-memory-sessionStorage-stub"
+        },
+        "ledger": {
+          "records": {},
+          "writes": [],
+          "reads": [],
+          "rpcCalls": [],
+          "repositoryAttempts": [],
+          "teamReads": [],
+          "callbacks": [],
+          "lastCreated": null
+        },
+        "documentId": "1c9cfbc9-c460-473f-8536-0784488a845f",
+        "queryClientId": "efd05483-14a9-4e02-8b78-86c7d69accf0",
+        "boot": 1,
+        "pending": 0,
+        "settled": 0,
+        "violations": []
+      }
+    },
+    {
+      "case_id": "missing-existing",
+      "name": "Missing existing holder: disabled submit still gives linked blur explanation",
+      "status": "failed",
+      "error": "Error: expect(locator).toHaveAttribute(expected) failed\n\nLocator:  locator('#corp-change-transferee-shareholding')\nExpected: \"true\"\nReceived: \"\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveAttribute\" locator('#corp-change-transferee-shareholding') with timeout 5000ms\n  - waiting for locator('#corp-change-transferee-shareholding')\n    14 × locator resolved to <select required=\"\" id=\"corp-change-transferee-shareholding\" class=\"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full\">…</select>\n       - unexpected value \"null\"\n\n    at captureRawStack (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toHaveAttribute (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at fieldError (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261024-transfer-f7337fb9\\browser-transfer.mjs:194:25)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261024-transfer-f7337fb9\\browser-transfer.mjs:288:73\n    at async test (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261024-transfer-f7337fb9\\browser-transfer.mjs:254:24)\n    at async file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-transfer-f7337fb9/browser-transfer.mjs:285:3",
+      "url": "http://127.0.0.1:5173/corporate-changes?run=cosec-20261024-transfer-f7337fb9&instance=0dbd8313-c16f-45ca-91d8-58361d83ae09&attempt=historical4&case=missing-existing",
+      "dom": "UC166 local adapter: Staff actor fixture; native Auth/HTTP/DB/RLS unproven.\n\n新增公司變更申請\n\n記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。\n\n公司\n選擇公司\nQA UC166 Company\n變更類別\n更改公司名稱\n股份轉讓\n高級人員委任／辭任／資料變更\n更改註冊辦事處地址\n報價（HKD）\n轉讓人股權\n選擇股權\nQA UC166 Transferor\nQA UC166 Existing\n承讓人\n現有股東\n新股東\n承讓人股權\n選擇股權\nQA UC166 Existing\n轉讓股數\n代價（HKD）\n印花稅（HKD）\n取消\n建立申請\nClose",
+      "state": {
+        "identity": {
+          "run_id": "cosec-20261024-transfer-f7337fb9",
+          "attempt": "historical4",
+          "instance": "0dbd8313-c16f-45ca-91d8-58361d83ae09",
+          "root": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+          "origin": "http://127.0.0.1:5173",
+          "host": "127.0.0.1",
+          "port": 5173,
+          "branch": "codex/cosec-20261023",
+          "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "head": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "transport": "local-memory-sessionStorage-stub"
+        },
+        "ledger": {
+          "records": {},
+          "writes": [],
+          "reads": [],
+          "rpcCalls": [],
+          "repositoryAttempts": [],
+          "teamReads": [],
+          "callbacks": [],
+          "lastCreated": null
+        },
+        "documentId": "af0c7cc7-55d6-4dc0-a889-86ffe999f7bd",
+        "queryClientId": "d4e7ca32-9f96-468d-83db-3823a0590a39",
+        "boot": 1,
+        "pending": 0,
+        "settled": 0,
+        "violations": []
+      }
+    },
+    {
+      "case_id": "invalid-quantity",
+      "name": "Quantity 0, negative, fractional and 2^31: field errors, first focus, zero RPC",
+      "status": "failed",
+      "error": "Error: expect(locator).toHaveAttribute(expected) failed\n\nLocator:  locator('#corp-change-shares-transferred')\nExpected: \"true\"\nReceived: \"\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveAttribute\" locator('#corp-change-shares-transferred') with timeout 5000ms\n  - waiting for locator('#corp-change-shares-transferred')\n    14 × locator resolved to <input min=\"1\" step=\"1\" value=\"10\" required=\"\" type=\"number\" id=\"corp-change-shares-transferred\" class=\"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full\"/>\n       - unexpected value \"null\"\n\n    at captureRawStack (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toHaveAttribute (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at fieldError (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261024-transfer-f7337fb9\\browser-transfer.mjs:194:25)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261024-transfer-f7337fb9\\browser-transfer.mjs:296:43\n    at async test (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261024-transfer-f7337fb9\\browser-transfer.mjs:254:24)\n    at async file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-transfer-f7337fb9/browser-transfer.mjs:292:3",
+      "url": "http://127.0.0.1:5173/corporate-changes?run=cosec-20261024-transfer-f7337fb9&instance=0dbd8313-c16f-45ca-91d8-58361d83ae09&attempt=historical4&case=invalid-quantity",
+      "dom": "UC166 local adapter: Staff actor fixture; native Auth/HTTP/DB/RLS unproven.\n\n新增公司變更申請\n\n記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。\n\n公司\n選擇公司\nQA UC166 Company\n變更類別\n更改公司名稱\n股份轉讓\n高級人員委任／辭任／資料變更\n更改註冊辦事處地址\n報價（HKD）\n轉讓人股權\n選擇股權\nQA UC166 Transferor\nQA UC166 Existing\n承讓人\n現有股東\n新股東\n新股東名稱\n新股東地址\n轉讓股數\n代價（HKD）\n印花稅（HKD）\n\n[ { \"code\": \"too_small\", \"minimum\": 1, \"type\": \"number\", \"inclusive\": true, \"exact\": false, \"message\": \"轉讓股數必須大於零。\", \"path\": [ \"sharesTransferred\" ] } ]\n\n取消\n建立申請\nClose",
+      "state": {
+        "identity": {
+          "run_id": "cosec-20261024-transfer-f7337fb9",
+          "attempt": "historical4",
+          "instance": "0dbd8313-c16f-45ca-91d8-58361d83ae09",
+          "root": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+          "origin": "http://127.0.0.1:5173",
+          "host": "127.0.0.1",
+          "port": 5173,
+          "branch": "codex/cosec-20261023",
+          "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "head": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "transport": "local-memory-sessionStorage-stub"
+        },
+        "ledger": {
+          "records": {},
+          "writes": [],
+          "reads": [],
+          "rpcCalls": [
+            {
+              "input": {
+                "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                "quotedFee": 2500,
+                "changeType": "share_transfer",
+                "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                "sharesTransferred": 0,
+                "consideration": 0,
+                "stampDutyAmount": 0,
+                "transfereeShareholdingId": null,
+                "transfereeNewShareholderName": "QA UC166 New Holder",
+                "transfereeNewShareholderAddress": "QA UC166 synthetic address"
+              },
+              "documentId": "f730cf4a-b857-4cf8-b453-5639f4b1a0f9",
+              "queryClientId": "aad6a68c-b6e1-426b-be6c-a52795aaa742",
+              "boot": 1
+            }
+          ],
+          "repositoryAttempts": [],
+          "teamReads": [],
+          "callbacks": [],
+          "lastCreated": null
+        },
+        "documentId": "f730cf4a-b857-4cf8-b453-5639f4b1a0f9",
+        "queryClientId": "aad6a68c-b6e1-426b-be6c-a52795aaa742",
+        "boot": 1,
+        "pending": 0,
+        "settled": 1,
+        "violations": []
+      }
+    },
+    {
+      "case_id": "existing-control",
+      "name": "Correction and new-to-existing mode: one real service create, inactive new payload null",
+      "status": "failed",
+      "error": "Error: expect(locator).toHaveAttribute(expected) failed\n\nLocator:  locator('#corp-change-shares-transferred')\nExpected: \"true\"\nReceived: \"\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveAttribute\" locator('#corp-change-shares-transferred') with timeout 5000ms\n  - waiting for locator('#corp-change-shares-transferred')\n    14 × locator resolved to <input min=\"1\" step=\"1\" value=\"10\" required=\"\" type=\"number\" id=\"corp-change-shares-transferred\" class=\"rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-8 px-2 text-xs w-full\"/>\n       - unexpected value \"null\"\n\n    at captureRawStack (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toHaveAttribute (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at fieldError (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261024-transfer-f7337fb9\\browser-transfer.mjs:194:25)\n    at C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261024-transfer-f7337fb9\\browser-transfer.mjs:302:11\n    at async test (C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261024-transfer-f7337fb9\\browser-transfer.mjs:254:24)\n    at async file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-transfer-f7337fb9/browser-transfer.mjs:300:3",
+      "url": "http://127.0.0.1:5173/corporate-changes?run=cosec-20261024-transfer-f7337fb9&instance=0dbd8313-c16f-45ca-91d8-58361d83ae09&attempt=historical4&case=existing-control",
+      "dom": "UC166 local adapter: Staff actor fixture; native Auth/HTTP/DB/RLS unproven.\n\n新增公司變更申請\n\n記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。\n\n公司\n選擇公司\nQA UC166 Company\n變更類別\n更改公司名稱\n股份轉讓\n高級人員委任／辭任／資料變更\n更改註冊辦事處地址\n報價（HKD）\n轉讓人股權\n選擇股權\nQA UC166 Transferor\nQA UC166 Existing\n承讓人\n現有股東\n新股東\n新股東名稱\n新股東地址\n轉讓股數\n代價（HKD）\n印花稅（HKD）\n\n[ { \"code\": \"too_small\", \"minimum\": 1, \"type\": \"number\", \"inclusive\": true, \"exact\": false, \"message\": \"轉讓股數必須大於零。\", \"path\": [ \"sharesTransferred\" ] } ]\n\n取消\n建立申請\nClose",
+      "state": {
+        "identity": {
+          "run_id": "cosec-20261024-transfer-f7337fb9",
+          "attempt": "historical4",
+          "instance": "0dbd8313-c16f-45ca-91d8-58361d83ae09",
+          "root": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+          "origin": "http://127.0.0.1:5173",
+          "host": "127.0.0.1",
+          "port": 5173,
+          "branch": "codex/cosec-20261023",
+          "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "head": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "transport": "local-memory-sessionStorage-stub"
+        },
+        "ledger": {
+          "records": {},
+          "writes": [],
+          "reads": [],
+          "rpcCalls": [
+            {
+              "input": {
+                "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                "quotedFee": 2500,
+                "changeType": "share_transfer",
+                "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                "sharesTransferred": -1,
+                "consideration": 0,
+                "stampDutyAmount": 0,
+                "transfereeShareholdingId": null,
+                "transfereeNewShareholderName": "QA UC166 New Holder",
+                "transfereeNewShareholderAddress": "QA UC166 synthetic address"
+              },
+              "documentId": "7067beeb-e52e-44d9-b01a-acf35605bfdf",
+              "queryClientId": "f98ba27b-362d-4d1a-b0d5-53ed91f25c54",
+              "boot": 1
+            }
+          ],
+          "repositoryAttempts": [],
+          "teamReads": [],
+          "callbacks": [],
+          "lastCreated": null
+        },
+        "documentId": "7067beeb-e52e-44d9-b01a-acf35605bfdf",
+        "queryClientId": "f98ba27b-362d-4d1a-b0d5-53ed91f25c54",
+        "boot": 1,
+        "pending": 0,
+        "settled": 1,
+        "violations": []
+      }
+    },
+    {
+      "case_id": "new-control-reload",
+      "name": "Existing-to-new mode: trim name, max integer, onCreated readback and actual browser reload",
+      "status": "passed",
+      "evidence": {
+        "before": {
+          "row": {
+            "id": "f7337fb9-0166-4166-8166-000000000100",
+            "status": "Requested",
+            "ownerId": "f7337fb9-0166-4166-8166-000000000010",
+            "currentNameEn": null,
+            "currentNameZh": null,
+            "newNameEn": null,
+            "newNameZh": null,
+            "officerId": null,
+            "officerAction": null,
+            "newOfficerType": null,
+            "newOfficerName": null,
+            "newOfficerIdentificationType": null,
+            "newOfficerIdentificationNumber": null,
+            "newOfficerAddress": null,
+            "effectiveDate": null,
+            "currentRegisteredOffice": null,
+            "newRegisteredOffice": null,
+            "completedAt": null,
+            "createdAt": "2026-10-24T00:00:00Z",
+            "updatedAt": "2026-10-24T00:00:00Z",
+            "checklistItems": [],
+            "companyId": "f7337fb9-0166-4166-8166-000000000001",
+            "quotedFee": 2500,
+            "changeType": "share_transfer",
+            "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+            "sharesTransferred": 2147483647,
+            "consideration": 0,
+            "stampDutyAmount": 0,
+            "transfereeShareholdingId": null,
+            "transfereeNewShareholderName": "QA UC166 New Holder",
+            "transfereeNewShareholderAddress": "QA UC166 synthetic address"
+          },
+          "state": {
+            "identity": {
+              "run_id": "cosec-20261024-transfer-f7337fb9",
+              "attempt": "historical4",
+              "instance": "0dbd8313-c16f-45ca-91d8-58361d83ae09",
+              "root": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+              "origin": "http://127.0.0.1:5173",
+              "host": "127.0.0.1",
+              "port": 5173,
+              "branch": "codex/cosec-20261023",
+              "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+              "head": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+              "transport": "local-memory-sessionStorage-stub"
+            },
+            "ledger": {
+              "records": {
+                "f7337fb9-0166-4166-8166-000000000100": {
+                  "id": "f7337fb9-0166-4166-8166-000000000100",
+                  "status": "Requested",
+                  "ownerId": "f7337fb9-0166-4166-8166-000000000010",
+                  "currentNameEn": null,
+                  "currentNameZh": null,
+                  "newNameEn": null,
+                  "newNameZh": null,
+                  "officerId": null,
+                  "officerAction": null,
+                  "newOfficerType": null,
+                  "newOfficerName": null,
+                  "newOfficerIdentificationType": null,
+                  "newOfficerIdentificationNumber": null,
+                  "newOfficerAddress": null,
+                  "effectiveDate": null,
+                  "currentRegisteredOffice": null,
+                  "newRegisteredOffice": null,
+                  "completedAt": null,
+                  "createdAt": "2026-10-24T00:00:00Z",
+                  "updatedAt": "2026-10-24T00:00:00Z",
+                  "checklistItems": [],
+                  "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                  "quotedFee": 2500,
+                  "changeType": "share_transfer",
+                  "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                  "sharesTransferred": 2147483647,
+                  "consideration": 0,
+                  "stampDutyAmount": 0,
+                  "transfereeShareholdingId": null,
+                  "transfereeNewShareholderName": "QA UC166 New Holder",
+                  "transfereeNewShareholderAddress": "QA UC166 synthetic address"
+                }
+              },
+              "writes": [
+                {
+                  "id": "f7337fb9-0166-4166-8166-000000000100",
+                  "input": {
+                    "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                    "quotedFee": 2500,
+                    "changeType": "share_transfer",
+                    "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                    "sharesTransferred": 2147483647,
+                    "consideration": 0,
+                    "stampDutyAmount": 0,
+                    "transfereeShareholdingId": null,
+                    "transfereeNewShareholderName": "QA UC166 New Holder",
+                    "transfereeNewShareholderAddress": "QA UC166 synthetic address",
+                    "actorId": "f7337fb9-0166-4166-8166-000000000010"
+                  },
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1
+                }
+              ],
+              "reads": [
+                {
+                  "id": "f7337fb9-0166-4166-8166-000000000100",
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1,
+                  "sequence": 1
+                }
+              ],
+              "rpcCalls": [
+                {
+                  "input": {
+                    "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                    "quotedFee": 2500,
+                    "changeType": "share_transfer",
+                    "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                    "sharesTransferred": 2147483647,
+                    "consideration": 0,
+                    "stampDutyAmount": 0,
+                    "transfereeShareholdingId": null,
+                    "transfereeNewShareholderName": "  QA UC166 New Holder  ",
+                    "transfereeNewShareholderAddress": "QA UC166 synthetic address"
+                  },
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1
+                }
+              ],
+              "repositoryAttempts": [
+                {
+                  "input": {
+                    "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                    "quotedFee": 2500,
+                    "changeType": "share_transfer",
+                    "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                    "sharesTransferred": 2147483647,
+                    "consideration": 0,
+                    "stampDutyAmount": 0,
+                    "transfereeShareholdingId": null,
+                    "transfereeNewShareholderName": "QA UC166 New Holder",
+                    "transfereeNewShareholderAddress": "QA UC166 synthetic address",
+                    "actorId": "f7337fb9-0166-4166-8166-000000000010"
+                  },
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1
+                }
+              ],
+              "teamReads": [
+                {
+                  "id": "f7337fb9-0166-4166-8166-000000000001",
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1
+                },
+                {
+                  "id": "f7337fb9-0166-4166-8166-000000000001",
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1
+                }
+              ],
+              "callbacks": [
+                {
+                  "id": "f7337fb9-0166-4166-8166-000000000100",
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1
+                }
+              ],
+              "lastCreated": "f7337fb9-0166-4166-8166-000000000100"
+            },
+            "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+            "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+            "boot": 1,
+            "pending": 0,
+            "settled": 1,
+            "violations": []
+          }
+        },
+        "after": {
+          "row": {
+            "id": "f7337fb9-0166-4166-8166-000000000100",
+            "status": "Requested",
+            "ownerId": "f7337fb9-0166-4166-8166-000000000010",
+            "currentNameEn": null,
+            "currentNameZh": null,
+            "newNameEn": null,
+            "newNameZh": null,
+            "officerId": null,
+            "officerAction": null,
+            "newOfficerType": null,
+            "newOfficerName": null,
+            "newOfficerIdentificationType": null,
+            "newOfficerIdentificationNumber": null,
+            "newOfficerAddress": null,
+            "effectiveDate": null,
+            "currentRegisteredOffice": null,
+            "newRegisteredOffice": null,
+            "completedAt": null,
+            "createdAt": "2026-10-24T00:00:00Z",
+            "updatedAt": "2026-10-24T00:00:00Z",
+            "checklistItems": [],
+            "companyId": "f7337fb9-0166-4166-8166-000000000001",
+            "quotedFee": 2500,
+            "changeType": "share_transfer",
+            "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+            "sharesTransferred": 2147483647,
+            "consideration": 0,
+            "stampDutyAmount": 0,
+            "transfereeShareholdingId": null,
+            "transfereeNewShareholderName": "QA UC166 New Holder",
+            "transfereeNewShareholderAddress": "QA UC166 synthetic address"
+          },
+          "state": {
+            "identity": {
+              "run_id": "cosec-20261024-transfer-f7337fb9",
+              "attempt": "historical4",
+              "instance": "0dbd8313-c16f-45ca-91d8-58361d83ae09",
+              "root": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+              "origin": "http://127.0.0.1:5173",
+              "host": "127.0.0.1",
+              "port": 5173,
+              "branch": "codex/cosec-20261023",
+              "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+              "head": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+              "transport": "local-memory-sessionStorage-stub"
+            },
+            "ledger": {
+              "records": {
+                "f7337fb9-0166-4166-8166-000000000100": {
+                  "id": "f7337fb9-0166-4166-8166-000000000100",
+                  "status": "Requested",
+                  "ownerId": "f7337fb9-0166-4166-8166-000000000010",
+                  "currentNameEn": null,
+                  "currentNameZh": null,
+                  "newNameEn": null,
+                  "newNameZh": null,
+                  "officerId": null,
+                  "officerAction": null,
+                  "newOfficerType": null,
+                  "newOfficerName": null,
+                  "newOfficerIdentificationType": null,
+                  "newOfficerIdentificationNumber": null,
+                  "newOfficerAddress": null,
+                  "effectiveDate": null,
+                  "currentRegisteredOffice": null,
+                  "newRegisteredOffice": null,
+                  "completedAt": null,
+                  "createdAt": "2026-10-24T00:00:00Z",
+                  "updatedAt": "2026-10-24T00:00:00Z",
+                  "checklistItems": [],
+                  "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                  "quotedFee": 2500,
+                  "changeType": "share_transfer",
+                  "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                  "sharesTransferred": 2147483647,
+                  "consideration": 0,
+                  "stampDutyAmount": 0,
+                  "transfereeShareholdingId": null,
+                  "transfereeNewShareholderName": "QA UC166 New Holder",
+                  "transfereeNewShareholderAddress": "QA UC166 synthetic address"
+                }
+              },
+              "writes": [
+                {
+                  "id": "f7337fb9-0166-4166-8166-000000000100",
+                  "input": {
+                    "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                    "quotedFee": 2500,
+                    "changeType": "share_transfer",
+                    "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                    "sharesTransferred": 2147483647,
+                    "consideration": 0,
+                    "stampDutyAmount": 0,
+                    "transfereeShareholdingId": null,
+                    "transfereeNewShareholderName": "QA UC166 New Holder",
+                    "transfereeNewShareholderAddress": "QA UC166 synthetic address",
+                    "actorId": "f7337fb9-0166-4166-8166-000000000010"
+                  },
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1
+                }
+              ],
+              "reads": [
+                {
+                  "id": "f7337fb9-0166-4166-8166-000000000100",
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1,
+                  "sequence": 1
+                },
+                {
+                  "id": "f7337fb9-0166-4166-8166-000000000100",
+                  "documentId": "ca66d80c-a314-4d94-8c26-673732add724",
+                  "queryClientId": "c2184de2-b389-47ae-928d-931aa2d97df6",
+                  "boot": 2,
+                  "sequence": 2
+                }
+              ],
+              "rpcCalls": [
+                {
+                  "input": {
+                    "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                    "quotedFee": 2500,
+                    "changeType": "share_transfer",
+                    "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                    "sharesTransferred": 2147483647,
+                    "consideration": 0,
+                    "stampDutyAmount": 0,
+                    "transfereeShareholdingId": null,
+                    "transfereeNewShareholderName": "  QA UC166 New Holder  ",
+                    "transfereeNewShareholderAddress": "QA UC166 synthetic address"
+                  },
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1
+                }
+              ],
+              "repositoryAttempts": [
+                {
+                  "input": {
+                    "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                    "quotedFee": 2500,
+                    "changeType": "share_transfer",
+                    "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                    "sharesTransferred": 2147483647,
+                    "consideration": 0,
+                    "stampDutyAmount": 0,
+                    "transfereeShareholdingId": null,
+                    "transfereeNewShareholderName": "QA UC166 New Holder",
+                    "transfereeNewShareholderAddress": "QA UC166 synthetic address",
+                    "actorId": "f7337fb9-0166-4166-8166-000000000010"
+                  },
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1
+                }
+              ],
+              "teamReads": [
+                {
+                  "id": "f7337fb9-0166-4166-8166-000000000001",
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1
+                },
+                {
+                  "id": "f7337fb9-0166-4166-8166-000000000001",
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1
+                },
+                {
+                  "id": "f7337fb9-0166-4166-8166-000000000001",
+                  "documentId": "ca66d80c-a314-4d94-8c26-673732add724",
+                  "queryClientId": "c2184de2-b389-47ae-928d-931aa2d97df6",
+                  "boot": 2
+                }
+              ],
+              "callbacks": [
+                {
+                  "id": "f7337fb9-0166-4166-8166-000000000100",
+                  "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+                  "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+                  "boot": 1
+                }
+              ],
+              "lastCreated": "f7337fb9-0166-4166-8166-000000000100"
+            },
+            "documentId": "ca66d80c-a314-4d94-8c26-673732add724",
+            "queryClientId": "c2184de2-b389-47ae-928d-931aa2d97df6",
+            "boot": 2,
+            "pending": 0,
+            "settled": 0,
+            "violations": []
+          }
+        },
+        "actual_reload": true,
+        "persistence": "own sessionStorage ledger STUB; not DB persistence",
+        "new_document": true,
+        "new_query_client": true,
+        "repository_read_counts": [
+          1,
+          2
+        ]
+      },
+      "state": {
+        "identity": {
+          "run_id": "cosec-20261024-transfer-f7337fb9",
+          "attempt": "historical4",
+          "instance": "0dbd8313-c16f-45ca-91d8-58361d83ae09",
+          "root": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+          "origin": "http://127.0.0.1:5173",
+          "host": "127.0.0.1",
+          "port": 5173,
+          "branch": "codex/cosec-20261023",
+          "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "head": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "transport": "local-memory-sessionStorage-stub"
+        },
+        "ledger": {
+          "records": {
+            "f7337fb9-0166-4166-8166-000000000100": {
+              "id": "f7337fb9-0166-4166-8166-000000000100",
+              "status": "Requested",
+              "ownerId": "f7337fb9-0166-4166-8166-000000000010",
+              "currentNameEn": null,
+              "currentNameZh": null,
+              "newNameEn": null,
+              "newNameZh": null,
+              "officerId": null,
+              "officerAction": null,
+              "newOfficerType": null,
+              "newOfficerName": null,
+              "newOfficerIdentificationType": null,
+              "newOfficerIdentificationNumber": null,
+              "newOfficerAddress": null,
+              "effectiveDate": null,
+              "currentRegisteredOffice": null,
+              "newRegisteredOffice": null,
+              "completedAt": null,
+              "createdAt": "2026-10-24T00:00:00Z",
+              "updatedAt": "2026-10-24T00:00:00Z",
+              "checklistItems": [],
+              "companyId": "f7337fb9-0166-4166-8166-000000000001",
+              "quotedFee": 2500,
+              "changeType": "share_transfer",
+              "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+              "sharesTransferred": 2147483647,
+              "consideration": 0,
+              "stampDutyAmount": 0,
+              "transfereeShareholdingId": null,
+              "transfereeNewShareholderName": "QA UC166 New Holder",
+              "transfereeNewShareholderAddress": "QA UC166 synthetic address"
+            }
+          },
+          "writes": [
+            {
+              "id": "f7337fb9-0166-4166-8166-000000000100",
+              "input": {
+                "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                "quotedFee": 2500,
+                "changeType": "share_transfer",
+                "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                "sharesTransferred": 2147483647,
+                "consideration": 0,
+                "stampDutyAmount": 0,
+                "transfereeShareholdingId": null,
+                "transfereeNewShareholderName": "QA UC166 New Holder",
+                "transfereeNewShareholderAddress": "QA UC166 synthetic address",
+                "actorId": "f7337fb9-0166-4166-8166-000000000010"
+              },
+              "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+              "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+              "boot": 1
+            }
+          ],
+          "reads": [
+            {
+              "id": "f7337fb9-0166-4166-8166-000000000100",
+              "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+              "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+              "boot": 1,
+              "sequence": 1
+            },
+            {
+              "id": "f7337fb9-0166-4166-8166-000000000100",
+              "documentId": "ca66d80c-a314-4d94-8c26-673732add724",
+              "queryClientId": "c2184de2-b389-47ae-928d-931aa2d97df6",
+              "boot": 2,
+              "sequence": 2
+            }
+          ],
+          "rpcCalls": [
+            {
+              "input": {
+                "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                "quotedFee": 2500,
+                "changeType": "share_transfer",
+                "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                "sharesTransferred": 2147483647,
+                "consideration": 0,
+                "stampDutyAmount": 0,
+                "transfereeShareholdingId": null,
+                "transfereeNewShareholderName": "  QA UC166 New Holder  ",
+                "transfereeNewShareholderAddress": "QA UC166 synthetic address"
+              },
+              "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+              "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+              "boot": 1
+            }
+          ],
+          "repositoryAttempts": [
+            {
+              "input": {
+                "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                "quotedFee": 2500,
+                "changeType": "share_transfer",
+                "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                "sharesTransferred": 2147483647,
+                "consideration": 0,
+                "stampDutyAmount": 0,
+                "transfereeShareholdingId": null,
+                "transfereeNewShareholderName": "QA UC166 New Holder",
+                "transfereeNewShareholderAddress": "QA UC166 synthetic address",
+                "actorId": "f7337fb9-0166-4166-8166-000000000010"
+              },
+              "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+              "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+              "boot": 1
+            }
+          ],
+          "teamReads": [
+            {
+              "id": "f7337fb9-0166-4166-8166-000000000001",
+              "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+              "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+              "boot": 1
+            },
+            {
+              "id": "f7337fb9-0166-4166-8166-000000000001",
+              "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+              "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+              "boot": 1
+            },
+            {
+              "id": "f7337fb9-0166-4166-8166-000000000001",
+              "documentId": "ca66d80c-a314-4d94-8c26-673732add724",
+              "queryClientId": "c2184de2-b389-47ae-928d-931aa2d97df6",
+              "boot": 2
+            }
+          ],
+          "callbacks": [
+            {
+              "id": "f7337fb9-0166-4166-8166-000000000100",
+              "documentId": "f400462b-a5ba-4d99-82cf-13bce25b4dae",
+              "queryClientId": "7c3a5489-e1ed-4f2c-857d-9ca7330668bc",
+              "boot": 1
+            }
+          ],
+          "lastCreated": "f7337fb9-0166-4166-8166-000000000100"
+        },
+        "documentId": "ca66d80c-a314-4d94-8c26-673732add724",
+        "queryClientId": "c2184de2-b389-47ae-928d-931aa2d97df6",
+        "boot": 2,
+        "pending": 0,
+        "settled": 0,
+        "violations": []
+      }
+    },
+    {
+      "case_id": "redaction-retry",
+      "name": "Raw repository error redacted; draft retained and explicit retry creates exactly once",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert(/[\\u3400-\\u9fff]/.test(alert))\n\n    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-transfer-f7337fb9/browser-transfer.mjs:340:5\n    at async test (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-transfer-f7337fb9/browser-transfer.mjs:254:24)\n    at async file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-transfer-f7337fb9/browser-transfer.mjs:337:3",
+      "url": "http://127.0.0.1:5173/corporate-changes?run=cosec-20261024-transfer-f7337fb9&instance=0dbd8313-c16f-45ca-91d8-58361d83ae09&attempt=historical4&case=redaction-retry",
+      "dom": "UC166 local adapter: Staff actor fixture; native Auth/HTTP/DB/RLS unproven.\n\n新增公司變更申請\n\n記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。\n\n公司\n選擇公司\nQA UC166 Company\n變更類別\n更改公司名稱\n股份轉讓\n高級人員委任／辭任／資料變更\n更改註冊辦事處地址\n報價（HKD）\n轉讓人股權\n選擇股權\nQA UC166 Transferor\nQA UC166 Existing\n承讓人\n現有股東\n新股東\n新股東名稱\n新股東地址\n轉讓股數\n代價（HKD）\n印花稅（HKD）\n\nUC166_RAW_ERROR_f7337fb9 UC166_PRIVATE_TABLE_f7337fb9 db.internal SQL token=UC166_FAKE_ONLY\n\n取消\n建立申請\nClose",
+      "state": {
+        "identity": {
+          "run_id": "cosec-20261024-transfer-f7337fb9",
+          "attempt": "historical4",
+          "instance": "0dbd8313-c16f-45ca-91d8-58361d83ae09",
+          "root": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+          "origin": "http://127.0.0.1:5173",
+          "host": "127.0.0.1",
+          "port": 5173,
+          "branch": "codex/cosec-20261023",
+          "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "head": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "transport": "local-memory-sessionStorage-stub"
+        },
+        "ledger": {
+          "records": {},
+          "writes": [],
+          "reads": [],
+          "rpcCalls": [
+            {
+              "input": {
+                "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                "quotedFee": 2500,
+                "changeType": "share_transfer",
+                "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                "sharesTransferred": 10,
+                "consideration": 0,
+                "stampDutyAmount": 0,
+                "transfereeShareholdingId": null,
+                "transfereeNewShareholderName": "QA UC166 New Holder",
+                "transfereeNewShareholderAddress": "QA UC166 synthetic address"
+              },
+              "documentId": "60545755-e2c1-4de8-9254-e883459ed21e",
+              "queryClientId": "aca4e64a-2ee8-49d9-8539-6b22fe74c185",
+              "boot": 1
+            }
+          ],
+          "repositoryAttempts": [
+            {
+              "input": {
+                "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                "quotedFee": 2500,
+                "changeType": "share_transfer",
+                "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                "sharesTransferred": 10,
+                "consideration": 0,
+                "stampDutyAmount": 0,
+                "transfereeShareholdingId": null,
+                "transfereeNewShareholderName": "QA UC166 New Holder",
+                "transfereeNewShareholderAddress": "QA UC166 synthetic address",
+                "actorId": "f7337fb9-0166-4166-8166-000000000010"
+              },
+              "documentId": "60545755-e2c1-4de8-9254-e883459ed21e",
+              "queryClientId": "aca4e64a-2ee8-49d9-8539-6b22fe74c185",
+              "boot": 1
+            }
+          ],
+          "teamReads": [
+            {
+              "id": "f7337fb9-0166-4166-8166-000000000001",
+              "documentId": "60545755-e2c1-4de8-9254-e883459ed21e",
+              "queryClientId": "aca4e64a-2ee8-49d9-8539-6b22fe74c185",
+              "boot": 1
+            }
+          ],
+          "callbacks": [],
+          "lastCreated": null
+        },
+        "documentId": "60545755-e2c1-4de8-9254-e883459ed21e",
+        "queryClientId": "aca4e64a-2ee8-49d9-8539-6b22fe74c185",
+        "boot": 1,
+        "pending": 0,
+        "settled": 1,
+        "violations": []
+      }
+    },
+    {
+      "case_id": "pending-dedup",
+      "name": "Two synchronous pending submit events share one RPC and one ledger create",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 1\n\n    at file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-transfer-f7337fb9/browser-transfer.mjs:354:47\n    at async test (file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-transfer-f7337fb9/browser-transfer.mjs:254:24)\n    at async file:///C:/Users/laich/Documents/kossilon-hub/cosec-20261023/docs/audit-remediation/cosec-20261024-transfer-f7337fb9/browser-transfer.mjs:351:3",
+      "url": "http://127.0.0.1:5173/corporate-changes?run=cosec-20261024-transfer-f7337fb9&instance=0dbd8313-c16f-45ca-91d8-58361d83ae09&attempt=historical4&case=pending-dedup",
+      "dom": "UC166 local adapter: Staff actor fixture; native Auth/HTTP/DB/RLS unproven.\n\n新增公司變更申請\n\n記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。\n\n公司\n選擇公司\nQA UC166 Company\n變更類別\n更改公司名稱\n股份轉讓\n高級人員委任／辭任／資料變更\n更改註冊辦事處地址\n報價（HKD）\n轉讓人股權\n選擇股權\nQA UC166 Transferor\nQA UC166 Existing\n承讓人\n現有股東\n新股東\n新股東名稱\n新股東地址\n轉讓股數\n代價（HKD）\n印花稅（HKD）\n取消\n建立中…\nClose",
+      "state": {
+        "identity": {
+          "run_id": "cosec-20261024-transfer-f7337fb9",
+          "attempt": "historical4",
+          "instance": "0dbd8313-c16f-45ca-91d8-58361d83ae09",
+          "root": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+          "origin": "http://127.0.0.1:5173",
+          "host": "127.0.0.1",
+          "port": 5173,
+          "branch": "codex/cosec-20261023",
+          "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "head": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "transport": "local-memory-sessionStorage-stub"
+        },
+        "ledger": {
+          "records": {},
+          "writes": [],
+          "reads": [],
+          "rpcCalls": [
+            {
+              "input": {
+                "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                "quotedFee": 2500,
+                "changeType": "share_transfer",
+                "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                "sharesTransferred": 10,
+                "consideration": 0,
+                "stampDutyAmount": 0,
+                "transfereeShareholdingId": null,
+                "transfereeNewShareholderName": "QA UC166 New Holder",
+                "transfereeNewShareholderAddress": "QA UC166 synthetic address"
+              },
+              "documentId": "f116d2b3-5b17-41ca-bc36-c0141df8002d",
+              "queryClientId": "b9a91b3f-c763-4126-875a-60129ec7686d",
+              "boot": 1
+            },
+            {
+              "input": {
+                "companyId": "f7337fb9-0166-4166-8166-000000000001",
+                "quotedFee": 2500,
+                "changeType": "share_transfer",
+                "transferorShareholdingId": "f7337fb9-0166-4166-8166-000000000002",
+                "sharesTransferred": 10,
+                "consideration": 0,
+                "stampDutyAmount": 0,
+                "transfereeShareholdingId": null,
+                "transfereeNewShareholderName": "QA UC166 New Holder",
+                "transfereeNewShareholderAddress": "QA UC166 synthetic address"
+              },
+              "documentId": "f116d2b3-5b17-41ca-bc36-c0141df8002d",
+              "queryClientId": "b9a91b3f-c763-4126-875a-60129ec7686d",
+              "boot": 1
+            }
+          ],
+          "repositoryAttempts": [],
+          "teamReads": [],
+          "callbacks": [],
+          "lastCreated": null
+        },
+        "documentId": "f116d2b3-5b17-41ca-bc36-c0141df8002d",
+        "queryClientId": "b9a91b3f-c763-4126-875a-60129ec7686d",
+        "boot": 1,
+        "pending": 2,
+        "settled": 0,
+        "violations": []
+      }
+    },
+    {
+      "case_id": "cancel",
+      "name": "Cancel a filled valid draft without RPC, callback or ledger write",
+      "status": "passed",
+      "evidence": {
+        "rpc": 0,
+        "callbacks": 0,
+        "writes": 0,
+        "records": 0
+      },
+      "state": {
+        "identity": {
+          "run_id": "cosec-20261024-transfer-f7337fb9",
+          "attempt": "historical4",
+          "instance": "0dbd8313-c16f-45ca-91d8-58361d83ae09",
+          "root": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+          "origin": "http://127.0.0.1:5173",
+          "host": "127.0.0.1",
+          "port": 5173,
+          "branch": "codex/cosec-20261023",
+          "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "head": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "transport": "local-memory-sessionStorage-stub"
+        },
+        "ledger": {
+          "records": {},
+          "writes": [],
+          "reads": [],
+          "rpcCalls": [],
+          "repositoryAttempts": [],
+          "teamReads": [],
+          "callbacks": [],
+          "lastCreated": null
+        },
+        "documentId": "4b129c99-9067-4d55-936b-461fe178a7d3",
+        "queryClientId": "0bfd179a-9664-4b06-9b20-cd2338f2cb8d",
+        "boot": 1,
+        "pending": 0,
+        "settled": 0,
+        "violations": []
+      }
+    },
+    {
+      "case_id": "dual-service",
+      "name": "Direct actual ForActor service rejects dual transferees at both fields with no ledger write",
+      "status": "passed",
+      "evidence": {
+        "probe": {
+          "rejected": true,
+          "name": "ZodError",
+          "issues": [
+            {
+              "path": [
+                "transfereeShareholdingId"
+              ],
+              "message": "只可選擇承讓人股權或填寫新股東名稱，不能同時提供。"
+            },
+            {
+              "path": [
+                "transfereeNewShareholderName"
+              ],
+              "message": "只可選擇承讓人股權或填寫新股東名稱，不能同時提供。"
+            }
+          ]
+        },
+        "zero_repository_calls": true,
+        "layer": "direct domain service + injected repository; not UI/native RPC/DB"
+      },
+      "state": {
+        "identity": {
+          "run_id": "cosec-20261024-transfer-f7337fb9",
+          "attempt": "historical4",
+          "instance": "0dbd8313-c16f-45ca-91d8-58361d83ae09",
+          "root": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023",
+          "origin": "http://127.0.0.1:5173",
+          "host": "127.0.0.1",
+          "port": 5173,
+          "branch": "codex/cosec-20261023",
+          "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "head": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+          "transport": "local-memory-sessionStorage-stub"
+        },
+        "ledger": {
+          "records": {},
+          "writes": [],
+          "reads": [],
+          "rpcCalls": [],
+          "repositoryAttempts": [],
+          "teamReads": [],
+          "callbacks": [],
+          "lastCreated": null
+        },
+        "documentId": "de509a52-ff1b-4405-ac4c-74a6fe05d231",
+        "queryClientId": "4c7ba040-e206-434b-bd2a-0654cc2acac2",
+        "boot": 1,
+        "pending": 0,
+        "settled": 0,
+        "violations": []
+      }
+    }
+  ],
+  "blocked_external_requests": [],
+  "unstubbed_boundary_violations": [],
+  "page_errors": [],
+  "console_errors": [],
+  "http_errors": [],
+  "resolutions": [
+    {
+      "id": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src/features/clients/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/components/corporate-changes/create-corporate-change-request-dialog.tsx",
+      "stub": "clients"
+    },
+    {
+      "id": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\src/features/corporate-changes/server-fns",
+      "from": "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/components/corporate-changes/create-corporate-change-request-dialog.tsx",
+      "stub": "changes"
+    }
+  ],
+  "served_production_modules": [
+    "/src/components/corporate-changes/create-corporate-change-request-dialog.tsx",
+    "/src/components/ui/button.tsx",
+    "/src/components/ui/dialog.tsx",
+    "/src/components/ui/field.tsx",
+    "/src/features/clients/labels.ts",
+    "/src/features/corporate-changes/authorization.ts",
+    "/src/features/corporate-changes/create-input.ts",
+    "/src/features/corporate-changes/create.ts",
+    "/src/features/corporate-changes/errors.ts",
+    "/src/features/corporate-changes/labels.ts",
+    "/src/features/corporate-changes/read.ts",
+    "/src/features/corporate-changes/types.ts",
+    "/src/features/incorporation/authorization.ts",
+    "/src/features/incorporation/case-list-query.ts",
+    "/src/lib/utils.ts",
+    "/src/styles.css"
+  ],
+  "freeze_error": null,
+  "outer_error": null,
+  "native_application_http": false,
+  "native_auth": false,
+  "native_db": false,
+  "native_rls": false,
+  "limitations": [
+    "Synthetic Staff root context does not prove real authentication or role resolution",
+    "Virtual RPC calls actual domain services with an injected local ledger; native application HTTP is blocked",
+    "Register is synthetic; ledger is not SQL and proves no database constraints, atomic children, RLS or backend persistence",
+    "onCreated and actual reload read through the real read service into own sessionStorage ledger only",
+    "Programmatic submit cases explicitly bypass native validity/disabled UI; positive controls click enabled submit",
+    "Historical overlay changes only exact-base dialog bytes; current shared schema and services stay active",
+    "Headless local Edge only; no physical device or Safari/WebKit acceptance"
+  ],
+  "cleanup": "Own contexts/browser/loopback server closed; immutable receipts and own cache retained; no DB/shared-resource cleanup"
+}

@@ -21,8 +21,8 @@ import {
 import type { ProductionFollowUpRepository } from "./follow-up-repository";
 
 const followUpIdentityFields = {
-  caseId: z.string().uuid(),
-  entityId: z.string().uuid(),
+  caseId: z.string().guid(),
+  entityId: z.string().guid(),
   expectedVersion: z.string().min(1).max(32_768),
 };
 

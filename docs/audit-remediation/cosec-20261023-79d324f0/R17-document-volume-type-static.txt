@@ -1,0 +1,2 @@
+PASS focused source diagnostics in full repository ambient context: zero syntax/type diagnostics for new document-volume test. No test/application module import, client construction or SQL execution. Initial single-root validator omitted Node ambient references; its output is preserved separately, with no product/type fix inferred.
+ExitCode=0

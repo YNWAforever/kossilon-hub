@@ -1,0 +1,37 @@
+{
+  "base": "c6c8a74be1377c57b73dd9870056441cd8e34e33",
+  "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023",
+  "branch": "codex/cosec-20261023",
+  "origin": "https://github.com/YNWAforever/kossilon-hub.git",
+  "intake_status": "clean before owned edits, verified in PLAN.md and intake command",
+  "status_at_capture": " M src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx\n M src/components/corporate-changes/create-corporate-change-request-dialog.tsx\n M src/features/corporate-changes/repository.ts\n M src/features/corporate-changes/server-fns.ts\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/PLAN.md\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/capture-evidence.mjs\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/capture-remote-final.ps1\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/create-corporate-change-request-dialog.tsx.before.snapshot\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/create-input-red.ts.snapshot\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/dialog-red.tsx.snapshot\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/freeze-source.mjs\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/git-blob-verify.mjs\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/isolated-db-runner.mjs\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/legacy-dialog-test.before.snapshot\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/repository.ts.before.snapshot\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/resource-checks.jsonl\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/resource-gate.mjs\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/run-checks.mjs\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/server-fns.ts.before.snapshot\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/targeted-green1.json\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/targeted-green1.txt\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/targeted-green2.json\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/targeted-green2.txt\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/targeted-red1.json\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/targeted-red1.txt\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/typecheck-first.json\n?? docs/audit-remediation/cosec-20261024-transfer-f7337fb9/typecheck-first.txt\n?? src/components/corporate-changes/share-transfer-validation.test.tsx\n?? src/features/corporate-changes/create-input.test.ts\n?? src/features/corporate-changes/create-input.ts\n?? src/features/corporate-changes/create.test.ts\n?? src/features/corporate-changes/create.ts\n",
+  "worktrees": "worktree C:/Users/laich/Documents/kossilon-hub/kossilon-hub-work\nHEAD 76ad310ca8bad75a7ce44c82c9e20db734fd6eaa\nbranch refs/heads/codex/outbox-safety\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree\nHEAD 38123c96ed84fae84e41f17d4dea606c7a8938d0\nbranch refs/heads/codex/r03-role-review-package-20261005\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r12-f25-ci-20261009\nHEAD c9417b925d2134d7c2aef1d45be5d52da8154e50\nbranch refs/heads/codex/staff-remediation-20261012\n\nworktree C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r13-dependency-audit-20261009\nHEAD 01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e\nbranch refs/heads/codex/audit-r13-dependency-gates-20261009\n\nworktree C:/Users/laich/Documents/kossilon-hub/cosec-20261023\nHEAD c6c8a74be1377c57b73dd9870056441cd8e34e33\nbranch refs/heads/codex/cosec-20261023\n\n",
+  "main_readonly": "1c57a67213af72bff8d776694e6ed8c986b921db",
+  "production_historical_not_accessed": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "snapshots": [
+    {
+      "path": "src/features/corporate-changes/server-fns.ts",
+      "snapshot": "server-fns.ts.before.snapshot",
+      "bytes": 9140,
+      "sha256": "5549a7d7552fb33164f7d2de3d053bfc00f2def085cfe91fa1ea28bb749d0f67"
+    },
+    {
+      "path": "src/features/corporate-changes/repository.ts",
+      "snapshot": "repository.ts.before.snapshot",
+      "bytes": 26779,
+      "sha256": "04222e95a4b25af4b11f903827f503dae58b6600ea21da1d29334bf93907babd"
+    },
+    {
+      "path": "src/components/corporate-changes/create-corporate-change-request-dialog.tsx",
+      "snapshot": "create-corporate-change-request-dialog.tsx.before.snapshot",
+      "bytes": 27002,
+      "sha256": "712f041912cbe1397eef3e91fd25b11bb37d4d2ddac0d10ce92e05451e538225"
+    },
+    {
+      "path": "src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx",
+      "snapshot": "legacy-dialog-test.before.snapshot",
+      "bytes": 10827,
+      "sha256": "e5cb3a09fa36d0c1e482876bb537ef9489f7ccc85e71fa793783aaa78cb7aafa"
+    }
+  ]
+}

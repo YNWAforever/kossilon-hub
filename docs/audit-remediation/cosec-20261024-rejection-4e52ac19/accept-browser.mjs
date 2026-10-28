@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+import {digest} from './git-blob-verify.mjs';
+const folder=import.meta.dirname,root=resolve(folder,'../../..'),attempt=process.argv[2];
+assert.equal(process.cwd(),root);assert.match(attempt??'',/^green[0-9]+$/);
+const json=p=>JSON.parse(readFileSync(join(folder,p),'utf8').replace(/^\uFEFF/,''));
+const receipt=`browser-${attempt}.json`,report=`browser-results-${attempt}.json`,r=json(receipt),b=json(report);
+assert.equal(r.exit_code,0);assert.equal(r.error,null);assert.equal(b.outer_error,null);
+assert.equal(b.results.length,9);assert(b.results.every(row=>row.status==='passed'));
+for(const key of ['blocked_external_origins','page_errors','console_errors','http_errors'])assert.deepEqual(b[key],[]);
+assert.equal(b.native_auth_http_db_storage_scanner,false);
+for(const [path,hash] of Object.entries(b.sourceHashes))assert.equal(digest(readFileSync(join(root,path))),hash);
+writeFileSync(join(folder,'browser-accepted.json'),JSON.stringify({exit_code:0,error:null,receipt,report,passed:b.results.length,version:b.browser_version,source_hashes_verified:true,native:false},null,2)+'\n',{flag:'wx'});
+console.log(`Accepted ${b.results.length} local browser cases; native remains false.`);

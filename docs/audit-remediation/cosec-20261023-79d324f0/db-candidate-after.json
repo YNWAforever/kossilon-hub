@@ -1,0 +1,1 @@
+{"database" : "cosec_79d324f0", "db_user" : "postgres", "server_version" : "17.11 (Debian 17.11-1.pgdg13+2)", "companies" : 3, "users" : 4, "staff_profiles" : 4, "annual_return_cases" : 3, "work_items" : 3, "documents" : 14, "outbox" : 0, "nar_batches" : 0, "bulk_operation_jobs" : 0}

@@ -1,0 +1,12 @@
+{
+  "started_utc": "2026-10-23T19:02:23.8655234Z",
+  "finished_utc": "2026-10-23T19:02:25.5310813Z",
+  "command": "git ls-remote --heads origin main",
+  "exit_code": 0,
+  "output": "1c57a67213af72bff8d776694e6ed8c986b921db\trefs/heads/main",
+  "previous_sandbox_probe": {
+    "source": "tool output before this retry",
+    "exit_code": 1,
+    "error": "Could not resolve host: github.com"
+  }
+}

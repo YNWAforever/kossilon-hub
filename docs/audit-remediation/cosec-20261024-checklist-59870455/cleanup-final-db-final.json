@@ -1,0 +1,9 @@
+{
+  "checked_utc": "2026-10-23T20:34:58.420Z",
+  "container_absent": true,
+  "credentials_absent": true,
+  "preexisting_count": 313,
+  "preexisting_missing": [],
+  "remaining_count": 313,
+  "daemon_stopped": false
+}

@@ -1,0 +1,43 @@
+{
+  "run_id": "cosec-20261025-build-d29cd5ec",
+  "head": "561f1ee2e761ab2d1b8ee1bff44533ea610d7614",
+  "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "started": "2026-10-24T17:29:37.885Z",
+  "finished": "2026-10-24T17:30:12.555Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vite/bin/vite.js",
+    "build"
+  ],
+  "exit_code": 0,
+  "signal": null,
+  "error": null,
+  "env_keys": [
+    "APPDATA",
+    "ComSpec",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "Path",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "ProgramW6432",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir",
+    "CI",
+    "NO_COLOR",
+    "NITRO_PRESET",
+    "VITE_ENABLE_DEMO_AUTH",
+    "WRANGLER_SEND_METRICS"
+  ],
+  "native_auth": false,
+  "native_http": false,
+  "db_clients_created": 0,
+  "deployed": false
+}

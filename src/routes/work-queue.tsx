@@ -1,9 +1,9 @@
 import { pageTitle } from "@/lib/page-title";
 import { describeWorkItemTitle } from "@/features/work-items/title";
 import { formatDateTime } from "@/lib/format-date";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, type SearchSchemaInput } from "@tanstack/react-router";
 import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
 import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
@@ -35,15 +35,12 @@ import type { PersistedWorkItem } from "@/features/work-items/repository";
 import {
   acknowledgeWorkItemEscalation,
   assignWorkItem,
-  listWorkQueue,
+  listWorkQueuePage,
   recommendWorkItemAssignees,
 } from "@/features/work-items/server-fns";
 import { cn } from "@/lib/utils";
-
-type QueueView = "mine" | "team" | "breached";
-type SlaFilter = "all" | PersistedWorkItem["escalationState"];
-type PriorityFilter = "all" | "high" | "normal";
-type StatusFilter = "all" | PersistedWorkItem["status"];
+import { useRetainedPage } from "@/lib/use-retained-page";
+import { queueViewSearch, queueReturnPath } from "@/features/work-items/queue-view-state";
 
 type CaseDetailLink =
   | { to: "/annual-returns/$id"; params: { id: string } }
@@ -68,33 +65,28 @@ export function caseDetailLinkFor(item: PersistedWorkItem): CaseDetailLink | nul
 
 export const Route = createFileRoute("/work-queue")({
   head: () => ({ meta: [{ title: pageTitle("工作隊列") }] }),
-  validateSearch: (search: Record<string, unknown>) => ({
-    view:
-      search.view === "team" || search.view === "breached"
-        ? (search.view as QueueView)
-        : ("mine" as QueueView),
-    owner: typeof search.owner === "string" ? search.owner : "all",
-    workType: typeof search.workType === "string" ? search.workType : "all",
-    sla:
-      search.sla === "none" ||
-      search.sla === "warning" ||
-      search.sla === "breach" ||
-      search.sla === "acknowledged"
-        ? (search.sla as SlaFilter)
-        : ("all" as SlaFilter),
-    priority:
-      search.priority === "high" || search.priority === "normal"
-        ? (search.priority as PriorityFilter)
-        : ("all" as PriorityFilter),
-    status:
-      search.status === "open" || search.status === "in_progress" || search.status === "blocked"
-        ? (search.status as StatusFilter)
-        : ("all" as StatusFilter),
-  }),
+  validateSearch: (input: SearchSchemaInput & Record<string, unknown>) => queueViewSearch(input),
   component: WorkQueueRoute,
 });
 
 export function WorkQueueRoute() {
+  const { actor, dataMode } = Route.useRouteContext();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  if (search.contextError)
+    return (
+      <main className="min-w-0 flex-1 space-y-4 p-4 md:p-6">
+        <PageHeader eyebrow="今日工作" title="工作隊列" />
+        <p role="alert">篩選連結無效，請清除重複或無效條件後重試。</p>
+        <Button onClick={() => void navigate({ search: queueViewSearch({}), replace: true })}>
+          清除無效篩選
+        </Button>
+      </main>
+    );
+  return <WorkQueueSession key={JSON.stringify([dataMode, actor])} />;
+}
+
+function WorkQueueSession() {
   const { session } = useAuth();
   const queryClient = useQueryClient();
   const search = Route.useSearch();
@@ -103,21 +95,153 @@ export function WorkQueueRoute() {
     actor ? [actor.authUserId, actor.userId, actor.role, actor.teamId, actor.active] : null,
   );
   const navigate = Route.useNavigate();
-  const { view, owner, workType, sla, priority, status } = search;
-  const [query, setQuery] = useState("");
+  const {
+    view,
+    owner,
+    workType,
+    sla,
+    priority,
+    status,
+    q: query = "",
+    sort = "deadline",
+    cursor,
+  } = search;
+  const effectiveSla = view === "breached" ? ("breach" as const) : sla;
   const [assignmentItem, setAssignmentItem] = useState<PersistedWorkItem | null>(null);
+  const assignmentsNeedingRead = useRef(new Set<string>());
   const [acknowledgementItem, setAcknowledgementItem] = useState<PersistedWorkItem | null>(null);
+  const acknowledgementBusy = useRef(false);
+  const acknowledgementEpoch = useRef(0);
+  const acknowledgementNeedsRead = useRef(new Set<string>());
+  const [uncertainAcknowledgements, setUncertainAcknowledgements] = useState(new Set<string>());
+  const acknowledgementReads = useRef(new Set<string>());
+  const acknowledgementReadGeneration = useRef(0);
+  const activeQueue = useRef(true);
+  useEffect(() => {
+    activeQueue.current = true;
+    return () => {
+      activeQueue.current = false;
+    };
+  }, []);
+  const acknowledge = useMutation({
+    retry: false,
+    mutationFn: (input: { workItemId: string; note: string }) =>
+      acknowledgeWorkItemEscalation({ data: input }),
+    onError: (_error, input) => {
+      acknowledgementNeedsRead.current.add(input.workItemId);
+      if (activeQueue.current)
+        setUncertainAcknowledgements(new Set(acknowledgementNeedsRead.current));
+    },
+    onSuccess: (_result, input) => {
+      if (!activeQueue.current) return;
+      acknowledgementNeedsRead.current.delete(input.workItemId);
+      setUncertainAcknowledgements(new Set(acknowledgementNeedsRead.current));
+      setAcknowledgementItem((current) => (current?.id === input.workItemId ? null : current));
+      void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
+    },
+    onSettled: () => {
+      acknowledgementBusy.current = false;
+    },
+  });
   const canManage = session?.role === "Admin" || session?.role === "Manager";
   const filters = {
     view,
-    escalationState: view === "breached" ? ("breach" as const) : undefined,
+    ...(query.trim() ? { q: query.trim() } : {}),
+    ...(owner === "unassigned" ? { unassigned: true } : owner !== "all" ? { ownerId: owner } : {}),
+    ...(workType !== "all" ? { workType } : {}),
+    ...(effectiveSla !== "all" ? { escalationState: effectiveSla } : {}),
+    ...(priority !== "all" ? { priority } : {}),
+    ...(status !== "all" ? { status } : {}),
+    sort,
   };
+  const readScope = JSON.stringify([actorScope, filters]);
+  const queueKey = ["work-queue", readScope, cursor];
+  const recoveryScope = JSON.stringify([readScope, cursor]);
+  const currentRecoveryScope = useRef(recoveryScope);
+  currentRecoveryScope.current = recoveryScope;
   const queueQuery = useQuery({
-    queryKey: ["work-queue", view, actorScope],
-    queryFn: () => listWorkQueue({ data: filters }),
+    queryKey: queueKey,
+    queryFn: () => listWorkQueuePage({ data: { ...filters, cursor, limit: 50 } }),
     enabled: dataMode === "production",
+    retry: false,
   });
-  const items = useMemo(() => queueQuery.data ?? [], [queueQuery.data]);
+  const queueReadBlocked = queueQuery.isError || queueQuery.isFetching;
+  async function reconcileAcknowledgement(item: PersistedWorkItem) {
+    if (acknowledgementBusy.current || acknowledgementReads.current.has(item.id))
+      throw new Error("Read pending");
+    acknowledgementReads.current.add(item.id);
+    const epoch = acknowledgementEpoch.current;
+    const readGeneration = ++acknowledgementReadGeneration.current;
+    try {
+      await queryClient.cancelQueries({ queryKey: queueKey, exact: true });
+      const fresh = await listWorkQueuePage({ data: { ...filters, cursor, limit: 50 } });
+      if (
+        !fresh ||
+        !Array.isArray(fresh.items) ||
+        (fresh.nextCursor !== null &&
+          (typeof fresh.nextCursor !== "string" || !fresh.nextCursor.trim()))
+      )
+        throw new Error("Queue unavailable");
+      const matches = fresh.items.filter((row) => row?.id === item.id);
+      const row = matches[0];
+      if (
+        matches.length !== 1 ||
+        !row ||
+        !Number.isInteger(row.version) ||
+        row.version < item.version ||
+        !["none", "warning", "breach", "acknowledged"].includes(row.escalationState) ||
+        !["open", "in_progress", "blocked", "completed", "cancelled"].includes(row.status)
+      )
+        throw new Error("Work item unavailable");
+      await queryClient.cancelQueries({ queryKey: queueKey, exact: true });
+      if (
+        !activeQueue.current ||
+        currentRecoveryScope.current !== recoveryScope ||
+        acknowledgementEpoch.current !== epoch ||
+        acknowledgementReadGeneration.current !== readGeneration
+      )
+        throw new Error("Queue scope changed");
+      await queryClient.invalidateQueries({ queryKey: ["work-queue"], refetchType: "none" });
+      if (
+        !activeQueue.current ||
+        currentRecoveryScope.current !== recoveryScope ||
+        acknowledgementEpoch.current !== epoch ||
+        acknowledgementReadGeneration.current !== readGeneration
+      )
+        throw new Error("Queue scope changed");
+      queryClient.setQueryData(queueKey, fresh);
+      acknowledgementNeedsRead.current.delete(item.id);
+      setUncertainAcknowledgements(new Set(acknowledgementNeedsRead.current));
+    } finally {
+      acknowledgementReads.current.delete(item.id);
+    }
+  }
+  const response = useMemo(
+    () =>
+      queueQuery.data ? { page: queueQuery.data, search: queueViewSearch(search) } : undefined,
+    [queueQuery.data, search],
+  );
+  const retained = useRetainedPage(readScope, response);
+  const page = retained?.page;
+  const items = useMemo(() => page?.items ?? [], [page]);
+  const currentAcknowledgementRow = queueQuery.data?.items.find(
+    (row) => row.id === acknowledgementItem?.id,
+  );
+  const acknowledgementReadBlocked =
+    queueReadBlocked ||
+    !currentAcknowledgementRow ||
+    (currentAcknowledgementRow.escalationState !== "warning" &&
+      currentAcknowledgementRow.escalationState !== "breach") ||
+    currentAcknowledgementRow.status === "completed" ||
+    currentAcknowledgementRow.status === "cancelled";
+  const currentAssignmentRow = queueQuery.data?.items.find((row) => row.id === assignmentItem?.id);
+  const assignmentQueueIssue = queueReadBlocked
+    ? "未能重新讀取目前隊列，請重新讀取工作及建議人選。"
+    : !currentAssignmentRow
+      ? "此工作不在目前隊列，請核對範圍後重新讀取。"
+      : currentAssignmentRow.status === "completed" || currentAssignmentRow.status === "cancelled"
+        ? "此工作已關閉，不能分配。請重新讀取目前隊列。"
+        : null;
   const owners = useMemo(
     () =>
       assignmentLabels(
@@ -141,48 +265,22 @@ export function WorkQueueRoute() {
     () => Array.from(new Set(items.map((item) => item.workType))).sort(),
     [items],
   );
-  const visibleItems = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return items.filter((item) => {
-      const matchesQuery =
-        !needle ||
-        `${describeWorkItemTitle(item.title)} ${item.workType} ${workTypeLabel(item.workType)} ${item.companyName ?? ""}`
-          .toLowerCase()
-          .includes(needle);
-      const matchesOwner =
-        owner === "all" || (owner === "unassigned" ? !item.ownerId : item.ownerId === owner);
-      const matchesWorkType = workType === "all" || item.workType === workType;
-      const matchesSla = sla === "all" || item.escalationState === sla;
-      const matchesPriority =
-        priority === "all" || (priority === "high" ? item.priority >= 70 : item.priority < 70);
-      const matchesStatus = status === "all" || item.status === status;
-      return (
-        matchesQuery &&
-        matchesOwner &&
-        matchesWorkType &&
-        matchesSla &&
-        matchesPriority &&
-        matchesStatus
-      );
-    });
-  }, [items, owner, priority, query, sla, status, workType]);
+  const visibleItems = items;
   const bulkFilters: BulkFilters = {
     view,
     activeOnly: true,
     ...(query.trim() ? { q: query.trim() } : {}),
     ...(owner === "unassigned" ? { unassigned: true } : owner !== "all" ? { ownerId: owner } : {}),
     ...(workType !== "all" ? { workType } : {}),
-    ...(sla !== "all" ? { escalationState: sla } : {}),
+    ...(effectiveSla !== "all" ? { escalationState: effectiveSla } : {}),
     ...(priority !== "all" ? { priority } : {}),
     ...(status !== "all" ? { workStatus: status } : {}),
   };
-  const presentationScope = JSON.stringify([actorScope, bulkFilters]);
-  const [loadedScope, setLoadedScope] = useState({ scope: presentationScope, limit: 50 });
-  const visibleLimit = loadedScope.scope === presentationScope ? loadedScope.limit : 50;
-  const pageItems = visibleItems.slice(0, visibleLimit);
+  const pageItems = visibleItems;
+  const returnTo = queueReturnPath(retained?.search ?? queueViewSearch(search));
 
   const setFilter = (key: "owner" | "workType" | "sla" | "priority" | "status", value: string) =>
-    void navigate({ search: { ...search, [key]: value }, replace: true });
+    void navigate({ search: { ...search, [key]: value, cursor: undefined }, replace: true });
 
   const metrics = {
     dueToday: items.filter((item) => hongKongDateKey(item.slaDueAt) === hongKongDateKey(new Date()))
@@ -208,13 +306,32 @@ export function WorkQueueRoute() {
       <main className="min-w-0 flex-1 p-4 md:p-6">
         <PageHeader eyebrow="今日工作" title="工作隊列" subtitle="分配、工作量及 SLA 管控" />
         <div className="mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4">
-          <Counter label="今日到期" value={metrics.dueToday} />
-          <Counter label="有風險" value={metrics.atRisk} tone="warning" />
-          <Counter label="已逾時" value={metrics.breached} tone="danger" />
-          <Counter label="未分配" value={metrics.unassigned} />
+          <Counter label="本頁今日到期" value={metrics.dueToday} />
+          <Counter label="本頁有風險" value={metrics.atRisk} tone="warning" />
+          <Counter label="本頁已逾時" value={metrics.breached} tone="danger" />
+          <Counter label="本頁未分配" value={metrics.unassigned} />
         </div>
 
         <div className="mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
+          <label>
+            排序
+            <Select
+              aria-label="工作排序"
+              value={sort}
+              onChange={(event) =>
+                void navigate({
+                  search: {
+                    ...search,
+                    sort: event.target.value === "priority" ? "priority" : "deadline",
+                    cursor: undefined,
+                  },
+                })
+              }
+            >
+              <option value="deadline">SLA 到期</option>
+              <option value="priority">優先次序</option>
+            </Select>
+          </label>
           <nav aria-label="工作隊列檢視" className="flex min-w-0 gap-1">
             {(
               [
@@ -226,7 +343,7 @@ export function WorkQueueRoute() {
               <Link
                 key={value}
                 to="/work-queue"
-                search={{ ...search, view: value }}
+                search={{ ...search, view: value, cursor: undefined }}
                 className={cn(
                   "min-h-9 border-b-2 px-3 py-2 text-sm font-medium",
                   view === value
@@ -243,7 +360,12 @@ export function WorkQueueRoute() {
             <span className="sr-only">搜尋工作隊列</span>
             <Input
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) =>
+                void navigate({
+                  search: { ...search, q: event.target.value, cursor: undefined },
+                  replace: true,
+                })
+              }
               placeholder="搜尋案件或工作類型"
               className="w-full pl-9"
             />
@@ -278,7 +400,8 @@ export function WorkQueueRoute() {
           </FilterSelect>
           <FilterSelect
             label="按 SLA 狀態篩選"
-            value={sla}
+            value={effectiveSla}
+            disabled={view === "breached"}
             onChange={(value) => setFilter("sla", value)}
           >
             <option value="all">全部 SLA 狀態</option>
@@ -315,16 +438,28 @@ export function WorkQueueRoute() {
           <BulkSelectionToolbar
             actorScope={actorScope}
             resource="work_item"
+            selectionDisabled={queueReadBlocked}
             filters={bulkFilters}
             page={pageItems.map((i) => ({
               id: i.id,
               label: `${i.companyName ?? "公司資料不詳"} · ${describeWorkItemTitle(i.title)}`,
             }))}
-            total={queueQuery.isError || !queueQuery.data ? null : visibleItems.length}
+            total={null}
           />
         ) : null}
         {queueQuery.isError ? (
-          <QueueMessage>無法載入工作隊列，請重新整理再試。</QueueMessage>
+          <QueueMessage>
+            無法載入這一頁；同一範圍已讀取內容仍保留。資料或篩選可能已變更，請重試或返回第一頁。
+            <Button
+              disabled={queueQuery.isFetching}
+              onClick={() => void queueQuery.refetch({ cancelRefetch: false })}
+            >
+              重試
+            </Button>
+            <Button onClick={() => void navigate({ search: { ...search, cursor: undefined } })}>
+              返回第一頁
+            </Button>
+          </QueueMessage>
         ) : null}
         {!queueQuery.isLoading && !queueQuery.isError && visibleItems.length === 0 ? (
           <QueueMessage>此檢視沒有符合的工作項目。</QueueMessage>
@@ -372,6 +507,7 @@ export function WorkQueueRoute() {
                         <Link
                           to={caseDetailLinkFor(item)!.to}
                           params={caseDetailLinkFor(item)!.params}
+                          search={{ returnTo }}
                           className="font-medium hover:underline"
                         >
                           {describeWorkItemTitle(item.title)}
@@ -410,6 +546,7 @@ export function WorkQueueRoute() {
                       <QueueActions
                         item={item}
                         canManage={canManage}
+                        readBlocked={queueReadBlocked}
                         onAssign={setAssignmentItem}
                         onAcknowledge={setAcknowledgementItem}
                       />
@@ -429,6 +566,7 @@ export function WorkQueueRoute() {
                       <Link
                         to={caseDetailLinkFor(item)!.to}
                         params={caseDetailLinkFor(item)!.params}
+                        search={{ returnTo }}
                         className="font-medium hover:underline"
                       >
                         {describeWorkItemTitle(item.title)}
@@ -460,6 +598,7 @@ export function WorkQueueRoute() {
                   <QueueActions
                     item={item}
                     canManage={canManage}
+                    readBlocked={queueReadBlocked}
                     onAssign={setAssignmentItem}
                     onAcknowledge={setAcknowledgementItem}
                   />
@@ -469,21 +608,50 @@ export function WorkQueueRoute() {
           </section>
         ) : null}
       </main>
-      {visibleItems.length > pageItems.length ? (
+      <p className="px-4 text-sm text-muted-foreground">
+        本頁最多 50 項；排序及範圍變更後由第一頁重新讀取。
+      </p>
+      {cursor ? (
         <Button
           className="m-4"
-          onClick={() => setLoadedScope({ scope: presentationScope, limit: visibleLimit + 50 })}
+          onClick={() => void navigate({ search: { ...search, cursor: undefined } })}
         >
-          載入更多工作（每次 50 項）
+          返回第一頁
         </Button>
       ) : null}
-      {assignmentItem && items.some((i) => i.id === assignmentItem.id) ? (
+      {page?.nextCursor ? (
+        <Button
+          className="m-4"
+          disabled={queueQuery.isFetching}
+          onClick={() =>
+            void navigate({ search: { ...search, cursor: page.nextCursor ?? undefined } })
+          }
+        >
+          下一頁工作（每頁 50 項）
+        </Button>
+      ) : null}
+      {assignmentItem ? (
         <AssignmentDialog
-          key={actorScope}
+          key={`${actorScope}:${assignmentItem.id}`}
           item={assignmentItem}
           actorScope={actorScope}
+          queueIssue={assignmentQueueIssue}
+          initialReadRequired={assignmentsNeedingRead.current.has(assignmentItem.id)}
+          onReadRequired={() => {
+            assignmentsNeedingRead.current.add(assignmentItem.id);
+          }}
+          onReviewed={() => {
+            assignmentsNeedingRead.current.delete(assignmentItem.id);
+          }}
+          onReload={async () => {
+            const result = await queueQuery.refetch();
+            // A failed refetch can still contain cached rows. Never review those as fresh.
+            if (result.isError || !result.data) throw new Error("Queue reread failed.");
+            return result.data.items.find((item) => item.id === assignmentItem.id) ?? null;
+          }}
           onClose={() => setAssignmentItem(null)}
           onAssigned={() => {
+            assignmentsNeedingRead.current.delete(assignmentItem.id);
             setAssignmentItem(null);
             void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
           }}
@@ -491,12 +659,24 @@ export function WorkQueueRoute() {
       ) : null}
       {acknowledgementItem ? (
         <AcknowledgementDialog
+          key={acknowledgementItem.id}
           item={acknowledgementItem}
-          onClose={() => setAcknowledgementItem(null)}
-          onAcknowledged={() => {
-            setAcknowledgementItem(null);
-            void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
+          readBlocked={acknowledgementReadBlocked}
+          pending={acknowledge.isPending}
+          readRequired={uncertainAcknowledgements.has(acknowledgementItem.id)}
+          onReconcile={() => reconcileAcknowledgement(acknowledgementItem)}
+          onSubmit={(note) => {
+            if (
+              acknowledgementReadBlocked ||
+              acknowledgementBusy.current ||
+              acknowledgementNeedsRead.current.has(acknowledgementItem.id)
+            )
+              return;
+            acknowledgementBusy.current = true;
+            acknowledgementEpoch.current += 1;
+            acknowledge.mutate({ workItemId: acknowledgementItem.id, note });
           }}
+          onClose={() => setAcknowledgementItem(null)}
         />
       ) : null}
     </>
@@ -506,34 +686,70 @@ export function WorkQueueRoute() {
 function AssignmentDialog({
   item,
   actorScope,
+  queueIssue,
+  initialReadRequired,
+  onReadRequired,
+  onReviewed,
+  onReload,
   onClose,
   onAssigned,
 }: {
   item: PersistedWorkItem;
   actorScope: string;
+  queueIssue: string | null;
+  initialReadRequired: boolean;
+  onReadRequired: () => void;
+  onReviewed: () => void;
+  onReload: () => Promise<PersistedWorkItem | null>;
   onClose: () => void;
   onAssigned: () => void;
 }) {
   const [selected, setSelected] = useState("");
   const [reason, setReason] = useState("");
   const [target, setTarget] = useState<"owner" | "reviewer">("owner");
+  // Keep the reviewed snapshot fixed until an explicit, successful reread.
+  const [reviewedItem, setReviewedItem] = useState(item);
+  const [readRequired, setReadRequired] = useState(initialReadRequired);
+  const [message, setMessage] = useState<string | null>(
+    initialReadRequired
+      ? "上次分配結果或隊列狀態未能確認。請重新讀取工作及建議人選，再選擇並確認。"
+      : null,
+  );
+  const [busy, setBusy] = useState(false);
+  const actionInFlight = useRef(false);
+  const mustReread = useRef(initialReadRequired);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const recommendations = useQuery({
     queryKey: ["work-item-recommendations", item.id, actorScope, target, item.version],
     queryFn: () =>
       recommendWorkItemAssignees({ data: { workItemId: item.id, assignmentTarget: target } }),
+    retry: false,
   });
   const assign = useMutation({
-    mutationFn: () =>
-      assignWorkItem({
-        data: {
-          workItemId: item.id,
-          assigneeId: selected,
-          expectedVersion: item.version,
-          assignmentTarget: target,
-          overrideReason: reason.trim() || undefined,
-        },
-      }),
-    onSuccess: onAssigned,
+    mutationFn: (input: Parameters<typeof assignWorkItem>[0]) => assignWorkItem(input),
+    retry: false,
+    onSuccess: () => {
+      if (mounted.current) onAssigned();
+    },
+    onError: (error) => {
+      // Even an unknown transport error may follow a committed write.
+      mustReread.current = true;
+      if (!mounted.current) return;
+      onReadRequired();
+      setReadRequired(true);
+      setSelected("");
+      setMessage(assignmentFailureMessage(error));
+    },
+    onSettled: () => {
+      actionInFlight.current = false;
+      if (mounted.current) setBusy(false);
+    },
   });
   const options = activeAssignmentOptions(recommendations.data ?? []);
   const labels = assignmentLabels(options);
@@ -543,30 +759,125 @@ function AssignmentDialog({
     (selectedRecommendation.rank !== 1 ||
       selectedRecommendation.factors.capacityUtilization >= 100),
   );
+  const closed = reviewedItem.status === "completed" || reviewedItem.status === "cancelled";
+  const canConfirm = Boolean(
+    !busy &&
+    !readRequired &&
+    !queueIssue &&
+    !closed &&
+    !recommendations.isError &&
+    !recommendations.isFetching &&
+    selectedRecommendation &&
+    (!requiresReason || reason.trim()),
+  );
+  useEffect(() => {
+    if (!queueIssue) return;
+    mustReread.current = true;
+    onReadRequired();
+    setReadRequired(true);
+    setSelected("");
+    setMessage(queueIssue);
+  }, [queueIssue, onReadRequired]);
+  useEffect(() => {
+    if (
+      selected &&
+      (recommendations.isError ||
+        (recommendations.isSuccess && !recommendations.isFetching && !selectedRecommendation))
+    ) {
+      setSelected("");
+    }
+  }, [
+    selected,
+    selectedRecommendation,
+    recommendations.isError,
+    recommendations.isSuccess,
+    recommendations.isFetching,
+  ]);
+
+  const reload = async () => {
+    if (actionInFlight.current) return;
+    actionInFlight.current = true;
+    mustReread.current = true;
+    setBusy(true);
+    setReadRequired(true);
+    setSelected("");
+    setMessage(null);
+    try {
+      // Settle BOTH reads before unlocking; neither cached data nor a partial read suffices.
+      const [work, candidates] = await Promise.allSettled([
+        onReload(),
+        recommendations.refetch({ throwOnError: true }),
+      ]);
+      if (!mounted.current) return;
+      if (
+        work.status === "rejected" ||
+        candidates.status === "rejected" ||
+        candidates.value.isError ||
+        !candidates.value.data
+      ) {
+        setMessage("未能重新讀取工作及建議人選，請重新讀取後再確認。");
+      } else if (!work.value) {
+        setMessage("此工作不在目前隊列，未能確認分配。請核對範圍後重新讀取。");
+      } else if (work.value.status === "completed" || work.value.status === "cancelled") {
+        setReviewedItem(work.value);
+        setMessage("此工作已關閉，不能分配。請重新讀取目前隊列。");
+      } else {
+        setReviewedItem(work.value);
+        mustReread.current = false;
+        onReviewed();
+        setReadRequired(false);
+        setMessage("已重新讀取目前分配及建議人選。請重新選擇人選，再確認分配。");
+      }
+    } finally {
+      actionInFlight.current = false;
+      if (mounted.current) setBusy(false);
+    }
+  };
+  const close = () => {
+    if (!actionInFlight.current) onClose();
+  };
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-xl gap-0 p-0">
+    <Dialog open onOpenChange={(open) => !open && close()}>
+      <DialogContent
+        className="max-w-xl gap-0 p-0"
+        onEscapeKeyDown={(event) => {
+          if (actionInFlight.current) event.preventDefault();
+        }}
+        onInteractOutside={(event) => {
+          if (actionInFlight.current) event.preventDefault();
+        }}
+      >
         <div className="border-b border-border px-5 py-4">
           <DialogHeader>
             <DialogTitle>分配工作項目</DialogTitle>
-            <DialogDescription>{describeWorkItemTitle(item.title)}</DialogDescription>
+            <DialogDescription>{describeWorkItemTitle(reviewedItem.title)}</DialogDescription>
           </DialogHeader>
         </div>
         <div className="max-h-[55vh] space-y-2 overflow-y-auto p-5">
+          <p className="text-sm text-muted-foreground">
+            目前負責同事：{reviewedItem.ownerName ?? (reviewedItem.ownerId ? "姓名待補" : "未分配")}
+            {" · "}覆核人：
+            {reviewedItem.reviewerName ?? (reviewedItem.reviewerId ? "姓名待補" : "未分配")}
+            {" · "}
+            {WORK_ITEM_STATUS_LABELS[reviewedItem.status]} · 版本 {reviewedItem.version}
+          </p>
           <Select
             aria-label="分配角色"
             value={target}
+            disabled={busy}
             onChange={(event) => {
+              if (actionInFlight.current) return;
               setTarget(event.target.value as "owner" | "reviewer");
               setSelected("");
-              setReason("");
             }}
           >
             <option value="owner">負責同事</option>
             <option value="reviewer">覆核人</option>
           </Select>
-          {recommendations.isError ? <p role="alert">可分配名單未能載入，請重新載入。</p> : null}
+          {recommendations.isError && !message ? (
+            <p role="alert">可分配名單未能載入，請重新載入。</p>
+          ) : null}
           {recommendations.isLoading ? (
             <p className="text-sm text-muted-foreground">建議人選載入中…</p>
           ) : null}
@@ -576,28 +887,53 @@ function AssignmentDialog({
               option={option}
               label={labels.get(option.userId)!}
               selected={selected === option.userId}
-              onSelect={() => setSelected(option.userId)}
+              disabled={busy || recommendations.isFetching || recommendations.isError || closed}
+              onSelect={() => {
+                if (!actionInFlight.current) setSelected(option.userId);
+              }}
             />
           ))}
-          {requiresReason ? (
+          {requiresReason || reason ? (
             <Textarea
               aria-label="例外理由"
               value={reason}
+              disabled={busy}
               onChange={(event) => setReason(event.target.value)}
               placeholder="不選首選人選或超出工作量的理由"
               className="mt-3 min-h-20 w-full"
             />
           ) : null}
-          {assign.isError ? (
-            <p className="text-sm text-destructive">未能儲存分配，請重新整理再試。</p>
+          {message ? (
+            <p role={readRequired ? "alert" : "status"} className="text-sm">
+              {message}
+            </p>
           ) : null}
+          {closed && !message ? <p role="alert">此工作已關閉，不能分配。</p> : null}
+          <Button disabled={busy} onClick={() => void reload()}>
+            重新讀取工作及建議人選
+          </Button>
         </div>
         <DialogFooter className="border-t border-border px-5 py-4">
-          <Button onClick={onClose}>取消</Button>
+          <Button disabled={busy} onClick={close}>
+            取消
+          </Button>
           <Button
             variant="primary"
-            disabled={!selected || (requiresReason && !reason.trim()) || assign.isPending}
-            onClick={() => assign.mutate()}
+            disabled={!canConfirm}
+            onClick={() => {
+              if (actionInFlight.current || mustReread.current || !canConfirm) return;
+              actionInFlight.current = true;
+              setBusy(true);
+              assign.mutate({
+                data: {
+                  workItemId: reviewedItem.id,
+                  assigneeId: selected,
+                  expectedVersion: reviewedItem.version,
+                  assignmentTarget: target,
+                  overrideReason: reason.trim() || undefined,
+                },
+              });
+            }}
           >
             確認分配
           </Button>
@@ -607,23 +943,56 @@ function AssignmentDialog({
   );
 }
 
+function assignmentFailureMessage(error: unknown): string {
+  const detail =
+    error && typeof error === "object" ? (error as { code?: unknown; message?: unknown }) : {};
+  if (
+    detail.code === "WORK_ITEM_ASSIGNMENT_STALE" ||
+    detail.message === "Work item assignment is stale."
+  )
+    return "其他同事已更新分配，你的分配未有覆寫目前記錄。請重新讀取工作及建議人選，再選擇並確認。";
+  if (
+    detail.code === "WORK_ITEM_ASSIGNEE_UNAVAILABLE" ||
+    detail.message === "Selected assignee is no longer eligible. Refresh recommendations." ||
+    detail.message === "Selected assignee is not eligible for this work item."
+  )
+    return "人選已不符合分配資格，未能儲存。請重新讀取工作及建議人選，再選擇合資格人選。";
+  if (
+    detail.code === "WORK_ITEM_ACTOR_UNAVAILABLE" ||
+    detail.message === "Forbidden: inactive users cannot assign work." ||
+    detail.message === "Forbidden: inactive staff actor."
+  )
+    return "目前帳戶已不能執行分配。請重新讀取工作及建議人選，並核對帳戶權限。";
+  return "未能確認分配結果。請重新讀取工作及建議人選，再選擇並確認；系統不會自動重送。";
+}
+
 function AcknowledgementDialog({
   item,
+  readBlocked,
   onClose,
-  onAcknowledged,
+  pending,
+  readRequired,
+  onReconcile,
+  onSubmit,
 }: {
   item: PersistedWorkItem;
+  readBlocked: boolean;
   onClose: () => void;
-  onAcknowledged: () => void;
+  pending: boolean;
+  readRequired: boolean;
+  onReconcile: () => Promise<void>;
+  onSubmit: (note: string) => void;
 }) {
   const [note, setNote] = useState("");
-  const acknowledge = useMutation({
-    mutationFn: () =>
-      acknowledgeWorkItemEscalation({
-        data: { workItemId: item.id, note: note.trim() },
-      }),
-    onSuccess: onAcknowledged,
-  });
+  const recovering = useRef(false);
+  const alive = useRef(true);
+  const [recovery, setRecovery] = useState<"none" | "reading" | "failed" | "checked">("none");
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -642,15 +1011,51 @@ function AcknowledgementDialog({
           placeholder="覆核結果及下一步"
           className="min-h-24 w-full"
         />
-        {acknowledge.isError ? (
-          <p className="text-sm text-destructive">未能儲存確認知悉記錄。</p>
+        {readBlocked ? (
+          <p role="alert" className="text-sm text-destructive">
+            隊列讀取或升級狀態未能核實；暫不能確認知悉。
+          </p>
+        ) : null}
+        {readRequired ? (
+          <div role="alert" className="space-y-2 text-sm text-destructive">
+            <p>知悉結果未能確認。請先核對目前工作狀態；沒有自動重試寫入。</p>
+            <Button
+              disabled={pending || recovery === "reading"}
+              onClick={async () => {
+                if (recovering.current) return;
+                recovering.current = true;
+                setRecovery("reading");
+                try {
+                  await onReconcile();
+                  if (alive.current) setRecovery("checked");
+                } catch {
+                  if (alive.current) setRecovery("failed");
+                } finally {
+                  recovering.current = false;
+                }
+              }}
+            >
+              重新核對知悉結果
+            </Button>
+          </div>
+        ) : null}
+        {recovery === "failed" ? (
+          <p role="status">未能核實知悉結果，請稍後重新核對；沒有重試寫入。</p>
+        ) : null}
+        {recovery === "checked" ? (
+          <p role="status">已重新核對目前升級狀態。請核對結果及備註，再決定是否提交。</p>
         ) : null}
         <DialogFooter>
           <Button onClick={onClose}>取消</Button>
           <Button
             variant="primary"
-            disabled={!note.trim() || acknowledge.isPending}
-            onClick={() => acknowledge.mutate()}
+            disabled={readBlocked || readRequired || pending || !note.trim()}
+            onClick={() => {
+              if (!readBlocked && !readRequired && !pending && note.trim()) {
+                setRecovery("none");
+                onSubmit(note.trim());
+              }
+            }}
           >
             確認知悉
           </Button>
@@ -664,17 +1069,20 @@ function RecommendationOption({
   option,
   label,
   selected,
+  disabled,
   onSelect,
 }: {
   option: AssignmentRecommendation & AssignmentOption;
   label: string;
   selected: boolean;
+  disabled?: boolean;
   onSelect: () => void;
 }) {
   return (
     <button
       type="button"
       aria-pressed={selected}
+      disabled={disabled}
       onClick={onSelect}
       className={cn(
         "grid w-full grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border p-3 text-left",
@@ -727,14 +1135,17 @@ function FilterSelect({
   value,
   onChange,
   children,
+  disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   children: React.ReactNode;
+  disabled?: boolean;
 }) {
   return (
     <Select
+      disabled={disabled}
       size="sm"
       aria-label={label}
       value={value}
@@ -749,23 +1160,35 @@ function FilterSelect({
 function QueueActions({
   item,
   canManage,
+  readBlocked,
   onAssign,
   onAcknowledge,
 }: {
   item: PersistedWorkItem;
   canManage: boolean;
+  readBlocked: boolean;
   onAssign: (item: PersistedWorkItem) => void;
   onAcknowledge: (item: PersistedWorkItem) => void;
 }) {
   return (
     <div className="flex justify-end gap-2">
       {canManage ? (
-        <Button size="icon" title="分配工作項目" onClick={() => onAssign(item)}>
+        <Button
+          disabled={readBlocked}
+          size="icon"
+          title="分配工作項目"
+          onClick={() => onAssign(item)}
+        >
           <UserRoundPlus className="h-4 w-4" />
         </Button>
       ) : null}
       {canManage && (item.escalationState === "warning" || item.escalationState === "breach") ? (
-        <Button size="icon" title="確認知悉升級" onClick={() => onAcknowledge(item)}>
+        <Button
+          disabled={readBlocked}
+          size="icon"
+          title="確認知悉升級"
+          onClick={() => onAcknowledge(item)}
+        >
           <Check className="h-4 w-4" />
         </Button>
       ) : null}

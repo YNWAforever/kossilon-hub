@@ -1,0 +1,1021 @@
+diff --git a/src/features/nar-import/mixed-xlsx-fixture.test.ts b/src/features/nar-import/mixed-xlsx-fixture.test.ts
+new file mode 100644
+index 0000000..14140ac
+--- /dev/null
++++ b/src/features/nar-import/mixed-xlsx-fixture.test.ts
+@@ -0,0 +1,209 @@
++import { beforeAll, describe, expect, it } from "vitest";
++import { dispositionFor, readNarSheet, type NarSheetReadResult } from "./mapping";
++import { buildMixedNarWorkbook } from "./mixed-xlsx-fixture";
++import { readXlsxWorkbook, type Workbook } from "./xlsx/workbook";
++import { openZipArchive } from "./xlsx/zip";
++
++const TAG = "cosec-parser-500";
++const rowRange = (start: number, count: number) =>
++  Array.from({ length: count }, (_, index) => start + index);
++
++describe("R26.4 mixed 500-row XLSX through the real workbook and NAR readers", () => {
++  let fixture: Awaited<ReturnType<typeof buildMixedNarWorkbook>>;
++  let workbook: Workbook;
++  let read: NarSheetReadResult;
++  let sheetXml: string;
++
++  beforeAll(async () => {
++    fixture = await buildMixedNarWorkbook(TAG);
++    workbook = await readXlsxWorkbook(fixture.bytes);
++    const sheet = workbook.sheet("8.2025");
++    if (!sheet) throw new Error("The generated OOXML workbook has no 8.2025 sheet.");
++    read = readNarSheet(sheet, workbook.date1904);
++    sheetXml = new TextDecoder().decode(
++      await openZipArchive(fixture.bytes).read("xl/worksheets/sheet1.xml"),
++    );
++  });
++
++  it("contains genuine compressed OOXML parts and exactly 500 physical data rows", () => {
++    expect([...fixture.bytes.subarray(0, 4)]).toEqual([0x50, 0x4b, 0x03, 0x04]);
++    const archive = openZipArchive(fixture.bytes);
++    expect([...archive.entries.keys()].sort()).toEqual([
++      "[Content_Types].xml",
++      "_rels/.rels",
++      "xl/_rels/workbook.xml.rels",
++      "xl/workbook.xml",
++      "xl/worksheets/sheet1.xml",
++    ]);
++    expect([...archive.entries.values()].every((entry) => entry.compressionMethod === 8)).toBe(
++      true,
++    );
++    expect(
++      [...sheetXml.matchAll(/<row\b[^>]*\br="(\d+)"/g)].map((match) => Number(match[1])),
++    ).toEqual(rowRange(1, 502));
++    expect(workbook.sheets.map((sheet) => sheet.name)).toEqual(["8.2025"]);
++    expect(workbook.date1904).toBe(false);
++    expect(workbook.sheet("8.2025")?.dimension).toBe("A1:H502");
++    expect([...workbook.sheet("8.2025")!.rows.keys()].filter((row) => row >= 3)).toEqual(
++      rowRange(3, 500),
++    );
++    expect(read.headerRowNumber).toBe(2);
++    expect(read.columns).toEqual({
++      clientId: "B",
++      companyName: "C",
++      incorporation: "D",
++      invoice: "E",
++      paymentReceived: "F",
++      arDue: "G",
++      brDue: "H",
++    });
++    expect(read.rows.map((row) => row.rowNumber)).toEqual(rowRange(3, 500));
++    expect(read.skippedRowNumbers).toEqual([]);
++    expect(read.issues).toEqual([]);
++  });
++
++  it("exposes 450 exact company keys with 50 duplicate pairs separate from 350 valid keys", () => {
++    expect(fixture.validRowNumbers).toEqual(rowRange(3, 350));
++    expect(fixture.duplicateRowNumbers).toEqual(rowRange(353, 100));
++    expect(fixture.invalidRowNumbers).toEqual(rowRange(453, 50));
++    expect(Object.keys(fixture.keyForRow).map(Number)).toEqual(rowRange(3, 500));
++    expect(fixture.companyKeys).toHaveLength(450);
++    expect(new Set(fixture.companyKeys).size).toBe(450);
++    expect(fixture.companyKeys).toEqual([
++      ...Array.from({ length: 350 }, (_, index) => `${TAG}-v-${index}`),
++      ...Array.from({ length: 50 }, (_, index) => `${TAG}-d-${index}`),
++      ...Array.from({ length: 25 }, (_, index) => `${TAG}-n-${index}`),
++      ...Array.from({ length: 25 }, (_, index) => `${TAG}-a-${index}`),
++    ]);
++    const rowsByKey = new Map<string, number[]>();
++    for (const row of read.rows) {
++      expect(row.externalClientId).toBe(fixture.keyForRow[row.rowNumber]);
++      rowsByKey.set(row.externalClientId, [
++        ...(rowsByKey.get(row.externalClientId) ?? []),
++        row.rowNumber,
++      ]);
++    }
++    expect([...rowsByKey.keys()]).toEqual(fixture.companyKeys);
++    expect([...rowsByKey.values()].filter((rows) => rows.length === 1)).toHaveLength(400);
++    expect([...rowsByKey.values()].filter((rows) => rows.length === 2)).toHaveLength(50);
++    for (let index = 0; index < 50; index += 1) {
++      expect(rowsByKey.get(`${TAG}-d-${index}`)).toEqual([353 + index * 2, 354 + index * 2]);
++    }
++  });
++
++  it("retains all invalid rows and flags precisely the duplicate IDs, blank names and missing AR dates", () => {
++    const blocking = read.rows.flatMap((row) =>
++      row.issues
++        .filter((issue) => issue.severity === "blocking")
++        .map((issue) => ({ rowNumber: row.rowNumber, code: issue.code })),
++    );
++    expect(blocking).toHaveLength(150);
++    expect(blocking).toEqual([
++      ...rowRange(353, 100).map((rowNumber) => ({ rowNumber, code: "duplicate-client-id" })),
++      ...rowRange(453, 25).map((rowNumber) => ({ rowNumber, code: "company-name-missing" })),
++      ...rowRange(478, 25).map((rowNumber) => ({ rowNumber, code: "ar-due-missing" })),
++    ]);
++    expect(read.rows.filter((row) => row.companyName === "").map((row) => row.rowNumber)).toEqual(
++      rowRange(453, 25),
++    );
++    expect(
++      read.rows.filter((row) => row.arDue.kind === "absent").map((row) => row.rowNumber),
++    ).toEqual(rowRange(478, 25));
++  });
++
++  it("treats the shared invoice as attention rather than company identity or blocking valid rows", () => {
++    expect(new Set(read.rows.map((row) => row.invoice.raw))).toEqual(
++      new Set(["SHARED-XLSX-INVOICE"]),
++    );
++    for (const row of read.rows) {
++      expect(row.invoice.kind).toBe("value");
++      expect(row.issues.filter((issue) => issue.code === "duplicate-invoice-number")).toEqual([
++        expect.objectContaining({ severity: "attention" }),
++      ]);
++      expect(
++        dispositionFor(row, {
++          matchedCompanyId: `mapped-${row.externalClientId}`,
++          existingCase: null,
++          returnYear: 2025,
++        }).disposition,
++      ).toBe(row.rowNumber <= 352 ? "new" : "invalid");
++    }
++  });
++
++  it("preserves the credit note as source evidence with attention on every row", () => {
++    for (const row of read.rows) {
++      expect(row.incorporation).toMatchObject({
++        kind: "dayMonth",
++        day: 1,
++        month: 1,
++        raw: "01/01",
++      });
++      expect(row.paymentReceived).toEqual({
++        kind: "text",
++        iso: "2025-03-01",
++        raw: "1/3/2025 (credit note)",
++        note: "(credit note)",
++        ambiguous: true,
++      });
++      expect(row.raw.F).toEqual({
++        ref: `F${row.rowNumber}`,
++        type: "inlineStr",
++        text: "1/3/2025 (credit note)",
++        dateFormatted: false,
++        fromFormula: false,
++      });
++      expect(row.issues).toContainEqual(
++        expect.objectContaining({
++          code: "date-carries-note",
++          column: "F",
++          severity: "attention",
++        }),
++      );
++      expect(row.issues).toContainEqual(
++        expect.objectContaining({
++          code: "date-arrived-as-text",
++          column: "F",
++          severity: "attention",
++        }),
++      );
++      if (row.rowNumber < 478) {
++        expect(row.arDue).toEqual({
++          kind: "text",
++          iso: "2025-02-15",
++          raw: "15/2/2025",
++          ambiguous: false,
++        });
++        expect(row.issues).toContainEqual(
++          expect.objectContaining({ code: "payment-after-ar-due", severity: "attention" }),
++        );
++      }
++      expect(row.brDue).toEqual({ kind: "absent" });
++      expect(row.raw.H).toBeUndefined();
++    }
++  });
++
++  it("round-trips UTF-8 and XML metacharacters through ZIP bytes without adding cells or rows", async () => {
++    expect(sheetXml).toContain("Synthetic 企業 &amp; Co &lt;1&gt;");
++    expect(read.rows[0].companyName).toBe("Synthetic 企業 & Co <1>");
++    expect(read.rows[0].raw.C.text).toBe("Synthetic 企業 & Co <1>");
++    const escapedTag = `cosec-parser-&<"'>`;
++    const escaped = await buildMixedNarWorkbook(escapedTag);
++    const escapedWorkbook = await readXlsxWorkbook(escaped.bytes);
++    const escapedRead = readNarSheet(escapedWorkbook.sheet("8.2025")!, escapedWorkbook.date1904);
++    expect(escapedRead.rows).toHaveLength(500);
++    expect(escapedRead.rows.map((row) => row.externalClientId)).toEqual(
++      Object.values(escaped.keyForRow),
++    );
++    expect(escapedRead.rows[0].externalClientId).toBe(`${escapedTag}-v-0`);
++    expect(escapedRead.rows[0].raw.B.text).toBe(`${escapedTag}-v-0`);
++    expect(escapedRead.rows[0].companyName).toBe("Synthetic 企業 & Co <1>");
++    expect([...escapedWorkbook.sheet("8.2025")!.rows.get(3)!.keys()]).toEqual([
++      "B",
++      "C",
++      "D",
++      "E",
++      "F",
++      "G",
++    ]);
++  });
++});
+diff --git a/src/features/nar-import/mixed-xlsx-fixture.ts b/src/features/nar-import/mixed-xlsx-fixture.ts
+new file mode 100644
+index 0000000..8ba1910
+--- /dev/null
++++ b/src/features/nar-import/mixed-xlsx-fixture.ts
+@@ -0,0 +1,128 @@
++import { buildZip } from "../../test/xlsx-fixture";
++
++export type MixedNarWorkbook = {
++  bytes: Uint8Array;
++  companyKeys: string[];
++  validRowNumbers: number[];
++  duplicateRowNumbers: number[];
++  invalidRowNumbers: number[];
++  keyForRow: Record<number, string>;
++};
++
++function escapeXml(value: string): string {
++  return value
++    .replace(/&/g, "&amp;")
++    .replace(/</g, "&lt;")
++    .replace(/>/g, "&gt;")
++    .replace(/"/g, "&quot;")
++    .replace(/'/g, "&apos;");
++}
++
++function textCell(column: string, row: number, text: string): string {
++  return `<c r="${column}${row}" t="inlineStr"><is><t xml:space="preserve">${escapeXml(text)}</t></is></c>`;
++}
++
++/**
++ * Test-only OOXML source for R26.4 parser-to-persistence acceptance. Every name
++ * and identifier is invented; this function performs no I/O beyond ZIP compression.
++ *
++ * Rows 3..352: 350 distinct valid keys; 353..452: 50 duplicate pairs;
++ * 453..477: 25 blank names; 478..502: 25 absent AR due dates. Keys use zero-based
++ * indexes within their category. Duplicate keys are never shared with valid rows.
++ * All 450 keys are exposed for explicit mapping by the isolated SQL test.
++ */
++export async function buildMixedNarWorkbook(tag: string): Promise<MixedNarWorkbook> {
++  const companyKeys: string[] = [];
++  const validRowNumbers: number[] = [];
++  const duplicateRowNumbers: number[] = [];
++  const invalidRowNumbers: number[] = [];
++  const keyForRow: Record<number, string> = {};
++  const rows = [
++    `<row r="1">${textCell("A", 1, "Synthetic Annual Return 2025")}</row>`,
++    `<row r="2">${[
++      ["B", "Client ID"],
++      ["C", "Name"],
++      ["D", "Date of Incorp"],
++      ["E", "Invoice no."],
++      ["F", "Payment Rcvd Date"],
++      ["G", "AR Due Date"],
++      ["H", "BR Due Date"],
++    ]
++      .map(([column, header]) => textCell(column, 2, header))
++      .join("")}</row>`,
++  ];
++
++  for (let index = 0; index < 500; index += 1) {
++    const rowNumber = index + 3;
++    let key: string;
++    if (index < 350) {
++      key = `${tag}-v-${index}`;
++      validRowNumbers.push(rowNumber);
++      companyKeys.push(key);
++    } else if (index < 450) {
++      key = `${tag}-d-${Math.floor((index - 350) / 2)}`;
++      duplicateRowNumbers.push(rowNumber);
++      if (index % 2 === 0) companyKeys.push(key);
++    } else if (index < 475) {
++      key = `${tag}-n-${index - 450}`;
++      invalidRowNumbers.push(rowNumber);
++      companyKeys.push(key);
++    } else {
++      key = `${tag}-a-${index - 475}`;
++      invalidRowNumbers.push(rowNumber);
++      companyKeys.push(key);
++    }
++    keyForRow[rowNumber] = key;
++
++    // Give both rows in a duplicate pair the same invented name. The invalid
++    // name rows still carry IDs and all other cells, so the parser must retain them.
++    const nameIndex = index >= 350 && index < 450 ? 351 + Math.floor((index - 350) / 2) : index + 1;
++    const companyName = index >= 450 && index < 475 ? "" : `Synthetic 企業 & Co <${nameIndex}>`;
++    rows.push(
++      `<row r="${rowNumber}">${[
++        textCell("B", rowNumber, key),
++        textCell("C", rowNumber, companyName),
++        textCell("D", rowNumber, "01/01"),
++        textCell("E", rowNumber, "SHARED-XLSX-INVOICE"),
++        textCell("F", rowNumber, "1/3/2025 (credit note)"),
++        ...(index < 475 ? [textCell("G", rowNumber, "15/2/2025")] : []),
++      ].join("")}</row>`,
++    );
++  }
++
++  const declaration = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
++  const spreadsheetNs = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
++  const officeRelsNs = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
++  const packageRelsNs = "http://schemas.openxmlformats.org/package/2006/relationships";
++  const bytes = await buildZip([
++    {
++      name: "[Content_Types].xml",
++      content: `${declaration}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`,
++    },
++    {
++      name: "_rels/.rels",
++      content: `${declaration}<Relationships xmlns="${packageRelsNs}"><Relationship Id="rId1" Type="${officeRelsNs}/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
++    },
++    {
++      name: "xl/workbook.xml",
++      content: `${declaration}<workbook xmlns="${spreadsheetNs}" xmlns:r="${officeRelsNs}"><workbookPr date1904="0"/><sheets><sheet name="8.2025" sheetId="1" r:id="rId1"/></sheets></workbook>`,
++    },
++    {
++      name: "xl/_rels/workbook.xml.rels",
++      content: `${declaration}<Relationships xmlns="${packageRelsNs}"><Relationship Id="rId1" Type="${officeRelsNs}/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`,
++    },
++    {
++      name: "xl/worksheets/sheet1.xml",
++      content: `${declaration}<worksheet xmlns="${spreadsheetNs}"><dimension ref="A1:H502"/><sheetData>${rows.join("")}</sheetData></worksheet>`,
++    },
++  ]);
++
++  return {
++    bytes,
++    companyKeys,
++    validRowNumbers,
++    duplicateRowNumbers,
++    invalidRowNumbers,
++    keyForRow,
++  };
++}
+diff --git a/src/features/nar-import/mixed-xlsx.integration.test.ts b/src/features/nar-import/mixed-xlsx.integration.test.ts
+new file mode 100644
+index 0000000..8683a15
+--- /dev/null
++++ b/src/features/nar-import/mixed-xlsx.integration.test.ts
+@@ -0,0 +1,448 @@
++import { createHash, randomUUID } from "node:crypto";
++import { appendFileSync, closeSync, openSync, realpathSync, writeFileSync } from "node:fs";
++import { dirname, isAbsolute, relative, resolve } from "node:path";
++import { getCurrentTest } from "@vitest/runner";
++import { describe, expect, it, onTestFinished } from "vitest";
++import type { AuthenticatedActor } from "@/features/auth/types";
++import { createSqlClient } from "@/server/db/client";
++import { guardSqlTestLifetime } from "@/test/sql-test-lifetime";
++import { createNarApplyRepository, runNarApplyChunk, type NarRowInputs } from "./apply";
++import { createNarImportRepository } from "./repository";
++import { getNarImportBatchReviewForActor, stageNarImportForActor } from "./server-fns";
++import { buildMixedNarWorkbook } from "./mixed-xlsx-fixture";
++import { readXlsxWorkbook } from "./xlsx/workbook";
++import { readNarSheet } from "./mapping";
++
++// Explicit operator opt-in only after a fresh disposable target identity gate.
++// Collecting/skipping this file constructs no client and writes no artifact.
++const databaseUrl = process.env.TEST_DATABASE_URL;
++const runId = process.env.KOSSILON_NAR_XLSX_RUN_ID;
++const eventsPath = process.env.KOSSILON_NAR_XLSX_EVENTS_PATH;
++const workbookPath = process.env.KOSSILON_NAR_XLSX_WORKBOOK_PATH;
++function ownedArtifact(path: string) {
++  const absolute = resolve(path),
++    local = relative(resolve("docs/audit-remediation"), absolute);
++  if (
++    local.startsWith("..") ||
++    isAbsolute(local) ||
++    realpathSync(dirname(absolute)) !== dirname(absolute)
++  )
++    throw new Error(
++      "Fresh artifacts must be inside the run-owned audit directory without redirection.",
++    );
++  return absolute;
++}
++describe.skipIf(!databaseUrl || !runId)(
++  "R26.4 mixed 500-row XLSX through real repositories",
++  () => {
++    it("parses actual bytes, refuses all duplicate/invalid rows and resumes only eligible rows", async () => {
++      if (
++        !databaseUrl ||
++        !runId ||
++        !/^cosec-[a-z0-9-]{8,100}$/.test(runId) ||
++        !eventsPath ||
++        !workbookPath
++      )
++        throw new Error(
++          "Verified disposable target, unique run ID and fresh artifact paths required.",
++        );
++      const context = getCurrentTest()?.context;
++      if (!context) throw new Error("A running test lifetime is required.");
++      const pending = scenario(
++        databaseUrl,
++        runId,
++        ownedArtifact(eventsPath),
++        ownedArtifact(workbookPath),
++        context.signal,
++      );
++      onTestFinished(async () => {
++        try {
++          await pending;
++        } catch (error) {
++          if (!context.signal.aborted || error !== context.signal.reason) throw error;
++        }
++      });
++      await pending;
++    }, 180_000);
++  },
++);
++
++async function scenario(
++  url: string,
++  tag: string,
++  eventFile: string,
++  binaryFile: string,
++  signal: AbortSignal,
++) {
++  const fd = openSync(eventFile, "wx");
++  const record = (phase: string, data: object) =>
++    appendFileSync(fd, JSON.stringify({ runId: tag, phase, ...data }) + "\n");
++  // Pure fixture generation and actual ZIP parsing precede any fixture DB write.
++  let raw: ReturnType<typeof createSqlClient> | undefined;
++  let reader: ReturnType<typeof createSqlClient> | undefined;
++  const teamId = randomUUID(),
++    templateId = randomUUID(),
++    userIds = [randomUUID(), randomUUID(), randomUUID()];
++  const [adminId, staffId, otherId] = userIds;
++  const actor = (userId: string, role: "Admin" | "Staff"): AuthenticatedActor => ({
++    userId,
++    authUserId: `${tag}:${userId}`,
++    role,
++    teamId,
++    active: true,
++  });
++  const admin = actor(adminId, "Admin"),
++    staff = actor(staffId, "Staff"),
++    other = actor(otherId, "Admin");
++  const companies: string[] = [];
++  try {
++    const fixture = await buildMixedNarWorkbook(tag);
++    writeFileSync(binaryFile, fixture.bytes, { flag: "wx" });
++    const sha256 = createHash("sha256").update(fixture.bytes).digest("hex");
++    const workbook = await readXlsxWorkbook(fixture.bytes);
++    const sheet = workbook.sheet("8.2025");
++    expect(sheet).toBeDefined();
++    const parsed = readNarSheet(sheet!, workbook.date1904);
++    expect(parsed.rows).toHaveLength(500);
++    expect(parsed.skippedRowNumbers).toEqual([]);
++    expect(parsed.rows.filter((r) => r.issues.some((i) => i.severity === "blocking"))).toHaveLength(
++      150,
++    );
++    record("workbook", {
++      file: binaryFile,
++      sha256,
++      bytes: fixture.bytes.length,
++      parserVersion: workbook.parserVersion,
++      rowCount: parsed.rows.length,
++      validRowNumbers: fixture.validRowNumbers,
++      duplicateRowNumbers: fixture.duplicateRowNumbers,
++      invalidRowNumbers: fixture.invalidRowNumbers,
++      sourceRows: parsed.rows.map((r) => ({
++        rowNumber: r.rowNumber,
++        externalClientId: r.externalClientId,
++        raw: r.raw,
++        issues: r.issues,
++      })),
++    });
++    companies.push(...fixture.companyKeys.map(() => randomUUID()));
++    const companyByKey = new Map(fixture.companyKeys.map((key, index) => [key, companies[index]]));
++    record("planned-ids", {
++      teamId,
++      templateId,
++      userIds,
++      companyMappings: Object.fromEntries(companyByKey),
++    });
++    raw = createSqlClient(url, { max: 4 });
++    const sql = guardSqlTestLifetime(raw, () => signal);
++    await sql.begin(async (tx) => {
++      await tx`insert into teams(id,name) values(${teamId},${tag + ":mixed-xlsx"})`;
++      for (const identity of [admin, staff, other]) {
++        await tx`insert into users(id,name,email,role,team_id,active) values(${identity.userId!},'Synthetic XLSX reviewer',${identity.userId + "@example.test"},${identity.role},${teamId},true)`;
++        await tx`insert into staff_profiles(user_id,auth_user_id,role,team_id,active) values(${identity.userId!},${identity.authUserId},${identity.role},${teamId},true)`;
++      }
++      await tx`insert into checklist_templates(id,name,service_type,documents) values(${templateId},${tag + ":mixed"},'Annual Return — Private Ltd',${tx.json([{ label: "NAR1", required: true, daysBeforeDue: 7 }])})`;
++      await tx`insert into companies ${tx(companies.map((id, i) => ({ id, company_name: `Synthetic XLSX company ${i}`, cr_number: id, br_number: id, incorporation_date: "2020-01-01", annual_return_basis_date: "2026-01-01", registered_office: "Synthetic office", company_secretary: "Synthetic secretary", status: "active", assigned_owner_id: staffId, assigned_team_id: teamId, data_origin: "client" })))}`;
++      await tx`insert into company_external_references ${tx(fixture.companyKeys.map((key) => ({ source_system: "nar-monthly-workbook", external_client_id: key, company_id: companyByKey.get(key)!, mapped_by: adminId })))}`;
++    });
++    const imports = createNarImportRepository({ sql });
++    const request = {
++      fileName: `${tag}-mixed-500.xlsx`,
++      bodyBase64: Buffer.from(fixture.bytes).toString("base64"),
++      sheetName: "8.2025",
++      returnYear: 2025,
++    };
++    await expect(stageNarImportForActor(staff, request, { repository: imports })).rejects.toThrow(
++      /Admin/,
++    );
++    const staged = await stageNarImportForActor(admin, request, { repository: imports });
++    expect(staged.reused).toBe(false);
++    expect(staged.batch).toMatchObject({
++      rowCount: 500,
++      sourceSha256: sha256,
++      sourceSizeBytes: fixture.bytes.length,
++      parserVersion: workbook.parserVersion,
++      returnYear: 2025,
++    });
++    expect(await stageNarImportForActor(admin, request, { repository: imports })).toMatchObject({
++      reused: true,
++      batch: { id: staged.batch.id },
++    });
++    const review = await getNarImportBatchReviewForActor(
++      admin,
++      { batchId: staged.batch.id },
++      { repository: imports },
++    );
++    expect(review.counts).toMatchObject({ new: 350, invalid: 150, needsCompanyMapping: 0 });
++    expect(review.rows).toHaveLength(500);
++    for (const row of review.rows)
++      expect(row.raw).toEqual(parsed.rows.find((r) => r.rowNumber === row.rowNumber)!.raw);
++    const validNumbers = new Set(fixture.validRowNumbers);
++    const validRows = review.rows.filter((r) => validNumbers.has(r.rowNumber));
++    const blockedRows = review.rows.filter((r) => !validNumbers.has(r.rowNumber));
++    const rowIds = review.rows.map((r) => r.id);
++    const inputs: Record<string, NarRowInputs> = Object.fromEntries(
++      rowIds.map((id) => [
++        id,
++        {
++          templateId,
++          ownerId: staffId,
++          feeAmount: 1200,
++          madeUpDate: "2025-01-01",
++          acknowledgeDueDifference: true,
++          acknowledgeSourceIssues: true,
++        },
++      ]),
++    );
++    record("staged-ids", {
++      batchId: staged.batch.id,
++      rows: review.rows.map((r) => ({
++        id: r.id,
++        rowNumber: r.rowNumber,
++        externalClientId: r.externalClientId,
++        disposition: r.disposition,
++      })),
++      counts: review.counts,
++    });
++    const repo = createNarApplyRepository({ sql });
++    const preview = await repo.preview(admin, { batchId: staged.batch.id, rowIds, inputs });
++    expect(preview).toMatchObject({ selected: 500, eligibleCount: 350 });
++    expect(
++      new Set(
++        preview.rows.filter((r) => r.conflicts.includes("source_row_invalid")).map((r) => r.rowId),
++      ),
++    ).toEqual(new Set(blockedRows.map((r) => r.id)));
++    expect(
++      await sql`select id from annual_return_cases where company_id=any(${companies}::uuid[])`,
++    ).toHaveLength(0);
++    record("preview", {
++      previewId: preview.previewId,
++      selected: preview.selected,
++      eligibleCount: preview.eligibleCount,
++      rows: preview.rows.map((r) => ({
++        rowId: r.rowId,
++        conflicts: r.conflicts,
++        requiredInputs: r.requiredInputs,
++        command: r.command,
++      })),
++    });
++    const command = { previewId: preview.previewId, idempotencyKey: `${tag}:initial` };
++    await expect(repo.execute({ ...staff, role: "Admin" }, command)).rejects.toThrow(
++      /current verified Admin/,
++    );
++    const [job, duplicate] = await Promise.all([
++      repo.execute(admin, command),
++      repo.execute(admin, command),
++    ]);
++    expect(duplicate).toEqual(job);
++    await expect(repo.getJob(other, job.jobId)).rejects.toThrow(/own NAR job/);
++    record("initial-job", job);
++    await expect(
++      runNarApplyChunk({
++        repository: repo,
++        actor: admin,
++        jobId: job.jobId,
++        afterCommit: (n) => {
++          if (n === 37) throw new Error("Synthetic post-commit interruption at 37");
++        },
++      }),
++    ).rejects.toThrow(/interruption at 37/);
++    reader = createSqlClient(url, { max: 2 });
++    const readSql = guardSqlTestLifetime(reader, () => signal);
++    const reopened = createNarApplyRepository({ sql: readSql });
++    const interrupted = await reopened.getJob(admin, job.jobId);
++    expect(interrupted.counts).toEqual({
++      pending: 313,
++      applied: 37,
++      conflict: 150,
++      failed: 0,
++      cancelled: 0,
++    });
++    expect(await reopened.cancel(admin, job.jobId)).toEqual({ cancelled: 313 });
++    expect(await reopened.cancel(admin, job.jobId)).toEqual({ cancelled: 0 });
++    expect(await reopened.execute(admin, command)).toEqual(job);
++    expect(await runNarApplyChunk({ repository: repo, actor: admin, jobId: job.jobId })).toEqual({
++      processed: 0,
++    });
++    const cancelled = await reopened.getJob(admin, job.jobId);
++    expect(cancelled.state).toBe("cancelled");
++    record("cancelled", { jobId: job.jobId, counts: cancelled.counts, rows: cancelled.rows });
++    const remainingIds = cancelled.rows.filter((r) => r.state === "cancelled").map((r) => r.row_id);
++    expect(remainingIds).toHaveLength(313);
++    const retryPreview = await reopened.preview(admin, {
++      batchId: staged.batch.id,
++      rowIds: remainingIds,
++      inputs,
++    });
++    expect(retryPreview).toMatchObject({ selected: 313, eligibleCount: 313 });
++    await expect(
++      reopened.execute(admin, { ...command, previewId: retryPreview.previewId }),
++    ).rejects.toThrow(/Idempotency payload conflict/);
++    const retryCommand = { previewId: retryPreview.previewId, idempotencyKey: `tag:${tag}:retry` };
++    const [retryJob, sameRetry] = await Promise.all([
++      repo.execute(admin, retryCommand),
++      reopened.execute(admin, retryCommand),
++    ]);
++    expect(sameRetry).toEqual(retryJob);
++    const processed: number[] = [];
++    for (let n = 0; n < 4; n++)
++      processed.push(
++        (await runNarApplyChunk({ repository: reopened, actor: admin, jobId: retryJob.jobId }))
++          .processed,
++      );
++    expect(processed).toEqual([100, 100, 100, 13]);
++    expect(
++      await runNarApplyChunk({ repository: repo, actor: admin, jobId: retryJob.jobId }),
++    ).toEqual({ processed: 0 });
++    expect(await reopened.getJob(admin, retryJob.jobId)).toMatchObject({
++      state: "completed",
++      selected: 313,
++      unselected: 187,
++      counts: { applied: 313, pending: 0, conflict: 0, failed: 0, cancelled: 0 },
++    });
++    record("retry", { jobId: retryJob.jobId, previewId: retryPreview.previewId, processed });
++    // Acknowledging every source attention cannot authorize a blocking row.
++    const deniedPreview = await reopened.preview(admin, {
++      batchId: staged.batch.id,
++      rowIds: blockedRows.map((r) => r.id),
++      inputs,
++    });
++    expect(deniedPreview.eligibleCount).toBe(0);
++    const deniedJob = await reopened.execute(admin, {
++      previewId: deniedPreview.previewId,
++      idempotencyKey: `${tag}:blocked-only`,
++    });
++    expect(
++      await runNarApplyChunk({ repository: reopened, actor: admin, jobId: deniedJob.jobId }),
++    ).toEqual({ processed: 0 });
++    expect(await reopened.getJob(admin, deniedJob.jobId)).toMatchObject({
++      state: "partial",
++      counts: { applied: 0, conflict: 150, pending: 0, failed: 0, cancelled: 0 },
++    });
++    const facts =
++      await readSql`select a.id,a.company_id,a.filing_due_date::text due,a.import_origin,p.id payment_id,p.status,p.invoice_number,p.amount,p.paid_at,w.id work_id from annual_return_cases a join payments p on p.case_id=a.id join work_items w on w.annual_return_case_id=a.id where a.company_id=any(${companies}::uuid[])`;
++    expect(facts).toHaveLength(350);
++    for (const key of ["id", "company_id", "payment_id", "work_id"])
++      expect(new Set(facts.map((r) => r[key])).size).toBe(350);
++    const expectedCompanies = validRows.map((r) => companyByKey.get(r.externalClientId));
++    expect(new Set(facts.map((r) => r.company_id))).toEqual(new Set(expectedCompanies));
++    expect(
++      facts.every(
++        (r) =>
++          r.status === "Payment pending" &&
++          r.paid_at === null &&
++          r.amount === 1200 &&
++          r.invoice_number === "SHARED-XLSX-INVOICE" &&
++          r.due === "2025-02-15" &&
++          r.import_origin === "historical",
++      ),
++    ).toBe(true);
++    const journals =
++      await readSql`select id,row_id,case_id,job_id,command from nar_apply_journal where batch_id=${staged.batch.id}`;
++    expect(journals).toHaveLength(350);
++    expect(new Set(journals.map((r) => r.row_id))).toEqual(new Set(validRows.map((r) => r.id)));
++    const finalImports = createNarImportRepository({ sql: readSql });
++    const finalRows = await finalImports.listRows(staged.batch.id);
++    expect(finalRows.filter((r) => r.appliedAt !== null)).toHaveLength(350);
++    expect(
++      finalRows
++        .filter((r) => !validNumbers.has(r.rowNumber))
++        .every((r) => r.appliedAt === null && r.appliedCaseId === null),
++    ).toBe(true);
++    expect(await finalImports.getBatch(staged.batch.id)).toMatchObject({
++      rowCount: 500,
++      status: "pending_review",
++      appliedAt: null,
++      sourceSha256: sha256,
++      parserVersion: workbook.parserVersion,
++    });
++    for (const row of finalRows) {
++      expect(row.raw).toEqual(parsed.rows.find((r) => r.rowNumber === row.rowNumber)!.raw);
++      expect(row.parsed).toMatchObject({
++        paymentReceived: { kind: "text", iso: "2025-03-01", raw: "1/3/2025 (credit note)" },
++      });
++    }
++    expect(
++      await stageNarImportForActor(admin, request, { repository: finalImports }),
++    ).toMatchObject({ reused: true, batch: { id: staged.batch.id, status: "pending_review" } });
++    expect((await reopened.getJob(admin, job.jobId)).counts).toEqual(cancelled.counts);
++    const [outbox] =
++      await readSql`select count(*)::int n from notification_outbox where company_id=any(${companies}::uuid[])`;
++    expect(outbox.n).toBe(0);
++    record("readback", {
++      batchId: staged.batch.id,
++      sha256,
++      facts,
++      journals,
++      rows: finalRows.map((r) => ({
++        id: r.id,
++        rowNumber: r.rowNumber,
++        appliedCaseId: r.appliedCaseId,
++        appliedAt: r.appliedAt,
++      })),
++      blockedOnlyJobId: deniedJob.jobId,
++      batchStatus: "pending_review",
++      outboxCount: outbox.n,
++    });
++  } finally {
++    try {
++      await reader?.end();
++      if (raw)
++        await raw.begin(async (tx) => {
++          const cases =
++            await tx`select id from annual_return_cases where company_id=any(${companies}::uuid[])`;
++          const batches = await tx`select id from nar_import_batches where created_by=${adminId}`;
++          const caseIds = cases.map((r) => r.id),
++            batchIds = batches.map((r) => r.id);
++          const jobs =
++            await tx`select id from nar_apply_jobs where batch_id=any(${batchIds}::uuid[])`;
++          const jobIds = jobs.map((r) => r.id);
++          const descendants =
++            await tx`select 'payment' kind,id from payments where company_id=any(${companies}::uuid[]) union all select 'work',id from work_items where company_id=any(${companies}::uuid[]) union all select 'checklist',id from annual_return_checklist_items where case_id=any(${caseIds}::uuid[]) union all select 'timeline',id from timeline_events where company_id=any(${companies}::uuid[]) union all select 'audit',id from annual_return_audit_events where case_id=any(${caseIds}::uuid[])`;
++          record("cleanup-ids", {
++            companyIds: companies,
++            userIds,
++            caseIds,
++            batchIds,
++            jobIds,
++            descendants,
++          });
++          await tx`delete from notification_outbox where company_id=any(${companies}::uuid[])`;
++          await tx`delete from nar_apply_journal where batch_id=any(${batchIds}::uuid[])`;
++          await tx`delete from nar_apply_job_items where job_id=any(${jobIds}::uuid[])`;
++          await tx`delete from nar_apply_jobs where id=any(${jobIds}::uuid[])`;
++          await tx`delete from nar_apply_previews where actor_user_id=${adminId}`;
++          await tx`delete from nar_batch_review_events where batch_id=any(${batchIds}::uuid[])`;
++          await tx`delete from nar_import_batches where id=any(${batchIds}::uuid[])`;
++          await tx`delete from nar_mapping_events where actor_user_id=${adminId}`;
++          await tx`delete from assignment_events where work_item_id in(select id from work_items where company_id=any(${companies}::uuid[]))`;
++          await tx`delete from work_items where company_id=any(${companies}::uuid[])`;
++          await tx`delete from annual_return_audit_events where case_id=any(${caseIds}::uuid[])`;
++          await tx`delete from timeline_events where company_id=any(${companies}::uuid[])`;
++          await tx`delete from annual_return_cases where id=any(${caseIds}::uuid[])`;
++          await tx`delete from companies where id=any(${companies}::uuid[])`;
++          await tx`delete from checklist_templates where id=${templateId}`;
++          await tx`delete from staff_access_events where actor_user_id=any(${userIds}::uuid[])`;
++          await tx`delete from staff_profiles where user_id=any(${userIds}::uuid[])`;
++          await tx`delete from users where id=any(${userIds}::uuid[])`;
++          await tx`delete from teams where id=${teamId}`;
++          const [remaining] =
++            await tx`select (select count(*) from companies where id=any(${companies}::uuid[]))::int companies,(select count(*) from annual_return_cases where id=any(${caseIds}::uuid[]))::int cases,(select count(*) from nar_import_batches where id=any(${batchIds}::uuid[]))::int batches,(select count(*) from nar_apply_jobs where id=any(${jobIds}::uuid[]))::int jobs,(select count(*) from users where id=any(${userIds}::uuid[]))::int users,(select count(*) from teams where id=${teamId})::int teams`;
++          expect(remaining).toEqual({
++            companies: 0,
++            cases: 0,
++            batches: 0,
++            jobs: 0,
++            users: 0,
++            teams: 0,
++          });
++          record("cleanup-readback", remaining);
++        });
++    } finally {
++      try {
++        await raw?.end();
++      } finally {
++        closeSync(fd);
++      }
++    }
++  }
++}
+diff --git a/src/features/nar-import/xlsx/workbook.test.ts b/src/features/nar-import/xlsx/workbook.test.ts
+index 5b69168..30a1f6f 100644
+--- a/src/features/nar-import/xlsx/workbook.test.ts
++++ b/src/features/nar-import/xlsx/workbook.test.ts
+@@ -1,4 +1,5 @@
+ import { describe, expect, it } from "vitest";
++import { buildZip, type ZipInput } from "../../../test/xlsx-fixture";
+ import { readXlsxWorkbook, XlsxFormatError } from "./workbook";
+ import { openZipArchive, ZipFormatError } from "./zip";
+ 
+@@ -15,99 +16,6 @@ import { openZipArchive, ZipFormatError } from "./zip";
+  * and identifiers are invented.
+  */
+ 
+-// ---------------------------------------------------------------------------
+-// A minimal ZIP writer, test-only.
+-// ---------------------------------------------------------------------------
+-
+-const CRC_TABLE = (() => {
+-  const table = new Uint32Array(256);
+-  for (let index = 0; index < 256; index += 1) {
+-    let value = index;
+-    for (let bit = 0; bit < 8; bit += 1) {
+-      value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+-    }
+-    table[index] = value >>> 0;
+-  }
+-  return table;
+-})();
+-
+-function crc32(bytes: Uint8Array): number {
+-  let crc = 0xffffffff;
+-  for (const byte of bytes) crc = CRC_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+-  return (crc ^ 0xffffffff) >>> 0;
+-}
+-
+-async function deflateRaw(bytes: Uint8Array): Promise<Uint8Array> {
+-  const stream = new Blob([bytes as BlobPart])
+-    .stream()
+-    .pipeThrough(new CompressionStream("deflate-raw"));
+-  return new Uint8Array(await new Response(stream).arrayBuffer());
+-}
+-
+-type ZipInput = { name: string; content: string; store?: boolean };
+-
+-async function buildZip(files: ZipInput[]): Promise<Uint8Array> {
+-  const encoder = new TextEncoder();
+-  const locals: Uint8Array[] = [];
+-  const centrals: Uint8Array[] = [];
+-  let offset = 0;
+-
+-  for (const file of files) {
+-    const raw = encoder.encode(file.content);
+-    const compressed = file.store ? raw : await deflateRaw(raw);
+-    const method = file.store ? 0 : 8;
+-    const nameBytes = encoder.encode(file.name);
+-    const checksum = crc32(raw);
+-
+-    const local = new Uint8Array(30 + nameBytes.length + compressed.length);
+-    const localView = new DataView(local.buffer);
+-    localView.setUint32(0, 0x04034b50, true);
+-    localView.setUint16(4, 20, true);
+-    localView.setUint16(8, method, true);
+-    localView.setUint32(14, checksum, true);
+-    localView.setUint32(18, compressed.length, true);
+-    localView.setUint32(22, raw.length, true);
+-    localView.setUint16(26, nameBytes.length, true);
+-    local.set(nameBytes, 30);
+-    local.set(compressed, 30 + nameBytes.length);
+-    locals.push(local);
+-
+-    const central = new Uint8Array(46 + nameBytes.length);
+-    const centralView = new DataView(central.buffer);
+-    centralView.setUint32(0, 0x02014b50, true);
+-    centralView.setUint16(4, 20, true);
+-    centralView.setUint16(6, 20, true);
+-    centralView.setUint16(10, method, true);
+-    centralView.setUint32(16, checksum, true);
+-    centralView.setUint32(20, compressed.length, true);
+-    centralView.setUint32(24, raw.length, true);
+-    centralView.setUint16(28, nameBytes.length, true);
+-    centralView.setUint32(42, offset, true);
+-    central.set(nameBytes, 46);
+-    centrals.push(central);
+-
+-    offset += local.length;
+-  }
+-
+-  const centralSize = centrals.reduce((total, part) => total + part.length, 0);
+-  const eocd = new Uint8Array(22);
+-  const eocdView = new DataView(eocd.buffer);
+-  eocdView.setUint32(0, 0x06054b50, true);
+-  eocdView.setUint16(8, files.length, true);
+-  eocdView.setUint16(10, files.length, true);
+-  eocdView.setUint32(12, centralSize, true);
+-  eocdView.setUint32(16, offset, true);
+-
+-  const total = offset + centralSize + eocd.length;
+-  const out = new Uint8Array(total);
+-  let cursor = 0;
+-  for (const part of [...locals, ...centrals, eocd]) {
+-    out.set(part, cursor);
+-    cursor += part.length;
+-  }
+-  return out;
+-}
+-
+ // ---------------------------------------------------------------------------
+ // A workbook shaped like the supplied one, with invented identifiers.
+ // ---------------------------------------------------------------------------
+diff --git a/src/test/db-integration-files.ts b/src/test/db-integration-files.ts
+index 3ca2e11..ec2dee7 100644
+--- a/src/test/db-integration-files.ts
++++ b/src/test/db-integration-files.ts
+@@ -16,6 +16,7 @@ export const DB_INTEGRATION_TEST_FILES = [
+   "src/features/bulk-operations/actions.integration.test.ts",
+   "src/features/nar-import/apply.integration.test.ts",
+   "src/features/nar-import/scale.integration.test.ts",
++  "src/features/nar-import/mixed-xlsx.integration.test.ts",
+   "scripts/audit-schema-readiness.test.ts",
+   "scripts/prepare-historical-schema-release.test.ts",
+   // Rehearsal subprocess refusal uses a DB URL; retain the conservative registry gate.
+diff --git a/src/test/xlsx-fixture.ts b/src/test/xlsx-fixture.ts
+new file mode 100644
+index 0000000..255b76c
+--- /dev/null
++++ b/src/test/xlsx-fixture.ts
+@@ -0,0 +1,90 @@
++/** Test-only ZIP writer extracted unchanged from the workbook reader tests. */
++
++const CRC_TABLE = (() => {
++  const table = new Uint32Array(256);
++  for (let index = 0; index < 256; index += 1) {
++    let value = index;
++    for (let bit = 0; bit < 8; bit += 1) {
++      value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
++    }
++    table[index] = value >>> 0;
++  }
++  return table;
++})();
++
++function crc32(bytes: Uint8Array): number {
++  let crc = 0xffffffff;
++  for (const byte of bytes) crc = CRC_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8);
++  return (crc ^ 0xffffffff) >>> 0;
++}
++
++async function deflateRaw(bytes: Uint8Array): Promise<Uint8Array> {
++  const stream = new Blob([bytes as BlobPart])
++    .stream()
++    .pipeThrough(new CompressionStream("deflate-raw"));
++  return new Uint8Array(await new Response(stream).arrayBuffer());
++}
++
++export type ZipInput = { name: string; content: string; store?: boolean };
++
++export async function buildZip(files: ZipInput[]): Promise<Uint8Array> {
++  const encoder = new TextEncoder();
++  const locals: Uint8Array[] = [];
++  const centrals: Uint8Array[] = [];
++  let offset = 0;
++
++  for (const file of files) {
++    const raw = encoder.encode(file.content);
++    const compressed = file.store ? raw : await deflateRaw(raw);
++    const method = file.store ? 0 : 8;
++    const nameBytes = encoder.encode(file.name);
++    const checksum = crc32(raw);
++
++    const local = new Uint8Array(30 + nameBytes.length + compressed.length);
++    const localView = new DataView(local.buffer);
++    localView.setUint32(0, 0x04034b50, true);
++    localView.setUint16(4, 20, true);
++    localView.setUint16(8, method, true);
++    localView.setUint32(14, checksum, true);
++    localView.setUint32(18, compressed.length, true);
++    localView.setUint32(22, raw.length, true);
++    localView.setUint16(26, nameBytes.length, true);
++    local.set(nameBytes, 30);
++    local.set(compressed, 30 + nameBytes.length);
++    locals.push(local);
++
++    const central = new Uint8Array(46 + nameBytes.length);
++    const centralView = new DataView(central.buffer);
++    centralView.setUint32(0, 0x02014b50, true);
++    centralView.setUint16(4, 20, true);
++    centralView.setUint16(6, 20, true);
++    centralView.setUint16(10, method, true);
++    centralView.setUint32(16, checksum, true);
++    centralView.setUint32(20, compressed.length, true);
++    centralView.setUint32(24, raw.length, true);
++    centralView.setUint16(28, nameBytes.length, true);
++    centralView.setUint32(42, offset, true);
++    central.set(nameBytes, 46);
++    centrals.push(central);
++
++    offset += local.length;
++  }
++
++  const centralSize = centrals.reduce((total, part) => total + part.length, 0);
++  const eocd = new Uint8Array(22);
++  const eocdView = new DataView(eocd.buffer);
++  eocdView.setUint32(0, 0x06054b50, true);
++  eocdView.setUint16(8, files.length, true);
++  eocdView.setUint16(10, files.length, true);
++  eocdView.setUint32(12, centralSize, true);
++  eocdView.setUint32(16, offset, true);
++
++  const total = offset + centralSize + eocd.length;
++  const out = new Uint8Array(total);
++  let cursor = 0;
++  for (const part of [...locals, ...centrals, eocd]) {
++    out.set(part, cursor);
++    cursor += part.length;
++  }
++  return out;
++}

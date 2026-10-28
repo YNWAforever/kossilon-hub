@@ -1,0 +1,43 @@
+
+> test
+> vitest run --project unit src/features/annual-return/components/payment-pagination.test.tsx --maxWorkers 1 -t hides cached debt
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/annual-return/components/payment-pagination.test.tsx (20 tests | 1 failed | 19 skipped) 405ms
+   × hides cached debt details when the refreshed case list is denied 403ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/payment-pagination.test.tsx > hides cached debt details when the refreshed case list is denied
+AssertionError: expected <a …(1)></a> to be null
+
+- Expected:
+null
+
++ Received:
+<a
+  href="/annual-returns/40000000-0000-4000-8000-000000000201"
+>
+  QA Case 201
+</a>
+
+ ❯ src/features/annual-return/components/payment-pagination.test.tsx:215:63
+    213|   });
+    214|   await screen.findByRole("alert");
+    215|   expect(screen.queryByRole("link", { name: "QA Case 201" })).toBeNull…
+       |                                                               ^
+    216|   expect(screen.queryByText(/餘額：HK\$1,200.00/)).toBeNull();
+    217|   client.clear();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 skipped (20)
+   Start at  04:59:57
+   Duration  5.70s (transform 429ms, setup 0ms, import 1.28s, tests 405ms, environment 3.26s)
+

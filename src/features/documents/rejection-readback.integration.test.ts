@@ -1,0 +1,628 @@
+import { randomUUID } from "node:crypto";
+import { appendFileSync, closeSync, openSync, realpathSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { getCurrentTest } from "@vitest/runner";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import { createSqlClient, type SqlClient } from "@/server/db/client";
+import { guardSqlTestLifetime } from "@/test/sql-test-lifetime";
+import {
+  requireClientCompanyAccess,
+  type NeonSessionAdapter,
+} from "@/features/auth/neon-auth-server";
+import { createDocumentRepository, type DocumentSummary } from "./repository";
+import { listDocumentPageForActor } from "./server-fns";
+import { DocumentVersionConflictError } from "./version-conflict";
+
+// Parent supplies TEST_DATABASE_URL and DATABASE_URL for this owned target;
+// the former is also the repository convention marker for DB-only test files.
+// Collection is inert: no dotenv, SQL constructor, fixture or artifact. The parent
+// alone verifies its NEW disposable container/image/labels/mounts/mapped TCP path
+// before supplying this sanitized environment. Loopback and an env label are not
+// isolation proof. No storage, scanner, worker or native Auth provider is invoked.
+const RUN = "cosec-20261024-rejection-4e52ac19";
+const DATABASE = "cosec_rejection_4e52ac19";
+const DB_USER = "cosec_runner";
+const run = process.env.COSEC_UC149_RUN_ID;
+const checksum = "a".repeat(64);
+
+type Identity = {
+  database: string;
+  db_role: string;
+  system_id: string;
+  server_address: string;
+  server_port: number;
+  pid: number;
+};
+
+async function identity(sql: SqlClient) {
+  const [row] = await sql<Identity[]>`select current_database() database,current_user db_role,
+    (select system_identifier::text from pg_control_system()) system_id,
+    inet_server_addr()::text server_address,inet_server_port() server_port,pg_backend_pid() pid`;
+  return row;
+}
+
+async function fixtureCounts(sql: SqlClient) {
+  const [row] = await sql`select
+    (select count(*)::int from teams) teams,
+    (select count(*)::int from users) users,
+    (select count(*)::int from staff_profiles) profiles,
+    (select count(*)::int from client_company_memberships) memberships,
+    (select count(*)::int from companies) companies,
+    (select count(*)::int from annual_return_cases) cases,
+    (select count(*)::int from annual_return_checklist_items) checklist,
+    (select count(*)::int from documents) documents,
+    (select count(*)::int from document_versions) versions,
+    (select count(*)::int from document_upload_intents) intents,
+    (select count(*)::int from document_scan_jobs) scan_jobs,
+    (select count(*)::int from document_analysis_jobs) analysis_jobs,
+    (select count(*)::int from timeline_events) timeline,
+    (select count(*)::int from annual_return_audit_events) audits,
+    (select count(*)::int from work_items) work_items,
+    (select count(*)::int from notification_outbox) outbox`;
+  return row;
+}
+
+describe.skipIf(!run)("UC149 rejection readback on parent-owned disposable SQL", () => {
+  it("projects only the current scoped reason; replacement stays pending and old review survives", async () => {
+    const databaseUrl = process.env.DATABASE_URL;
+    const targetId = process.env.COSEC_UC149_TARGET_ID;
+    const systemId = process.env.COSEC_UC149_SYSTEM_ID;
+    const directory = process.env.COSEC_UC149_EVENTS_DIR;
+    const attempt = process.env.COSEC_UC149_ATTEMPT;
+    if (
+      run !== RUN ||
+      !databaseUrl ||
+      process.env.COSEC_UC149_DB_NAME !== DATABASE ||
+      !/^[a-f0-9]{64}$/.test(targetId ?? "") ||
+      !/^\d+$/.test(systemId ?? "") ||
+      !directory ||
+      !["red", "green"].includes(attempt ?? "")
+    )
+      throw new Error(
+        "Parent-gated UC149 run, target, system identity and fresh attempt required.",
+      );
+    let target: URL;
+    try {
+      target = new URL(databaseUrl);
+    } catch {
+      throw new Error("Invalid parent-gated UC149 TCP URL.");
+    }
+    if (
+      target.protocol !== "postgresql:" ||
+      target.hostname !== "127.0.0.1" ||
+      !target.port ||
+      target.username !== DB_USER ||
+      target.pathname !== "/" + DATABASE ||
+      target.search ||
+      target.hash
+    )
+      throw new Error("UC149 URL differs from the parent's direct mapped TCP target.");
+    const folder = resolve(directory);
+    if (
+      realpathSync(process.cwd()).toLowerCase() !==
+        "c:\\users\\laich\\documents\\kossilon-hub\\cosec-20261023" ||
+      folder !== resolve("docs/audit-remediation", RUN, "db") ||
+      realpathSync(folder) !== folder ||
+      realpathSync(dirname(folder)) !== dirname(folder)
+    )
+      throw new Error("UC149 evidence path is outside the exact run or redirected.");
+    const signal = getCurrentTest()?.context.signal;
+    if (!signal) throw new Error("Running test lifetime required.");
+    signal.throwIfAborted();
+    const pending = scenario(databaseUrl, targetId!, systemId!, folder, attempt!, signal);
+    onTestFinished(async () => {
+      // Drain in-flight operations AND raw-client cleanup after a timeout/abort.
+      await pending.catch(() => undefined);
+    });
+    await pending;
+  }, 60_000);
+});
+
+async function scenario(
+  databaseUrl: string,
+  targetId: string,
+  systemId: string,
+  folder: string,
+  attempt: string,
+  signal: AbortSignal,
+) {
+  const fd = openSync(resolve(folder, `sidecar-UC149-SQL-${attempt}.jsonl`), "wx");
+  const record = (phase: string, values: object) => {
+    const receipt = { runId: RUN, attempt, phase, ...values };
+    appendFileSync(fd, JSON.stringify(receipt) + "\n");
+    console.info(JSON.stringify(receipt));
+  };
+  const ids = {
+    team: randomUUID(),
+    staff: randomUUID(),
+    profile: randomUUID(),
+    companies: [randomUUID(), randomUUID()],
+    cases: [randomUUID(), randomUUID(), randomUUID()],
+    checklist: randomUUID(),
+    memberships: [randomUUID(), randomUUID(), randomUUID()],
+    clientAuth: randomUUID(),
+    otherClientAuth: randomUUID(),
+    staleVersion: randomUUID(),
+  };
+  const staffAuth = `${RUN}:${ids.staff}`;
+  const objectKeys: string[] = [];
+  let raw: SqlClient | undefined;
+  let observerRaw: SqlClient | undefined;
+  let fixturesCommitted = false;
+  let assertionsPassed = false;
+  const failures: unknown[] = [];
+  try {
+    record("planned-ids", { ids, targetId, nativeAuth: false, nativeProvider: false });
+    signal.throwIfAborted();
+    // Constructors follow the parent's metadata gate AND the checks above.
+    raw = createSqlClient(databaseUrl, { max: 1, ssl: false });
+    observerRaw = createSqlClient(databaseUrl, { max: 1, ssl: false });
+    const sql = guardSqlTestLifetime(raw, () => signal);
+    const observer = guardSqlTestLifetime(observerRaw, () => signal);
+    const writerIdentity = await identity(sql);
+    const observerIdentity = await identity(observer);
+    record("tcp-identity", { targetId, writerIdentity, observerIdentity });
+    for (const value of [writerIdentity, observerIdentity]) {
+      expect(value.database).toBe(DATABASE);
+      expect(value.db_role).toBe(DB_USER);
+      expect(value.system_id).toBe(systemId);
+      expect(value.server_port).toBe(5432);
+      expect(value.server_address).toBeTruthy();
+    }
+    expect(observerIdentity.server_address).toBe(writerIdentity.server_address);
+    expect(observerIdentity.pid).not.toBe(writerIdentity.pid);
+    const baseline = await fixtureCounts(observer);
+    record("empty-fixture-gate", { baseline });
+    expect(Object.values(baseline).every((n) => n === 0)).toBe(true);
+
+    await sql.begin(async (tx) => {
+      await tx`insert into teams(id,name) values(${ids.team},${`${RUN}:${ids.team}`})`;
+      await tx`insert into users(id,name,email,role,team_id,active)
+        values(${ids.staff},'Synthetic UC149 reviewer',${ids.staff + "@example.test"},'Staff',${ids.team},true)`;
+      await tx`insert into staff_profiles(id,user_id,auth_user_id,role,team_id,active)
+        values(${ids.profile},${ids.staff},${staffAuth},'Staff',${ids.team},true)`;
+      for (const [index, company] of ids.companies.entries()) {
+        // Public lists omit fixture-origin companies. These run-owned
+        // client-origin rows exist only in the newly gated disposable database.
+        await tx`insert into companies(id,company_name,cr_number,br_number,incorporation_date,
+          annual_return_basis_date,registered_office,company_secretary,assigned_owner_id,assigned_team_id,data_origin)
+          values(${company},${`Synthetic UC149 ${index}`},${company},${company},'2025-01-01',
+            '2026-01-01','Synthetic office','Synthetic secretary',${ids.staff},${ids.team},'client')`;
+      }
+      for (const [index, caseId] of ids.cases.entries()) {
+        await tx`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,
+          current_status,owner_id,reviewer_id)
+          values(${caseId},${ids.companies[index === 2 ? 1 : 0]},${2026 + index},'2026-01-01',
+            '2026-02-12','Documents pending',${ids.staff},${ids.staff})`;
+      }
+      await tx`insert into annual_return_checklist_items(id,case_id,item_label,due_date,status)
+        values(${ids.checklist},${ids.cases[0]},'Synthetic signed form','2026-02-12','Missing')`;
+      await tx`insert into client_company_memberships(id,auth_user_id,company_id,active) values
+        (${ids.memberships[0]},${ids.clientAuth},${ids.companies[0]},true),
+        (${ids.memberships[1]},${ids.clientAuth},${ids.companies[1]},false),
+        (${ids.memberships[2]},${ids.otherClientAuth},${ids.companies[1]},true)`;
+    });
+    fixturesCommitted = true;
+    record("fixtures-committed", { ids });
+
+    const repository = createDocumentRepository({ sql });
+    const reader = createDocumentRepository({ sql: observer });
+    const upload = async (label: string, replacementDocumentId?: string) => {
+      const objectKey = `${RUN}/${ids.companies[0]}/${label}.pdf`;
+      objectKeys.push(objectKey);
+      const intent = await repository.createUploadIntent({
+        companyId: ids.companies[0],
+        caseId: ids.cases[0],
+        checklistItemId:
+          label === "original" || label === "replacement" ? ids.checklist : undefined,
+        replacementDocumentId,
+        requestedByAuthUserId: ids.clientAuth,
+        category: "signature",
+        fileName: `${label}.pdf`,
+        contentType: "application/pdf",
+        expectedSizeBytes: 4,
+        checksum,
+        objectKey,
+        expiresAt: new Date(Date.now() + 900_000).toISOString(),
+      });
+      const document = await repository.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: null,
+        source: "client",
+      });
+      expect(document.currentVersionId).toBeTruthy();
+      record("upload-received", {
+        label,
+        intentId: intent.id,
+        documentId: document.id,
+        versionId: document.currentVersionId,
+      });
+      return {
+        intentId: intent.id,
+        documentId: document.id,
+        versionId: document.currentVersionId!,
+      };
+    };
+    const scan = async (document: Awaited<ReturnType<typeof upload>>) => {
+      // Controlled SQL stimulus only: 'provider' selects the production version
+      // binding branch. This fabricated result is NOT native scan/storage proof.
+      await repository.recordScanResult(
+        document.intentId,
+        {
+          status: "clean",
+          providerReference: `${RUN}:LOCAL-STUB-NOT-NATIVE`,
+          verifiedChecksum: checksum,
+          verifiedByteSize: 4,
+          documentVersionId: document.versionId,
+        },
+        {
+          verdictSource: "provider",
+          expectedChecksum: checksum,
+          expectedVersionId: document.versionId,
+        },
+      );
+      record("controlled-scan-result", { ...document, localStub: true, nativeProvider: false });
+    };
+    const review = (
+      document: Awaited<ReturnType<typeof upload>>,
+      decision: "verified" | "rejected",
+      reason?: string,
+    ) =>
+      repository.reviewDocument({
+        documentId: document.documentId,
+        expectedVersionId: document.versionId,
+        reviewerId: ids.staff,
+        reviewerAuthUserId: staffAuth,
+        decision,
+        reason,
+      });
+    const readOne = async (documentId: string): Promise<DocumentSummary> => {
+      const page = await reader.listDocumentPage({
+        id: documentId,
+        companyId: ids.companies[0],
+        caseId: ids.cases[0],
+      });
+      expect(page.documents).toHaveLength(1);
+      expect(page.nextCursor).toBeNull();
+      return page.documents[0];
+    };
+    const reviewRows = () => observer`select id,company_id,case_id,event_type,actor_id,metadata,
+      created_at::text,xmin::text row_version from timeline_events
+      where company_id=any(${ids.companies}::uuid[]) order by id`;
+    const original = await upload("original");
+    await scan(original);
+    const reason = "缺少董事簽署；請於第 2 頁簽名後補傳。\nKeep the signed page readable.";
+    await review(original, "rejected", reason);
+    const events = await reviewRows();
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      company_id: ids.companies[0],
+      case_id: ids.cases[0],
+      event_type: "document_reviewed",
+      actor_id: ids.staff,
+      metadata: {
+        documentId: original.documentId,
+        documentVersionId: original.versionId,
+        decision: "rejected",
+        reason,
+      },
+    });
+
+    // Later decoys must not shadow the authoritative reason. Each mismatch is
+    // independent, so dropping any one company/case/version/type/decision fence fails.
+    const decoys = [
+      {
+        company: ids.companies[1],
+        caseId: ids.cases[0],
+        type: "document_reviewed",
+        version: original.versionId,
+        decision: "rejected",
+      },
+      {
+        company: ids.companies[0],
+        caseId: ids.cases[1],
+        type: "document_reviewed",
+        version: original.versionId,
+        decision: "rejected",
+      },
+      {
+        company: ids.companies[0],
+        caseId: ids.cases[0],
+        type: "document_reviewed",
+        version: randomUUID(),
+        decision: "rejected",
+      },
+      {
+        company: ids.companies[0],
+        caseId: ids.cases[0],
+        type: "internal_note",
+        version: original.versionId,
+        decision: "rejected",
+      },
+      {
+        company: ids.companies[0],
+        caseId: ids.cases[0],
+        type: "document_reviewed",
+        version: original.versionId,
+        decision: "verified",
+      },
+    ];
+    for (const [index, decoy] of decoys.entries()) {
+      await sql`insert into timeline_events(company_id,case_id,event_type,actor_type,actor_id,description,metadata,created_at)
+        values(${decoy.company},${decoy.caseId},${decoy.type},'user',${ids.staff},'Synthetic projection decoy',
+          ${sql.json({ documentId: original.documentId, documentVersionId: decoy.version, decision: decoy.decision, reason: `PRIVATE-DECOY-${index}` })},
+          now() + ${index + 1}::int * interval '1 minute')`;
+    }
+    expect((await readOne(original.documentId)).rejectionReason).toBe(reason);
+
+    const request = new Request("https://example.test/uc149");
+    const auth = (authUserId: string): NeonSessionAdapter => ({
+      getSession: async () => ({ user: { id: authUserId, email: "uc149@example.test" } }),
+      signOut: async () => new Response(),
+    });
+    const client: AuthenticatedActor = {
+      authUserId: ids.clientAuth,
+      userId: null,
+      teamId: null,
+      role: "Client",
+      active: true,
+    };
+    const listPage = vi.fn(reader.listDocumentPage);
+    const listFor = (actor: AuthenticatedActor, companyId?: string, caseId = ids.cases[0]) =>
+      listDocumentPageForActor(
+        actor,
+        { companyId, caseId },
+        {
+          repository: { ...reader, listDocumentPage: listPage },
+          authorizeDocument: async (who, subject) => {
+            await requireClientCompanyAccess(request, subject.companyId, {
+              auth: auth(who.authUserId),
+              sql: observer,
+            });
+          },
+        },
+      );
+    expect((await listFor(client, ids.companies[0])).documents[0].rejectionReason).toBe(reason);
+    const auditBeforeDenials = [...(await reviewRows())];
+    for (const denied of [
+      () => listFor(client, ids.companies[1], ids.cases[2]), // persisted inactive membership
+      () => listFor({ ...client, authUserId: ids.otherClientAuth }, ids.companies[0]),
+      () => listFor(client),
+    ]) {
+      listPage.mockClear();
+      await expect(denied()).rejects.toThrow(/membership|company ID/);
+      expect(listPage).not.toHaveBeenCalled();
+    }
+    expect((await listFor(client, ids.companies[0], ids.cases[2])).documents).toEqual([]);
+    expect([...(await reviewRows())]).toEqual(auditBeforeDenials);
+
+    const snapshotOriginal = async () => {
+      const [row] = await observer`select to_jsonb(d) document,d.xmin::text row_version,
+        (select jsonb_agg(to_jsonb(v) order by v.id) from document_versions v where v.document_id=d.id) versions,
+        (select jsonb_agg(to_jsonb(e) order by e.id) from timeline_events e
+          where e.metadata->>'documentId'=d.id::text) events
+        from documents d where d.id=${original.documentId}`;
+      return row;
+    };
+    const beforeReplacement = await snapshotOriginal();
+    // Explicit fixture setup for a rejected requirement. We deliberately use
+    // reviewDocument above, not the annual-return service's SLA/work-item path.
+    await sql`update annual_return_checklist_items set status='Rejected',document_id=${original.documentId}
+      where id=${ids.checklist} and case_id=${ids.cases[0]}`;
+    const replacement = await upload("replacement", original.documentId);
+    expect(replacement.documentId).not.toBe(original.documentId);
+    expect(replacement.versionId).not.toBe(original.versionId);
+    expect(await readOne(replacement.documentId)).toMatchObject({
+      reviewStatus: "pending",
+      rejectionReason: null,
+      uploadStatus: "quarantined",
+    });
+    await scan(replacement);
+    expect(await readOne(replacement.documentId)).toMatchObject({
+      reviewStatus: "pending",
+      rejectionReason: null,
+      uploadStatus: "available",
+    });
+    const [item] =
+      await observer`select status,document_id,verified_at from annual_return_checklist_items where id=${ids.checklist}`;
+    expect(item).toEqual({
+      status: "Received",
+      document_id: replacement.documentId,
+      verified_at: null,
+    });
+    const [unreviewed] =
+      await observer`select reviewed_document_version_id,verified_by,verified_at from documents where id=${replacement.documentId}`;
+    expect(unreviewed).toEqual({
+      reviewed_document_version_id: null,
+      verified_by: null,
+      verified_at: null,
+    });
+    expect(await snapshotOriginal()).toEqual(beforeReplacement);
+
+    const beforeRefusals = [...(await reviewRows())];
+    await expect(
+      repository.reviewDocument({
+        documentId: replacement.documentId,
+        expectedVersionId: original.versionId,
+        reviewerId: ids.staff,
+        reviewerAuthUserId: staffAuth,
+        decision: "verified",
+      }),
+    ).rejects.toBeInstanceOf(DocumentVersionConflictError);
+    for (const decision of ["rejected", "verified"] as const) {
+      await expect(review(original, decision, "Conflicting retry")).rejects.toThrow(/immutable/);
+    }
+    expect([...(await reviewRows())]).toEqual(beforeRefusals);
+    expect(await snapshotOriginal()).toEqual(beforeReplacement);
+    expect((await readOne(replacement.documentId)).reviewStatus).toBe("pending");
+
+    const verified = await upload("verified");
+    await scan(verified);
+    await review(verified, "verified", "PRIVATE verification note");
+    expect(await readOne(verified.documentId)).toMatchObject({
+      reviewStatus: "verified",
+      rejectionReason: null,
+    });
+    const missing = await upload("missing-reason");
+    await scan(missing);
+    await review(missing, "rejected");
+    expect(await readOne(missing.documentId)).toMatchObject({
+      reviewStatus: "rejected",
+      rejectionReason: null,
+    });
+    // Controlled missing-history setup, using only the precise event just created.
+    const [missingEvent] = await observer<{ id: string }[]>`select id from timeline_events
+      where company_id=${ids.companies[0]} and case_id=${ids.cases[0]}
+        and event_type='document_reviewed' and metadata->>'documentId'=${missing.documentId}`;
+    expect(missingEvent).toBeDefined();
+    await sql`delete from timeline_events where id=${missingEvent.id}
+      and metadata->>'documentId'=${missing.documentId}`;
+    expect((await readOne(missing.documentId)).rejectionReason).toBeNull();
+
+    const stale = await upload("stale-history");
+    await scan(stale);
+    await review(stale, "rejected", "PRIVATE historical reason");
+    await sql.begin(async (tx) => {
+      // A legacy rejected decision and timeline event refer to superseded bytes.
+      // The current upload lineage remains intact; this is controlled history setup.
+      await tx`update document_versions set version_number=2 where id=${stale.versionId}`;
+      await tx`insert into document_versions(id,document_id,version_number,file_name,storage_url,superseded_by_version_id,superseded_at)
+        values(${ids.staleVersion},${stale.documentId},1,'uc149-history.pdf',${RUN + "/history"},${stale.versionId},now())`;
+      await tx`update timeline_events set metadata=jsonb_set(metadata,'{documentVersionId}',to_jsonb(${ids.staleVersion}::text))
+        where company_id=${ids.companies[0]} and case_id=${ids.cases[0]}
+          and event_type='document_reviewed' and metadata->>'documentId'=${stale.documentId}`;
+    });
+    // A current rejected pointer without a matching current-version event is null.
+    expect(await readOne(stale.documentId)).toMatchObject({
+      currentVersionId: stale.versionId,
+      reviewStatus: "rejected",
+      rejectionReason: null,
+    });
+    await sql.begin(async (tx) => {
+      await tx`update documents set reviewed_document_version_id=${ids.staleVersion} where id=${stale.documentId}`;
+      await tx`insert into timeline_events(company_id,case_id,event_type,actor_type,actor_id,description,metadata)
+        values(${ids.companies[0]},${ids.cases[0]},'document_reviewed','user',${ids.staff},'Synthetic current-version decoy',
+          ${tx.json({ documentId: stale.documentId, documentVersionId: stale.versionId, decision: "rejected", reason: "PRIVATE current event with stale review pointer" })})`;
+    });
+    // Even a matching event cannot make a superseded review current again.
+    expect(await readOne(stale.documentId)).toMatchObject({
+      currentVersionId: stale.versionId,
+      reviewStatus: "pending",
+      rejectionReason: null,
+    });
+    const clientPage = await listFor(client, ids.companies[0]);
+    expect(clientPage.documents).toHaveLength(5);
+    expect(
+      clientPage.documents.find((document) => document.id === original.documentId)?.rejectionReason,
+    ).toBe(reason);
+    expect(
+      clientPage.documents
+        .filter((document) => document.id !== original.documentId)
+        .every((document) => document.rejectionReason === null),
+    ).toBe(true);
+    expect(await snapshotOriginal()).toEqual(beforeReplacement);
+    const [auditCount] =
+      await observer`select count(*)::int count from annual_return_audit_events where case_id=any(${ids.cases}::uuid[])`;
+    expect(auditCount.count).toBe(0); // No hidden service/SLA side effects.
+    record("observer-readback", {
+      ids,
+      original,
+      replacement,
+      verified,
+      missing,
+      stale,
+      documents: clientPage.documents,
+      checklist: item,
+      originalUnchanged: true,
+      auditCount: auditCount.count,
+    });
+    assertionsPassed = true;
+    record("assertions-complete", { assertionsPassed });
+  } catch (error) {
+    record("scenario-failed", { fixturesCommitted, assertionsPassed, ids });
+    failures.push(error);
+  } finally {
+    try {
+      if (raw && observerRaw && fixturesCommitted) {
+        // Raw clients are reserved for awaited teardown after the lifetime guard
+        // aborts. Recheck server identity before ANY cleanup, and preserve on drift.
+        for (const client of [raw, observerRaw]) {
+          const value = await identity(client);
+          expect(value.database).toBe(DATABASE);
+          expect(value.db_role).toBe(DB_USER);
+          expect(value.system_id).toBe(systemId);
+        }
+        await raw.begin(async (tx) => {
+          // Discover only descendants of exact committed, fresh fixture parents.
+          // Freeze their exact IDs before deleting; no prefix/blanket deletes.
+          const intents = await tx<
+            { id: string; object_key: string }[]
+          >`select id,object_key from document_upload_intents
+            where company_id=${ids.companies[0]} and case_id=${ids.cases[0]}`;
+          expect(intents.every((row) => objectKeys.includes(row.object_key))).toBe(true);
+          const documents = await tx<
+            { id: string; storage_url: string }[]
+          >`select id,storage_url from documents
+            where company_id=${ids.companies[0]} and case_id=${ids.cases[0]}`;
+          expect(documents.every((row) => objectKeys.includes(row.storage_url))).toBe(true);
+          const documentIds = documents.map((row) => row.id);
+          const intentIds = intents.map((row) => row.id);
+          const versions = await tx<
+            { id: string }[]
+          >`select id from document_versions where document_id=any(${documentIds}::uuid[])`;
+          const versionIds = versions.map((row) => row.id);
+          const scans = await tx<
+            { id: string }[]
+          >`select id from document_scan_jobs where intent_id=any(${intentIds}::uuid[])`;
+          const analyses = await tx<
+            { id: string }[]
+          >`select id from document_analysis_jobs where document_version_id=any(${versionIds}::uuid[])`;
+          const events = await tx<{ id: string }[]>`select id from timeline_events
+            where company_id=any(${ids.companies}::uuid[]) and case_id=any(${ids.cases}::uuid[])`;
+          record("exact-cleanup-ids", {
+            ids,
+            intents,
+            documents,
+            versions,
+            scans,
+            analyses,
+            events,
+          });
+          await tx`delete from timeline_events where id=any(${events.map((row) => row.id)}::uuid[])`;
+          await tx`delete from annual_return_checklist_items where id=${ids.checklist} and case_id=${ids.cases[0]}`;
+          await tx`delete from document_analysis_jobs where id=any(${analyses.map((row) => row.id)}::uuid[])`;
+          await tx`delete from document_scan_jobs where id=any(${scans.map((row) => row.id)}::uuid[])`;
+          // Remove the single owned superseded history row first (self-FK restrict).
+          await tx`delete from document_versions where id=${ids.staleVersion} and document_id=any(${documentIds}::uuid[])`;
+          await tx`delete from document_versions where id=any(${versionIds}::uuid[]) and document_id=any(${documentIds}::uuid[])`;
+          await tx`delete from document_upload_intents where id=any(${intentIds}::uuid[])`;
+          await tx`delete from documents where id=any(${documentIds}::uuid[])`;
+          await tx`delete from client_company_memberships where id=any(${ids.memberships}::uuid[])`;
+          await tx`delete from annual_return_cases where id=any(${ids.cases}::uuid[])`;
+          await tx`delete from companies where id=any(${ids.companies}::uuid[])`;
+          await tx`delete from staff_profiles where id=${ids.profile} and user_id=${ids.staff}`;
+          await tx`delete from users where id=${ids.staff}`;
+          await tx`delete from teams where id=${ids.team}`;
+        });
+        const remaining = await fixtureCounts(observerRaw);
+        record("cleanup-readback", { ids, remaining, assertionsPassed });
+        expect(Object.values(remaining).every((n) => n === 0)).toBe(true);
+      } else record("no-committed-fixtures-to-clean", { fixturesCommitted, ids });
+    } catch (error) {
+      record("cleanup-failed-preserve-target", { fixturesCommitted, assertionsPassed, ids });
+      failures.push(error);
+    } finally {
+      const closes = await Promise.allSettled([raw?.end(), observerRaw?.end()]);
+      for (const result of closes) if (result.status === "rejected") failures.push(result.reason);
+      try {
+        closeSync(fd);
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+  }
+  if (failures.length === 1) throw failures[0];
+  if (failures.length > 1)
+    throw new AggregateError(failures, "UC149 scenario and teardown failed.");
+}

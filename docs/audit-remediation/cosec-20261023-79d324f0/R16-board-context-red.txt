@@ -1,0 +1,232 @@
+
+> test
+> vitest run --project unit src/features/annual-return/components/production-command-center.interaction.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/annual-return/components/production-command-center.interaction.test.tsx (23 tests | 1 failed) 13596ms
+     × bounds work context reads to the displayed cases instead of unrelated global work 1128ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/annual-return/components/production-command-center.interaction.test.tsx > production annual return command center > bounds work context reads to the displayed cases instead of unrelated global work
+AssertionError: expected "vi.fn()" to be called with arguments: [ { data: { view: 'team', …(2) } } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+      "data": {
+-       "caseIds": [
+-         "11111111-1111-4111-8111-111111111111",
+-       ],
+-       "limit": 200,
+        "view": "team",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <main
+        class="flex-1 space-y-6 p-6"
+      >
+        <div
+          class="flex flex-wrap items-start justify-between gap-3"
+        >
+          <div
+            class="min-w-0 space-y-1"
+          >
+            <p
+              class="text-sm font-medium text-muted-foreground"
+            >
+              案件與客戶
+            </p>
+            <h1
+              class="font-display text-2xl font-semibold text-foreground"
+            >
+              周年申報
+            </h1>
+          </div>
+          <div
+            class="flex shrink-0 flex-wrap items-center gap-2"
+          >
+            <div
+              class="flex gap-2"
+            >
+              <button
+                class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+                type="button"
+              >
+                新增案件
+              </button>
+              <a
+                href="/annual-returns"
+              >
+                開啟工作隊列
+              </a>
+            </div>
+          </div>
+        </div>
+        <div
+          class="grid gap-3 md:grid-cols-4 xl:grid-cols-8"
+        >
+          <div
+            class="rounded-md border bg-background px-3 py-3"
+          >
+            <p
+              class="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              7 日內到期
+            </p>
+            <p
+              class="mt-2 text-lg font-semibold"
+            >
+              0
+            </p>
+          </div>
+          <div
+            class="rounded-md border bg-background px-3 py-3"
+          >
+            <p
+              class="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              30 日內到期
+            </p>
+            <p
+              class="mt-2 text-lg font-semibold"
+            >
+              1
+            </p>
+          </div>
+          <div
+            class="rounded-md border bg-background px-3 py-3"
+          >
+            <p
+              class="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              逾期未完成（案）
+            </p>
+            <p
+              class="mt-2 text-lg font-semibold"
+            >
+              0
+            </p>
+          </div>
+          <div
+            class="rounded-md border bg-background px-3 py-3"
+          >
+            <p
+              class="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              高風險（範圍內）
+            </p>
+            <p
+              class="mt-2 text-lg font-semibold"
+            >
+              0
+            </p>
+          </div>
+          <div
+            class="rounded-md border bg-background px-3 py-3"
+          >
+            <p
+              class="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              待核對文件（份）
+            </p>
+            <p
+              class="mt-2 text-lg font-semibold"
+            >
+              0
+            </p>
+          </div>
+          <div
+            class="rounded-md border bg-background px-3 py-3"
+          >
+            <p
+              class="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              有待核對文件（案）
+            </p>
+            <p
+              class="mt-2 text-lg font-semibold"
+            >
+              0
+            </p>
+          </div>
+          <div
+            class="rounded-md border bg-background px-3 py-3"
+          >
+            <p
+              class="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              待付款
+            </p>
+            <p
+              class="mt-2 text-lg font-semibold"
+            >
+              0
+            </p>
+          </div>
+          <div
+            class="rounded-md border bg-background px-3 py-3"
+          >
+            <p
+              class="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              範圍內案件
+            </p>
+            <p
+              class="mt-2 text-lg font-semibold"
+            >
+              1
+            </p>
+          </div>
+        </div>
+        <p
+          class="text-xs text-muted-foreground"
+        >
+          統計覆蓋目前完整授權及篩選範圍；未完成指標排除 已遞交／已完成。待核對包括已收到但未覆核文件，追件原因以案件完成度為準。
+        </p>
+        <p
+          class="text-sm text-muted-foreground"
+        >
+          正式範圍：排除測試資料；歷史資料只供查閱。
+        </p>
+        <section
+          class="rounded-lg border bg-card"
+        >
+          <div
+            class...
+ ❯ src/features/annual-return/components/production-command-center.interaction.test.tsx:104:57
+
+    102|     serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [mak…
+    103|     renderBoard();
+    104|     await waitFor(() => expect(serverFns.listWorkQueue).toHaveBeenCall…
+       |                                                         ^
+    105|   });
+    106|   it("searches authorised owners beyond the first200 directory entries…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 passed (23)
+   Start at  05:09:23
+   Duration  18.34s (transform 445ms, setup 0ms, import 1.45s, tests 13.60s, environment 2.64s)
+

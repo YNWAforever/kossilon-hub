@@ -1,0 +1,28 @@
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-Q1kJQt
+[WebServer] (node:38560) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+Running 3 tests using 1 worker
+
+(node:39220) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-Q1kJQt
+[WebServer] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+  ok 1 [full390] › e2e\r22-viewport-zoom.spec.ts:46:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial (24.5s)
+(node:11028) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-Q1kJQt
+  ok 2 [desktop100] › e2e\r22-viewport-zoom.spec.ts:46:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial (17.8s)
+(node:37136) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-Q1kJQt
+  ok 3 [desktop200] › e2e\r22-viewport-zoom.spec.ts:46:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial (26.7s)
+[local-browser-evidence] historical bytes unchanged: 9
+
+  3 passed (1.4m)

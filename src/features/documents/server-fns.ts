@@ -16,6 +16,8 @@ import type {
   DocumentRepository,
   DocumentRecoveryRequest,
   DocumentListFilters,
+  DocumentUploadIntent,
+  PrivateDocument,
 } from "./repository";
 import { assertDocumentServable, canApproveDocument, documentSafetyOf } from "./safety";
 import { createDeterministicDocumentScanner } from "./scanner";
@@ -26,6 +28,7 @@ import {
   createOpaqueDocumentKey,
 } from "./storage";
 import { DocumentVersionConflictError, withDocumentVersionConflict } from "./version-conflict";
+import { documentSearchFields } from "./list-filters";
 
 export function createDocumentStorageForProviderMode(
   providerMode: ProviderMode,
@@ -223,6 +226,17 @@ async function sha256Hex(body: Uint8Array): Promise<string> {
   );
 }
 
+// Keep the repository (and SQL client module) behind the server-only boundary,
+// just like createDocumentContextForRequest's lazy repository import.
+const committedUploadDocument = createServerOnlyFn(
+  async (intent: DocumentUploadIntent, document: PrivateDocument | null) => {
+    const assertCommittedUploadMatchesDocument: typeof import("./repository").assertCommittedUploadMatchesDocument =
+      (await import("./repository")).assertCommittedUploadMatchesDocument;
+    assertCommittedUploadMatchesDocument(intent, document);
+    return document;
+  },
+);
+
 function bytesFromBase64(value: string): Uint8Array {
   const binary = atob(value);
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
@@ -235,6 +249,7 @@ export async function createDocumentUploadIntentForActor(
     caseId?: string;
     checklistItemId?: string;
     replacementDocumentId?: string;
+    uploadRequestId?: string;
     recovery?: DocumentRecoveryRequest;
     category: (typeof DOCUMENT_CATEGORIES)[number];
     fileName: string;
@@ -244,6 +259,10 @@ export async function createDocumentUploadIntentForActor(
   },
   dependencies: DocumentOperationDependencies,
 ) {
+  if (input.uploadRequestId !== undefined) {
+    z.string().guid().parse(input.uploadRequestId);
+    if (input.recovery) throw new Error("Recovery cannot include an upload request ID.");
+  }
   if (input.recovery) assertStaffAccess(actor);
   await authorizeCompanyScope(actor, input, dependencies);
   let recoveryObjectState: "missing" | undefined;
@@ -284,7 +303,11 @@ export async function createDocumentUploadIntentForActor(
     contentType: input.contentType,
     expectedSizeBytes: input.sizeBytes,
     checksum: input.checksum,
-    objectKey: createOpaqueDocumentKey(input),
+    // The authenticated actor comes only from the request resolver. Hash both
+    // values so storage paths disclose neither actor nor client request IDs.
+    objectKey: input.uploadRequestId
+      ? `documents/request-${await sha256Hex(new TextEncoder().encode(JSON.stringify([actor.authUserId, input.uploadRequestId.toLowerCase()])))}`
+      : createOpaqueDocumentKey(input),
     expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
   });
 }
@@ -317,6 +340,28 @@ export async function previewDocumentRecoveryForActor(
   };
 }
 
+/** A read-only persisted receipt; never transmits bytes or resumes a write. */
+export async function readDocumentUploadReceiptForActor(
+  actor: AuthenticatedActor,
+  intentId: string,
+  dependencies: DocumentOperationDependencies,
+) {
+  assertStaffAccess(actor);
+  await authorizeIntentById(actor, intentId, dependencies);
+  const intent = await dependencies.repository.getUploadIntent(intentId);
+  if (!intent || intent.id !== intentId) throw new Error("Upload intent not found.");
+  if (intent.requestedByAuthUserId !== actor.authUserId)
+    throw new Error("Forbidden: upload intent belongs to another user.");
+  if (!intent.documentId) return { intentId, state: "unconfirmed" as const };
+  await committedUploadDocument(
+    intent,
+    await dependencies.repository.getDocument(intent.documentId),
+  );
+  await authorizeIntentById(actor, intentId, dependencies);
+  // Do not expose storage keys, bytes, checksums or scanner/provider internals.
+  return { intentId, state: "received" as const, documentId: intent.documentId };
+}
+
 export async function finalizeDocumentUploadForActor(
   actor: AuthenticatedActor,
   intentId: string,
@@ -325,16 +370,26 @@ export async function finalizeDocumentUploadForActor(
 ) {
   const intent = await dependencies.repository.getUploadIntent(intentId);
   if (!intent) throw new Error("Upload intent not found.");
-  if (intent.status !== "created") throw new Error("Upload intent cannot be finalized.");
-  if (Date.parse(intent.expiresAt) <= Date.now()) throw new Error("Upload intent expired.");
   await authorizeIntentById(actor, intentId, dependencies);
-  if (actor.role === "Client" && intent.requestedByAuthUserId !== actor.authUserId) {
+  if (intent.requestedByAuthUserId !== actor.authUserId) {
     throw new Error("Forbidden: upload intent belongs to another user.");
   }
   if (body.byteLength !== intent.expectedSizeBytes)
     throw new Error("Uploaded size does not match intent.");
   if ((await sha256Hex(body)) !== intent.checksum)
     throw new Error("Uploaded checksum does not match intent.");
+  if (intent.documentId) {
+    const document = await committedUploadDocument(
+      intent,
+      await dependencies.repository.getDocument(intent.documentId),
+    );
+    // Recheck authority after asynchronous readback; a replay never bypasses
+    // a membership revocation or actor change while the operation was pending.
+    await authorizeIntentById(actor, intentId, dependencies);
+    return document;
+  }
+  if (intent.status !== "created") throw new Error("Upload intent cannot be finalized.");
+  if (Date.parse(intent.expiresAt) <= Date.now()) throw new Error("Upload intent expired.");
   await dependencies.storage.put({
     objectKey: intent.objectKey,
     body,
@@ -342,6 +397,7 @@ export async function finalizeDocumentUploadForActor(
     contentType: intent.contentType,
     sizeBytes: intent.expectedSizeBytes,
   });
+  await authorizeIntentById(actor, intentId, dependencies);
   return dependencies.repository.finalizeUploadIntent({
     intentId,
     uploadedBy: actor.userId,
@@ -459,11 +515,11 @@ export async function listDocumentsForActor(
   if (actor.role === "Client") {
     if (!filters.companyId) throw new Error("Client document lists require a company ID.");
     await authorizeCompanyScope(actor, { companyId: filters.companyId }, dependencies);
-    return dependencies.repository.listDocuments(filters);
+    return dependencies.repository.listDocuments({ ...filters, includeFixtures: false });
   }
 
   const scope = documentFiltersForActor(actor);
-  return dependencies.repository.listDocuments({ ...filters, ...scope });
+  return dependencies.repository.listDocuments({ ...filters, ...scope, includeFixtures: false });
 }
 export async function listDocumentPageForActor(
   actor: AuthenticatedActor,
@@ -474,11 +530,12 @@ export async function listDocumentPageForActor(
   if (actor.role === "Client") {
     if (!filters.companyId) throw new Error("Client document lists require a company ID.");
     await authorizeCompanyScope(actor, { companyId: filters.companyId }, dependencies);
-    return dependencies.repository.listDocumentPage(filters);
+    return dependencies.repository.listDocumentPage({ ...filters, includeFixtures: false });
   }
   return dependencies.repository.listDocumentPage({
     ...filters,
     ...documentFiltersForActor(actor),
+    includeFixtures: false,
   });
 }
 
@@ -498,13 +555,14 @@ const MAX_UPLOAD_BASE64_LENGTH = Math.ceil(MAX_UPLOAD_BYTES / 3) * 4;
 
 const createIntentSchema = z
   .object({
-    companyId: z.string().uuid(),
-    caseId: z.string().uuid().optional(),
-    checklistItemId: z.string().uuid().optional(),
-    replacementDocumentId: z.string().uuid().optional(),
+    companyId: z.string().guid(),
+    caseId: z.string().guid().optional(),
+    checklistItemId: z.string().guid().optional(),
+    replacementDocumentId: z.string().guid().optional(),
+    uploadRequestId: z.string().guid().optional(),
     recovery: z
       .object({
-        documentId: z.string().uuid(),
+        documentId: z.string().guid(),
         expectedToken: z.string().regex(/^[0-9a-f]{32}$/),
         reason: z.string().trim().min(1).max(500),
       })
@@ -516,9 +574,12 @@ const createIntentSchema = z
     sizeBytes: z.number().int().positive().max(MAX_UPLOAD_BYTES),
     checksum: z.string().regex(/^[0-9a-f]{64}$/),
   })
-  .strict();
-const intentIdSchema = z.object({ intentId: z.string().uuid() }).strict();
-const documentIdSchema = z.object({ documentId: z.string().uuid() }).strict();
+  .strict()
+  .refine((input) => !input.recovery || !input.uploadRequestId, {
+    message: "Recovery cannot include an upload request ID.",
+  });
+const intentIdSchema = z.object({ intentId: z.string().guid() }).strict();
+const documentIdSchema = z.object({ documentId: z.string().guid() }).strict();
 
 export const previewDocumentRecovery = createServerFn({ method: "GET" })
   .validator(documentIdSchema)
@@ -533,6 +594,14 @@ export const createDocumentUploadIntent = createServerFn({ method: "POST" })
   .handler(({ data }) =>
     withDefaultDocumentContext((actor, dependencies) =>
       createDocumentUploadIntentForActor(actor, data, dependencies),
+    ),
+  );
+
+export const readDocumentUploadReceipt = createServerFn({ method: "GET" })
+  .validator(intentIdSchema)
+  .handler(({ data }) =>
+    withDefaultDocumentContext((actor, dependencies) =>
+      readDocumentUploadReceiptForActor(actor, data.intentId, dependencies),
     ),
   );
 
@@ -562,7 +631,7 @@ export const scanQuarantinedDocument = createServerFn({ method: "POST" })
 export const downloadDocument = createServerFn({ method: "GET" })
   .validator(
     z
-      .object({ documentId: z.string().uuid(), expectedVersionId: z.string().uuid().optional() })
+      .object({ documentId: z.string().guid(), expectedVersionId: z.string().guid().optional() })
       .strict(),
   )
   .handler(({ data }) =>
@@ -586,7 +655,7 @@ export const downloadDocument = createServerFn({ method: "GET" })
 export const listDocuments = createServerFn({ method: "GET" })
   .validator(
     z
-      .object({ companyId: z.string().uuid().optional(), caseId: z.string().uuid().optional() })
+      .object({ companyId: z.string().guid().optional(), caseId: z.string().guid().optional() })
       .strict(),
   )
   .handler(({ data }) =>
@@ -594,12 +663,11 @@ export const listDocuments = createServerFn({ method: "GET" })
       listDocumentsForActor(actor, data, dependencies),
     ),
   );
-const documentListPageSchema = z
+export const documentListPageSchema = z
   .object({
-    companyId: z.string().uuid().optional(),
-    caseId: z.string().uuid().optional(),
-    q: z.string().max(200).optional(),
-    category: z.enum(DOCUMENT_CATEGORIES).optional(),
+    companyId: z.string().guid().optional(),
+    caseId: z.string().guid().optional(),
+    ...documentSearchFields,
     cursor: z.string().max(2048).optional(),
     limit: z.number().int().min(1).max(200).optional(),
   })
@@ -616,7 +684,7 @@ export const reviewDocument = createServerFn({ method: "POST" })
   .validator(
     documentIdSchema
       .extend({
-        expectedVersionId: z.string().uuid(),
+        expectedVersionId: z.string().guid(),
         decision: z.enum(["verified", "rejected"]),
         reason: z.string().trim().max(500).optional(),
       })

@@ -1,0 +1,13 @@
+{
+  "source_sha": "57cc413fdd37aca1eb230fe2973757e8526f1209",
+  "parent_sha": "1a9f3fef8e419a3cc75d0d62e90795c3d8134d68",
+  "paths": [
+    "src/features/operations/repository.ts",
+    "src/server/maintenance-schema.ts",
+    "src/server/maintenance-schema.integration.test.ts",
+    "src/server/maintenance-trigger-runtime.ts",
+    "src/server/maintenance-trigger-runtime.test.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "operation": "ordinary local commit only; no push/merge/deploy"
+}

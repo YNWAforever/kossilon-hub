@@ -1,4 +1,5 @@
 import { readFileSync, readdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
@@ -8,7 +9,7 @@ function sourcesUnder(dir: URL): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     if (entry.isDirectory()) return sourcesUnder(new URL(`${entry.name}/`, dir));
     if (!/\.tsx?$/.test(entry.name) || entry.name.includes(".test.")) return [];
-    return [new URL(entry.name, dir).pathname];
+    return [fileURLToPath(new URL(entry.name, dir))];
   });
 }
 

@@ -1,0 +1,126 @@
+
+> test:e2e:local
+> playwright test --config playwright.local.config.ts
+
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-F8TElT
+[WebServer] (node:18348) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+Running 12 tests using 1 worker
+
+(node:18376) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-F8TElT
+[WebServer] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:29 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:29 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:30 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[WebServer] 上午5:35:30 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[WebServer] 上午5:35:32 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[WebServer] 上午5:35:32 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+  ok  1 [mobile390] › e2e\audit-persona-local.spec.ts:4:1 › LOCAL demo rejects a Staff session labelled as Admin despite the same dashboard landing (10.4s)
+[WebServer] 上午5:35:33 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:33 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+  ok  2 [mobile390] › e2e\audit-release-demo.spec.ts:5:1 › LOCAL supplemental: real DOCX parser retains paragraphs, Unicode and literal markup (1.4s)
+[WebServer] 上午5:35:35 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:35 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+  ok  3 [mobile390] › e2e\audit-release-demo.spec.ts:39:1 › LOCAL supplemental: real PDF parser and worker extract a synthetic file without a provider claim (2.4s)
+[WebServer] 上午5:35:37 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:37 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:37 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[WebServer] 上午5:35:37 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[WebServer] 上午5:35:38 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[WebServer] 上午5:35:38 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+  ok  4 [mobile390] › e2e\local-ux.spec.ts:4:1 › Admin daily entry, all links, keyboard drawer, readable settings and touch targets (4.8s)
+[WebServer] 上午5:35:41 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:41 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:42 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[WebServer] 上午5:35:42 [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+  ok  5 [mobile390] › e2e\local-ux.spec.ts:64:1 › Staff retains daily links while Admin settings/actions stay hidden (1.5s)
+[WebServer] 上午5:35:43 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:43 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:44 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:44 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+  ok  6 [mobile390] › e2e\performance.spec.ts:3:1 › captures actual local demo browser timing and parser network boundaries (2.3s)
+(node:34072) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-F8TElT
+[WebServer] 上午5:35:51 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:51 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+  ok  7 [desktop1280] › e2e\audit-persona-local.spec.ts:4:1 › LOCAL demo rejects a Staff session labelled as Admin despite the same dashboard landing (2.9s)
+  ok  8 [desktop1280] › e2e\audit-release-demo.spec.ts:5:1 › LOCAL supplemental: real DOCX parser retains paragraphs, Unicode and literal markup (598ms)
+[WebServer] 上午5:35:55 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:55 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+  ok  9 [desktop1280] › e2e\audit-release-demo.spec.ts:39:1 › LOCAL supplemental: real PDF parser and worker extract a synthetic file without a provider claim (1.2s)
+[WebServer] 上午5:35:56 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:56 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+  ok 10 [desktop1280] › e2e\local-ux.spec.ts:4:1 › Admin daily entry, all links, keyboard drawer, readable settings and touch targets (2.5s)
+[WebServer] 上午5:35:59 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:35:59 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+  ok 11 [desktop1280] › e2e\local-ux.spec.ts:64:1 › Staff retains daily links while Admin settings/actions stay hidden (1.6s)
+[WebServer] 上午5:36:00 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:36:00 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:36:01 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - LoginPage
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[WebServer] 上午5:36:01 [vite] (client) [console.warn] [tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+[WebServer] - WorkQueueRoute
+[WebServer] For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+  ok 12 [desktop1280] › e2e\performance.spec.ts:3:1 › captures actual local demo browser timing and parser network boundaries (2.4s)
+[local-browser-evidence] historical bytes unchanged: 9
+
+  12 passed (1.3m)

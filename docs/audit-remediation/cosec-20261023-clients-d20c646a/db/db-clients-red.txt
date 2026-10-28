@@ -1,0 +1,40 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Users/laich/Documents/kossilon-hub/cosec-20261023[39m
+
+ [31m❯[39m [30m[45m db [49m[39m src/features/clients/create-recovery.integration.test.ts [2m([22m[2m10 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[33m 1279[2mms[22m[39m
+[31m     [31m×[31m UC135-companyName[39m[32m 111[2mms[22m[39m
+[31m     [31m×[31m UC135-registeredOffice[39m[32m 92[2mms[22m[39m
+[31m     [31m×[31m UC135-companySecretary[39m[32m 82[2mms[22m[39m
+     [32m✓[39m UC135-correction[32m 177[2mms[22m[39m
+     [32m✓[39m UC135-rollback[32m 110[2mms[22m[39m
+     [32m✓[39m UC136-crNumber[32m 136[2mms[22m[39m
+     [32m✓[39m UC136-brNumber[32m 119[2mms[22m[39m
+     [32m✓[39m UC136-race-crNumber[32m 163[2mms[22m[39m
+     [32m✓[39m UC136-race-brNumber[32m 180[2mms[22m[39m
+     [32m✓[39m UC137-certificate[32m 108[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m7 passed[39m[22m[90m (10)[39m
+[2m   Start at [22m 21:06:26
+[2m   Duration [22m 1.86s[2m (transform 239ms, setup 0ms, import 423ms, tests 1.28s, environment 0ms)[22m
+
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/clients/create-recovery.integration.test.ts[2m > [22mUC135–137 client validation, duplicate refusal and normalized readback[2m > [22mUC135-companyName
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/clients/create-recovery.integration.test.ts[2m > [22mUC135–137 client validation, duplicate refusal and normalized readback[2m > [22mUC135-registeredOffice
+[41m[1m FAIL [22m[49m [30m[45m db [49m[39m src/features/clients/create-recovery.integration.test.ts[2m > [22mUC135–137 client validation, duplicate refusal and normalized readback[2m > [22mUC135-companySecretary
+[31m[1mAssertionError[22m: expected undefined to be defined[39m
+[36m [2m❯[22m scenario src/features/clients/create-recovery.integration.test.ts:[2m223:25[22m[39m
+    [90m221|[39m       })[33m;[39m
+    [90m222|[39m       [35mconst[39m after [33m=[39m [35mawait[39m [34mreadback[39m([32m"invalid-readback"[39m)[33m;[39m
+    [90m223|[39m       [34mexpect[39m(bad[33m.[39merror)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+    [90m   |[39m                         [31m^[39m
+    [90m224|[39m       [34mexpect[39m([34merrorFacts[39m(bad[33m.[39merror)[33m.[39missues)[33m.[39m[34mtoEqual[39m(
+    [90m225|[39m         expect.arrayContaining([expect.objectContaining({ path: [field…
+[90m [2m❯[22m src/features/clients/create-recovery.integration.test.ts:[2m96:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+

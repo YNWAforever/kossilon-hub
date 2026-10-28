@@ -1,0 +1,3 @@
+VERIFIED source=2b25cacf4af6a1c2fc529e4b585000fe40bab40d; evidence_files=394
+VERIFIED original_rows=184; native=70_BLOCKED/114_NOT_RUN/0_PASS; NO_GO
+VERIFIED browser=3+2_PASS; checkpoints=48; native_surface_images=60; actual_page_zoom=1/2

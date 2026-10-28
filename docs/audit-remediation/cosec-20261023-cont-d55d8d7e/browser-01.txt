@@ -1,0 +1,4 @@
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-rLTci1
+[WebServer] (node:12616) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

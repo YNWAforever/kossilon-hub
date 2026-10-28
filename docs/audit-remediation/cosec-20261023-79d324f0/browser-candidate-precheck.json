@@ -1,0 +1,10 @@
+{
+  "reuse_existing_server": false,
+  "data_mode": "demo",
+  "observed_utc": "2026-10-22T22:20:04.2903866Z",
+  "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+  "port": 5180,
+  "native_auth": false,
+  "free_memory_kib": 6007940,
+  "listeners_before": 0
+}

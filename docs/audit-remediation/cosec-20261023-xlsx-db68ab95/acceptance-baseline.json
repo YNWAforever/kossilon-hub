@@ -1,0 +1,15 @@
+{
+  "record_count": 184,
+  "native_passes": 0,
+  "native_results": [
+    {
+      "Name": "BLOCKED",
+      "Count": 70
+    },
+    {
+      "Name": "NOT_RUN",
+      "Count": 114
+    }
+  ],
+  "status": "intake; no new passes applied"
+}

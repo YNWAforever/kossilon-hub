@@ -1,0 +1,69 @@
+{
+  "run_id": "cosec-20261024-handover-exec-a30e04f1",
+  "source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+  "parent_sha": "104af5c4875d2f10b595ec330fcb2e1d07e87201",
+  "previous_candidate": "209aef6c78fe1ded6ad3a68eba4eaa9bd7304243",
+  "repo": "https://github.com/YNWAforever/kossilon-hub.git",
+  "branch": "codex/cosec-20261023",
+  "phase": "UC186_LOCAL_CASE_WORK_HANDOVER_AND_CONCURRENCY",
+  "release_gate": "NO_GO",
+  "original_uc186": "PARTIAL_SCOPED",
+  "local_core_functional_scope": "PASS",
+  "required_local_checks": "INCOMPLETE",
+  "deployed": false,
+  "native_matrix": {
+    "BLOCKED": 70,
+    "NOT_RUN": 114,
+    "PASS": 0
+  },
+  "checks": {
+    "unit": {
+      "result": "PASS",
+      "receipt": "unit-final.json",
+      "log": "unit-final.txt",
+      "tests": 2780,
+      "files": 288
+    },
+    "typecheck": {
+      "result": "PASS",
+      "receipt": "typecheck-accepted.json",
+      "log": "typecheck-accepted.txt"
+    },
+    "lint": {
+      "result": "PASS",
+      "receipt": "lint-accepted.json",
+      "log": "lint-accepted.txt"
+    },
+    "build": {
+      "result": "NOT_RUN_RESOURCE",
+      "receipt": "resource-checks.jsonl",
+      "stage": "build-accepted",
+      "free_bytes": 1535733760,
+      "minimum_gib": 3
+    },
+    "sql": {
+      "result": "PASS_LOCAL_INJECTED_SESSION_SUPERUSER",
+      "tests": 1,
+      "files": 1,
+      "log": "db/test-green-r4.txt",
+      "journey": "db/UC186-green-r4.jsonl"
+    }
+  },
+  "auth_runtime_verified": false,
+  "native_http_db_rls_verified": false,
+  "isolated_runtime": {
+    "result": "PASS_LOCAL_SQL_INJECTED_SESSION_SUPERUSER",
+    "containers_created": 5,
+    "cleanup": "ALL_5_DISPOSED_SEALED_AND_CREDENTIALS_REMOVED",
+    "external_http_calls": 0,
+    "inventory": "owned-inventory.json"
+  },
+  "remaining_local": [
+    "build after original3GiB RAM gate"
+  ],
+  "native_plan": "NATIVE-PLAN.md",
+  "coverage": "COVERAGE.md",
+  "blockers": "blockers.md",
+  "rollback": "ordinary new commit reverting 4d63818fe2562146f85e9a7b9917d8f0eb58f4c1; retain evidence; no production effects; committed future real business handovers require separately authorized compensation",
+  "evidence_manifest": "evidence-manifest.json"
+}

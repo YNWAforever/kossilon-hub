@@ -1,0 +1,13 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |db| src/features/admin/last-admin.integration.test.ts (1 test) 10347ms
+   ✓ UC185 refuses sole-Admin removal and serializes opposite removals with exact audit readback  10345ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:52:52
+   Duration  10.93s (transform 987ms, setup 0ms, import 152ms, tests 10.35s, environment 0ms)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

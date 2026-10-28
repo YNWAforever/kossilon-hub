@@ -1,0 +1,10 @@
+{
+  "mode": "read-only demo",
+  "ci_no_reuse": true,
+  "exit_code": 0,
+  "source_sha": "e8ecf3fad979adc4321a58eb64a90d0927e175de",
+  "auth_runtime_verified": false,
+  "channel": "msedge",
+  "finished_utc": "2026-10-22T22:20:41.7355080Z",
+  "command": "npm run test:e2e:local"
+}

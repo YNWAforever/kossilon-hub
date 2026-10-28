@@ -1,0 +1,27 @@
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 /workspace/kossilon-hub
+
+[tanstack-router] These exports from "/workspace/kossilon-hub/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+[tanstack-router] These exports from "/workspace/kossilon-hub/src/routes/login.tsx" will not be code-split and will increase your bundle size:
+- LoginPage
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+ ❯ |unit| scripts/validate-neon-auth-demo.test.ts (22 tests | 2 failed) 372ms
+     × redacts CLI startup errors for an unreadable --env-file: missing 167ms
+     × redacts CLI startup errors for an unreadable --env-file: directory 182ms
+ ❯ |unit| scripts/audit-performance-report.test.ts (26 tests | 1 failed) 680ms
+     × reports actual CLI exits for complete/incomplete/invalid input without exposing values 253ms
+ ❯ |unit| scripts/audit-performance-samples.test.ts (15 tests | 1 failed) 842ms
+     × runs the real CSV flag with complete/incomplete exits while preserving the default JSON mode 151ms
+ ❯ |unit| scripts/validate-firm-runtime.test.ts (5 tests | 4 failed) 1556ms
+     × reports missing config names without treating declared resources as dotenv 584ms
+     × rejects an unresolved template even when configuration values exist 394ms
+     × validates a rendered deployment manifest without printing secrets 287ms
+     × reports a firm missing Resend configuration as not ready 281ms
+ ❯ |unit| src/server/dependency-security-f25.test.ts (10 tests | 2 failed) 523ms
+     × preserves Nitro's real bounded in-memory LRU driver in the installed graph 115ms
+     × preserves mammoth CLI input and output-format arguments after the parser change 370ms

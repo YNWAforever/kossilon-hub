@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Layers } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,8 @@ type Props = {
   total: number | null;
   pageSize?: number;
   maintenanceActions?: MaintenanceActionKind[];
+  /** Disable new selection/commands while the source list is unverified. */
+  selectionDisabled?: boolean;
 };
 const maintenanceLabels: Record<MaintenanceActionKind, string> = {
   client_maintenance: "客戶負責同事／團隊維護（更改資料）",
@@ -55,6 +57,12 @@ const jobStateLabels: Record<JobResult["state"], string> = {
   completed: "已完成",
   partial: "部分完成",
   cancelled: "已取消",
+};
+const resourceLabels: Record<BulkResource, string> = {
+  annual_return_case: "周年申報案件",
+  work_item: "工作項目",
+  client_company: "客戶公司",
+  document: "文件",
 };
 const itemStateLabels: Record<ItemState, string> = {
   pending: "待處理",
@@ -95,11 +103,13 @@ function BulkSession(props: Props) {
           />
         </summary>
         <div className="border-t px-4 py-4">
-          <SelectionControls
-            key={JSON.stringify([props.resource, props.filters])}
-            {...props}
-            onCreated={setJobId}
-          />
+          <fieldset className="min-w-0" disabled={props.selectionDisabled}>
+            <SelectionControls
+              key={JSON.stringify([props.resource, props.filters])}
+              {...props}
+              onCreated={setJobId}
+            />
+          </fieldset>
           {jobId ? null : (
             <div className="mt-4 border-t pt-4">
               <BulkJobProgress actorScope={props.actorScope} jobId={jobId} onJobChange={setJobId} />
@@ -178,6 +188,10 @@ function SelectionControls({
   const snapshot = useMutation({
     mutationFn: () => createBulkSelectionSnapshot({ data: { resource, filters } }),
     retry: false,
+    onMutate: () => {
+      change({ mode: "explicit_ids", ids: [] });
+      setFixedCount(0);
+    },
     onSuccess: (s) => {
       setSelection({ mode: "filtered_snapshot", snapshotId: s.snapshotId, excludedIds: [] });
       setFixedCount(s.count);
@@ -301,13 +315,18 @@ function SelectionControls({
         >
           選取已載入紀錄
         </Button>
-        <Button size="sm" disabled={busy || total === null} onClick={() => snapshot.mutate()}>
+        <Button size="sm" disabled={busy} onClick={() => snapshot.mutate()}>
           選取全部篩選結果
         </Button>
         <Button size="sm" disabled={busy} onClick={() => change({ mode: "explicit_ids", ids: [] })}>
           清空選取
         </Button>
       </div>
+      {snapshot.isPending ? <p role="status">正在計算範圍…</p> : null}
+      {snapshot.isError ? <p role="alert">未能計算範圍；請重試選取全部篩選結果。</p> : null}
+      {selection.mode === "filtered_snapshot" && fixedCount === 0 ? (
+        <p role="status">此篩選範圍沒有可選取紀錄。</p>
+      ) : null}
       <p>已選取{count}筆</p>
       {selection.mode === "filtered_snapshot" ? (
         <p>
@@ -512,10 +531,7 @@ function SelectionControls({
           </Button>
         </div>
       ) : null}
-      {snapshot.isError ||
-      dryRun.isError ||
-      (needsAssignee && assignees.isError) ||
-      membership.isError ? (
+      {dryRun.isError || (needsAssignee && assignees.isError) || membership.isError ? (
         <p role="alert">未能取得目前範圍、同事或預覽；請重新核對，暫不套用。</p>
       ) : null}
       {execute.isError ? (
@@ -553,6 +569,15 @@ function BulkJobProgress({
     getNextPageParam: (p) => p.nextCursor ?? undefined,
     enabled: !!jobId,
     retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: (query) => {
+      // At most 60 automatic refreshes (five minutes), with no automatic execution.
+      // A failed read or any terminal/unrecognised state requires manual review.
+      if (query.state.status === "error" || query.state.dataUpdateCount >= 61) return false;
+      const state = query.state.data?.pages[0]?.state;
+      return state === "queued" || state === "running" ? 5_000 : false;
+    },
   });
   const first = result.data?.pages[0];
   const items = result.data?.pages.flatMap((p) => p.items) ?? [];
@@ -585,10 +610,19 @@ function BulkJobProgress({
     retry: false,
     onSuccess: refreshed,
   });
+  const exportScope = useRef<object | null>(null);
+  useEffect(() => {
+    exportScope.current = {};
+    return () => {
+      exportScope.current = null;
+    };
+  }, [actorScope, jobId]);
   const exporting = useMutation({
-    mutationFn: () => exportBulkResults({ data: { jobId: jobId! } }),
+    mutationFn: ({ jobId }: { jobId: string; scope: object | null }) =>
+      exportBulkResults({ data: { jobId } }),
     retry: false,
-    onSuccess: (data) => {
+    onSuccess: (data, request) => {
+      if (!request.scope || request.scope !== exportScope.current) return;
       const url = URL.createObjectURL(new Blob([data.csv], { type: "text/csv;charset=utf-8" }));
       const a = document.createElement("a");
       a.href = url;
@@ -636,13 +670,32 @@ function BulkJobProgress({
       {first ? (
         <>
           <p>
-            工作狀態：{stateLabel(jobStateLabels, first.state)}；共{first.total}；成功
+            操作：
+            {first.operation === "assignment"
+              ? `分配${first.assignmentTarget === "reviewer" ? "覆核人" : first.assignmentTarget === "owner" ? "負責同事" : "（角色未知）"}`
+              : stateLabel(maintenanceLabels, first.operation ?? "未知")}
+            ； 範圍：{stateLabel(resourceLabels, first.resource ?? "未知")} · {first.total}筆
+          </p>
+          <p>
+            建立者：{first.createdBy ?? "未知"}；建立時間：{first.createdAt ?? "未知"}
+          </p>
+          <p>最後進度更新：{first.updatedAt ?? "未知"}</p>
+          <p className="break-all">批准內容指紋：{first.payloadHash ?? "未知"}</p>
+          <p>
+            工作狀態：
+            {first.state === "completed" && (first.counts.unknown ?? 0) > 0
+              ? "結果未確認"
+              : (jobStateLabels[first.state] ?? "未知狀態")}
+            ；共{first.total}；成功
             {first.counts.succeeded ?? 0}；待處理
             {first.counts.pending ?? 0}；鎖定{first.counts.locked ?? 0}；無權
             {first.counts.forbidden ?? 0}；衝突{first.counts.conflict ?? 0}；失敗
             {first.counts.failed ?? 0}；結果未知{first.counts.unknown ?? 0}；取消
             {first.counts.cancelled ?? 0}
           </p>
+          {["queued", "running"].includes(first.state) && result.dataUpdatedAt > 0 ? (
+            <p>每5秒核對進度，最多自動刷新60次；其後可手動刷新。刷新不會執行或重試工作。</p>
+          ) : null}
           <div className="flex flex-wrap gap-3">
             <Button
               size="sm"
@@ -660,17 +713,25 @@ function BulkJobProgress({
             </Button>
             <Button
               size="sm"
-              disabled={busy || !first.retryableFailedCount}
+              disabled={busy || first.state === "cancelled" || !first.retryableFailedCount}
               onClick={() => retry.mutate()}
             >
               只重試可重試失敗
             </Button>
             {(first.counts.unknown ?? 0) > 0 ? (
-              <Button size="sm" disabled={busy} onClick={() => reconcile.mutate()}>
+              <Button
+                size="sm"
+                disabled={busy || first.state === "cancelled"}
+                onClick={() => reconcile.mutate()}
+              >
                 先核對未知結果
               </Button>
             ) : null}
-            <Button size="sm" disabled={exporting.isPending} onClick={() => exporting.mutate()}>
+            <Button
+              size="sm"
+              disabled={exporting.isPending}
+              onClick={() => exporting.mutate({ jobId: jobId!, scope: exportScope.current })}
+            >
               匯出可查閱結果
             </Button>
           </div>

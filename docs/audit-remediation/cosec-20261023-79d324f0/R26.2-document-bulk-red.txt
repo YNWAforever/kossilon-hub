@@ -1,0 +1,48 @@
+
+> test
+> vitest run --configLoader runner --project unit src/features/documents/document-list.unit.test.ts --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/documents/document-list.unit.test.ts (9 tests | 1 failed) 24ms
+     × uses the same global filters for a bulk snapshot and its count 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/documents/document-list.unit.test.ts > document register query contract (no database) > uses the same global filters for a bulk snapshot and its count
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "category",
+      "source",
+      "reviewStatus"
+    ],
+    "path": [
+      "filters"
+    ],
+    "message": "Unrecognized key(s) in object: 'category', 'source', 'reviewStatus'"
+  }
+]
+ ❯ Object.get error [as error] node_modules/zod/v3/types.js:39:31
+ ❯ ZodObject.parse node_modules/zod/v3/types.js:114:22
+ ❯ Object.createSnapshot src/features/bulk-operations/repository.ts:205:33
+    203|   ) {
+    204|     assertBulkManager(actor);
+    205|     const data = snapshotSchema.parse(input);
+       |                                 ^
+    206|     const verified = await currentActor(sql, actor);
+    207|     const rows = await resources(sql, verified, data.resource, data.fi…
+ ❯ src/features/documents/document-list.unit.test.ts:104:68
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  04:57:50
+   Duration  1.82s (transform 966ms, setup 0ms, import 1.40s, tests 24ms, environment 0ms)
+

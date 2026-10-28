@@ -1,0 +1,781 @@
+
+> test
+> vitest run --project unit --maxWorkers 1 src/features/incorporation/components/case-lists.test.tsx -t refetches a rejected first page
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ❯ |unit| src/features/incorporation/components/case-lists.test.tsx (8 tests | 2 failed | 6 skipped) 2309ms
+     × refetches a rejected first page and renders the second response when refresh is clicked 1218ms
+     × refetches a rejected first page and renders the second response when refresh is clicked 1089ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/features/incorporation/components/case-lists.test.tsx > incorporation > refetches a rejected first page and renders the second response when refresh is clicked
+TestingLibraryElementError: Unable to find an element with the text: New Venture recovered. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            公司註冊
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            新香港公司註冊受理，由開立案件至公司註冊處批核。
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+            type="button"
+          >
+            開始公司註冊
+          </button>
+        </div>
+      </div>
+      <form
+        aria-label="案件篩選"
+        class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        <label
+          class="text-sm"
+        >
+          搜尋既有案件
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            maxlength="200"
+            name="q"
+            placeholder="公司中文或英文名稱"
+            value="New"
+          />
+        </label>
+        <label
+          class="text-sm"
+        >
+          狀態
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="status"
+          >
+            <option
+              selected=""
+              value=""
+            >
+              全部狀態
+            </option>
+            <option
+              value="Intake"
+            >
+              受理中
+            </option>
+            <option
+              value="Documents pending"
+            >
+              待收文件
+            </option>
+            <option
+              value="Ready to file"
+            >
+              可遞交
+            </option>
+            <option
+              value="Filed with Registrar"
+            >
+              已遞交公司註冊處
+            </option>
+            <option
+              value="Completed"
+            >
+              已完成
+            </option>
+          </select>
+        </label>
+        <label
+          class="text-sm"
+        >
+          負責同事
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="ownerId"
+          >
+            <option
+              selected=""
+              value=""
+            >
+              全部同事
+            </option>
+          </select>
+        </label>
+        <label
+          class="text-sm"
+        >
+          期限由
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="dueFrom"
+            type="date"
+            value=""
+          />
+        </label>
+        <label
+          class="text-sm"
+        >
+          期限至
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="dueTo"
+            type="date"
+            value=""
+          />
+        </label>
+        <label
+          class="text-sm"
+        >
+          排序
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="sort"
+          >
+            <option
+              value="created"
+            >
+              最新建立
+            </option>
+            <option
+              selected=""
+              value="company"
+            >
+              公司名稱
+            </option>
+            <option
+              value="due"
+            >
+              最早期限
+            </option>
+          </select>
+        </label>
+        <div
+          class="flex flex-wrap gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+            type="submit"
+          >
+            搜尋案件
+          </button>
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+            type="button"
+          >
+            清除篩選
+          </button>
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+            type="button"
+          >
+            重新整理列表
+          </button>
+        </div>
+      </form>
+      <p
+        class="text-sm text-destructive"
+        role="alert"
+      >
+        公司註冊案件資料暫時無法載入，請重試或重新整理列表。
+      </p>
+      <section
+        aria-label="公司註冊案件"
+        class="rounded-lg border bg-card p-4"
+      >
+        <div
+          class="divide-y"
+        />
+      </section>
+      <nav
+        aria-label="案件分頁"
+        class="flex items-center gap-3"
+      >
+        <button
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+          disabled=""
+          type="button"
+        >
+          回到第一頁
+        </button>
+        <button
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+          disabled=""
+          type="button"
+        >
+          下一頁
+        </button>
+      </nav>
+    </main>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            公司註冊
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            新香港公司註冊受理，由開立案件至公司註冊處批核。
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+            type="button"
+          >
+            開始公司註冊
+          </button>
+        </div>
+      </div>
+      <form
+        aria-label="案件篩選"
+        class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        <label
+          class="text-sm"
+        >
+          搜尋既有案件
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            maxlength="200"
+            name="q"
+            placeholder="公司中文或英文名稱"
+            value="New"
+          />
+        </label>
+        <label
+          class="text-sm"
+        >
+          狀態
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="status"
+          >
+            <option
+              selected=""
+              value=""
+            >
+              全部狀態
+            </option>
+            <option
+              value="Intake"
+            >
+              受理中
+            </option>
+            <option
+              value="Documents pending"
+            >
+              待收文件
+            </option>
+            <option
+              value="Ready to file"
+            >
+              可遞交
+            </option>
+            <option
+              value="Filed with Registrar"
+            >
+              已遞交公司註冊處
+            </option>
+            <option
+              value="Completed"
+            >
+              已完成
+            </option>
+          </select>
+        </label>
+        <label
+          class="text-sm"
+        >
+          負責同事
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="ownerId"
+          >
+            <option
+              selected=""
+              value=""
+            >
+              全部同事
+            </option>
+          </select>
+        </label>
+        <label
+          class="text-sm"
+        >
+          期限由
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="dueFrom"
+            type="date"
+            value=""
+          />
+        </label>
+        <label
+          class="text-sm"
+        >
+          期限至
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="dueTo"
+            type="date"
+            value=""
+          />
+        </label>
+        <label
+          class="text-sm"
+        >
+          排序
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="sort"
+          >
+            <option
+              value="created"
+            >
+              最新建立
+            </option>
+            <option
+              selected=""
+              value="company"
+            >
+              公司名稱
+            </option>
+            <option
+              value="due"
+            >
+              最早期限
+            </option>
+          </select>
+        </label>
+        <div
+          class="flex flex-wrap gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+            type="submit"
+          >
+            搜尋案件
+          </button>
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+            type="button"
+          >
+            清除篩選
+          </button>
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+            type="button"
+          >
+            重新整理列表
+          </button>
+        </div>
+      </form>
+      <p
+        class="text-sm text-destructive"
+        role="alert"
+      >
+        公司註冊案件資料暫時無法載入，請重試或重新整理列表。
+      </p>
+      <section
+        aria-label="公司註冊案件"
+        class="rounded-lg border bg-card p-4"
+      >
+        <div
+          class="divide-y"
+        />
+      </section>
+      <nav
+        aria-label="案件分頁"
+        class="flex items-center gap-3"
+      >
+        <button
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+          disabled=""
+          type="button"
+        >
+          回到第一頁
+        </button>
+        <button
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent h-10 px-4 text-sm"
+          disabled=""
+          type="button"
+        >
+          下一頁
+        </button>
+      </nav>
+    </main>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/incorporation/components/case-lists.test.tsx:125:20
+    123|       expect(api).toHaveBeenCalledTimes(1);
+    124|       fireEvent.click(screen.getByRole("button", { name: "重新整理列表" }));
+    125|       await screen.findByText("New Venture recovered");
+       |                    ^
+    126|       expect(api).toHaveBeenCalledTimes(2);
+    127|       expect(api).toHaveBeenLastCalledWith({ data: { q: "New", sort: "…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit| src/features/incorporation/components/case-lists.test.tsx > corporate changes > refetches a rejected first page and renders the second response when refresh is clicked
+TestingLibraryElementError: Unable to find an element with the text: New Venture recovered. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            公司變更
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            公司名稱變更、股份轉讓、高級人員變更及註冊辦事處變更。
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+            type="button"
+          >
+            新增申請
+          </button>
+        </div>
+      </div>
+      <form
+        aria-label="案件篩選"
+        class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        <label
+          class="text-sm"
+        >
+          搜尋既有案件
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            maxlength="200"
+            name="q"
+            placeholder="公司中文或英文名稱"
+            value="New"
+          />
+        </label>
+        <label
+          class="text-sm"
+        >
+          狀態
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="status"
+          >
+            <option
+              selected=""
+              value=""
+            >
+              全部狀態
+            </option>
+            <option
+              value="Requested"
+            >
+              已提出
+            </option>
+            <option
+              value="Documents pending"
+            >
+              待收文件
+            </option>
+            <option
+              value="Ready to file"
+            >
+              可遞交
+            </option>
+            <option
+              value="Filed with Registrar"
+            >
+              已遞交公司註冊處
+            </option>
+            <option
+              value="Completed"
+            >
+              已完成
+            </option>
+            <option
+              value="Cancelled"
+            >
+              已取消
+            </option>
+          </select>
+        </label>
+        <label
+          class="text-sm"
+        >
+          負責同事
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="ownerId"
+          >
+            <option
+              selected=""
+              value=""
+            >
+              全部同事
+            </option>
+          </select>
+        </label>
+        <label
+          class="text-sm"
+        >
+          期限由
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="dueFrom"
+            type="date"
+            value=""
+          />
+        </label>
+        <label
+          class="text-sm"
+        >
+          期限至
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="dueTo"
+            type="date"
+            value=""
+          />
+        </label>
+        <label
+          class="text-sm"
+        >
+          排序
+          <select
+        ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <main
+      class="flex-1 space-y-6 p-4 md:p-6"
+    >
+      <div
+        class="flex flex-wrap items-start justify-between gap-3"
+      >
+        <div
+          class="min-w-0 space-y-1"
+        >
+          <p
+            class="text-sm font-medium text-muted-foreground"
+          >
+            案件與客戶
+          </p>
+          <h1
+            class="font-display text-2xl font-semibold text-foreground"
+          >
+            公司變更
+          </h1>
+          <p
+            class="text-sm text-muted-foreground"
+          >
+            公司名稱變更、股份轉讓、高級人員變更及註冊辦事處變更。
+          </p>
+        </div>
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2"
+        >
+          <button
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-10 px-4 text-sm"
+            type="button"
+          >
+            新增申請
+          </button>
+        </div>
+      </div>
+      <form
+        aria-label="案件篩選"
+        class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        <label
+          class="text-sm"
+        >
+          搜尋既有案件
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            maxlength="200"
+            name="q"
+            placeholder="公司中文或英文名稱"
+            value="New"
+          />
+        </label>
+        <label
+          class="text-sm"
+        >
+          狀態
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="status"
+          >
+            <option
+              selected=""
+              value=""
+            >
+              全部狀態
+            </option>
+            <option
+              value="Requested"
+            >
+              已提出
+            </option>
+            <option
+              value="Documents pending"
+            >
+              待收文件
+            </option>
+            <option
+              value="Ready to file"
+            >
+              可遞交
+            </option>
+            <option
+              value="Filed with Registrar"
+            >
+              已遞交公司註冊處
+            </option>
+            <option
+              value="Completed"
+            >
+              已完成
+            </option>
+            <option
+              value="Cancelled"
+            >
+              已取消
+            </option>
+          </select>
+        </label>
+        <label
+          class="text-sm"
+        >
+          負責同事
+          <select
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="ownerId"
+          >
+            <option
+              selected=""
+              value=""
+            >
+              全部同事
+            </option>
+          </select>
+        </label>
+        <label
+          class="text-sm"
+        >
+          期限由
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="dueFrom"
+            type="date"
+            value=""
+          />
+        </label>
+        <label
+          class="text-sm"
+        >
+          期限至
+          <input
+            class="rounded-md border border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-muted/40 aria-invalid:border-destructive aria-invalid:ring-destructive/30 h-10 px-3 text-sm"
+            name="dueTo"
+            type="date"
+            value=""
+          />
+        </label>
+        <label
+          class="text-sm"
+        >
+          排序
+          <select
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/incorporation/components/case-lists.test.tsx:125:20
+    123|       expect(api).toHaveBeenCalledTimes(1);
+    124|       fireEvent.click(screen.getByRole("button", { name: "重新整理列表" }));
+    125|       await screen.findByText("New Venture recovered");
+       |                    ^
+    126|       expect(api).toHaveBeenCalledTimes(2);
+    127|       expect(api).toHaveBeenLastCalledWith({ data: { q: "New", sort: "…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 skipped (8)
+   Start at  05:24:52
+   Duration  5.57s (transform 363ms, setup 0ms, import 1.08s, tests 2.31s, environment 1.83s)
+

@@ -1,0 +1,6 @@
+{
+  "status": "NOT_RUN_BY_SIDECAR",
+  "reason": "ONE_FOCUSED_RUN_LIMIT",
+  "owner": "parent final unit/type/lint/build",
+  "actual_green_log": null
+}

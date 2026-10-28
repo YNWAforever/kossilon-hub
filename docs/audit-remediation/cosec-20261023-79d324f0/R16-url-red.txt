@@ -1,0 +1,54 @@
+
+> test
+> vitest run --project unit src/routes/-work-queue.interaction.test.tsx --maxWorkers 1
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+stderr | src/routes/-work-queue.interaction.test.tsx
+[tanstack-router] These exports from "C:/Users/laich/Documents/kossilon-hub/cosec-20261023/src/routes/work-queue.tsx" will not be code-split and will increase your bundle size:
+- WorkQueueRoute
+For the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.
+
+ ❯ |unit| src/routes/-work-queue.interaction.test.tsx (2 tests | 1 failed) 460ms
+     × shows real identity, payment blocker with on-track SLA, and current owner/reviewer candidates 316ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit| src/routes/-work-queue.interaction.test.tsx > work queue assignment and blockers > shows real identity, payment blocker with on-track SLA, and current owner/reviewer candidates
+AssertionError: expected last "vi.fn()" call to have been called with [ ObjectContaining{…} ]
+
+- Expected:
+[
+  ObjectContaining {
+    "search": ObjectContaining {
+      "cursor": undefined,
+      "q": "Scoped company",
+    },
+  },
+]
+
++ Received:
+undefined
+
+ ❯ src/routes/-work-queue.interaction.test.tsx:145:28
+    143|       target: { value: "Scoped company" },
+    144|     });
+    145|     expect(mocks.navigate).toHaveBeenLastCalledWith(expect.objectConta…
+       |                            ^
+    146|     expect(screen.getAllByText("Review case").length).toBeGreaterThan(…
+    147|     expect(screen.getAllByText("Payment missing").length).toBeGreaterT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  04:56:42
+   Duration  3.57s (transform 897ms, setup 0ms, import 1.92s, tests 460ms, environment 993ms)
+

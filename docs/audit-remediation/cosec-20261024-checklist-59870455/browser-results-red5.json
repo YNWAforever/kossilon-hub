@@ -1,0 +1,48 @@
+{
+  "attempt": "red5",
+  "run_id": "cosec-20261024-checklist-59870455",
+  "origin": "http://127.0.0.1:5173",
+  "host": "127.0.0.1",
+  "server_port": 5173,
+  "browser_version": "155.0.4283.62",
+  "executable": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+  "source_sha256": "fb3d3c1607d94ec9d6f9bd5fa19ff485b598b492daacb6a0a9fc816942c94902",
+  "rpc_stub_resolutions": 1,
+  "blocked_external_origins": [],
+  "page_errors": [],
+  "console_errors": [],
+  "http_errors": [],
+  "results": [
+    {
+      "name": "UC159 five unique accessible names",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n\n4 !== 5\n",
+      "dom": "返回工作列表\n\n案件與客戶\n\nUC159 local browser contract\n\n目標完成日期 2026年11月30日\n\n狀態\n\n受理中推進至「待收文件」\n\n負責同事／團隊\n\nLocal owner · Local team\n\n註冊辦事處\n\nLocal only\n\n清單\nNNC1 法團成立表格NNC1 incorporation form\n缺少\n缺少\n已收到\n已核對\n已退回\nNNC1 法團成立表格NNC1 incorporation form\n缺少\n缺少\n已收到\n已核對\n已退回\nLocal document 3\n缺少\n缺少\n已收到\n已核對\n已退回\nLocal document 4\n缺少\n缺少\n已收到\n已核對\n已退回\nLocal document 5\n缺少\n缺少\n已收到\n已核對\n已退回",
+      "active": {
+        "tag": "BODY",
+        "label": null
+      }
+    },
+    {
+      "name": "UC159 keyboard pending focus, Tab, five saves and reopen",
+      "status": "failed",
+      "error": "{\"disabled\":true,\"focused\":false,\"value\":\"Missing\",\"ariaDisabled\":null}\n\nfalse !== true\n",
+      "dom": "返回工作列表\n\n案件與客戶\n\nUC159 local browser contract\n\n目標完成日期 2026年11月30日\n\n狀態\n\n受理中推進至「待收文件」\n\n負責同事／團隊\n\nLocal owner · Local team\n\n註冊辦事處\n\nLocal only\n\n清單\nNNC1 法團成立表格NNC1 incorporation form\n缺少\n缺少\n已收到\n已核對\n已退回\nNNC1 法團成立表格NNC1 incorporation form\n缺少\n缺少\n已收到\n已核對\n已退回\nLocal document 3\n缺少\n缺少\n已收到\n已核對\n已退回\nLocal document 4\n缺少\n缺少\n已收到\n已核對\n已退回\nLocal document 5\n缺少\n缺少\n已收到\n已核對\n已退回",
+      "active": {
+        "tag": "BODY",
+        "label": null
+      }
+    },
+    {
+      "name": "UC159 linked error and explicit keyboard retry",
+      "status": "failed",
+      "error": "expect(locator).toContainText(expected) failed\n\nLocator: getByRole('alert')\nExpected substring: \"未能保存\"\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toContainText\" getByRole('alert') with timeout 5000ms\n  - waiting for getByRole('alert')\n",
+      "dom": "返回工作列表\n\n案件與客戶\n\nUC159 local browser contract\n\n目標完成日期 2026年11月30日\n\n狀態\n\n受理中推進至「待收文件」\n\n負責同事／團隊\n\nLocal owner · Local team\n\n註冊辦事處\n\nLocal only\n\n清單\nNNC1 法團成立表格NNC1 incorporation form\n缺少\n缺少\n已收到\n已核對\n已退回\nNNC1 法團成立表格NNC1 incorporation form\n缺少\n缺少\n已收到\n已核對\n已退回\nLocal document 3\n缺少\n缺少\n已收到\n已核對\n已退回\nLocal document 4\n缺少\n缺少\n已收到\n已核對\n已退回\nLocal document 5\n缺少\n缺少\n已收到\n已核對\n已退回",
+      "active": {
+        "tag": "SELECT",
+        "label": "Local document 3 狀態"
+      }
+    }
+  ],
+  "native_auth_http_rls": false
+}

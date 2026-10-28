@@ -1,0 +1,14 @@
+{
+  "result": "BLOCKED_BEFORE_BUILD_LAUNCH",
+  "reading": {
+    "checked_utc": "2026-10-24T07:03:25.825Z",
+    "stage": "build-final2",
+    "free_bytes": 3103531008,
+    "total_bytes": 34033348608,
+    "minimum_gib": 3,
+    "allowed": false,
+    "started": false,
+    "policy": "Bounded local test resource budget; no processes or shared resources stopped"
+  },
+  "reason": "3103531008 bytes < 3 GiB; no build process started; no processes stopped"
+}

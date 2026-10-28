@@ -1,0 +1,17 @@
+[
+  {
+    "from": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261023-79d324f0\\R25-unit-temp",
+    "owned_test_cache": true,
+    "to": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\.cache\\cosec-run-temp\\R25-unit-temp"
+  },
+  {
+    "from": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261023-79d324f0\\review-1-auth-temp",
+    "owned_test_cache": true,
+    "to": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\.cache\\cosec-run-temp\\review-1-auth-temp"
+  },
+  {
+    "from": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\docs\\audit-remediation\\cosec-20261023-79d324f0\\review-2-today-temp",
+    "owned_test_cache": true,
+    "to": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\node_modules\\.cache\\cosec-run-temp\\review-2-today-temp"
+  }
+]

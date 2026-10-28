@@ -1,0 +1,55 @@
+{
+  "run_id": "cosec-20261025-ap01-meta-a7885f7a",
+  "files": [
+    {
+      "path": "AP-01-METADATA-ONLY.md",
+      "bytes": 8375,
+      "sha256": "c55bf820ff75f351993850be1d5227d6fe2d35d906d58a87430a278408567e38"
+    },
+    {
+      "path": "DELIVERY.md",
+      "bytes": 4219,
+      "sha256": "4af9fd268142e6054b1e5b0369563fe482c792507160f6542f0d1b040c25fd71"
+    },
+    {
+      "path": "baseline.json",
+      "bytes": 7540,
+      "sha256": "dd2331705345ef10bf2d8c81202f9ac158e73183766dd231105e427fe7876ce0"
+    },
+    {
+      "path": "commit-delivery.ps1",
+      "bytes": 2091,
+      "sha256": "dd95fe380363b530fcd7a44b036f74ab9e0a6c2b0d3779d65da2b4ae1fc7ce61"
+    },
+    {
+      "path": "document-check.json",
+      "bytes": 400,
+      "sha256": "1fed2f332d886dc79fdb21080e2fbd7e64df8eb09169bc2ed870890cead5ce3f"
+    },
+    {
+      "path": "document-check.ps1",
+      "bytes": 1555,
+      "sha256": "010225b96affe842eb1c9481dc8df4364ab4bb16753aee02b430bf9510f9e2c8"
+    },
+    {
+      "path": "evidence-template.json",
+      "bytes": 1883,
+      "sha256": "c4ecec0c3adb53949d077cdb400da5bde20c97ef1ca361046893a835f479ef87"
+    },
+    {
+      "path": "metadata-only-request.json",
+      "bytes": 3493,
+      "sha256": "92d7f4e9528ad1ce10db5e0f9c2fbd4ec71ee50398811bb49e27acb1de3bde44"
+    },
+    {
+      "path": "package.mjs",
+      "bytes": 10267,
+      "sha256": "fc9cbe05d28bc4025aefa15b8640d39cd8692c297c38dad19fa30420c1ae0bb5"
+    },
+    {
+      "path": "release-candidate.json",
+      "bytes": 1357,
+      "sha256": "11d33dd7c0d0761e0600698ae17e7b477779ff03545482cf3e4d5fa1d7eac6dd"
+    }
+  ]
+}

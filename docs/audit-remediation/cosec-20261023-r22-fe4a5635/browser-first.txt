@@ -1,0 +1,107 @@
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-XuM7OZ
+[WebServer] (node:31876) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+
+Running 3 tests using 1 worker
+
+(node:34944) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-XuM7OZ
+  x  1 [full390] › e2e\r22-viewport-zoom.spec.ts:47:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial (803ms)
+(node:26504) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-XuM7OZ
+  x  2 [desktop100] › e2e\r22-viewport-zoom.spec.ts:47:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial (625ms)
+(node:38740) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[local-browser-evidence] run root: C:\Users\laich\Documents\kossilon-hub\cosec-20261023\.worktrees\local-browser-runs\run-XuM7OZ
+  x  3 [desktop200] › e2e\r22-viewport-zoom.spec.ts:47:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial (617ms)
+[local-browser-evidence] historical bytes unchanged: 9
+
+
+  1) [full390] › e2e\r22-viewport-zoom.spec.ts:47:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial 
+
+    Error: tracing.start: Tracing has been already started
+
+      35 |       serviceWorkers: "block",
+      36 |     });
+    > 37 |     await context.tracing.start({ screenshots: true, snapshots: true });
+         |                           ^
+      38 |     try {
+      39 |       await use(context.pages()[0]);
+      40 |     } finally {
+        at Object.demoPage (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\r22-viewport-zoom.spec.ts:37:27)
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-XuM7OZ\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-full390\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .worktrees\local-browser-runs\run-XuM7OZ\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-full390\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-XuM7OZ\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-full390\trace.zip
+    Usage:
+
+        npx playwright show-trace .worktrees\local-browser-runs\run-XuM7OZ\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-full390\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [desktop100] › e2e\r22-viewport-zoom.spec.ts:47:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial 
+
+    Error: tracing.start: Tracing has been already started
+
+      35 |       serviceWorkers: "block",
+      36 |     });
+    > 37 |     await context.tracing.start({ screenshots: true, snapshots: true });
+         |                           ^
+      38 |     try {
+      39 |       await use(context.pages()[0]);
+      40 |     } finally {
+        at Object.demoPage (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\r22-viewport-zoom.spec.ts:37:27)
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-XuM7OZ\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop100\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .worktrees\local-browser-runs\run-XuM7OZ\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop100\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-XuM7OZ\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop100\trace.zip
+    Usage:
+
+        npx playwright show-trace .worktrees\local-browser-runs\run-XuM7OZ\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop100\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [desktop200] › e2e\r22-viewport-zoom.spec.ts:47:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial 
+
+    Error: tracing.start: Tracing has been already started
+
+      35 |       serviceWorkers: "block",
+      36 |     });
+    > 37 |     await context.tracing.start({ screenshots: true, snapshots: true });
+         |                           ^
+      38 |     try {
+      39 |       await use(context.pages()[0]);
+      40 |     } finally {
+        at Object.demoPage (C:\Users\laich\Documents\kossilon-hub\cosec-20261023\e2e\r22-viewport-zoom.spec.ts:37:27)
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-XuM7OZ\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop200\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .worktrees\local-browser-runs\run-XuM7OZ\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop200\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .worktrees\local-browser-runs\run-XuM7OZ\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop200\trace.zip
+    Usage:
+
+        npx playwright show-trace .worktrees\local-browser-runs\run-XuM7OZ\artifacts\r22-viewport-zoom-LOCAL-R2-98623-load-return-and-role-denial-desktop200\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [full390] › e2e\r22-viewport-zoom.spec.ts:47:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial 
+    [desktop100] › e2e\r22-viewport-zoom.spec.ts:47:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial 
+    [desktop200] › e2e\r22-viewport-zoom.spec.ts:47:1 › LOCAL R22 fixed viewport: keyboard demo boundary, case, reload, return and role denial 

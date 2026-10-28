@@ -1,0 +1,24 @@
+
+ RUN  v4.1.11 C:/Users/laich/Documents/kossilon-hub/cosec-20261023
+
+ ✓ |unit| src/features/annual-return/work-views-today.test.tsx (5 tests) 559ms
+     ✓ keeps numeric search and both cursors on every business detail link  460ms
+ ✓ |unit| src/features/annual-return/server-fns.authorization.test.ts (31 tests) 34ms
+ ✓ |unit| src/features/annual-return/server-fns.test.ts (17 tests) 34ms
+ ✓ |unit| src/features/annual-return/workflow.test.ts (34 tests) 29ms
+ ✓ |unit| src/features/annual-return/session.test.ts (2 tests) 22ms
+ ✓ |unit| src/features/annual-return/work-views.test.ts (14 tests) 15ms
+ ✓ |unit| src/features/annual-return/work-views-other-page.test.ts (8 tests) 12ms
+ ✓ |unit| src/features/annual-return/requirement-template.test.ts (24 tests) 9ms
+ ✓ |unit| src/features/annual-return/requirements.test.ts (15 tests) 7ms
+ ✓ |unit| src/features/annual-return/whatsapp-reminders.test.ts (8 tests) 9ms
+ ✓ |unit| src/features/annual-return/reminder-sweep.test.ts (15 tests) 5ms
+ ✓ |unit| src/features/annual-return/work-views-other.test.ts (11 tests) 6ms
+
+ Test Files  12 passed (12)
+      Tests  184 passed (184)
+   Start at  12:17:44
+   Duration  6.66s (transform 941ms, setup 0ms, import 2.37s, tests 740ms, environment 1.05s)
+
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.

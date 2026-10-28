@@ -1,0 +1,14 @@
+{
+  "source_sha": "80a8fc31e797fe0a897bdd6a8b9f82221246a1d2",
+  "verified_source_git_blobs": 649,
+  "verified_prior_runs": 12,
+  "verified_prior_files": 1953,
+  "verified_current_manifest_files": 63,
+  "tests": 75,
+  "test_files": 7,
+  "edge_passed": 9,
+  "baseline_edge_failed": 1,
+  "native_pass": 0,
+  "release_gate": "NO_GO",
+  "external_actions": false
+}

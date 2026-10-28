@@ -1,0 +1,13 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "exit_code": 2,
+  "bytes": 749151,
+  "sha256": "82262106c66d94633de3f49892b8bd01382d1544bbe720089b9a9d040e18e8ed",
+  "classification": "Raw CRLF evidence and captured failure log spaces/EOF. Not source test failure. No raw bytes normalized.",
+  "correction": "Check authored md/mjs/ps1 with cr-at-eol support; preserve raw csv/json/txt/snapshots under checksum and Git blob validation."
+}

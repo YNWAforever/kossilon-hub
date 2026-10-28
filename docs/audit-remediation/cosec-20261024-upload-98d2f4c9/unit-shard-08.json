@@ -1,0 +1,91 @@
+{
+  "name": "unit-shard-08",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--project",
+    "unit",
+    "src/features/auth/auth-context-neon.test.tsx",
+    "src/features/auth/auth-router-recovery.test.tsx",
+    "src/features/auth/auth-signout-remount.test.tsx",
+    "src/features/auth/authorization.test.ts",
+    "src/features/auth/neon-auth-client.test.ts",
+    "src/features/auth/neon-auth-magic-link.test.ts",
+    "src/features/auth/neon-auth-proxy.test.ts",
+    "src/features/auth/neon-auth-server.test.ts",
+    "src/features/auth/query-scope.test.ts",
+    "src/features/auth/role-labels.test.ts",
+    "src/features/auth/route-guard.test.ts",
+    "src/features/auth/session.test.ts",
+    "--maxWorkers",
+    "1"
+  ],
+  "files": [
+    "src/features/auth/auth-context-neon.test.tsx",
+    "src/features/auth/auth-router-recovery.test.tsx",
+    "src/features/auth/auth-signout-remount.test.tsx",
+    "src/features/auth/authorization.test.ts",
+    "src/features/auth/neon-auth-client.test.ts",
+    "src/features/auth/neon-auth-magic-link.test.ts",
+    "src/features/auth/neon-auth-proxy.test.ts",
+    "src/features/auth/neon-auth-server.test.ts",
+    "src/features/auth/query-scope.test.ts",
+    "src/features/auth/role-labels.test.ts",
+    "src/features/auth/route-guard.test.ts",
+    "src/features/auth/session.test.ts"
+  ],
+  "exit_code": 0,
+  "error": null,
+  "signal": null,
+  "observed": [
+    {
+      "path": "src/features/auth/auth-router-recovery.test.tsx",
+      "tests": 9
+    },
+    {
+      "path": "src/features/auth/auth-context-neon.test.tsx",
+      "tests": 26
+    },
+    {
+      "path": "src/features/auth/auth-signout-remount.test.tsx",
+      "tests": 6
+    },
+    {
+      "path": "src/features/auth/neon-auth-magic-link.test.ts",
+      "tests": 5
+    },
+    {
+      "path": "src/features/auth/neon-auth-proxy.test.ts",
+      "tests": 3
+    },
+    {
+      "path": "src/features/auth/authorization.test.ts",
+      "tests": 7
+    },
+    {
+      "path": "src/features/auth/neon-auth-server.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "src/features/auth/session.test.ts",
+      "tests": 11
+    },
+    {
+      "path": "src/features/auth/route-guard.test.ts",
+      "tests": 17
+    },
+    {
+      "path": "src/features/auth/neon-auth-client.test.ts",
+      "tests": 2
+    },
+    {
+      "path": "src/features/auth/query-scope.test.ts",
+      "tests": 1
+    },
+    {
+      "path": "src/features/auth/role-labels.test.ts",
+      "tests": 1
+    }
+  ]
+}

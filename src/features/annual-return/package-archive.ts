@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
-const uuid = z.string().uuid(),
+const uuid = z.string().guid(),
   hash = z.string().regex(/^[a-f0-9]{64}$/);
 const manifestSchema = z.object({
   manifest: z.object({

@@ -1,0 +1,97 @@
+{
+  "date": "2026-10-26",
+  "baseline_head": "9c5127938060ad1ed7fdc42d155ff2c78abd9f26",
+  "code_commit": "b38aaa14892d12e87e5519d82df90fed3d0150f7",
+  "tested_state": "baseline plus tracked two-file diff; final code commit contains identical tested file contents",
+  "sha256": {
+    "src/features/annual-return/components/production-payment-review.tsx": "7b07a26edc7fd7b07ee86894d1ec8bdcd28e6da5eee900a04d61eb4f6e2ae5b3",
+    "src/routes/-payments.interaction.test.tsx": "52c98393b8d4da677fcd97e82dd0cf5b8205fc3c20d7d1c600cf25dc89826755"
+  },
+  "checks": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-payments.interaction.test.tsx",
+      "phase": "RED before production change",
+      "exit": 1,
+      "tests": {
+        "passed": 5,
+        "failed": 3
+      },
+      "log": "red.txt"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/routes/-payments.interaction.test.tsx",
+      "phase": "final targeted",
+      "exit": 0,
+      "tests": {
+        "passed": 9,
+        "failed": 0
+      },
+      "log": "green.txt"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit --maxWorkers=4",
+      "phase": "sandbox; before fourth new test",
+      "exit": 1,
+      "tests": {
+        "passed": 2773,
+        "failed": 10
+      },
+      "files": {
+        "passed": 283,
+        "failed": 5
+      },
+      "log": "unit.txt",
+      "disposition": "CLI child-process failures; spawnSync EPERM directly observed in dependency checks. All failures resolved in final rerun with child-process support; no product change between runs."
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --project unit --maxWorkers=4",
+      "phase": "final; executor with child-process support",
+      "exit": 0,
+      "tests": {
+        "passed": 2784,
+        "failed": 0
+      },
+      "files": {
+        "passed": 288,
+        "failed": 0
+      },
+      "log": "unit-network-executor.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "log": "typecheck.txt"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js src/features/annual-return/components/production-payment-review.tsx src/routes/-payments.interaction.test.tsx",
+      "exit": 0,
+      "log": "lint.txt"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check src/features/annual-return/components/production-payment-review.tsx src/routes/-payments.interaction.test.tsx",
+      "exit": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "warnings": [
+    "vite-tsconfig-paths native resolution notice",
+    "TanStack work-queue and login export code-splitting warnings"
+  ],
+  "not_run": [
+    "DB/integration",
+    "build",
+    "hosted CI acceptance",
+    "Native/runtime",
+    "deployment"
+  ],
+  "native": {
+    "status": "BLOCKED / NO_GO",
+    "blocked": 70,
+    "not_run": 114,
+    "pass": 0
+  },
+  "authority": "Local in-repo code/tests/evidence plus push to existing draft branch; no production or Native resource actions."
+}

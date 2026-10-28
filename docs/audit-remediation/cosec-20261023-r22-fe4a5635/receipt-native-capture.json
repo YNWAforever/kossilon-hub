@@ -1,0 +1,13 @@
+{
+  "code": 0,
+  "signal": null,
+  "runRoot": "C:\\Users\\laich\\Documents\\kossilon-hub\\cosec-20261023\\.worktrees\\local-browser-runs\\run-Q1kJQt",
+  "utc": "2026-10-23T11:27:39.860Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/@playwright/test/cli.js",
+    "test",
+    "--config",
+    "playwright.r22-local.config.ts"
+  ]
+}

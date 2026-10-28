@@ -1,0 +1,13 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Users/laich/Documents/kossilon-hub/cosec-20261023[39m
+
+ [32m✓[39m [30m[45m db [49m[39m src/features/bulk-operations/payment-export.integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 6459[2mms[22m[39m
+     [33m[2m✓[22m[39m previews 103 current payments, exports two pages, redacts lost scope, rejects changing progress and resumes after cancellation [33m 6457[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m   Start at [22m 02:47:24
+[2m   Duration [22m 7.77s[2m (transform 785ms, setup 0ms, import 1.11s, tests 6.46s, environment 0ms)[22m
+
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m

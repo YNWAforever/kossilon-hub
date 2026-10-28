@@ -1,0 +1,16 @@
+{
+  "unit_files": 268,
+  "unit_pass": 2538,
+  "unit_fail": 0,
+  "unit_skip": 0,
+  "component_pass": 25,
+  "component_included_in_unit": true,
+  "sql_files": 1,
+  "sql_pass": 10,
+  "sql_unit_not_combined": true,
+  "lint_errors": 0,
+  "lint_warnings": 1,
+  "native_auth_runtime": false,
+  "typecheck_receipt": "typecheck-verified.json",
+  "lint_receipt": "lint-verified.json"
+}

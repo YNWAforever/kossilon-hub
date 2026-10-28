@@ -82,6 +82,9 @@ async function render(options: {
   caseId?: string;
 }) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  // This fixture represents a completed idle archive read. A stale seed would
+  // start a background refresh, where review controls must now stay hidden.
+  queryClient.setQueryDefaults(["documents", "archive"], { staleTime: Infinity });
   const selectedId = options.caseId ?? CASE_ID;
   const path = options.withCaseId ? `/documents?caseId=${selectedId}` : "/documents";
   const router = createRouter({
@@ -115,6 +118,22 @@ async function render(options: {
 }
 
 describe("/documents against data the types say is impossible", () => {
+  it("offers global filename/category/source/review filters in production", async () => {
+    const html = await render({ documents: [], withCaseId: false });
+    expect(html).toContain('aria-label="搜尋正式文件"');
+    expect(html).toContain('aria-label="按來源篩選正式文件"');
+    expect(html).toContain('aria-label="按類別篩選正式文件"');
+    expect(html).toContain('aria-label="按覆核狀態篩選正式文件"');
+  });
+  it("never offers byte controls when provider metadata has no current version", async () => {
+    const html = await render({
+      documents: [{ ...baseDocument, scanVerdictSource: "provider", currentVersionId: null }],
+      withCaseId: false,
+    });
+    expect(html).toContain("director-passport.pdf");
+    expect(html).not.toContain("開啟原件");
+    expect(html).not.toContain("下載</button>");
+  });
   it.each(["123", "true", "null", "", "123&caseId=456"])(
     "rejects present invalid parsed caseId %s without reading cached all scope",
     async (caseId) => {
@@ -206,7 +225,7 @@ describe("/documents in production must not link demo rows into production route
     const html = await render({ documents: [], withCaseId: false });
 
     // Demo case ids look like ar-harbour. The production detail route validates
-    // its id with z.string().uuid(), so following such a link renders
+    // its id with z.string().guid(), so following such a link renders
     // "Annual return case unavailable" over a raw Zod error.
     const demoLinks = [...html.matchAll(/href="\/annual-returns\/(ar-[a-z-]+)"/g)].map(
       (match) => match[1],

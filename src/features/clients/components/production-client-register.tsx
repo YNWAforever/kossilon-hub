@@ -16,6 +16,11 @@ import { COMPANY_STATUS_LABELS, PAYMENT_STATUS_LABELS } from "../labels";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { useRetainedPage } from "@/lib/use-retained-page";
+import {
+  clientRegisterSearch,
+  clientRegisterReturnPath,
+  type ClientRegisterSearch,
+} from "../register-view-state";
 
 // The tracks, six 12px gaps and row padding come to ~944px, so the register fits
 // the content area of a 1280px laptop. The old 1180px floor scrolled sideways
@@ -47,25 +52,29 @@ const paymentStatusTone: Record<ClientPaymentStatus, StatusTone> = {
 export function ProductionClientRegister({
   allowFixtureDiagnostics = false,
   actor = null,
+  search,
+  onSearchChange,
 }: {
   allowFixtureDiagnostics?: boolean;
   actor?: AuthenticatedActor | null;
+  search?: ClientRegisterSearch;
+  onSearchChange?: (next: ClientRegisterSearch) => void;
 }) {
   const queryClient = useQueryClient();
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [teamFilter, setTeamFilter] = useState("all");
+  const [localSearch, setLocalSearch] = useState(() => clientRegisterSearch({}));
+  const view = search ?? localSearch;
+  const { q: query, status: statusFilter, team: teamFilter, includeFixtures, cursor } = view;
+  const changeSearch = (next: ClientRegisterSearch) => (onSearchChange ?? setLocalSearch)(next);
+  const setFilter = (patch: Partial<ClientRegisterSearch>) =>
+    changeSearch({ ...view, ...patch, cursor: undefined });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [includeFixtures, setIncludeFixtures] = useState(false);
-  const [pagination, setPagination] = useState<{ key: string; cursor?: string }>({ key: "" });
   const filters = {
     includeFixtures,
     q: query,
     ...(statusFilter !== "all" ? { status: statusFilter } : {}),
     ...(teamFilter !== "all" ? { teamId: teamFilter } : {}),
   };
-  const filterKey = JSON.stringify(filters),
-    cursor = pagination.key === filterKey ? pagination.cursor : undefined;
+  const returnTo = clientRegisterReturnPath(view);
 
   const clientsQuery = useQuery({
     queryKey: ["clients", { ...filters, cursor, actorScope: actor }],
@@ -123,7 +132,7 @@ export function ProductionClientRegister({
           <input
             type="checkbox"
             checked={includeFixtures}
-            onChange={(event) => setIncludeFixtures(event.target.checked)}
+            onChange={(event) => setFilter({ includeFixtures: event.target.checked })}
           />
           包含測試資料（Admin 診斷）
         </label>
@@ -153,16 +162,18 @@ export function ProductionClientRegister({
           <Input
             className="w-full"
             aria-label="搜尋公司名稱、CR 或 BR 號碼"
+            maxLength={200}
             placeholder="搜尋公司名稱、CR 或 BR 號碼"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => setFilter({ q: event.target.value })}
           />
           <div className="flex flex-wrap gap-2">
             {STATUS_FILTERS.map((value) => (
               <Button
                 key={value}
                 variant={statusFilter === value ? "primary" : "outline"}
-                onClick={() => setStatusFilter(value)}
+                aria-pressed={statusFilter === value}
+                onClick={() => setFilter({ status: value })}
               >
                 {STATUS_FILTER_LABELS[value]}
               </Button>
@@ -172,7 +183,7 @@ export function ProductionClientRegister({
             className="w-full"
             aria-label="按團隊篩選"
             value={teamFilter}
-            onChange={(event) => setTeamFilter(event.target.value)}
+            onChange={(event) => setFilter({ team: event.target.value })}
           >
             <option value="all">全部團隊</option>
             {(optionsQuery.data?.teams ?? []).map((team) => (
@@ -199,7 +210,7 @@ export function ProductionClientRegister({
 
             <div className="divide-y">
               {visibleClients.map((client) => (
-                <ClientRow key={client.id} client={client} />
+                <ClientRow key={client.id} client={client} returnTo={returnTo} />
               ))}
             </div>
           </div>
@@ -215,7 +226,7 @@ export function ProductionClientRegister({
       </section>
       <div className="flex gap-3">
         {cursor ? (
-          <Button className="min-h-11" onClick={() => setPagination({ key: filterKey })}>
+          <Button className="min-h-11" onClick={() => changeSearch({ ...view, cursor: undefined })}>
             回第一頁客戶
           </Button>
         ) : null}
@@ -223,7 +234,7 @@ export function ProductionClientRegister({
           <Button
             disabled={clientsQuery.isFetching || clientsQuery.isError}
             className="min-h-11"
-            onClick={() => setPagination({ key: filterKey, cursor: page.nextCursor! })}
+            onClick={() => changeSearch({ ...view, cursor: page.nextCursor! })}
           >
             下一頁客戶
           </Button>
@@ -242,7 +253,7 @@ export function ProductionClientRegister({
   );
 }
 
-function ClientRow({ client }: { client: ClientSummary }) {
+function ClientRow({ client, returnTo }: { client: ClientSummary; returnTo: string }) {
   return (
     <div className={`grid gap-3 px-4 py-4 lg:items-center ${REGISTER_GRID_COLUMNS}`}>
       <div className="min-w-0">
@@ -280,7 +291,7 @@ function ClientRow({ client }: { client: ClientSummary }) {
       />
       <div className="flex justify-start lg:justify-end">
         <Button asChild>
-          <Link to="/clients/$id" params={{ id: client.id }}>
+          <Link to="/clients/$id" params={{ id: client.id }} search={{ returnTo }}>
             開啟
           </Link>
         </Button>
