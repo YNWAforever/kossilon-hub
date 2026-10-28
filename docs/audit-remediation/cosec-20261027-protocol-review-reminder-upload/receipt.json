@@ -1,0 +1,48 @@
+{
+  "kind": "protocol-design-review",
+  "reviewed_head": "fcce28d6b5483bd78bc31c8f32590325f3152d98",
+  "reviewed_branch": "codex/cosec-20261023",
+  "context_pr": 147,
+  "native": "70 BLOCKED / 114 NOT_RUN / 0 PASS — BLOCKED / NO_GO",
+  "product_code_changed": false,
+  "schema_changed": false,
+  "tests_run": false,
+  "ci_claimed_green": false,
+  "production_touched": false,
+  "handlers_read": [
+    "src/features/annual-return/server-fns.ts",
+    "src/features/annual-return/whatsapp-reminders.ts",
+    "src/features/annual-return/reminder-idempotency-key.ts",
+    "src/features/annual-return/repository.ts",
+    "src/features/annual-return/follow-up-server-fns.ts",
+    "src/features/annual-return/follow-up-repository.ts",
+    "src/features/annual-return/follow-ups.ts",
+    "src/features/annual-return/components/production-case-detail.tsx",
+    "src/features/whatsapp/repository.ts",
+    "src/features/whatsapp/server-fns.ts",
+    "src/features/documents/server-fns.ts",
+    "src/features/documents/repository.ts",
+    "src/features/documents/document-recovery-panel.tsx",
+    "src/features/documents/upload-resume.ts",
+    "src/features/documents/storage.ts",
+    "src/routes/portal.tsx",
+    "src/server/db/schema.sql",
+    "src/server/db/operational-read.ts",
+    "src/router.tsx"
+  ],
+  "prior_notes_read": [
+    "docs/audit-remediation/cosec-20261027-automation-draft-read-recovery/DELIVERY.md",
+    "docs/audit-remediation/cosec-20261027-automation-send-recovery/DELIVERY.md",
+    "docs/audit-remediation/cosec-20261027-upload-receipt-recovery/DELIVERY.md",
+    "docs/audit-remediation/cosec-20261027-filing-receipt-recovery/DELIVERY.md",
+    "docs/audit-remediation/cosec-20261027-integration-read-recovery/DELIVERY.md",
+    "docs/audit-remediation/cosec-20261027-queue-read-admission/DELIVERY.md",
+    "docs/audit-remediation/cosec-20261024-upload-98d2f4c9/UC150.md"
+  ],
+  "recommendation": {
+    "manual_reminder": "Client command UUID stored as notification_outbox.idempotency_key, staff GET of that row, recordReminder skipped on idempotent replay, single outer sql.begin kept.",
+    "staff_upload": "Read-only GET of the existing open document_recovery_requested intent by source documentId for the initiating auth user, then the existing receipt GET. No checksum search. No create replay.",
+    "portal_journal_loss": "Deferred. No handle remains without uploadRequestId.",
+    "cross_tab": "No reproduced defect. No fix."
+  }
+}
