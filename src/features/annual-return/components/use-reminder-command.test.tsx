@@ -278,6 +278,44 @@ describe("useAnnualReturnReminderCommand", () => {
     expect(send.mock.calls[2][0].recipientName).toBe("Ada Chan");
   });
 
+  it("does not strand another recipient behind a failed command receipt read", async () => {
+    const storage = memoryStorage();
+    const send = vi.fn<(input: SendInput) => Promise<unknown>>(async () => {
+      throw new Error("lost response");
+    });
+    mocks.read.mockRejectedValue(new Error("read unavailable"));
+    renderHarness(storage, send);
+    await fill();
+    fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
+    await screen.findByText("未能核對提醒結果。請先重試核對，不要再按發送。");
+    const firstCommand = send.mock.calls[0][0].commandUuid;
+
+    fireEvent.change(screen.getByLabelText("提醒收件人姓名"), { target: { value: "Ben Lee" } });
+    fireEvent.change(screen.getByLabelText("提醒電話號碼"), {
+      target: { value: "+85298765432" },
+    });
+    await waitFor(() =>
+      expect((screen.getByRole("button", { name: "發送提醒" }) as HTMLButtonElement).disabled).toBe(
+        false,
+      ),
+    );
+    // Returning to the failed command must still require its own receipt read.
+    fireEvent.change(screen.getByLabelText("提醒收件人姓名"), { target: { value: "Ada Chan" } });
+    fireEvent.change(screen.getByLabelText("提醒電話號碼"), {
+      target: { value: "+85291234567" },
+    });
+    await screen.findByText("未能核對提醒結果。請先重試核對，不要再按發送。");
+    expect((screen.getByRole("button", { name: "發送提醒" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    mocks.read.mockResolvedValue({ state: "absent" });
+    fireEvent.click(screen.getByRole("button", { name: "核對提醒結果" }));
+    await screen.findByText(/沿用同一指令/);
+    fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(2));
+    expect(send.mock.calls[1][0].commandUuid).toBe(firstCommand);
+  });
+
   it("restores the latest command on reload and reads it without posting", async () => {
     const storage = memoryStorage();
     const send = vi.fn<(input: SendInput) => Promise<unknown>>(async () => ({ ok: true }));

@@ -91,7 +91,7 @@ export function useAnnualReturnReminderCommand({
   const [commandUuid, setCommandUuid] = useState<string | null>(null);
   const [watch, setWatch] = useState(false);
   const [postingState, setPostingState] = useState(false);
-  const [readFailed, setReadFailed] = useState(false);
+  const [failedReadCommand, setFailedReadCommand] = useState<string | null>(null);
   const [reconciling, setReconciling] = useState(false);
   const [journalError, setJournalError] = useState<string | null>(null);
 
@@ -170,10 +170,10 @@ export function useAnnualReturnReminderCommand({
         });
         queryClient.setQueryData(reminderCommandQueryKey(caseId, variables.commandUuid), receipt);
         if (!mounted.current) return;
-        setReadFailed(false);
+        setFailedReadCommand(null);
         setWatch(true);
       } catch {
-        if (mounted.current) setReadFailed(true);
+        if (mounted.current) setFailedReadCommand(variables.commandUuid);
       } finally {
         posting.current = false;
         if (mounted.current) setPostingState(false);
@@ -183,7 +183,8 @@ export function useAnnualReturnReminderCommand({
 
   const receipt = commandQuery.data;
   const closed = Boolean(receipt && receipt.state !== "absent");
-  const readBlocked = readFailed || commandQuery.isError;
+  const readBlocked =
+    (commandUuid !== null && failedReadCommand === commandUuid) || commandQuery.isError;
   const pending =
     postingState || mutation.isPending || reconciling || (watch && commandQuery.isFetching);
   const sendDisabled =
@@ -218,7 +219,7 @@ export function useAnnualReturnReminderCommand({
     posting.current = true;
     setPostingState(true);
     setWatch(false);
-    setReadFailed(false);
+    setFailedReadCommand(null);
     setCommandUuid(nextCommand);
     mutation.mutate({ recipientName: name, recipientPhone: phone, commandUuid: nextCommand });
   }
@@ -226,7 +227,7 @@ export function useAnnualReturnReminderCommand({
   async function reconcile() {
     if (!commandUuid || posting.current) return;
     setReconciling(true);
-    setReadFailed(false);
+    setFailedReadCommand(null);
     try {
       const next = await readAnnualReturnReminderCommand({
         data: { caseId, commandUuid },
@@ -235,7 +236,7 @@ export function useAnnualReturnReminderCommand({
       if (!mounted.current) return;
       setWatch(true);
     } catch {
-      if (mounted.current) setReadFailed(true);
+      if (mounted.current) setFailedReadCommand(commandUuid);
     } finally {
       if (mounted.current) setReconciling(false);
     }
