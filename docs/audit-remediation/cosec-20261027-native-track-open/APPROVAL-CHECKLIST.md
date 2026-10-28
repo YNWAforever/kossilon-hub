@@ -3,7 +3,9 @@
 **Prepare only. Native NO_GO. No AP is approved. execution_enabled is false.**
 
 Candidate git SHA to compare a future deployment against:
-`79ad0c04da892ec03601f11c12d82fcc84039b31` (draft PR #149).
+`ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0` (`main`, PR #149 squash merge; unapproved).
+Original comparison SHA `79ad0c04da892ec03601f11c12d82fcc84039b31` is historical.
+No deployed artifact or hosted CI result is verified by this repin.
 
 Previous unapproved plan: `cosec-20261025-native-plan-fccb7c22`, source
 `4d63818fe2562146f85e9a7b9917d8f0eb58f4c1`, delivery
@@ -14,7 +16,7 @@ candidate. The old files stay as historical preparation.
 Gate A discovery now records committed repo identifiers in
 [gate-a-discovery.json](gate-a-discovery.json). Its `sources` map pins each
 source path, git blob, and SHA256 at reviewed #150 head
-`165e8cd53d9f85221e06d7b8bfb705f1681b2db7`. No provider state was refreshed.
+`51b9a2ebaff965726963cbeb6b7146e860248f90`. No provider state was refreshed.
 `repository_known` values are historical references or code contracts; they
 are not selected/approved bindings. All 19 Gate A fields still need owner
 input or confirmation. `approval-request.json.bindings` keeps unresolved
@@ -34,7 +36,7 @@ ComSec environment values were not inspected.
 | `existing_isolated_url` | Historical demo fixed URL `https://kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app`; documented alias `https://kossilon-hub-demo.vercel.app` | Existing isolated origin, current availability and DB/Auth/data isolation; neither URL was visited |
 | `runtime_project_id` | Historical demo `kossilon-hub-demo` / `prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm`; production reference `kossilon-hub` / `prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC` | Select and confirm an isolated target; production is excluded |
 | `deployment_id` | Historical demo `dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY`, recorded `READY`, target label `production` inside the demo project | Same-candidate deployment/artifact binding; old demo metadata exposes no Git SHA |
-| `observed_source_sha` | Expected comparison SHA `79ad0c04da892ec03601f11c12d82fcc84039b31` (#149 product candidate, separate from #150 packet) | Deployment-observed SHA; the expected SHA is not an observation |
+| `observed_source_sha` | Expected comparison SHA `ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0` (`main` after #149 squash merge, separate from #150 packet) | Deployment-observed SHA; the expected SHA is not an observation |
 | `observed_artifact_checksum` | Deployed checksum field and scope identified | Deployed artifact checksum; no local build/packet/lockfile hash substituted |
 | `required_ci_run_ids_and_results` | `.github/workflows/ci.yml`: workflow `CI`, runtime checks `Node22` / `Node24`, aggregate `verify` | Required-check policy and exact candidate-head run IDs/results; no hosted CI queried |
 | `artifact_sbom_and_dependency_disposition` | `package-lock.json` and `bun.lock` paths, git blobs and SHA256 in discovery JSON; unchanged from candidate | Deployed resolved SBOM or deployed lock identity and accepted dependency disposition |
@@ -133,7 +135,7 @@ Proposed ceilings in the previous JSON are copied into
 [approval-request.json](approval-request.json) as unapproved proposals. They are
 not a grant of reads, commands, spend, or setup rows.
 
-## AP status on candidate `79ad0c04`
+## AP status on candidate `ae9cbc19`
 
 | AP | Status | Why |
 | --- | --- | --- |

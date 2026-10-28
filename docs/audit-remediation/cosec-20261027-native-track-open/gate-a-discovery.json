@@ -4,8 +4,8 @@
   "native_pr": 150,
   "native_branch": "cursor/native-track-open-df67",
   "repository": "YNWAforever/kossilon-hub",
-  "reviewed_repository_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
-  "candidate_source_sha": "79ad0c04da892ec03601f11c12d82fcc84039b31",
+  "reviewed_repository_head": "51b9a2ebaff965726963cbeb6b7146e860248f90",
+  "candidate_source_sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
   "candidate_source_pr": 149,
   "status": "PARTIAL_REPOSITORY_IDENTIFIERS_ONLY",
   "release_gate": "NO_GO",
@@ -144,13 +144,13 @@
     },
     "npm_lock": {
       "path": "package-lock.json",
-      "git_blob": "111c5a9885a211a51aea0c639c6a0ef71371058d",
-      "sha256": "d15cefb788e67b59c49d56e0ca674e158615181ad86667dde4d72ce186d53465"
+      "git_blob": "edac118ae868a36f6e495b8ba333f4cb0d58493e",
+      "sha256": "bd17e9f06ecaa5410cad9a75fa6ec5fbf277c57986583686d503f21d8bee2f2c"
     },
     "bun_lock": {
       "path": "bun.lock",
-      "git_blob": "385246f2a09afd21d6dad0075de8e9a8c6f91046",
-      "sha256": "d3275fa41f0415571262ec3aeff1707791bccf3438d60d275cc236659043f8be"
+      "git_blob": "075646221414316b5205d720df9d2b15acfffa00",
+      "sha256": "f943a902e9ba1aa2ecb84262a796eb3e7d58b48229a6fce215d0f1a6909600db"
     }
   },
   "gate_a_fields": {
@@ -218,10 +218,11 @@
       "status": "OWNER_REQUIRED",
       "selected_binding": "OWNER_REQUIRED",
       "repository_known": {
-        "expected_candidate_sha": "79ad0c04da892ec03601f11c12d82fcc84039b31",
+        "expected_candidate_sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
         "candidate_pr": 149,
         "native_packet_pr": 150,
-        "historical_latest_demo_git_sha_exposed": false
+        "historical_latest_demo_git_sha_exposed": false,
+        "candidate_ref": "main (PR #149 squash merge; unapproved comparison only)"
       },
       "remaining_owner_input": "Deployment-observed Git SHA equal to the pinned candidate. The expected candidate is not an observed deployment SHA; old filtered results concern an earlier candidate only.",
       "source_refs": [
@@ -269,13 +270,13 @@
         "candidate_lockfiles": [
           {
             "path": "package-lock.json",
-            "sha256": "d15cefb788e67b59c49d56e0ca674e158615181ad86667dde4d72ce186d53465",
-            "git_blob": "111c5a9885a211a51aea0c639c6a0ef71371058d"
+            "sha256": "bd17e9f06ecaa5410cad9a75fa6ec5fbf277c57986583686d503f21d8bee2f2c",
+            "git_blob": "edac118ae868a36f6e495b8ba333f4cb0d58493e"
           },
           {
             "path": "bun.lock",
-            "sha256": "d3275fa41f0415571262ec3aeff1707791bccf3438d60d275cc236659043f8be",
-            "git_blob": "385246f2a09afd21d6dad0075de8e9a8c6f91046"
+            "sha256": "f943a902e9ba1aa2ecb84262a796eb3e7d58b48229a6fce215d0f1a6909600db",
+            "git_blob": "075646221414316b5205d720df9d2b15acfffa00"
           }
         ],
         "locks_unchanged_between_candidate_and_reviewed_head": true,
@@ -616,5 +617,7 @@
   "ap_01_ro_1": {
     "authorized": false,
     "executed": false
-  }
+  },
+  "original_reviewed_repository_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
+  "original_candidate_source_sha": "79ad0c04da892ec03601f11c12d82fcc84039b31"
 }

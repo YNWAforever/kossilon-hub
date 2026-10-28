@@ -1,9 +1,9 @@
 {
   "plan_id": "cosec-20261027-native-track-open",
   "supersedes_plan_id": "cosec-20261025-native-plan-fccb7c22",
-  "source_sha": "79ad0c04da892ec03601f11c12d82fcc84039b31",
+  "source_sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
   "source_pr": 149,
-  "source_branch": "cursor/reminder-upload-protocol-942a",
+  "source_branch": "main",
   "previous_source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
   "previous_evidence_base": "531887acce5468f7321a3a2919a7afaa20dedac1",
   "previous_source_runtime_conclusions_apply": false,
@@ -242,9 +242,11 @@
   "repository_discovery": {
     "status": "PARTIAL_REPOSITORY_IDENTIFIERS_ONLY",
     "path": "gate-a-discovery.json",
-    "reviewed_repository_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
+    "reviewed_repository_head": "51b9a2ebaff965726963cbeb6b7146e860248f90",
     "gate_a_fields_path": "gate_a_fields",
     "public_config_contracts_path": "public_config_contracts",
     "binding_interpretation": "OWNER_REQUIRED is unresolved, not approved or ready; repository_known values are reference evidence only. Gate B remains NOT_READY."
-  }
+  },
+  "original_source_sha": "79ad0c04da892ec03601f11c12d82fcc84039b31",
+  "original_source_branch": "cursor/reminder-upload-protocol-942a"
 }

@@ -16,13 +16,16 @@ Neither placeholder is ready or approved.
 
 | Pin | SHA | What it is |
 | --- | --- | --- |
-| Current product candidate | `79ad0c04da892ec03601f11c12d82fcc84039b31` | Draft PR [#149](https://github.com/YNWAforever/kossilon-hub/pull/149), branch `cursor/reminder-upload-protocol-942a`, subject `docs: record staff recovery finalize resume evidence` |
+| Current PR base / product comparison candidate | `ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0` | `origin/main`; PR [#149](https://github.com/YNWAforever/kossilon-hub/pull/149) squash-merged. Unapproved; no deployed artifact or hosted CI result verified here |
+| Original track-open candidate (historical) | `79ad0c04da892ec03601f11c12d82fcc84039b31` | Then-draft PR #149, branch `cursor/reminder-upload-protocol-942a`, subject `docs: record staff recovery finalize resume evidence` |
 | PR #147 head | `fcce28d6b5483bd78bc31c8f32590325f3152d98` | Draft PR [#147](https://github.com/YNWAforever/kossilon-hub/pull/147), branch `codex/cosec-20261023`. Ancestor of #149. Merge-base of #149 and #148 |
 | PR #148 head | `713f4a3d1fddc41905b0c3243230185fc5bc18e3` | Draft PR [#148](https://github.com/YNWAforever/kossilon-hub/pull/148), branch `cursor/protocol-review-reminder-upload-3c21`. One docs commit whose parent is the #147 head. Not an ancestor of #149 |
 | Previous Native source candidate | `4d63818fe2562146f85e9a7b9917d8f0eb58f4c1` | `fix(admin): hand over case responsibilities before staff disable`. Ancestor of #149. Superseded as the candidate |
 | Previous delivery named by that plan | `531887acce5468f7321a3a2919a7afaa20dedac1` | `docs(audit): complete UC186 same-source local build gate`. Ancestor of #149. Two commits after `4d63818` |
 
-Commit counts on this history: `4d63818..531887ac` = 2, `531887ac..fcce28d6` = 55,
+The #147/#148 states in the table and the ancestry comparisons describe the
+original track-open history against `79ad0c04`, not the squash-merged base.
+Commit counts on that historical branch: `4d63818..531887ac` = 2, `531887ac..fcce28d6` = 55,
 `fcce28d6..79ad0c04` = 6, `4d63818..79ad0c04` = 63.
 
 #148 and #149 share the protocol-review files under
@@ -31,9 +34,10 @@ diff. #149 then adds the reminder-command and staff-recovery implementation
 (`74007730` through `79ad0c04`). #148 stops at the design note.
 
 The previous plan's runtime conclusions stay attached to `4d63818` / `531887ac`.
-They do not transfer to `79ad0c04`. A later approval has to name `79ad0c04`, or a
-newer SHA that a human pins after reading the diff. This file does not observe a
-deployed artifact of either SHA.
+They do not transfer to `79ad0c04` or `ae9cbc19`. A later approval has to name
+`ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0`, or a newer SHA that a human pins
+after reading the diff. Repinning the comparison does not approve execution.
+This file does not observe a deployed artifact of any of those SHAs.
 
 ## Original track-open evidence (historical)
 
@@ -47,7 +51,7 @@ Historical matrix file
 SHA256 `287bafceb836b4e42b96cfbc006ee83dd9ac65900100d1ba199f93631537e6fb`,
 184 rows. Column `native_result`: **BLOCKED 70 / NOT_RUN 114 / PASS 0**.
 This open-track packet recounts that file. It does not re-run the matrix on
-`79ad0c04`.
+`79ad0c04` or `ae9cbc19`.
 
 UC map only (100 rows, a subset of the 184):
 `native-scenario-map.csv` SHA256
@@ -88,7 +92,7 @@ remaining requirements, not an empty repo discovery form.
 | `existing_isolated_url` | URL of an environment that already exists. A missing URL stays `NOT_READY`. This packet does not ask for a new deploy |
 | `runtime_project_id` | Project or runtime ID of that environment |
 | `deployment_id` | Deployment ID whose artifact will be read |
-| `observed_source_sha` | SHA the deployment actually runs. It must equal the approved git candidate. The candidate to compare against is `79ad0c04da892ec03601f11c12d82fcc84039b31` until a human pins a later SHA |
+| `observed_source_sha` | SHA the deployment actually runs. It must equal the approved git candidate. The unapproved candidate to compare against is `ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0` until a human pins a later SHA |
 | `observed_artifact_checksum` | Checksum of that deployed artifact |
 | `required_ci_run_ids_and_results` | Required check names, run IDs, and results for that same head |
 | `artifact_sbom_and_dependency_disposition` | SBOM or lockfile identity and the accepted dependency disposition for that artifact |
@@ -189,8 +193,13 @@ should start AP-01-RO-1.
 
 ## Repo-only Gate A follow-up for #150
 
-Reviewed source is #150 head `165e8cd53d9f85221e06d7b8bfb705f1681b2db7`;
-#149 remains only the pinned product comparison candidate `79ad0c04…`.
+Original discovery reviewed #150 head `165e8cd53d9f85221e06d7b8bfb705f1681b2db7`.
+After restacking, packet sources were rechecked at #150 head
+`51b9a2ebaff965726963cbeb6b7146e860248f90` on `origin/main@ae9cbc19`.
+The current product comparison candidate is the #149 squash merge `ae9cbc19…`;
+`79ad0c04…` remains historical provenance. Both lockfile pins were refreshed
+to the current base. Validation covers the working packet fingerprints in
+`verification-report.json`; no hosted CI results or runtime conclusions transfer.
 No #149 source, previous Native plan, provider state, or runtime setting was edited.
 
 Filled: historical demo Vercel project/team/name/slug, fixed URL/deployment ID;

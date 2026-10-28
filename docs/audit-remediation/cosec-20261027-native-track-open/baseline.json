@@ -8,14 +8,14 @@
   "external_accesses": 0,
   "hosted_ci_queried": false,
   "candidate": {
-    "sha": "79ad0c04da892ec03601f11c12d82fcc84039b31",
-    "subject": "docs: record staff recovery finalize resume evidence",
+    "sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
+    "subject": "feat(cosec): reconcile reminder commands and staff recovery reads (#149)",
     "pr": 149,
-    "pr_state": "open_draft",
-    "branch": "cursor/reminder-upload-protocol-942a",
+    "pr_state": "merged_squash",
+    "branch": "main",
     "pr_url": "https://github.com/YNWAforever/kossilon-hub/pull/149"
   },
-  "relations": {
+  "historical_relations_to_original_candidate": {
     "pr_147": {
       "sha": "fcce28d6b5483bd78bc31c8f32590325f3152d98",
       "branch": "codex/cosec-20261023",
@@ -42,13 +42,13 @@
       "approval_request_sha256": "20ad7c792f6a23b37b478005ea14ba4c065f69a29cd1f806ac64a730f5f5db96"
     }
   },
-  "commit_counts": {
+  "historical_commit_counts_to_original_candidate": {
     "4d63818_to_531887ac": 2,
     "531887ac_to_fcce28d6": 55,
     "fcce28d6_to_candidate": 6,
     "4d63818_to_candidate": 63
   },
-  "product_delta_4d63818_to_candidate": {
+  "historical_product_delta_4d63818_to_79ad0c04": {
     "src_files": 41,
     "docs_files": 458,
     "db_server_wrangler_package_github_workflow_files": 0,
@@ -74,7 +74,7 @@
   "native_http_db_rls_verified": false,
   "repo_discovery_refresh": {
     "status": "PARTIAL_REPOSITORY_IDENTIFIERS_ONLY",
-    "reviewed_repository_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
+    "reviewed_repository_head": "51b9a2ebaff965726963cbeb6b7146e860248f90",
     "discovery_file": "gate-a-discovery.json",
     "original_baseline_counters_scope": "Original track-open prepare pass; not a count of this follow-up GitHub fetch/push or PR metadata delivery operations.",
     "native_executed": false,
@@ -89,5 +89,14 @@
     "gate_a_fields_requiring_owner": 19,
     "actual_gate_a_alias_ids_requiring_owner": 14,
     "gate_b_changed": false
-  }
+  },
+  "original_track_open_candidate": {
+    "sha": "79ad0c04da892ec03601f11c12d82fcc84039b31",
+    "subject": "docs: record staff recovery finalize resume evidence",
+    "pr": 149,
+    "pr_state": "open_draft_at_original_track_open",
+    "branch": "cursor/reminder-upload-protocol-942a",
+    "pr_url": "https://github.com/YNWAforever/kossilon-hub/pull/149"
+  },
+  "review_base_sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0"
 }

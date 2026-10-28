@@ -1,9 +1,9 @@
 {
   "status": "PASS_REPOSITORY_PACKET_CHECKS_ONLY",
-  "verified_at_utc": "2026-10-27T16:22:44.183328+00:00",
-  "reviewed_repository_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
-  "validation_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
-  "validation_scope": "Working packet bytes below; no product tests, CI runs, app import, network probe, Auth, DB, browser or Native execution.",
+  "verified_at_utc": "2026-10-28T14:39:11.813769+00:00",
+  "reviewed_repository_head": "51b9a2ebaff965726963cbeb6b7146e860248f90",
+  "validation_head": "51b9a2ebaff965726963cbeb6b7146e860248f90",
+  "validation_scope": "Working packet fingerprints below, based on reviewed input head 51b9a2ebaff965726963cbeb6b7146e860248f90 after restack on ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0. This report is included in a subsequent docs-only commit. No product tests, CI runs, app import, network probe, Auth, DB, browser or Native execution.",
   "release_gate": "NO_GO",
   "execution_enabled": false,
   "approved_packet_ids": [],
@@ -22,7 +22,7 @@
   "changes_scoped_to_requested_packet": true,
   "checks": [
     "JSON parsing and execution/approval/AP invariants",
-    "Gate A unresolved, Gate B and previous baseline preserved",
+    "Gate A unresolved; Gate B, historical matrix and prior-plan evidence preserved",
     "Repo source paths/SHA256/git blobs/JSON pointers",
     "Candidate lockfiles match pinned source",
     "Historical matrix hash/recount and old packet immutability",
@@ -31,11 +31,14 @@
     "git diff --check"
   ],
   "file_sha256_excluding_this_report": {
-    "docs/audit-remediation/cosec-20261027-native-track-open/APPROVAL-CHECKLIST.md": "533381bf2444ea849246e1e27c6c83467f50742338ff2e611bc4b6f3e2448c68",
-    "docs/audit-remediation/cosec-20261027-native-track-open/DELIVERY.md": "cffde744994d69c443b73caebb93f50456c578cdc78047ae41be5d7500be9004",
-    "docs/audit-remediation/cosec-20261027-native-track-open/approval-request.json": "5de9431d018dd7086a1b3f0cd4eb5e7ef6a15046565eb567c220540a59344d1d",
-    "docs/audit-remediation/cosec-20261027-native-track-open/baseline.json": "affdefc444b7d17871f61bb06693ec7bcc0c2d1b83c7913ce4280ff1e3e2d16e",
-    "docs/audit-remediation/cosec-20261027-native-track-open/blockers.md": "928364e53675bd818bc81773cc688ab290de97f4755dc03264c85f0c54ad94f6",
-    "docs/audit-remediation/cosec-20261027-native-track-open/gate-a-discovery.json": "38234e3c0ac5eededad7e837abb3c9e37d0505dd780d6381bfa80a784f861848"
-  }
+    "docs/audit-remediation/cosec-20261027-native-track-open/APPROVAL-CHECKLIST.md": "8168ec8c44a23bf371f11ee1090829101781fb81ed31d8836f3a341f8c178b7d",
+    "docs/audit-remediation/cosec-20261027-native-track-open/DELIVERY.md": "c15920acdaf83cecc4d68455bdc5860ef72ad8b9c91698abaeae7e162c0121ca",
+    "docs/audit-remediation/cosec-20261027-native-track-open/approval-request.json": "1aed1712ddc9be2e6d639f6d348c823107117f62f2208c421ecad15f368bdba0",
+    "docs/audit-remediation/cosec-20261027-native-track-open/baseline.json": "312f11fe53452d83c71bdd74ea77f6b2c4332c33ce0a693560dc5719ecb55e83",
+    "docs/audit-remediation/cosec-20261027-native-track-open/blockers.md": "a655aae001bfca7b2a90c73fb439a8e9747a1bb7f3c27356827d4ba6c98fa908",
+    "docs/audit-remediation/cosec-20261027-native-track-open/gate-a-discovery.json": "a6573884d1094f79b980a185d96e6d2edadae4ae0c01964ee3bed484855169aa"
+  },
+  "original_validation_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
+  "review_base_sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
+  "original_verified_at_utc": "2026-10-27T16:22:44.183328+00:00"
 }
