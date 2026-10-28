@@ -50,7 +50,7 @@ test("LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return an
       await page.setViewportSize(initialViewport!);
       // Explicit existing redirect avoids inheriting the prior persona's
       // remembered deep link when this single test signs out and changes role.
-      await page.goto("/login?redirect=%2F");
+      await page.goto("/login?redirect=%2F", { waitUntil: "networkidle" });
       await activate(page, page.getByRole("button", { name: new RegExp(persona.name) }));
       await expect(
         page.getByRole("heading", { level: 1, name: "總覽", exact: true }),
@@ -137,7 +137,9 @@ test("LOCAL R22: keyboard demo boundaries, seeded annual-return reload/return an
         path: info.outputPath(`${persona.role}-case-640.png`),
         fullPage: true,
       });
-      await page.reload();
+      // Local Vite continues loading route modules after the window load event.
+      // Keep the existing UI assertions after those requests have settled.
+      await page.reload({ waitUntil: "networkidle" });
       expect(await assertReadonlyDelta(page)).toEqual(beforeReload);
       await assertReflow(page, REFLOW.width);
       await page.screenshot({
