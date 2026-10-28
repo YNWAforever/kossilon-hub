@@ -21,6 +21,13 @@ type SendReminder = (input: {
 
 type ReminderStorage = Pick<Storage, "getItem" | "setItem">;
 
+function recipientCommandKey(snapshot: AnnualReturnReminderCommandSnapshot) {
+  return annualReturnReminderCommandStorageKey({
+    ...snapshot,
+    recipientPhone: snapshot.recipientPhone.replace(/\D/g, ""),
+  });
+}
+
 function storedRecipientCommand(
   storage: ReminderStorage,
   snapshot: AnnualReturnReminderCommandSnapshot,
@@ -38,9 +45,9 @@ function storedRecipientCommand(
   ) {
     return latest.commandUuid;
   }
-  return readStoredAnnualReturnReminderCommand(
-    storage,
-    annualReturnReminderCommandStorageKey(snapshot),
+  return (
+    readStoredAnnualReturnReminderCommand(storage, recipientCommandKey(snapshot)) ??
+    readStoredAnnualReturnReminderCommand(storage, annualReturnReminderCommandStorageKey(snapshot))
   );
 }
 
@@ -203,14 +210,27 @@ export function useAnnualReturnReminderCommand({
     const key = annualReturnReminderCommandStorageKey(snapshot);
     let nextCommand: string;
     try {
-      const stored = storedRecipientCommand(storageRef.current(), snapshot);
+      const storage = storageRef.current();
+      const latestKey = annualReturnReminderLatestStorageKey({ actorScope, caseId });
+      const latest = readLatestAnnualReturnReminderCommand(storage, latestKey);
+      // Preserve the prior recipient before replacing the latest pointer, also
+      // migrating existing journals without rewriting their original entries.
+      if (latest) {
+        persistAnnualReturnReminderCommand(
+          storage,
+          recipientCommandKey({ ...latest, actorScope, caseId }),
+          latest.commandUuid,
+        );
+      }
+      const stored = storedRecipientCommand(storage, snapshot);
       nextCommand = !stored || closed ? crypto.randomUUID() : stored;
-      persistAnnualReturnReminderCommand(storageRef.current(), key, nextCommand);
-      persistLatestAnnualReturnReminderCommand(
-        storageRef.current(),
-        annualReturnReminderLatestStorageKey({ actorScope, caseId }),
-        { recipientName: name, recipientPhone: phone, commandUuid: nextCommand },
-      );
+      persistAnnualReturnReminderCommand(storage, key, nextCommand);
+      persistAnnualReturnReminderCommand(storage, recipientCommandKey(snapshot), nextCommand);
+      persistLatestAnnualReturnReminderCommand(storage, latestKey, {
+        recipientName: name,
+        recipientPhone: phone,
+        commandUuid: nextCommand,
+      });
       setJournalError(null);
     } catch (error) {
       setJournalError(error instanceof Error ? error.message : "無法保存提醒指令紀錄。");

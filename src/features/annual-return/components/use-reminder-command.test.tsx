@@ -4,6 +4,12 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useAnnualReturnReminderCommand } from "./use-reminder-command";
+import {
+  annualReturnReminderCommandStorageKey,
+  annualReturnReminderLatestStorageKey,
+  persistAnnualReturnReminderCommand,
+  persistLatestAnnualReturnReminderCommand,
+} from "../reminder-command";
 
 const mocks = vi.hoisted(() => ({ read: vi.fn() }));
 vi.mock("../server-fns", () => ({ readAnnualReturnReminderCommand: mocks.read }));
@@ -213,6 +219,61 @@ describe("useAnnualReturnReminderCommand", () => {
     fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
     await waitFor(() => expect(send).toHaveBeenCalledTimes(3));
     expect(send.mock.calls[2][0].commandUuid).toBe(unresolvedCommand);
+  });
+
+  it("retains an earlier recipient's command across formatting edits after sending to someone else", async () => {
+    const storage = memoryStorage();
+    const firstCommand = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const snapshot = {
+      actorScope: "actor-a",
+      caseId,
+      recipientName: "Ada Chan",
+      recipientPhone: "+85291234567",
+    };
+    // Start with the journal format written before recipient aliases existed.
+    persistAnnualReturnReminderCommand(
+      storage,
+      annualReturnReminderCommandStorageKey(snapshot),
+      firstCommand,
+    );
+    persistLatestAnnualReturnReminderCommand(
+      storage,
+      annualReturnReminderLatestStorageKey(snapshot),
+      {
+        recipientName: snapshot.recipientName,
+        recipientPhone: snapshot.recipientPhone,
+        commandUuid: firstCommand,
+      },
+    );
+    const send = vi.fn<(input: SendInput) => Promise<unknown>>(async () => {
+      throw new Error("lost response");
+    });
+    mocks.read.mockResolvedValue({ state: "absent" });
+    renderHarness(storage, send);
+    await screen.findByText(/沿用同一指令/);
+
+    fireEvent.change(screen.getByLabelText("提醒收件人姓名"), { target: { value: "Ben Lee" } });
+    fireEvent.change(screen.getByLabelText("提醒電話號碼"), {
+      target: { value: "+85298765432" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+    await screen.findByText(/沿用同一指令/);
+    fireEvent.change(screen.getByLabelText("提醒收件人姓名"), { target: { value: "Ada Chan" } });
+    fireEvent.change(screen.getByLabelText("提醒電話號碼"), {
+      target: { value: "+852 9123 4567" },
+    });
+    await waitFor(() =>
+      expect((screen.getByRole("button", { name: "發送提醒" }) as HTMLButtonElement).disabled).toBe(
+        false,
+      ),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(2));
+    expect(send.mock.calls[1][0].commandUuid).toBe(firstCommand);
+    expect(storage.getItem(annualReturnReminderCommandStorageKey(snapshot))).toContain(
+      firstCommand,
+    );
   });
 
   it("does not send again when the receipt read fails", async () => {
