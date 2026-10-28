@@ -235,6 +235,49 @@ describe("useAnnualReturnReminderCommand", () => {
     expect(send).toHaveBeenCalledTimes(1);
   });
 
+  it("restores the selected recipient's unresolved command after an in-flight send settles", async () => {
+    const storage = memoryStorage();
+    let finishSend!: () => void;
+    const send = vi.fn<(input: SendInput) => Promise<unknown>>();
+    send.mockRejectedValueOnce(new Error("lost response"));
+    send.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishSend = () => resolve({ ok: true });
+        }),
+    );
+    send.mockRejectedValueOnce(new Error("still uncertain"));
+    mocks.read.mockResolvedValue({ state: "absent" });
+    renderHarness(storage, send);
+    await fill();
+    fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
+    await screen.findByText(/沿用同一指令/);
+    const unresolvedCommand = send.mock.calls[0][0].commandUuid;
+
+    fireEvent.change(screen.getByLabelText("提醒收件人姓名"), { target: { value: "Ben Lee" } });
+    fireEvent.change(screen.getByLabelText("提醒電話號碼"), {
+      target: { value: "+85298765432" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(2));
+    // Inputs remain editable while the POST and its receipt read are pending.
+    fireEvent.change(screen.getByLabelText("提醒收件人姓名"), { target: { value: "Ada Chan" } });
+    fireEvent.change(screen.getByLabelText("提醒電話號碼"), {
+      target: { value: "+85291234567" },
+    });
+    mocks.read.mockResolvedValue({ state: "queued", messageId: "ben-message" });
+    await act(async () => finishSend());
+    await waitFor(() =>
+      expect((screen.getByRole("button", { name: "發送提醒" }) as HTMLButtonElement).disabled).toBe(
+        false,
+      ),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(3));
+    expect(send.mock.calls[2][0].commandUuid).toBe(unresolvedCommand);
+    expect(send.mock.calls[2][0].recipientName).toBe("Ada Chan");
+  });
+
   it("restores the latest command on reload and reads it without posting", async () => {
     const storage = memoryStorage();
     const send = vi.fn<(input: SendInput) => Promise<unknown>>(async () => ({ ok: true }));

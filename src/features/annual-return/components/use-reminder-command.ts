@@ -135,7 +135,9 @@ export function useAnnualReturnReminderCommand({
       setJournalError(error instanceof Error ? error.message : "無法讀取提醒指令紀錄。");
       setWatch(false);
     }
-  }, [actorScope, caseId, recipientName, recipientPhone]);
+    // Recipient edits during a POST are deferred until its receipt read ends.
+    // Rebind then so that receipt cannot close another recipient's command.
+  }, [actorScope, caseId, recipientName, recipientPhone, postingState]);
 
   const commandQuery = useQuery({
     queryKey: reminderCommandQueryKey(caseId, commandUuid ?? "none"),
