@@ -135,6 +135,8 @@ const DEMO_USER_FIXTURE_READERS = [
 ];
 
 const ROUTES_WITHOUT_A_MODE_BRANCH: Record<string, string> = {
+  "routes/index.tsx": "public marketing document; renders no firm data in either mode",
+  "routes/en.tsx": "public English marketing document; renders no firm data in either mode",
   "routes/login.tsx": "unauthenticated entry point; renders no firm data in either mode",
   "routes/admin.tsx": "branches inside AdminPage via Route.useRouteContext",
   "routes/__root.tsx": "the layout; reads dataMode in beforeLoad rather than in a component",

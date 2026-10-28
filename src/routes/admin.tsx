@@ -101,7 +101,7 @@ function ProductionAdminConsole() {
                 」身分登入。只有管理員可使用用戶管理。
               </p>
               <Button asChild variant="primary" className="mt-4">
-                <Link to="/">返回總覽</Link>
+                <Link to="/dashboard">返回總覽</Link>
               </Button>
             </div>
           </div>
@@ -157,7 +157,7 @@ function DemoAdminConsole() {
                 」身分登入。只有管理員可使用原型的用戶及系統控制。
               </p>
               <Button asChild variant="primary" className="mt-4">
-                <Link to="/">返回總覽</Link>
+                <Link to="/dashboard">返回總覽</Link>
               </Button>
             </div>
           </div>

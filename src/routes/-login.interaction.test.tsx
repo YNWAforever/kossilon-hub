@@ -187,13 +187,15 @@ describe("LoginPage", () => {
     };
     try {
       render(<LoginPage />);
-      await waitFor(() => expect(navigate).toHaveBeenCalledWith({ href: "/", replace: true }));
+      await waitFor(() =>
+        expect(navigate).toHaveBeenCalledWith({ href: "/dashboard", replace: true }),
+      );
     } finally {
       vi.unstubAllEnvs();
       history.replaceState(null, "", originalHref);
     }
   });
-  it("preserves an explicit dashboard return rather than treating slash as absence", async () => {
+  it("falls back to staff work when an old explicit root return now points to marketing", async () => {
     const originalHref = window.location.href;
     history.replaceState(null, "", "/login?redirect=%2F");
     window.sessionStorage.clear();
@@ -208,7 +210,7 @@ describe("LoginPage", () => {
     };
     try {
       render(<LoginPage />);
-      await waitFor(() => expect(navigate).toHaveBeenCalledWith({ href: "/", replace: true }));
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith({ href: "/today", replace: true }));
     } finally {
       history.replaceState(null, "", originalHref);
     }

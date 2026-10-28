@@ -31,6 +31,7 @@ import type { DataMode } from "@/features/runtime/data-mode";
 import {
   getSafeRedirectPath,
   isClientRoute,
+  isMarketingRoute,
   isPublicRoute,
   rememberRedirectPath,
 } from "@/features/auth/route-guard";
@@ -60,7 +61,7 @@ function NotFoundComponent() {
             href="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
-            返回總覽
+            返回首頁
           </a>
         </div>
       </div>
@@ -122,6 +123,9 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
+  // Public documents render without JavaScript. Keep the existing client-only
+  // staff/auth lifecycle for every other route.
+  ssr: ({ location }) => (isMarketingRoute(location.pathname) ? true : undefined),
   beforeLoad: async ({ context, location }) => {
     if (isPublicRoute(location.pathname)) {
       await ensureActorQueryScope(context.queryClient, null);
@@ -192,8 +196,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   return (
-    <html lang="zh-Hant-HK">
+    <html lang={pathname === "/en" ? "en" : "zh-HK"}>
       <head>
         <HeadContent />
       </head>
@@ -208,6 +213,10 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient, actor } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  // A public brochure never needs session bootstrap or staff data. It remains
+  // usable when auth is unavailable, including for already signed-in visitors.
+  if (isMarketingRoute(pathname)) return <Outlet />;
 
   return (
     <QueryClientProvider client={queryClient}>

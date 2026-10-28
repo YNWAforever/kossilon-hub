@@ -29,7 +29,7 @@ test("captures actual local demo browser timing and parser network boundaries", 
   });
   await page.goto("/login");
   await page.getByRole("button", { name: /Amy Chan/ }).click();
-  await expect(page).toHaveURL(/\/(?:\?|$)/);
+  await expect(page).toHaveURL(/\/dashboard(?:\?|$)/);
   await page.goto("/today");
   await expect(page.getByRole("heading", { name: "今日工作", exact: true })).toBeVisible();
   await expect

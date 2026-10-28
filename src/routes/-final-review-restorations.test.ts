@@ -18,7 +18,7 @@ const mobileNavSource = readFileSync(
   "utf8",
 );
 const startSource = readFileSync(new URL("../start.ts", import.meta.url), "utf8");
-const dashboardSource = readFileSync(new URL("./index.tsx", import.meta.url), "utf8");
+const dashboardSource = readFileSync(new URL("./dashboard.tsx", import.meta.url), "utf8");
 const settingsSource = readFileSync(new URL("./settings.tsx", import.meta.url), "utf8");
 const knowledgeBaseSectionSource = readFileSync(
   new URL("../components/knowledge-base-section.tsx", import.meta.url),

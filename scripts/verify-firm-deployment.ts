@@ -160,6 +160,8 @@ const LOCAL_GATE_CONTRACTS = {
  * that one runs in the suite.
  */
 const ROUTES_WITHOUT_A_MODE_BRANCH = new Set([
+  "index.tsx", // public marketing; no firm data in either mode
+  "en.tsx", // English public marketing; no firm data in either mode
   "login.tsx",
   "admin.tsx",
   "work-queue.tsx",

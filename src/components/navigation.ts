@@ -56,7 +56,7 @@ export const navGroups: NavGroup[] = [
     heading: "今日工作",
     items: [
       { to: "/today", label: "今日工作", icon: CalendarClock, exact: true },
-      { to: "/", label: "總覽", icon: LayoutDashboard, exact: true },
+      { to: "/dashboard", label: "總覽", icon: LayoutDashboard, exact: true },
       { to: "/work-queue", label: "工作隊列", icon: ListChecks },
     ],
   },

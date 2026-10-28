@@ -91,7 +91,8 @@ export function LoginPage() {
     const safeSearchRedirect = getSafeRedirectPath(searchRedirect);
     // 今日工作 reads production work views only, so in the read-only demo it is an
     // empty state; demo staff start on the fixture-backed dashboard instead.
-    const fallback = session.role === "Client" ? "/portal" : magicLinkEnabled ? "/today" : "/";
+    const fallback =
+      session.role === "Client" ? "/portal" : magicLinkEnabled ? "/today" : "/dashboard";
     const storedRedirect = consumeRedirectPath(undefined, fallback);
     const redirectPath =
       searchRedirect && safeSearchRedirect === searchRedirect ? safeSearchRedirect : storedRedirect;
