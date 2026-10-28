@@ -101,6 +101,9 @@ describe.skipIf(!databaseUrl)("R17 owned 1000-document SQL register correctness"
         file_name: row.file_name,
         storage_url: row.storage_url,
         intent_id: row.intent_id,
+        content_type: "application/pdf",
+        declared_byte_size: 20,
+        declared_checksum_sha256: "a".repeat(64),
         superseded_by_version_id: null,
         superseded_at: null,
       },
@@ -215,13 +218,17 @@ describe.skipIf(!databaseUrl)("R17 owned 1000-document SQL register correctness"
             file_type text,file_name text,storage_url text)`;
         createdIds.intents.push(...ownedIds.intents);
         // Superseded rows already point at their current version; no temporary
-        // duplicate-current state or broad fixture mutation is required.
+        // duplicate-current state or broad fixture mutation is required. Current
+        // versions carry the same declarations as their intents so the existing
+        // fail-closed identity join can associate them; these are not verified bytes.
         await tx`insert into document_versions(id,document_id,version_number,file_name,storage_url,intent_id,
-          superseded_by_version_id,superseded_at)
+          content_type,declared_byte_size,declared_checksum_sha256,superseded_by_version_id,superseded_at)
           select f.id,f.document_id,f.version_number,f.file_name,f.storage_url,f.intent_id,
+            f.content_type,f.declared_byte_size,f.declared_checksum_sha256,
             f.superseded_by_version_id,f.superseded_at::timestamptz
           from jsonb_to_recordset(${tx.json(versions)}::jsonb) f(id uuid,document_id uuid,version_number integer,
-            file_name text,storage_url text,intent_id uuid,superseded_by_version_id uuid,superseded_at text)`;
+            file_name text,storage_url text,intent_id uuid,content_type text,declared_byte_size bigint,
+            declared_checksum_sha256 text,superseded_by_version_id uuid,superseded_at text)`;
         createdIds.versions.push(...ownedIds.versions);
         // The review FK is populated only after its exact version IDs exist.
         await tx`update documents d set reviewed_document_version_id=f.reviewed_document_version_id
