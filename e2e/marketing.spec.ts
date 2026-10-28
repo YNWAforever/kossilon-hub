@@ -42,6 +42,17 @@ test("anonymous marketing has server-rendered content, locales, working navigati
   await expect(page.locator("#pricing")).toContainText("TBC");
   await expect(page.locator("figcaption")).toContainText("Synthetic illustration");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const viewport = page.viewportSize()!;
+  await page.setViewportSize({ width: 320, height: viewport.height });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+  await expect(page.getByText("Menu", { exact: true })).toBeInViewport({ ratio: 1 });
+  await page.getByText("Menu", { exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Product navigation" })
+    .getByRole("link", { name: "Features", exact: true })
+    .click();
+  await expect(page.locator("#features")).toBeInViewport();
+  await page.setViewportSize(viewport);
   await page.screenshot({ path: info.outputPath("marketing-en.png"), fullPage: true });
   await page.reload({ waitUntil: "networkidle" });
   await expect(page.locator("html")).toHaveAttribute("lang", "en");

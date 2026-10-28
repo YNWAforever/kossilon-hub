@@ -836,3 +836,11 @@
     margin-top: 12px;
   }
 }
+@media (max-width: 359px) {
+  .comsec-header .comsec-brand {
+    font-size: 18px;
+  }
+  .comsec-header .comsec-brand > span:first-child:not(.comsec-brand-dot) {
+    display: none;
+  }
+}
