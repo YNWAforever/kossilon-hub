@@ -2,21 +2,53 @@
 
 **原生驗收軌道已開啟，只準備。Native remains NO_GO.**
 
-Hong Kong date 2026-10-27. This packet refreshes the unapproved plan in
+Refresh date: 2026-10-29 HKT. Original track-open date: 2026-10-27. This
+packet continues the unapproved plan in
 [../cosec-20261025-native-plan-fccb7c22/](../cosec-20261025-native-plan-fccb7c22/).
-It does not approve any AP or execute Native. The repo-only follow-up fills
-non-secret reference identifiers and field contracts; every selected Gate A
-binding still requires owner input.
+Authority: **Willy Approve 2026-10-29 ~21:17 HKT — "deploy demo then brief
+Codex packet refresh only"** (demo deploy + packet refresh only).
 
-`execution_enabled` is `false`. `approved_packet_ids` is `[]`. Gate A selected
-bindings and 14 actual alias IDs are `OWNER_REQUIRED`; Gate B stays `NOT_READY`.
-Neither placeholder is ready or approved.
+**Prepare-only. Native NO_GO. execution_enabled=false. No AP authorized.
+No Ready/merge/Native ask.** `approved_packet_ids` stays `[]`. Seven supplied
+binding values are recorded for this packet only; twelve top-level Gate A
+fields and all 14 alias IDs remain `OWNER_REQUIRED`. DB/Auth/data isolation
+and required-check policy also need owner confirmation. Gate B and all APs
+stay `NOT_READY`.
+
+## Supplied verified demo deployment evidence — not Native approval
+
+The following evidence was supplied in Willy's task and transcribed without
+Vercel/Neon/Auth requests, visiting the demo URL, querying hosted CI, or running
+any AP. Full machine evidence: [approval-request.json](approval-request.json),
+`demo_deploy_evidence`.
+
+| Field | Supplied value |
+| --- | --- |
+| Team | `team_qvzlsFmfCsLkgItSypqHjw3z` / `ynwaforevers-projects` |
+| Project | `kossilon-hub-demo` / `prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm` — **DEMO ONLY**; not in Vercel `linkedProjects`, but Git-source `create_deployment` succeeded |
+| Deployment | `dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c`, state `READY`, target `production` **inside the demo project only** |
+| URL | `https://kossilon-hub-demo-4oxc6afow-ynwaforevers-projects.vercel.app` |
+| Aliases | `kossilon-hub-demo.vercel.app`, `kossilon-hub-demo-ynwaforevers-projects.vercel.app`, `kossilon-hub-demo-git-main-ynwaforevers-projects.vercel.app` |
+| Observed source / comparison candidate | `d5183ba04cd510230e7a7f6b6b53c4529141aad6`, `githubCommitRef=main` |
+| CI on same SHA | [GitHub Actions run 40755216699](https://github.com/YNWAforever/kossilon-hub/actions/runs/40755216699), `SUCCESS`; `Node22` / `Node24` / `verify` `SUCCESS` |
+| Accountable human/business owner | Willy (YNWAforever), confirmed by Willy; no email supplied |
+| Cleanup | `RETAIN_ONLY` — no delete/reset |
+
+Provider `READY` and CI `SUCCESS` are supplied observations, not Native/AP
+approval. Artifact checksum, usable isolated DB endpoint and Auth tenant are
+not in the evidence and remain `OWNER_REQUIRED`. The production Vercel project
+`kossilon-hub` was not touched. This refresh performed no deployment.
+
+Historical demo deployment `dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY` and its fixed URL
+remain in discovery and the original metadata receipt as **HISTORICAL /
+SUPERSEDED**, not current bindings. Old receipts and older packets are unchanged.
 
 ## Baseline SHAs
 
 | Pin | SHA | What it is |
 | --- | --- | --- |
-| Current PR base / product comparison candidate | `ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0` | `origin/main`; PR [#149](https://github.com/YNWAforever/kossilon-hub/pull/149) squash-merged. Unapproved; no deployed artifact or hosted CI result verified here |
+| Current PR base / comparison candidate | `d5183ba04cd510230e7a7f6b6b53c4529141aad6` | `main`; PR [#150](https://github.com/YNWAforever/kossilon-hub/pull/150) merge. Supplied demo deployment/source and CI evidence recorded above; Native unapproved |
+| Previous comparison candidate (historical / superseded) | `ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0` | PR [#149](https://github.com/YNWAforever/kossilon-hub/pull/149) squash merge; prior packet comparison only |
 | Original track-open candidate (historical) | `79ad0c04da892ec03601f11c12d82fcc84039b31` | Then-draft PR #149, branch `cursor/reminder-upload-protocol-942a`, subject `docs: record staff recovery finalize resume evidence` |
 | PR #147 head | `fcce28d6b5483bd78bc31c8f32590325f3152d98` | Draft PR [#147](https://github.com/YNWAforever/kossilon-hub/pull/147), branch `codex/cosec-20261023`. Ancestor of #149. Merge-base of #149 and #148 |
 | PR #148 head | `713f4a3d1fddc41905b0c3243230185fc5bc18e3` | Draft PR [#148](https://github.com/YNWAforever/kossilon-hub/pull/148), branch `cursor/protocol-review-reminder-upload-3c21`. One docs commit whose parent is the #147 head. Not an ancestor of #149 |
@@ -34,10 +66,11 @@ diff. #149 then adds the reminder-command and staff-recovery implementation
 (`74007730` through `79ad0c04`). #148 stops at the design note.
 
 The previous plan's runtime conclusions stay attached to `4d63818` / `531887ac`.
-They do not transfer to `79ad0c04` or `ae9cbc19`. A later approval has to name
-`ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0`, or a newer SHA that a human pins
-after reading the diff. Repinning the comparison does not approve execution.
-This file does not observe a deployed artifact of any of those SHAs.
+They do not transfer to `79ad0c04`, historical `ae9cbc19`, or current `d5183ba`.
+A later Native approval would have to name the candidate and exact scope.
+This prepare-only packet records supplied demo source/CI evidence at `d5183ba`;
+repinning and recording observations do not approve execution or prove the
+deployed artifact checksum.
 
 ## Original track-open evidence (historical)
 
@@ -51,7 +84,7 @@ Historical matrix file
 SHA256 `287bafceb836b4e42b96cfbc006ee83dd9ac65900100d1ba199f93631537e6fb`,
 184 rows. Column `native_result`: **BLOCKED 70 / NOT_RUN 114 / PASS 0**.
 This open-track packet recounts that file. It does not re-run the matrix on
-`79ad0c04` or `ae9cbc19`.
+`79ad0c04`, historical `ae9cbc19`, or current `d5183ba`.
 
 UC map only (100 rows, a subset of the 184):
 `native-scenario-map.csv` SHA256
@@ -67,11 +100,11 @@ case UI, document recovery and preview, Today / work-queue / documents / payment
 routes, and bulk selection. Those local slices do not supply an isolation URL, a
 CI run, a database target, an Auth tenant, storage, fixtures, or a cost ceiling.
 
-This prepare pass performed no Native Auth, HTTP, RLS, browser, provider, CI,
+The original prepare pass performed no Native Auth, HTTP, RLS, browser, provider, CI,
 scheduler, or restore action. It created no resources, ran no migration, sent no
 message, took no payment, merged nothing, and deployed nothing. It did not query
-hosted CI, so no run is recorded here as green or red. Missing run IDs stay
-`NOT_READY`.
+hosted CI. That historical absence of a run is now superseded for comparison
+by the supplied run 40755216699 above; it is not a CI query or rerun by this refresh.
 
 ## What Willy supplies for AP-00
 
@@ -81,20 +114,21 @@ existing secret store or an operator session. Do not paste secrets into git or
 chat.
 
 **Gate A — required before the first slice can be proposed for approval.**
-Repo-only discovery is now filled in [APPROVAL-CHECKLIST.md](APPROVAL-CHECKLIST.md)
-and [gate-a-discovery.json](gate-a-discovery.json). All selected bindings still
-need `OWNER_REQUIRED` input or confirmation. The table below describes the
-remaining requirements, not an empty repo discovery form.
+Repository discovery and supplied demo evidence are recorded in
+[APPROVAL-CHECKLIST.md](APPROVAL-CHECKLIST.md) and
+[gate-a-discovery.json](gate-a-discovery.json). The table distinguishes supplied
+values from remaining owner inputs. Counts refer to top-level fields only;
+recording a demo URL/project or CI result does not settle isolation or CI policy.
 
 | Field | What to supply |
 | --- | --- |
-| `environment_owner` | Named owner of the already-isolated target |
-| `existing_isolated_url` | URL of an environment that already exists. A missing URL stays `NOT_READY`. This packet does not ask for a new deploy |
-| `runtime_project_id` | Project or runtime ID of that environment |
-| `deployment_id` | Deployment ID whose artifact will be read |
-| `observed_source_sha` | SHA the deployment actually runs. It must equal the approved git candidate. The unapproved candidate to compare against is `ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0` until a human pins a later SHA |
+| `environment_owner` | Recorded: Willy (YNWAforever), confirmed human/business owner |
+| `existing_isolated_url` | Recorded: `https://kossilon-hub-demo-4oxc6afow-ynwaforevers-projects.vercel.app`; `OWNER_REQUIRED` for DB/Auth/data isolation and approved Native origin/availability |
+| `runtime_project_id` | Recorded: demo `prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm`; DB/Auth/data isolation remains `OWNER_REQUIRED` |
+| `deployment_id` | Recorded: demo `dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c`; checksum and isolation remain `OWNER_REQUIRED` |
+| `observed_source_sha` | Recorded from supplied evidence: `d5183ba04cd510230e7a7f6b6b53c4529141aad6`, the new comparison candidate; no Native approval |
 | `observed_artifact_checksum` | Checksum of that deployed artifact |
-| `required_ci_run_ids_and_results` | Required check names, run IDs, and results for that same head |
+| `required_ci_run_ids_and_results` | Recorded: 40755216699 `SUCCESS`, `Node22` / `Node24` / `verify`, same SHA; required-check policy remains `OWNER_REQUIRED` |
 | `artifact_sbom_and_dependency_disposition` | SBOM or lockfile identity and the accepted dependency disposition for that artifact |
 | `db_provider_project_id` | Provider project ID of the disposable or dedicated QA database |
 | `db_branch_id` | Branch ID |
@@ -106,7 +140,7 @@ remaining requirements, not an empty repo discovery form.
 | `role_identity_manifest` | Immutable Auth ID to internal user, profile, team, and revision for each Gate A alias, and the method that opens an existing QA session |
 | `network_allowlist` | Approved app, Auth, storage, and provider-sandbox hosts only |
 | `read_only_cost_ceiling_and_expiry_hkt` | Currency, amount, window, and expiry in HKT for the read-only slice |
-| `cleanup_manifest_and_disposition` | Retain-only disposition for sessions opened by that slice. Exact disposable IDs, if any, come from the owner |
+| `cleanup_manifest_and_disposition` | Recorded: `RETAIN_ONLY` (no delete/reset); this refresh opened no session; future exact IDs require a later packet |
 
 Gate A aliases, each actual Auth ID `OWNER_REQUIRED`: `ADMIN_PRIMARY`,
 `ADMIN_RECOVERY`, `STAFF_SOURCE`, `STAFF_OWNER`, `STAFF_REVIEWER`, `MANAGER_A`,
@@ -154,10 +188,10 @@ write, and no continuation into AP-02.
 
 | AP | Why it stays NOT_READY |
 | --- | --- |
-| AP-00 | Repo references are filled; every Gate A selected binding/actual alias ID remains `OWNER_REQUIRED`, Gate B `NOT_READY`; no AP approval |
-| AP-01 | No approved isolated target or same-candidate deployment/CI/DB/Auth binding; no ComSec metadata/session/HTTP call in this follow-up |
+| AP-00 | Seven supplied values recorded; twelve top-level fields/14 alias IDs `OWNER_REQUIRED`; isolation unproven; Gate B `NOT_READY`; no AP approval |
+| AP-01 | Demo deployment/source/CI recorded; no artifact checksum, proved isolation, DB/Auth/role manifest, allowlist or budget/expiry; no AP-01 execution |
 | AP-02 | No reviewed fixture driver, no exact IDs, no disposable database target |
-| AP-03 | No bound staff session, no core fixture, no same-SHA deployed runtime. Local Today and case edits are not that journey |
+| AP-03 | No bound staff session, core fixture or proved isolated Native runtime. Supplied same-SHA demo deployment is not that journey |
 | AP-04 | Storage, object prefix, scanner sandbox, and real scan receipts are `NOT_READY`. No payment was taken |
 | AP-05 | `STAFF_SOURCE` and `RACE_SOURCE_01`–`06` have no Auth IDs. Disabling seven QA profiles is not approved |
 | AP-06 | The 104-obligation fixture and `PAGING_SOURCE` are unbound |
@@ -166,7 +200,7 @@ write, and no continuation into AP-02.
 | AP-09 | Destinations, models, corpus, currency, and spend ceiling are blank. Approved provider calls and approved spend are 0 |
 | AP-10 | No device, browser, or network profile. AP-08 data does not exist. No performance number is claimed |
 | AP-11 | No scheduler owner, job IDs, backup ID, or restore target. No tick was observed |
-| AP-12 | No exact cleanup IDs. Disposition stays retain. This prepare pass created no resource to dispose |
+| AP-12 | `RETAIN_ONLY`, no delete/reset; future exact session IDs unbound. This refresh created no resource to dispose |
 
 Detail: [blockers.md](blockers.md).
 
@@ -181,44 +215,50 @@ Historical local evidence, including the UC186 slice at `4d63818` / `531887ac`
 and the reminder and recovery work on #149, stays local. It does not close the
 70 / 114 / 0 gate.
 
-## Recommended next human step
+## Remaining owner inputs — no approval request
 
-Willy confirms or replaces the historical reference identifiers and supplies the
-remaining Gate A owner fields in [APPROVAL-CHECKLIST.md](APPROVAL-CHECKLIST.md).
+Remaining Gate A fields are listed in [APPROVAL-CHECKLIST.md](APPROVAL-CHECKLIST.md).
 Secret material remains outside git. Gate B stays `NOT_READY` until the packet
 that needs it; completing the form does not approve an AP.
 
 Until those identifiers exist, the Native gate stays **NO_GO** and no executor
 should start AP-01-RO-1.
 
-## Repo-only Gate A follow-up for #150
+## Historical repo-only Gate A follow-up for #150
 
 Original discovery reviewed #150 head `165e8cd53d9f85221e06d7b8bfb705f1681b2db7`.
-After restacking, packet sources were rechecked at #150 head
-`51b9a2ebaff965726963cbeb6b7146e860248f90` on `origin/main@ae9cbc19`.
-The current product comparison candidate is the #149 squash merge `ae9cbc19…`;
-`79ad0c04…` remains historical provenance. Both lockfile pins were refreshed
-to the current base. Validation covers the working packet fingerprints in
-`verification-report.json`; no hosted CI results or runtime conclusions transfer.
-No #149 source, previous Native plan, provider state, or runtime setting was edited.
+After restacking, sources were rechecked at #150 head
+`51b9a2ebaff965726963cbeb6b7146e860248f90` on the then-comparison candidate
+`ae9cbc19` (now **HISTORICAL / SUPERSEDED**). That pass filled historical demo
+and Neon references, workflow/check names, both lockfile hashes, binding names,
+flags, code paths and role-manifest columns. Its original 19 unresolved fields
+and retain-only proposal are historical counters, not current binding counts.
 
-Filled: historical demo Vercel project/team/name/slug, fixed URL/deployment ID;
-production references explicitly excluded; historical Neon project, staging child,
-parent and database name with no-endpoint/Auth limitations; CI workflow/check
-names; both candidate lockfile hashes; binding names, flags and code paths;
-role/profile/team/revision manifest columns; retain-only proposal.
+## 2026-10-29 packet refresh validation and remaining gaps
 
-Remaining `OWNER_REQUIRED`: accountable human, selected currently isolated target,
-same-candidate deployed SHA/checksum, exact CI run IDs/results and dependency
-disposition, DB/server/role/Auth bindings, 14 actual alias identities and existing
-session method, approved hosts, budget/currency/HKT expiry and retain sign-off.
-All 19 Gate A fields still need input or confirmation. Historical demo READY and
-staging names do not close any field.
+The current comparison/base is `d5183ba04cd510230e7a7f6b6b53c4529141aad6`.
+All 26 discovery source paths, git blobs and SHA256 values, both candidate
+lockfiles and source-reference JSON pointers were locally rechecked at that
+base. All source bytes match the previous fingerprints. Supplied evidence has
+separate provenance in `demo_deploy_evidence`; it was not independently queried.
+`verification-report.json` fingerprints the current six other packet files.
 
-The JSON discovery source map pins repo paths, git blobs and SHA256. No ComSec
-HTTP/Auth/DB/browser/native/provider/CI/scheduler/restore action was run. GitHub
-fetch/push and PR metadata are delivery operations, separate from Native execution.
-Original baseline counters and old receipts describe their original passes;
-`baseline.json.repo_discovery_refresh` describes this follow-up. No old metadata
-approval or expiry is reused. Local validation checks packet invariants, source
-hashes/references, historical-file immutability and docs-only scope.
+Twelve top-level fields remain `OWNER_REQUIRED`: deployed artifact checksum;
+artifact SBOM/dependency disposition; DB provider project, usable isolated branch
+and database name; application and read-only observer roles; server identity;
+Auth tenant; role identity manifest/existing QA session method; network allowlist;
+and cost ceiling/currency/HKT window/expiry/approver. All 14 actual alias IDs,
+DB/Auth/data isolation and required-check policy remain `OWNER_REQUIRED`.
+No repo/packet/lockfile hash is substituted for a deployed artifact checksum.
+Historical Neon `red-morning-00331124`, `br-fragrant-sunset-aosoylhr` /
+`kossilon-r01-staging-20261004`, and `neondb` remain historical references only.
+No Neon resource was created or queried.
+
+No Native/Auth/HTTP/DB/RLS/browser/provider/CI/scheduler/restore action or AP was
+run. No provider state, runtime setting, production project, older packet or
+product source was changed. GitHub push and draft PR are delivery operations,
+separate from Native execution. Baseline counters label original passes and the
+current refresh separately. Historical matrix 70/114/0 and Gate B remain
+unchanged. Local validation checks JSON/invariants, base-pinned sources/locks,
+historical files, relative Markdown links, basic secret patterns, docs-only
+scope and `git diff --check`. No Ready/merge/Native ask is made.
