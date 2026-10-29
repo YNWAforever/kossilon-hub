@@ -1,10 +1,10 @@
 {
   "status": "PASS_REPOSITORY_PACKET_CHECKS_ONLY",
-  "verified_at_utc": "2026-10-29T15:00:21.370490+00:00",
+  "verified_at_utc": "2026-10-29T15:11:18.212663+00:00",
   "reviewed_repository_head": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
-  "validation_head": "48371b2c3cdd73e6faab60ec733896d5f3b71fa8",
+  "validation_head": "59edaa6c964ec710d5253140ed534cd893f5d8ac",
   "review_base_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
-  "validation_scope": "Local docs-only OWNER_REQUIRED candidate pass on packet branch base 48371b2c; source/lock references remain pinned to d5183ba. Six other packet-file fingerprints exclude this report. Ten read-only provider metadata queries gathered by shepherd are recorded from the supplied evidence file, with no additional provider calls by the editor. QA env match and Git deploy /files 404 are ComSec OS-reported only. No hosted CI query, product test/build, deployment, DB connection, Native/AP execution or mutation.",
+  "validation_scope": "Local docs-only QA target-preference follow-up to packet HEAD 59edaa6c; original packet branch base remains 48371b2c and source/lock references remain pinned to d5183ba. Willy target approval via ComSec OS relay 2026-10-29 ~22:57 HKT is preference only, not a selected_binding approval. Both stacks remain recorded candidates; all selected bindings, OWNER_REQUIRED counts and approval gates are unchanged. Six other packet-file fingerprints exclude this report. Prior provider evidence file SHA256 and repository source/reference/historical checks revalidated locally; ten previously gathered metadata queries remain recorded, with zero additional provider requests. QA env match and Git deploy /files 404 remain ComSec OS-reported only. No hosted CI query, product test/build, deployment, DB connection, Native/AP execution or mutation.",
   "release_gate": "NO_GO",
   "execution_enabled": false,
   "approved_packet_ids": [],
@@ -65,9 +65,11 @@
   "checks": [
     "All four JSON files parsed; NO_GO/execution/approval/Native/AP invariants and cross-file binding consistency",
     "All 19 selected_binding values and field statuses equal the starting packet; 7 earlier recorded values, 12 OWNER_REQUIRED fields, 14 unresolved aliases; isolation and required-check policy still unresolved",
+    "QA marked preferred_target_not_approved with Willy / ComSec OS relay / 2026-10-29 ~22:57 HKT provenance; demo recorded and not preferred; both stack statuses remain RECORDED_FOR_PACKET_ONLY_NOT_APPROVED; no selected_binding approval",
+    "QA deployment at d5183ba, port, roles, all 14 alias IDs, allowlist, cost ceiling/expiry, required_check_policy and selected bindings remain OWNER_REQUIRED; no deployment performed",
     "All approval bindings, allowlist, cost ceiling, role manifest, Gate B aliases/fields, public contracts and unapproved proposed limits unchanged; all 13 APs NOT_READY with zero actions",
-    "Supplied provider evidence SHA256 checked; demo/QA candidate IDs, role inventories, direct/pooled/proxy hosts and public Auth metadata checked against that file, with no binding selection",
-    "Provider counters increased by exactly 10 read-only metadata queries: Vercel 2, Neon 8; reported /files 404 and QA env match are distinct provenance, with no additional query counted",
+    "Supplied provider evidence SHA256 checked; demo/QA candidate IDs, role inventories, hosts, public Auth metadata and provider counters unchanged from prior packet; no binding selection",
+    "Prior ten read-only metadata queries retained: Vercel 2, Neon 8; this follow-up adds zero provider requests. Reported /files 404 and QA env match retain distinct provenance",
     "No provider artifact digest exposed; source SHA, existing CI and lockfile hashes explicitly labelled substitutes only, not a deployed digest or approval; checksum/roles/server port remain OWNER_REQUIRED",
     "All 26 source SHA256/git blobs checked at d5183ba; 24 also match working bytes/branch base, while the two current lockfiles differ and retain their original source-pin hashes; all source-reference JSON pointers resolved",
     "Both candidate lockfiles checked at d5183ba and unchanged from ae9cbc19; hashes do not prove deployed artifact bytes",
@@ -77,12 +79,12 @@
     "Only six allowed packet documents changed; no untracked repo files; git diff --check"
   ],
   "file_sha256_excluding_this_report": {
-    "docs/audit-remediation/cosec-20261027-native-track-open/APPROVAL-CHECKLIST.md": "db237f710193a17e33dd639dbaa9abece753f4b63965e35584692f6562d3fe7a",
-    "docs/audit-remediation/cosec-20261027-native-track-open/DELIVERY.md": "e44761b46948379cc80e4bfd3797ac5b52c1674c8f19748f3f64daa14edf1231",
-    "docs/audit-remediation/cosec-20261027-native-track-open/approval-request.json": "98ca27588f14c27fe31ba4dab3a5ed8394312f8ea0a7c4c1a2859f0e60055214",
+    "docs/audit-remediation/cosec-20261027-native-track-open/APPROVAL-CHECKLIST.md": "7a30af5618788fdfd07d109dd1c0f0a72d101a9bbf8bf2320467954bd789303a",
+    "docs/audit-remediation/cosec-20261027-native-track-open/DELIVERY.md": "f0f1a9bdb23ecbc2dbbf3a2b02bbcb59268876d16c50f53347882eb645c18c94",
+    "docs/audit-remediation/cosec-20261027-native-track-open/approval-request.json": "b3baabb94a26c304c2beb582929a2476dc009805fd1e4e583f7bd631d9aa9f84",
     "docs/audit-remediation/cosec-20261027-native-track-open/baseline.json": "b53428334590bc445e65bce69f02df2c7f60096e7b775c4f4971d37a2dbbae03",
-    "docs/audit-remediation/cosec-20261027-native-track-open/blockers.md": "c10ab61a05fc7490906893e7585117dc1e76a19185bd78b239eb29e1e6f308a1",
-    "docs/audit-remediation/cosec-20261027-native-track-open/gate-a-discovery.json": "1c37549d6dc5fba8beecef3d04aea29a8b5455aa0043be1d97dbb7f75b305f30"
+    "docs/audit-remediation/cosec-20261027-native-track-open/blockers.md": "6d4e3fd00e5a43b6aa99b5baf8e61a03c7790dabb94e922a7dbd38ef7ade5fba",
+    "docs/audit-remediation/cosec-20261027-native-track-open/gate-a-discovery.json": "08d714d89a28920a8471ff56b1bb41796586764f9ed902663d04f694a34fb219"
   },
   "previous_verification": {
     "verified_at_utc": "2026-10-28T14:39:11.813769+00:00",
@@ -93,7 +95,7 @@
   },
   "original_validation_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
   "original_verified_at_utc": "2026-10-27T16:22:44.183328+00:00",
-  "verified_at_hkt": "2026-10-29 23:00:21 HKT (UTC+8)",
+  "verified_at_hkt": "2026-10-29 23:11:18 HKT (UTC+8)",
   "packet_branch_base_sha": "48371b2c3cdd73e6faab60ec733896d5f3b71fa8",
   "source_files_matching_packet_branch_base": 24,
   "source_files_differing_from_packet_branch_base": [
@@ -119,6 +121,31 @@
     "qa_verified_deployment_at_comparison_sha": false,
     "app_and_readonly_roles_on_both_branches": "NONE_EXISTS",
     "server_port_on_both_candidates": "OWNER_REQUIRED",
-    "baseline_counter_scope": "Unchanged historical receipt of the prior refresh; current cumulative discovery/provider-evidence total is 10."
+    "baseline_counter_scope": "Unchanged historical receipt of the prior refresh; current cumulative discovery/provider-evidence total is 10.",
+    "request_counter_scope": "Ten reads belong to the prior provider-candidate evidence pass; zero additional provider requests in this target-preference follow-up."
+  },
+  "previous_candidate_pass_verification": {
+    "verified_at_utc": "2026-10-29T15:00:21.370490+00:00",
+    "validation_head": "48371b2c3cdd73e6faab60ec733896d5f3b71fa8",
+    "scope": "HISTORICAL_PROVIDER_CANDIDATE_PASS; ten metadata queries previously gathered by shepherd, no selected_binding or Native/AP approval."
+  },
+  "target_preference_validation": {
+    "candidate_stack": "qa",
+    "status": "preferred_target_not_approved",
+    "provenance": {
+      "owner": "Willy",
+      "relay": "ComSec OS",
+      "reported_at_hkt": "2026-10-29 ~22:57 HKT (UTC+8)",
+      "scope": "Gate A QA target preference only; not a selected_binding approval. No Native/AP execution or deployment authorization."
+    },
+    "demo_preference": "recorded_candidate_not_preferred",
+    "candidate_status_on_both_stacks": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
+    "selected_binding_approval": false,
+    "all_selected_bindings_unchanged": true,
+    "owner_required_counts_unchanged": true,
+    "qa_deployment_at_source_sha": "OWNER_REQUIRED",
+    "qa_verified_deployment_at_comparison_sha": false,
+    "additional_provider_queries": 0,
+    "deployments_performed": 0
   }
 }

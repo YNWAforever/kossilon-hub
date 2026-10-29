@@ -9,6 +9,12 @@ demo then brief Codex packet refresh only"**. Current authority: Willy approved
 starting to fill `OWNER_REQUIRED` fields with provider-observed candidates only;
 no binding selection or Native/AP approval.
 
+Latest owner input: **Willy approved the Gate A QA target preference via
+ComSec OS relay, 2026-10-29 ~22:57 HKT (UTC+8)**. QA is
+`preferred_target_not_approved`; demo remains a recorded candidate, not preferred.
+This is target preference only, **not a `selected_binding` approval**. Both stacks
+remain `RECORDED_FOR_PACKET_ONLY_NOT_APPROVED`; no binding or AP is approved.
+
 Comparison source (not the current packet branch base):
 `d5183ba04cd510230e7a7f6b6b53c4529141aad6` (`main`, PR #150 merge). Supplied
 verified evidence records demo `kossilon-hub-demo` /
@@ -47,8 +53,16 @@ Both stacks have status `RECORDED_FOR_PACKET_ONLY_NOT_APPROVED` in
 `approval-request.json#/provider_candidate_evidence`; no `selected_binding`
 changed and all twelve unresolved top-level fields still await Willy.
 
-- Demo: Vercel `kossilon-hub-demo` / `prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm`, `dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c` `READY` at `d5183ba`; Neon `green-unit-86146635` / `br-raspy-math-azlq08ge` / `kossilon_demo`, only `kossilon_demo_owner`; Auth `53ec191d-f012-46bb-b595-a583e514cc95`. Demo runtime-to-DB/Auth URL linkage remains `UNPROVEN` because sensitive env was unread.
-- QA (new to packet): Vercel `kossilon-cosec-qa-20261025` / `prj_5Q6rrOoH7voW4jEmxhhMqxz0s8qp`; latest CLI `dpl_FN5etCBSmhy1unZvBjx7pQG1TEt6` exposes no SHA, Git `dpl_AUMBEB8NtguuEwx6kpHWfXJHrpMt` is at `4d63818fe2562146f85e9a7b9917d8f0eb58f4c1`, with no verified `d5183ba` deployment. Neon `broad-mouse-83325496` / `br-aged-flower-b3clbnr6` / `kossilon_qa`, only `kossilon_qa_owner`; Auth `0f60a808-46df-46f3-8723-a47767ad48ba`. QA `NEON_AUTH_URL` match proof is ComSec OS-reported; shepherd did not re-read env. DB URL linkage and data isolation are not proved.
+QA latest deploys are **not verified at `d5183ba`**: the latest CLI deploy
+exposes no SHA, and the recorded Git deploy is at `4d63818`, not `d5183ba`.
+A QA deployment at source SHA `d5183ba04cd510230e7a7f6b6b53c4529141aad6`,
+port, restricted app/observer roles, all 14 alias IDs, allowlist, cost ceiling
+and expiry, `required_check_policy`, and selected bindings all remain
+`OWNER_REQUIRED`. Target preference does not authorize a deployment; this
+follow-up deploys nothing and leaves every `selected_binding` and count unchanged.
+
+- Demo (recorded, not preferred): Vercel `kossilon-hub-demo` / `prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm`, `dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c` `READY` at `d5183ba`; Neon `green-unit-86146635` / `br-raspy-math-azlq08ge` / `kossilon_demo`, only `kossilon_demo_owner`; Auth `53ec191d-f012-46bb-b595-a583e514cc95`. Demo runtime-to-DB/Auth URL linkage remains `UNPROVEN` because sensitive env was unread.
+- QA (`preferred_target_not_approved`): Vercel `kossilon-cosec-qa-20261025` / `prj_5Q6rrOoH7voW4jEmxhhMqxz0s8qp`; latest CLI `dpl_FN5etCBSmhy1unZvBjx7pQG1TEt6` exposes no SHA, Git `dpl_AUMBEB8NtguuEwx6kpHWfXJHrpMt` is at `4d63818fe2562146f85e9a7b9917d8f0eb58f4c1`, with no verified `d5183ba` deployment. Neon `broad-mouse-83325496` / `br-aged-flower-b3clbnr6` / `kossilon_qa`, only `kossilon_qa_owner`; Auth `0f60a808-46df-46f3-8723-a47767ad48ba`. QA `NEON_AUTH_URL` match proof is ComSec OS-reported; shepherd did not re-read env. DB URL linkage and data isolation are not proved.
 
 Demo checksum observation: `PROVIDER_EXPOSES_NO_DIGEST`; `get_deployment` has
 no digest field, and `/files` 404 for this Git deploy is ComSec OS-reported,
@@ -86,7 +100,7 @@ Historical Neon project `red-morning-00331124`, child
 `neondb` are references only. The historical child had no endpoint; later
 endpoint creation failed and Auth was not enabled. No current usable isolated
 DB/Auth binding is proved; current Neon metadata reads created no resource
-and selected no target.
+and selected no binding. The later QA target preference does not approve bindings.
 Production parent `br-muddy-mountain-aov8bbku` and its privileged observer are
 historical reference evidence, not selected Native bindings.
 

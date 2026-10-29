@@ -9,7 +9,7 @@
   "release_gate": "NO_GO",
   "execution_enabled": false,
   "approved_packet_ids": [],
-  "scope": "Docs-only provider-candidate evidence pass on packet base 48371b2c3cdd73e6faab60ec733896d5f3b71fa8; repository sources remain pinned to d5183ba. Ten read-only metadata queries gathered by shepherd (Vercel 2, Neon 8) are recorded from the supplied evidence file; packet editor made no additional provider calls. No hosted CI query, deployment, Native/AP execution or provider mutation.",
+  "scope": "Docs-only QA target-preference follow-up to packet HEAD 59edaa6c964ec710d5253140ed534cd893f5d8ac; packet branch base remains 48371b2c3cdd73e6faab60ec733896d5f3b71fa8 and repository sources remain pinned to d5183ba. Ten previously gathered read-only metadata queries (Vercel 2, Neon 8) remain recorded; this follow-up makes no additional provider or hosted CI request, deployment, Native/AP execution or provider mutation.",
   "native_executed": false,
   "live_comsec_http_requests": 0,
   "auth_actions": 0,
@@ -777,5 +777,19 @@
     "gate_a_alias_ids_owner_required": 14,
     "count_scope": "Top-level selected_binding values only; recorded demo URL/project still require isolation proof and CI policy remains OWNER_REQUIRED. Recorded values are not Native approval."
   },
-  "provider_request_counter_scope": "Provider reads gathered by shepherd this pass and transcribed locally; no additional provider request by the packet editor. ComSec-reported /files 404 and QA env match are not additional queries in this count."
+  "provider_request_counter_scope": "Provider reads gathered by shepherd this pass and transcribed locally; no additional provider request by the packet editor. ComSec-reported /files 404 and QA env match are not additional queries in this count.",
+  "target_preference": {
+    "candidate_stack": "qa",
+    "status": "preferred_target_not_approved",
+    "candidate_ref": "approval-request.json#/provider_candidate_evidence/candidate_stacks/qa",
+    "provenance": {
+      "owner": "Willy",
+      "relay": "ComSec OS",
+      "reported_at_hkt": "2026-10-29 ~22:57 HKT (UTC+8)",
+      "scope": "Gate A QA target preference only; not a selected_binding approval. No Native/AP execution or deployment authorization."
+    },
+    "demo_preference": "recorded_candidate_not_preferred",
+    "selected_binding_approval": false,
+    "all_selected_bindings_unchanged": true
+  }
 }

@@ -445,7 +445,8 @@
           "status": "UNPROVEN",
           "provenance": "Sensitive Vercel DATABASE_URL/NEON_AUTH_URL env values were not read; branch Auth metadata does not prove runtime linkage."
         },
-        "db_auth_data_isolation": "OWNER_REQUIRED"
+        "db_auth_data_isolation": "OWNER_REQUIRED",
+        "target_preference": "recorded_candidate_not_preferred"
       },
       "qa": {
         "status": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
@@ -507,7 +508,15 @@
           "provenance": "ComSec OS reported the QA Vercel NEON_AUTH_URL match; shepherd did not re-read env and packet editor did not access env.",
           "scope": "Auth URL match only; not DB URL linkage, data isolation, same-source artifact verification or approval."
         },
-        "db_auth_data_isolation": "OWNER_REQUIRED"
+        "db_auth_data_isolation": "OWNER_REQUIRED",
+        "target_preference": "preferred_target_not_approved",
+        "target_preference_provenance": {
+          "owner": "Willy",
+          "relay": "ComSec OS",
+          "reported_at_hkt": "2026-10-29 ~22:57 HKT (UTC+8)",
+          "scope": "Gate A QA target preference only; not a selected_binding approval. No Native/AP execution or deployment authorization."
+        },
+        "remaining_owner_input": "OWNER_REQUIRED: QA deployment at source SHA d5183ba04cd510230e7a7f6b6b53c4529141aad6, port, restricted app/observer roles, all 14 alias IDs, allowlist, cost ceiling/expiry, required_check_policy and selected bindings. Latest QA CLI deploy exposes no SHA; recorded Git deploy is at 4d63818, not d5183ba. Target preference does not authorize deployment or approve bindings."
       }
     },
     "role_disposition": "Both branches expose only their *_owner role. app_role and readonly_observer_role NONE_EXISTS; selected bindings stay OWNER_REQUIRED. Restricted roles must be created and approved by Willy later; no role creation authorized or performed here.",

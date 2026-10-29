@@ -16,6 +16,12 @@ The shepherd gathered ten read-only metadata queries at 2026-10-29 ~22:55 HKT
 additional provider or hosted CI request, deploys nothing, and runs no AP.
 Provider `READY` is an observation; all binding approval still awaits Willy.
 
+Latest owner input: **Willy approved the Gate A QA target preference via
+ComSec OS relay, 2026-10-29 ~22:57 HKT (UTC+8)**. QA is
+`preferred_target_not_approved`; demo remains a recorded candidate, not preferred.
+This is target preference only, **not a `selected_binding` approval**. Both stacks
+remain `RECORDED_FOR_PACKET_ONLY_NOT_APPROVED`; no binding or AP is approved.
+
 Previous unapproved plan: `cosec-20261025-native-plan-fccb7c22`, source
 `4d63818fe2562146f85e9a7b9917d8f0eb58f4c1`, delivery
 `531887acce5468f7321a3a2919a7afaa20dedac1`. That plan's runtime notes do not
@@ -73,12 +79,21 @@ remain unchanged; all twelve previously unresolved fields stay `OWNER_REQUIRED`.
 Provenance: `/workspace/cli-logs/comsec-gate-a-owner-required.provider-evidence.md`,
 gathered by shepherd 2026-10-29 ~22:55 HKT (UTC+8). Its SHA256, query counts,
 per-provider provenance, public Auth URLs and full candidate metadata are in
-`approval-request.json#/provider_candidate_evidence`. QA is new to this packet.
+`approval-request.json#/provider_candidate_evidence`. QA carries the owner
+target preference above; demo remains recorded, not preferred.
+
+QA latest deploys are **not verified at `d5183ba`**: the latest CLI deploy
+exposes no SHA, and the recorded Git deploy is at `4d63818`, not `d5183ba`.
+A QA deployment at source SHA `d5183ba04cd510230e7a7f6b6b53c4529141aad6`,
+port, restricted app/observer roles, all 14 alias IDs, allowlist, cost ceiling
+and expiry, `required_check_policy`, and selected bindings all remain
+`OWNER_REQUIRED`. Target preference does not authorize a deployment; this
+follow-up deploys nothing and leaves every `selected_binding` and count unchanged.
 
 | Stack | Vercel observation | Neon/Auth observation and limitation |
 | --- | --- | --- |
-| Demo | `kossilon-hub-demo` / `prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm`; `dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c` `READY` at `d5183ba` | `green-unit-86146635` / `br-raspy-math-azlq08ge` / `kossilon_demo`; only `kossilon_demo_owner`; Auth `53ec191d-f012-46bb-b595-a583e514cc95`. Runtime `DATABASE_URL`/`NEON_AUTH_URL` link `UNPROVEN` because sensitive env was unread |
-| QA | `kossilon-cosec-qa-20261025` / `prj_5Q6rrOoH7voW4jEmxhhMqxz0s8qp`; latest CLI `dpl_FN5etCBSmhy1unZvBjx7pQG1TEt6` has no SHA; Git `dpl_AUMBEB8NtguuEwx6kpHWfXJHrpMt` at `4d63818fe2562146f85e9a7b9917d8f0eb58f4c1`, no verified `d5183ba` deployment | `broad-mouse-83325496` / `br-aged-flower-b3clbnr6` / `kossilon_qa`; only `kossilon_qa_owner`; Auth `0f60a808-46df-46f3-8723-a47767ad48ba`. `NEON_AUTH_URL` match proof reported by ComSec OS; shepherd did not re-read env. This does not establish DB URL linkage or data isolation |
+| Demo (recorded, not preferred) | `kossilon-hub-demo` / `prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm`; `dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c` `READY` at `d5183ba` | `green-unit-86146635` / `br-raspy-math-azlq08ge` / `kossilon_demo`; only `kossilon_demo_owner`; Auth `53ec191d-f012-46bb-b595-a583e514cc95`. Runtime `DATABASE_URL`/`NEON_AUTH_URL` link `UNPROVEN` because sensitive env was unread |
+| QA (`preferred_target_not_approved`) | `kossilon-cosec-qa-20261025` / `prj_5Q6rrOoH7voW4jEmxhhMqxz0s8qp`; latest CLI `dpl_FN5etCBSmhy1unZvBjx7pQG1TEt6` has no SHA; Git `dpl_AUMBEB8NtguuEwx6kpHWfXJHrpMt` at `4d63818fe2562146f85e9a7b9917d8f0eb58f4c1`, no verified `d5183ba` deployment | `broad-mouse-83325496` / `br-aged-flower-b3clbnr6` / `kossilon_qa`; only `kossilon_qa_owner`; Auth `0f60a808-46df-46f3-8723-a47767ad48ba`. `NEON_AUTH_URL` match proof reported by ComSec OS; shepherd did not re-read env. This does not establish DB URL linkage or data isolation |
 
 | Stack | Direct host candidate | Pooled host candidate | Proxy host candidate | Port |
 | --- | --- | --- | --- | --- |

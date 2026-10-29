@@ -7,7 +7,13 @@ packet continues the unapproved plan in
 [../cosec-20261025-native-plan-fccb7c22/](../cosec-20261025-native-plan-fccb7c22/).
 Prior demo/refresh authority: **Willy Approve 2026-10-29 ~21:17 HKT — "deploy
 demo then brief Codex packet refresh only"**. Current authority permits recording
-provider-observed `OWNER_REQUIRED` candidates only; no selection or approval.
+provider-observed `OWNER_REQUIRED` candidates only; no binding selection or approval.
+
+Latest owner input: **Willy approved the Gate A QA target preference via
+ComSec OS relay, 2026-10-29 ~22:57 HKT (UTC+8)**. QA is
+`preferred_target_not_approved`; demo remains a recorded candidate, not preferred.
+This is target preference only, **not a `selected_binding` approval**. Both stacks
+remain `RECORDED_FOR_PACKET_ONLY_NOT_APPROVED`; no binding or AP is approved.
 
 **Prepare-only. Native NO_GO. execution_enabled=false. No AP authorized.
 No Ready/merge/Native ask.** `approved_packet_ids` stays `[]`. Seven supplied
@@ -282,6 +288,9 @@ scope and `git diff --check`. No Ready/merge/Native ask is made.
 ## OWNER_REQUIRED candidate evidence pass — 2026-10-29 HKT (UTC+8)
 
 The demo and QA stacks are both `RECORDED_FOR_PACKET_ONLY_NOT_APPROVED`.
+QA is `preferred_target_not_approved` per Willy via ComSec OS relay
+2026-10-29 ~22:57 HKT (UTC+8); demo remains recorded, not preferred.
+This target preference is not a `selected_binding` approval.
 Full metadata and provenance are in `approval-request.json#/provider_candidate_evidence`,
 with field observations in [gate-a-discovery.json](gate-a-discovery.json) and
 candidate/host tables in [APPROVAL-CHECKLIST.md](APPROVAL-CHECKLIST.md). No
@@ -296,6 +305,14 @@ has no SHA; its Git deployment is at `4d63818`, with no verified `d5183ba`
 deployment. Both branches expose only their owner role: required app/observer
 roles are `NONE_EXISTS` and need later creation/approval by Willy. Endpoint
 hosts are candidates only; API exposes no port and port stays `OWNER_REQUIRED`.
+
+QA latest deploys are **not verified at `d5183ba`**: the latest CLI deploy
+exposes no SHA, and the recorded Git deploy is at `4d63818`, not `d5183ba`.
+A QA deployment at source SHA `d5183ba04cd510230e7a7f6b6b53c4529141aad6`,
+port, restricted app/observer roles, all 14 alias IDs, allowlist, cost ceiling
+and expiry, `required_check_policy`, and selected bindings all remain
+`OWNER_REQUIRED`. Target preference does not authorize a deployment; this
+follow-up deploys nothing and leaves every `selected_binding` and count unchanged.
 
 Demo checksum observation is `PROVIDER_EXPOSES_NO_DIGEST`. `get_deployment`
 exposes no digest; Git deploy `/files` 404 is ComSec OS-reported, not re-run.
