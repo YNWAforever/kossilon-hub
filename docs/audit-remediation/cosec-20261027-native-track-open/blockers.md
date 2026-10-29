@@ -1,59 +1,76 @@
-# Native blockers after the 2026-10-27 track open
+# Native blockers after the 2026-10-29 demo evidence refresh
 
-Native gate: **NO_GO**. Historical matrix, recounted and not re-executed:
-**70 BLOCKED / 114 NOT_RUN / 0 PASS** in
-`../cosec-20261025-native-plan-fccb7c22/acceptance-results.csv`
-(SHA256 `287bafceb836b4e42b96cfbc006ee83dd9ac65900100d1ba199f93631537e6fb`).
+Native gate: **NO_GO**. **Prepare-only. execution_enabled=false. No AP
+authorized. No Ready/merge/Native ask.** `approved_packet_ids` is `[]`; AP-00
+through AP-12 remain `NOT_READY` with actual actions 0. Gate B stays `NOT_READY`.
 
-Current unapproved git comparison candidate / PR base:
-`ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0` on `origin/main` after PR #149 squash merge.
-Original candidate `79ad0c04da892ec03601f11c12d82fcc84039b31` and previous plan candidate
-`4d63818fe2562146f85e9a7b9917d8f0eb58f4c1` remain historical references; their
-ancestry analysis applies to the original branch. No deployed checksum or
-hosted CI result is bound to the current candidate here.
+Authority: **Willy Approve 2026-10-29 ~21:17 HKT — "deploy demo then brief
+Codex packet refresh only"** (demo deploy + packet refresh only).
 
-`execution_enabled` is `false`. `approved_packet_ids` is `[]`. Actual actions
-for AP-00 through AP-12 are 0. Gate A selected bindings and 14 actual alias IDs
-are `OWNER_REQUIRED`; Gate B remains `NOT_READY`. Repo reference values are
-filled in [gate-a-discovery.json](gate-a-discovery.json) and
-[APPROVAL-CHECKLIST.md](APPROVAL-CHECKLIST.md), with hashed source paths.
-Historical identifiers and code contracts do not close a Native binding.
+Current comparison candidate / PR base:
+`d5183ba04cd510230e7a7f6b6b53c4529141aad6` (`main`, PR #150 merge). Supplied
+verified evidence records demo `kossilon-hub-demo` /
+`prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm`, team `team_qvzlsFmfCsLkgItSypqHjw3z` /
+`ynwaforevers-projects`, deployment `dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c`, state
+`READY`, target `production` **inside the demo project only**. The demo project
+is absent from Vercel `linkedProjects`; supplied Git-source `create_deployment`
+succeeded. Production `kossilon-hub` was not touched.
+
+Demo URL: `https://kossilon-hub-demo-4oxc6afow-ynwaforevers-projects.vercel.app`.
+Assigned aliases: `kossilon-hub-demo.vercel.app`,
+`kossilon-hub-demo-ynwaforevers-projects.vercel.app`,
+`kossilon-hub-demo-git-main-ynwaforevers-projects.vercel.app`.
+Observed SHA equals the comparison candidate, `githubCommitRef=main`.
+[CI run 40755216699](https://github.com/YNWAforever/kossilon-hub/actions/runs/40755216699)
+is supplied as `SUCCESS` on the same SHA, jobs `Node22` / `Node24` / `verify`
+`SUCCESS`. Willy (YNWAforever) is the confirmed human/business owner; cleanup
+is `RETAIN_ONLY`, no delete/reset. No email or artifact digest was supplied.
+
+Seven top-level values are now recorded for this packet, without Native/AP
+approval. Twelve top-level Gate A values and all 14 alias IDs remain
+`OWNER_REQUIRED`; DB/Auth/data isolation and required-check policy also remain
+`OWNER_REQUIRED`. Reference hosts grant no access: `approved_hosts` is `[]`.
+Evidence is in [approval-request.json](approval-request.json),
+[gate-a-discovery.json](gate-a-discovery.json) and
+[APPROVAL-CHECKLIST.md](APPROVAL-CHECKLIST.md). This refresh queried no provider
+or hosted CI, visited no runtime URL, deployed nothing and executed no AP.
 
 ## Still blocked
 
-1. Same-candidate artifact, required CI, SBOM or lockfile disposition, and database catalog, ledger, application role, and observer role. Local docs and the historical 41 `src/` files in `4d63818..79ad0c04` are not that identity. No schema, Wrangler, package, or workflow file changed in that range.
-2. Real Auth tenant and the Gate A role map: admin, manager, staff, client, cross-team, no-team, no-profile, inactive, and no-skill. Account-switch cache, revoked sessions, RLS, and HTTP are unrun.
-3. Today to the correct company and case, safe documents and internal payment review, blockers, authorized writes, independent readback, cancel, return, and reload. UC186 full handover and the 100+4 paging batch still need Native fixtures that are not identified.
-4. Approved Hong Kong calendar (historical UC134 is `NOT_RUN`), three native five-minute ticks, QA backup and object restore with signed RTO/RPO, real accessibility and device performance, and controlled provider or filing receipts. Those targets are `NOT_READY`.
+1. Deployed artifact checksum and artifact SBOM/dependency disposition. CI/source identity is recorded, but required-check policy remains unconfirmed. Packet, Git and lockfile hashes are not a deployed artifact checksum.
+2. Usable isolated DB project, branch/endpoint and database name; server identity, catalog, migration ledger, application and read-only observer roles/privileges. Demo `READY` does not prove DB/Auth/data isolation.
+3. Real isolated Auth tenant, Gate A role identity manifest/existing QA session method and all 14 alias IDs. No account creation, invitation or session action is authorized. Account-switch cache, revoked sessions, RLS and HTTP remain unrun.
+4. Approved network allowlist, currency, cost ceiling, HKT window/expiry and approver for a later slice. The limited demo/refresh authority supplies no AP budget, expiry or execution approval.
+5. Today-to-case Native journey, document safety/payment review, authorized writes, independent readback and recovery; UC186 handover and the 100+4 paging batch still lack Native fixtures.
+6. Gate B calendar (historical UC134 `NOT_RUN`), fault runtime, storage/scanner/provider targets, device/network profile, scheduler jobs, backup and restore targets. No Native tick, provider receipt or performance result is claimed.
 
-## What the #149 local work does not close
+## Historical evidence retained
 
-On the original track-open history, reminder command UUIDs, reminder receipt reads after case lock, and staff
-recovery finalize resume are local product slices on top of draft PR #147
-(`fcce28d6`) and the protocol note in draft PR #148 (`713f4a3d`, not an ancestor
-of #149). They do not bind provider delivery, Auth, RLS, object storage, scan,
-or a browser reload of a committed intent.
+Previous comparison `ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0`, original
+`79ad0c04da892ec03601f11c12d82fcc84039b31`, and previous plan candidate
+`4d63818fe2562146f85e9a7b9917d8f0eb58f4c1` are historical; their runtime
+conclusions do not transfer. Old demo `dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY`
+is **HISTORICAL / SUPERSEDED**, preserved in its receipt and discovery.
 
-## First slice that waits on Gate A
+Historical Neon project `red-morning-00331124`, child
+`br-fragrant-sunset-aosoylhr` / `kossilon-r01-staging-20261004`, database
+`neondb` are references only. The historical child had no endpoint; later
+endpoint creation failed and Auth was not enabled. No current usable isolated
+DB/Auth binding is proved; no Neon resource was queried or created here.
+Production parent `br-muddy-mountain-aov8bbku` and its privileged observer are
+historical reference evidence, not selected Native bindings.
 
-AP-01-RO-1, described in [DELIVERY.md](DELIVERY.md). It is not authorized.
-AP-02 through AP-12 wait on Gate B as well as on AP-01. AP-12 has no resource
-IDs because this prepare pass created none.
+Historical matrix, locally recounted and not re-executed: **70 BLOCKED /
+114 NOT_RUN / 0 PASS** in
+`../cosec-20261025-native-plan-fccb7c22/acceptance-results.csv`
+(SHA256 `287bafceb836b4e42b96cfbc006ee83dd9ac65900100d1ba199f93631537e6fb`).
+The original #149 reminder/recovery work remains local evidence, without
+provider delivery, Auth/RLS, object storage or Native browser acceptance.
 
-## Repo discovery narrows owner lookup, not the execution gate
+## First slice still unauthorized
 
-The demo Vercel project/team/deployment and fixed hostname are already in a
-2026-10-25 committed receipt. That receipt leaves its deployed Git SHA and
-DB/Auth isolation unknown. The historical Neon child
-`br-fragrant-sunset-aosoylhr` / `kossilon-r01-staging-20261004` in
-`red-morning-00331124` had no endpoint; a later endpoint create failed and Auth
-was not enabled. It is not proved linked to the demo runtime. Production
-`br-muddy-mountain-aov8bbku` and its privileged observer are reference evidence,
-not selected Native bindings.
-
-Workflow `CI` / `Node22` / `Node24` / `verify`, lockfile hashes, runtime binding
-names, feature flags, and role-manifest columns are filled from repo code.
-Exact candidate CI runs, deployed artifact/SBOM, actual target/roles/Auth/14 QA
-identities, approved hosts, cost/expiry and human sign-off remain
-`OWNER_REQUIRED`. Every Gate A row still needs input or confirmation; all AP
-statuses, Gate B fields, historical 70/114/0 counts and execution disable remain.
+AP-01-RO-1 is described in [DELIVERY.md](DELIVERY.md); it is unstarted and
+unauthorized. Every later AP remains blocked. AP-12 retains all resources and
+has no session/resource IDs from this refresh, which created none. Historical
+receipts, older packets and the 70/114/0 matrix remain unchanged. Recording
+these demo bindings does not request approval or open Native execution.

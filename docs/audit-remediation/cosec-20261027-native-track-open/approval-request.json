@@ -1,8 +1,8 @@
 {
   "plan_id": "cosec-20261027-native-track-open",
   "supersedes_plan_id": "cosec-20261025-native-plan-fccb7c22",
-  "source_sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
-  "source_pr": 149,
+  "source_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+  "source_pr": 150,
   "source_branch": "main",
   "previous_source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
   "previous_evidence_base": "531887acce5468f7321a3a2919a7afaa20dedac1",
@@ -23,13 +23,23 @@
     "source_csv_sha256": "287bafceb836b4e42b96cfbc006ee83dd9ac65900100d1ba199f93631537e6fb"
   },
   "bindings": {
-    "environment_owner": "OWNER_REQUIRED",
-    "existing_isolated_url": "OWNER_REQUIRED",
-    "runtime_project_id": "OWNER_REQUIRED",
-    "deployment_id": "OWNER_REQUIRED",
-    "observed_source_sha": "OWNER_REQUIRED",
+    "environment_owner": "Willy (YNWAforever)",
+    "existing_isolated_url": "https://kossilon-hub-demo-4oxc6afow-ynwaforevers-projects.vercel.app",
+    "runtime_project_id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+    "deployment_id": "dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c",
+    "observed_source_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
     "observed_artifact_checksum": "OWNER_REQUIRED",
-    "required_ci_run_ids_and_results": "OWNER_REQUIRED",
+    "required_ci_run_ids_and_results": {
+      "run_id": 40755216699,
+      "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/40755216699",
+      "head_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+      "conclusion": "SUCCESS",
+      "jobs": {
+        "Node22": "SUCCESS",
+        "Node24": "SUCCESS",
+        "verify": "SUCCESS"
+      }
+    },
     "artifact_sbom_and_dependency_disposition": "OWNER_REQUIRED",
     "db_provider_project_id": "OWNER_REQUIRED",
     "db_branch_id": "OWNER_REQUIRED",
@@ -46,7 +56,7 @@
     "approved_calendar_version_hash_and_expected_dates": "NOT_READY",
     "fixture_driver_diff_and_physical_row_budget": "NOT_READY",
     "actual_fixture_ids_and_versions": "NOT_READY",
-    "cleanup_manifest_and_disposition": "OWNER_REQUIRED",
+    "cleanup_manifest_and_disposition": "RETAIN_ONLY",
     "fault_clone_id": "NOT_READY",
     "fault_runtime_url_and_artifact_binding": "NOT_READY",
     "backup_id_and_restore_target": "NOT_READY",
@@ -123,22 +133,26 @@
       "depends_on": [],
       "status": "NOT_READY",
       "prior_status": "MISSING_BINDINGS_NOT_APPROVED",
-      "reason": "Repo identifiers and field contracts are recorded in gate-a-discovery.json. Every Gate A selected binding and actual alias ID still needs OWNER_REQUIRED input/confirmation; Gate B stays NOT_READY. No AP is approved.",
+      "reason": "Seven supplied demo/owner/CI/retain values are recorded; twelve top-level Gate A fields and all 14 alias IDs remain OWNER_REQUIRED. DB/Auth/data isolation and required-check policy are unproven. Gate B stays NOT_READY; no AP is approved.",
       "actual_actions": 0
     },
     {
       "id": "AP-01",
       "operation": "Read-only metadata, CI, catalog, and existing QA session role reads. First named slice is AP-01-RO-1",
-      "depends_on": ["AP-00"],
+      "depends_on": [
+        "AP-00"
+      ],
       "status": "NOT_READY",
       "prior_status": "NOT_APPROVED",
-      "reason": "Gate A has repo reference identifiers but no approved isolated target, same-candidate deployment/artifact/CI, DB/Auth/role manifest, budget or expiry. No ComSec metadata, session or HTTP call was made; AP-01-RO-1 is not authorized.",
+      "reason": "Supplied demo deployment/source SHA and CI SUCCESS are recorded, without provider re-query. Artifact checksum, SBOM/dependency disposition, DB/Auth isolation, roles/manifest, allowlist, budget and expiry remain OWNER_REQUIRED; AP-01-RO-1 is unauthorized and unexecuted.",
       "actual_actions": 0
     },
     {
       "id": "AP-02",
       "operation": "Reviewed synthetic core fixture setup on a bound disposable target",
-      "depends_on": ["AP-01"],
+      "depends_on": [
+        "AP-01"
+      ],
       "status": "NOT_READY",
       "prior_status": "DRIVER_AND_EXACT_IDS_PENDING_NOT_APPROVED",
       "reason": "Fixture driver diff, exact IDs, and disposable database target are NOT_READY.",
@@ -147,16 +161,21 @@
     {
       "id": "AP-03",
       "operation": "Today to the correct company and case, normal domain writes, denial, empty, error, back, reload, and independent readback",
-      "depends_on": ["AP-01", "AP-02"],
+      "depends_on": [
+        "AP-01",
+        "AP-02"
+      ],
       "status": "NOT_READY",
       "prior_status": "NOT_APPROVED",
-      "reason": "No bound staff session, core fixture, or same-SHA deployed runtime. Local Today and case edits are not this journey.",
+      "reason": "Supplied same-SHA demo deployment does not prove an isolated Native runtime. No bound staff session or core fixture; no Native Today-to-case journey was executed.",
       "actual_actions": 0
     },
     {
       "id": "AP-04",
       "operation": "Document version and safety bytes, internal payment ledger, unknown-result retry, and opposite decisions",
-      "depends_on": ["AP-03"],
+      "depends_on": [
+        "AP-03"
+      ],
       "status": "NOT_READY",
       "prior_status": "NOT_APPROVED",
       "reason": "Storage account, object prefix, scanner sandbox, and real scan receipts are NOT_READY. No payment was taken.",
@@ -165,7 +184,9 @@
     {
       "id": "AP-05",
       "operation": "Lawful owner and reviewer handover, receipt and cancel recovery, and six race orders versus QA source disable",
-      "depends_on": ["AP-03"],
+      "depends_on": [
+        "AP-03"
+      ],
       "status": "NOT_READY",
       "prior_status": "NOT_APPROVED",
       "reason": "STAFF_SOURCE and RACE_SOURCE_01 through RACE_SOURCE_06 have no Auth IDs. Disabling seven QA profiles is not approved.",
@@ -174,7 +195,10 @@
     {
       "id": "AP-06",
       "operation": "104-obligation full preview paging and handover on a separately manifested batch",
-      "depends_on": ["AP-01", "AP-05"],
+      "depends_on": [
+        "AP-01",
+        "AP-05"
+      ],
       "status": "NOT_READY",
       "prior_status": "ADDITIONAL_SETUP_NOT_APPROVED",
       "reason": "The 104-obligation fixture and PAGING_SOURCE are unbound.",
@@ -183,7 +207,9 @@
     {
       "id": "AP-07",
       "operation": "Approved calendar boundaries, own-browser transport failures, dedicated clone schema denial, and last-admin safeguards",
-      "depends_on": ["AP-01"],
+      "depends_on": [
+        "AP-01"
+      ],
       "status": "NOT_READY",
       "prior_status": "FAULT_TARGET_AND_DIFF_PENDING_NOT_APPROVED",
       "reason": "Calendar hash, expected dates, fault clone, and fault runtime are NOT_READY. Historical UC134 remains NOT_RUN.",
@@ -192,7 +218,9 @@
     {
       "id": "AP-08",
       "operation": "Native scale, paging, import, and history fixture setup and bounded batch recovery",
-      "depends_on": ["AP-01"],
+      "depends_on": [
+        "AP-01"
+      ],
       "status": "NOT_READY",
       "prior_status": "LARGE_SETUP_DELTA_NOT_APPROVED",
       "reason": "Scale fixture manifest and no-dispatch policy are unbound.",
@@ -201,7 +229,9 @@
     {
       "id": "AP-09",
       "operation": "Separately approved scanner, OCR, AI, auth-mail, WhatsApp, and filing sandbox receipts",
-      "depends_on": ["AP-01"],
+      "depends_on": [
+        "AP-01"
+      ],
       "status": "NOT_READY",
       "prior_status": "DESTINATION_CORPUS_MODEL_COST_PERMISSION_PENDING_NOT_APPROVED",
       "reason": "Destinations, models, corpus, currency, and spend ceiling are blank. Approved provider calls and approved spend stay 0.",
@@ -214,7 +244,10 @@
     {
       "id": "AP-10",
       "operation": "Native keyboard, screen-reader, mobile, Safari, and representative cold and warm performance",
-      "depends_on": ["AP-01", "AP-08"],
+      "depends_on": [
+        "AP-01",
+        "AP-08"
+      ],
       "status": "NOT_READY",
       "prior_status": "DEVICE_NETWORK_FIXTURE_PERMISSION_PENDING_NOT_APPROVED",
       "reason": "Device, browser, and network profile are blank. AP-08 data does not exist. No performance number is claimed.",
@@ -223,7 +256,9 @@
     {
       "id": "AP-11",
       "operation": "Observe three native five-minute ticks and restore one synthetic backup to one new disposable target",
-      "depends_on": ["AP-01"],
+      "depends_on": [
+        "AP-01"
+      ],
       "status": "NOT_READY",
       "prior_status": "SCHEDULER_BACKUP_TARGET_COST_PENDING_NOT_APPROVED",
       "reason": "Scheduler owner, job IDs, backup ID, and restore target are NOT_READY. No tick was observed.",
@@ -232,21 +267,77 @@
     {
       "id": "AP-12",
       "operation": "Read back and close own clients and sessions. Retain immutable evidence. Dispose only exact owned IDs after a separate approval",
-      "depends_on": ["AP-00"],
+      "depends_on": [
+        "AP-00"
+      ],
       "status": "NOT_READY",
       "prior_status": "EXACT_CLEANUP_MODE_AND_IDS_PENDING_NOT_APPROVED",
-      "reason": "Cleanup IDs are blank. Default disposition is retain. This prepare pass created no resource.",
+      "reason": "RETAIN_ONLY is recorded (no delete/reset). Future exact cleanup/session IDs require a later packet; this refresh created no resource and opened no session. No AP is authorized.",
       "actual_actions": 0
     }
   ],
   "repository_discovery": {
-    "status": "PARTIAL_REPOSITORY_IDENTIFIERS_ONLY",
+    "status": "SUPPLIED_DEMO_EVIDENCE_AND_REPOSITORY_REFERENCES_NOT_APPROVED",
     "path": "gate-a-discovery.json",
-    "reviewed_repository_head": "51b9a2ebaff965726963cbeb6b7146e860248f90",
+    "reviewed_repository_head": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
     "gate_a_fields_path": "gate_a_fields",
     "public_config_contracts_path": "public_config_contracts",
-    "binding_interpretation": "OWNER_REQUIRED is unresolved, not approved or ready; repository_known values are reference evidence only. Gate B remains NOT_READY."
+    "binding_interpretation": "repository_known values remain historical references/code contracts. selected_binding records seven supplied values for packet comparison only; twelve top-level values remain OWNER_REQUIRED. DB/Auth isolation and CI policy also need owner confirmation. All 14 alias IDs remain OWNER_REQUIRED; Gate B stays NOT_READY."
   },
   "original_source_sha": "79ad0c04da892ec03601f11c12d82fcc84039b31",
-  "original_source_branch": "cursor/reminder-upload-protocol-942a"
+  "original_source_branch": "cursor/reminder-upload-protocol-942a",
+  "demo_deploy_evidence": {
+    "provenance": "Verified deploy evidence supplied by Willy in the packet-refresh task; transcribed without Vercel/Neon/Auth or hosted CI requests in this refresh.",
+    "authority": "Willy Approve 2026-10-29 ~21:17 HKT — \"deploy demo then brief Codex packet refresh only\"; demo deploy + packet refresh only.",
+    "scope": "DEMO_ONLY_PREPARE_ONLY_NOT_NATIVE_APPROVAL",
+    "team": {
+      "id": "team_qvzlsFmfCsLkgItSypqHjw3z",
+      "slug": "ynwaforevers-projects"
+    },
+    "project": {
+      "name": "kossilon-hub-demo",
+      "id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+      "listed_in_vercel_linkedProjects": false,
+      "git_source_create_deployment_succeeded": true
+    },
+    "deployment": {
+      "id": "dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c",
+      "state": "READY",
+      "target": "production",
+      "target_scope": "Production target label inside kossilon-hub-demo only; not the production kossilon-hub project.",
+      "url": "https://kossilon-hub-demo-4oxc6afow-ynwaforevers-projects.vercel.app",
+      "aliases": [
+        "kossilon-hub-demo.vercel.app",
+        "kossilon-hub-demo-ynwaforevers-projects.vercel.app",
+        "kossilon-hub-demo-git-main-ynwaforevers-projects.vercel.app"
+      ],
+      "observed_source_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+      "githubCommitRef": "main"
+    },
+    "ci": {
+      "run_id": 40755216699,
+      "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/40755216699",
+      "head_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+      "conclusion": "SUCCESS",
+      "jobs": {
+        "Node22": "SUCCESS",
+        "Node24": "SUCCESS",
+        "verify": "SUCCESS"
+      }
+    },
+    "environment_owner": "Willy (YNWAforever)",
+    "cleanup_manifest_and_disposition": "RETAIN_ONLY",
+    "observed_artifact_checksum": "OWNER_REQUIRED",
+    "db_auth_isolation": "OWNER_REQUIRED",
+    "required_check_policy_confirmation": "OWNER_REQUIRED",
+    "supersedes_historical_demo_bindings": true,
+    "native_approval_granted": false,
+    "network_requests_in_this_refresh": 0
+  },
+  "superseded_comparison_candidate": {
+    "sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
+    "pr": 149,
+    "status": "HISTORICAL_SUPERSEDED_NOT_APPROVED"
+  },
+  "binding_interpretation": "Seven supplied values are recorded for this demo evidence packet only, not approved Native bindings. Twelve top-level Gate A fields remain OWNER_REQUIRED; URL DB/Auth/data isolation and required-check policy also remain OWNER_REQUIRED. No allowlist access, AP execution, spend, delete or reset is authorized."
 }

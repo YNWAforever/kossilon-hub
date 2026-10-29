@@ -8,12 +8,12 @@
   "external_accesses": 0,
   "hosted_ci_queried": false,
   "candidate": {
-    "sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
-    "subject": "feat(cosec): reconcile reminder commands and staff recovery reads (#149)",
-    "pr": 149,
-    "pr_state": "merged_squash",
+    "sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+    "subject": "Merge pull request #150 from YNWAforever/cursor/native-track-open-df67",
+    "pr": 150,
+    "pr_state": "merged",
     "branch": "main",
-    "pr_url": "https://github.com/YNWAforever/kossilon-hub/pull/149"
+    "pr_url": "https://github.com/YNWAforever/kossilon-hub/pull/150"
   },
   "historical_relations_to_original_candidate": {
     "pr_147": {
@@ -72,7 +72,25 @@
   "deployed": false,
   "auth_runtime_verified": false,
   "native_http_db_rls_verified": false,
-  "repo_discovery_refresh": {
+  "original_track_open_candidate": {
+    "sha": "79ad0c04da892ec03601f11c12d82fcc84039b31",
+    "subject": "docs: record staff recovery finalize resume evidence",
+    "pr": 149,
+    "pr_state": "open_draft_at_original_track_open",
+    "branch": "cursor/reminder-upload-protocol-942a",
+    "pr_url": "https://github.com/YNWAforever/kossilon-hub/pull/149"
+  },
+  "review_base_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+  "superseded_comparison_candidate": {
+    "sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
+    "subject": "feat(cosec): reconcile reminder commands and staff recovery reads (#149)",
+    "pr": 149,
+    "pr_state": "merged_squash",
+    "branch": "main",
+    "pr_url": "https://github.com/YNWAforever/kossilon-hub/pull/149",
+    "status": "HISTORICAL_SUPERSEDED_NOT_APPROVED"
+  },
+  "historical_repo_discovery_refresh": {
     "status": "PARTIAL_REPOSITORY_IDENTIFIERS_ONLY",
     "reviewed_repository_head": "51b9a2ebaff965726963cbeb6b7146e860248f90",
     "discovery_file": "gate-a-discovery.json",
@@ -88,15 +106,39 @@
     "fully_bound_gate_a_fields": 0,
     "gate_a_fields_requiring_owner": 19,
     "actual_gate_a_alias_ids_requiring_owner": 14,
-    "gate_b_changed": false
+    "gate_b_changed": false,
+    "counter_scope": "Historical #150 repo-only discovery before the supplied demo-evidence refresh; original 0/19 binding counts are not current."
   },
-  "original_track_open_candidate": {
-    "sha": "79ad0c04da892ec03601f11c12d82fcc84039b31",
-    "subject": "docs: record staff recovery finalize resume evidence",
-    "pr": 149,
-    "pr_state": "open_draft_at_original_track_open",
-    "branch": "cursor/reminder-upload-protocol-942a",
-    "pr_url": "https://github.com/YNWAforever/kossilon-hub/pull/149"
-  },
-  "review_base_sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0"
+  "original_baseline_counters_scope": "Original track-open prepare pass. deployed=false means no deployment by that pass or this refresh; a prior demo deployment is now recorded from supplied evidence. External-access counters exclude GitHub delivery operations.",
+  "repo_discovery_refresh": {
+    "status": "SUPPLIED_DEMO_EVIDENCE_AND_REPOSITORY_REFERENCES_NOT_APPROVED",
+    "authority": "Willy Approve 2026-10-29 ~21:17 HKT — \"deploy demo then brief Codex packet refresh only\"; demo deploy + packet refresh only.",
+    "reviewed_repository_head": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+    "discovery_file": "gate-a-discovery.json",
+    "supplied_demo_evidence": "approval-request.json#/demo_deploy_evidence",
+    "supplied_demo_deployment_id": "dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c",
+    "supplied_demo_url": "https://kossilon-hub-demo-4oxc6afow-ynwaforevers-projects.vercel.app",
+    "supplied_observed_source_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+    "supplied_ci_run_id": 40755216699,
+    "supplied_ci_conclusion": "SUCCESS",
+    "environment_owner": "Willy (YNWAforever)",
+    "cleanup_manifest_and_disposition": "RETAIN_ONLY",
+    "native_executed": false,
+    "ap_executed": false,
+    "live_comsec_http_requests": 0,
+    "auth_actions": 0,
+    "database_connections": 0,
+    "browser_or_native_flows": 0,
+    "provider_control_plane_requests": 0,
+    "hosted_ci_queried": false,
+    "resources_created": 0,
+    "deployments_performed_this_refresh": 0,
+    "gate_a_fields_with_recorded_values": 7,
+    "gate_a_fields_requiring_owner": 12,
+    "actual_gate_a_alias_ids_requiring_owner": 14,
+    "db_auth_isolation": "OWNER_REQUIRED",
+    "required_check_policy_confirmation": "OWNER_REQUIRED",
+    "gate_b_changed": false,
+    "binding_counts_scope": "Top-level selected_binding values only; recorded demo URL/project still require isolation proof and CI policy remains OWNER_REQUIRED. Recorded values are not Native approval."
+  }
 }

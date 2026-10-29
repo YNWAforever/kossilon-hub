@@ -1,17 +1,15 @@
 {
   "schema": 1,
   "plan_id": "cosec-20261027-native-track-open",
-  "native_pr": 150,
-  "native_branch": "cursor/native-track-open-df67",
   "repository": "YNWAforever/kossilon-hub",
-  "reviewed_repository_head": "51b9a2ebaff965726963cbeb6b7146e860248f90",
-  "candidate_source_sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
-  "candidate_source_pr": 149,
-  "status": "PARTIAL_REPOSITORY_IDENTIFIERS_ONLY",
+  "reviewed_repository_head": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+  "candidate_source_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+  "candidate_source_pr": 150,
+  "status": "SUPPLIED_DEMO_EVIDENCE_AND_REPOSITORY_REFERENCES_NOT_APPROVED",
   "release_gate": "NO_GO",
   "execution_enabled": false,
   "approved_packet_ids": [],
-  "scope": "Committed repo docs/code/public config only. GitHub transport/PR metadata serves delivery, not Gate A runtime discovery.",
+  "scope": "Local repository verification at d5183ba plus supplied verified demo deployment/CI evidence. No Vercel/Neon/Auth/hosted CI request or Native/AP execution; GitHub push and draft PR are delivery operations.",
   "native_executed": false,
   "live_comsec_http_requests": 0,
   "auth_actions": 0,
@@ -20,7 +18,7 @@
   "provider_control_plane_requests": 0,
   "hosted_ci_queried": false,
   "resources_created": 0,
-  "interpretation": "repository_known is reference evidence, never a selected/approved binding. Every Gate A field still requires owner input. Historical observations were not refreshed and old approvals do not transfer.",
+  "interpretation": "Seven supplied values are recorded for this demo evidence packet only, not approved Native bindings. Twelve top-level Gate A fields remain OWNER_REQUIRED; URL DB/Auth/data isolation and required-check policy also remain OWNER_REQUIRED. No allowlist access, AP execution, spend, delete or reset is authorized.",
   "sources": {
     "demo_metadata": {
       "path": "docs/audit-remediation/cosec-20261025-ap01-form-61f03672/AP01-METADATA-EXECUTION.json",
@@ -155,38 +153,40 @@
   },
   "gate_a_fields": {
     "environment_owner": {
-      "status": "OWNER_REQUIRED",
-      "selected_binding": "OWNER_REQUIRED",
+      "status": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
+      "selected_binding": "Willy (YNWAforever)",
       "repository_known": {
         "platform_team_id": "team_qvzlsFmfCsLkgItSypqHjw3z",
         "platform_team_name": "ynwaforever's projects",
         "platform_team_slug": "ynwaforevers-projects"
       },
-      "remaining_owner_input": "Named accountable human/business owner of the isolated target. A platform team or GitHub actor is not that owner.",
+      "remaining_owner_input": "Accountable human/business owner confirmed as Willy (YNWAforever). No email supplied or needed. Native/AP approval remains absent.",
       "source_refs": [
-        "demo_metadata#/metadata_result/owner_team"
+        "demo_metadata#/metadata_result/owner_team",
+        "demo_deploy_20261029"
       ]
     },
     "existing_isolated_url": {
-      "status": "OWNER_REQUIRED",
-      "selected_binding": "OWNER_REQUIRED",
+      "status": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
+      "selected_binding": "https://kossilon-hub-demo-4oxc6afow-ynwaforevers-projects.vercel.app",
       "repository_known": {
         "historical_demo_fixed_url": "https://kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
         "historical_demo_alias_from_runbook": "https://kossilon-hub-demo.vercel.app",
         "known_production_origin": "https://kossilon-hub.vercel.app",
         "url_visited_this_pass": false
       },
-      "remaining_owner_input": "Owner-confirmed existing isolated HTTPS origin, current availability, data/DB/Auth isolation and approval reference. Neither the demo label nor READY establishes isolation.",
+      "remaining_owner_input": "OWNER_REQUIRED: DB/Auth/data isolation and approved Native origin/availability. The supplied demo URL and READY state do not establish isolation; this refresh did not visit it.",
       "source_refs": [
         "demo_metadata#/metadata_result/latest_visible_deployment",
         "demo_metadata#/metadata_result/isolation",
         "demo_runbook",
-        "staging_guard"
+        "staging_guard",
+        "demo_deploy_20261029"
       ]
     },
     "runtime_project_id": {
-      "status": "OWNER_REQUIRED",
-      "selected_binding": "OWNER_REQUIRED",
+      "status": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
+      "selected_binding": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
       "repository_known": {
         "historical_demo_project_id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
         "historical_demo_project_name": "kossilon-hub-demo",
@@ -194,39 +194,42 @@
         "historical_production_project_id": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
         "historical_production_project_name": "kossilon-hub"
       },
-      "remaining_owner_input": "Confirm which runtime project is the isolated Gate A target; neither historical project is selected or approved here.",
+      "remaining_owner_input": "Demo project ID recorded; OWNER_REQUIRED for proof of DB/Auth/data isolation. Production kossilon-hub is excluded. The demo project is absent from linkedProjects but supplied Git-source create_deployment succeeded.",
       "source_refs": [
         "demo_metadata#/metadata_result/project",
-        "production_vercel#/project_id"
+        "production_vercel#/project_id",
+        "demo_deploy_20261029"
       ]
     },
     "deployment_id": {
-      "status": "OWNER_REQUIRED",
-      "selected_binding": "OWNER_REQUIRED",
+      "status": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
+      "selected_binding": "dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c",
       "repository_known": {
         "historical_demo_deployment_id": "dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY",
         "historical_demo_target_label": "production",
         "historical_demo_state": "READY",
         "historical_demo_source_sha": null
       },
-      "remaining_owner_input": "Same-candidate deployment ID and its current source/artifact binding. target=production describes this old demo-project deployment, not an approved Native environment.",
+      "remaining_owner_input": "Demo deployment ID and source SHA recorded. Deployed artifact checksum and isolation remain OWNER_REQUIRED; target=production is confined to the demo project.",
       "source_refs": [
-        "demo_metadata#/metadata_result/latest_visible_deployment"
+        "demo_metadata#/metadata_result/latest_visible_deployment",
+        "demo_deploy_20261029"
       ]
     },
     "observed_source_sha": {
-      "status": "OWNER_REQUIRED",
-      "selected_binding": "OWNER_REQUIRED",
+      "status": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
+      "selected_binding": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
       "repository_known": {
-        "expected_candidate_sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
-        "candidate_pr": 149,
+        "expected_candidate_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+        "candidate_pr": 150,
         "native_packet_pr": 150,
         "historical_latest_demo_git_sha_exposed": false,
-        "candidate_ref": "main (PR #149 squash merge; unapproved comparison only)"
+        "candidate_ref": "main at d5183ba (PR #150 merge; comparison only, no Native approval)"
       },
-      "remaining_owner_input": "Deployment-observed Git SHA equal to the pinned candidate. The expected candidate is not an observed deployment SHA; old filtered results concern an earlier candidate only.",
+      "remaining_owner_input": "Supplied deployment-observed SHA equals the new comparison candidate. No Native/AP approval; no independent provider query in this refresh.",
       "source_refs": [
-        "demo_metadata#/metadata_result/comparison"
+        "demo_metadata#/metadata_result/comparison",
+        "demo_deploy_20261029"
       ]
     },
     "observed_artifact_checksum": {
@@ -241,8 +244,18 @@
       ]
     },
     "required_ci_run_ids_and_results": {
-      "status": "OWNER_REQUIRED",
-      "selected_binding": "OWNER_REQUIRED",
+      "status": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
+      "selected_binding": {
+        "run_id": 40755216699,
+        "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/40755216699",
+        "head_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+        "conclusion": "SUCCESS",
+        "jobs": {
+          "Node22": "SUCCESS",
+          "Node24": "SUCCESS",
+          "verify": "SUCCESS"
+        }
+      },
       "repository_known": {
         "workflow_path": ".github/workflows/ci.yml",
         "workflow_name": "CI",
@@ -258,9 +271,10 @@
         ],
         "hosted_runs_queried_this_pass": false
       },
-      "remaining_owner_input": "Required-check policy confirmation plus exact candidate-head run IDs, head SHA, conclusions, and dependency audit results. No historical run is carried forward.",
+      "remaining_owner_input": "Supplied run 40755216699 SUCCESS and Node22/Node24/verify results at d5183ba are recorded. OWNER_REQUIRED: required-check policy confirmation and accepted dependency disposition; hosted CI/logs were not queried or rerun here.",
       "source_refs": [
-        "workflow"
+        "workflow",
+        "demo_deploy_20261029"
       ]
     },
     "artifact_sbom_and_dependency_disposition": {
@@ -466,8 +480,10 @@
       "repository_known": {
         "approved_hosts": [],
         "reference_app_hosts": [
-          "kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
-          "kossilon-hub-demo.vercel.app"
+          "kossilon-hub-demo-4oxc6afow-ynwaforevers-projects.vercel.app",
+          "kossilon-hub-demo.vercel.app",
+          "kossilon-hub-demo-ynwaforevers-projects.vercel.app",
+          "kossilon-hub-demo-git-main-ynwaforevers-projects.vercel.app"
         ],
         "known_production_hosts_excluded": [
           "kossilon-hub.vercel.app",
@@ -475,13 +491,18 @@
         ],
         "auth_host": "OWNER_REQUIRED",
         "database_endpoint_host": "OWNER_REQUIRED",
-        "storage_or_provider_sandbox_hosts": "OWNER_REQUIRED"
+        "storage_or_provider_sandbox_hosts": "OWNER_REQUIRED",
+        "historical_reference_app_hosts": [
+          "kossilon-hub-demo-dpp5u56nf-ynwaforevers-projects.vercel.app",
+          "kossilon-hub-demo.vercel.app"
+        ]
       },
       "remaining_owner_input": "Exact owner-approved hosts for the selected isolated target and slice. Reference URLs, trusted domains, environment egress policy and wildcard provider domains grant no access.",
       "source_refs": [
         "demo_metadata#/metadata_result/latest_visible_deployment",
         "staging_guard",
-        "firm_runbook"
+        "firm_runbook",
+        "demo_deploy_20261029"
       ]
     },
     "read_only_cost_ceiling_and_expiry_hkt": {
@@ -502,17 +523,18 @@
       ]
     },
     "cleanup_manifest_and_disposition": {
-      "status": "OWNER_REQUIRED",
-      "selected_binding": "OWNER_REQUIRED",
+      "status": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
+      "selected_binding": "RETAIN_ONLY",
       "repository_known": {
         "proposed_disposition": "RETAIN_ONLY",
         "resources_created_this_pass": 0,
         "sessions_opened_this_pass": 0,
         "delete_reset_suspend_revoke_signout_authorized": false
       },
-      "remaining_owner_input": "Owner sign-off on retain-only disposition and exact references for any future sessions; this pass has no runtime resource/session IDs to clean up.",
+      "remaining_owner_input": "RETAIN_ONLY recorded from supplied evidence; no delete/reset. No resource/session was created in this refresh. Any future exact session/cleanup references require a later packet and authorization.",
       "source_refs": [
-        "demo_metadata#/forbidden_actions"
+        "demo_metadata#/forbidden_actions",
+        "demo_deploy_20261029"
       ]
     }
   },
@@ -619,5 +641,31 @@
     "executed": false
   },
   "original_reviewed_repository_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
-  "original_candidate_source_sha": "79ad0c04da892ec03601f11c12d82fcc84039b31"
+  "original_candidate_source_sha": "79ad0c04da892ec03601f11c12d82fcc84039b31",
+  "historical_native_pr": 150,
+  "historical_native_branch": "cursor/native-track-open-df67",
+  "refresh_branch": "codex/native-gate-a-packet-refresh-20261029",
+  "previous_repo_discovery_reviewed_head": "51b9a2ebaff965726963cbeb6b7146e860248f90",
+  "superseded_comparison_candidate": {
+    "sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
+    "pr": 149,
+    "status": "HISTORICAL_SUPERSEDED_NOT_APPROVED"
+  },
+  "sources_at_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+  "supplied_evidence_refs": {
+    "demo_deploy_20261029": {
+      "path": "docs/audit-remediation/cosec-20261027-native-track-open/approval-request.json",
+      "json_pointer": "/demo_deploy_evidence",
+      "provenance": "User-supplied verified evidence; not independently queried in this refresh.",
+      "fingerprint_location": "verification-report.json.file_sha256_excluding_this_report",
+      "approval_scope": "Demo deploy + packet refresh only; no Native or AP approval."
+    }
+  },
+  "binding_counts": {
+    "gate_a_fields_total": 19,
+    "gate_a_fields_with_recorded_values": 7,
+    "gate_a_fields_owner_required": 12,
+    "gate_a_alias_ids_owner_required": 14,
+    "count_scope": "Top-level selected_binding values only; recorded demo URL/project still require isolation proof and CI policy remains OWNER_REQUIRED. Recorded values are not Native approval."
+  }
 }
