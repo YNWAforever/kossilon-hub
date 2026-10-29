@@ -133,7 +133,7 @@
       "depends_on": [],
       "status": "NOT_READY",
       "prior_status": "MISSING_BINDINGS_NOT_APPROVED",
-      "reason": "Seven supplied demo/owner/CI/retain values are recorded; twelve top-level Gate A fields and all 14 alias IDs remain OWNER_REQUIRED. DB/Auth/data isolation and required-check policy are unproven. Gate B stays NOT_READY; no AP is approved.",
+      "reason": "Seven previously supplied demo/owner/CI/retain values remain recorded; demo and QA provider candidates are recorded without selection or approval. Twelve top-level Gate A fields and all 14 alias IDs remain OWNER_REQUIRED. DB/Auth/data isolation and required-check policy remain unapproved; Gate B stays NOT_READY.",
       "actual_actions": 0
     },
     {
@@ -144,7 +144,7 @@
       ],
       "status": "NOT_READY",
       "prior_status": "NOT_APPROVED",
-      "reason": "Supplied demo deployment/source SHA and CI SUCCESS are recorded, without provider re-query. Artifact checksum, SBOM/dependency disposition, DB/Auth isolation, roles/manifest, allowlist, budget and expiry remain OWNER_REQUIRED; AP-01-RO-1 is unauthorized and unexecuted.",
+      "reason": "Ten read-only provider metadata queries are recorded as candidate discovery only, not AP-01 execution. Demo exposes no artifact digest; QA has no verified deployment at d5183ba. Both branches lack app/observer roles; checksum disposition, SBOM, isolation, selected DB/Auth/roles, manifest, allowlist, budget and expiry remain OWNER_REQUIRED; AP-01-RO-1 stays unauthorized and unexecuted.",
       "actual_actions": 0
     },
     {
@@ -277,17 +277,17 @@
     }
   ],
   "repository_discovery": {
-    "status": "SUPPLIED_DEMO_EVIDENCE_AND_REPOSITORY_REFERENCES_NOT_APPROVED",
+    "status": "PROVIDER_CANDIDATES_AND_REPOSITORY_REFERENCES_NOT_APPROVED",
     "path": "gate-a-discovery.json",
     "reviewed_repository_head": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
     "gate_a_fields_path": "gate_a_fields",
     "public_config_contracts_path": "public_config_contracts",
-    "binding_interpretation": "repository_known values remain historical references/code contracts. selected_binding records seven supplied values for packet comparison only; twelve top-level values remain OWNER_REQUIRED. DB/Auth isolation and CI policy also need owner confirmation. All 14 alias IDs remain OWNER_REQUIRED; Gate B stays NOT_READY."
+    "binding_interpretation": "repository_known values remain historical references/code contracts. selected_binding records seven supplied values for packet comparison only; twelve top-level values remain OWNER_REQUIRED. DB/Auth isolation and CI policy also need owner confirmation. All 14 alias IDs remain OWNER_REQUIRED; Gate B stays NOT_READY. provider_candidate_evidence adds unselected demo/QA candidates and no-digest/role/host observations only; no selected_binding changed."
   },
   "original_source_sha": "79ad0c04da892ec03601f11c12d82fcc84039b31",
   "original_source_branch": "cursor/reminder-upload-protocol-942a",
   "demo_deploy_evidence": {
-    "provenance": "Verified deploy evidence supplied by Willy in the packet-refresh task; transcribed without Vercel/Neon/Auth or hosted CI requests in this refresh.",
+    "provenance": "Verified deploy/CI evidence supplied by Willy for the prior packet refresh and transcribed there without provider or hosted CI requests. Current provider_candidate_evidence separately corroborates deployment metadata only; CI remains supplied evidence.",
     "authority": "Willy Approve 2026-10-29 ~21:17 HKT — \"deploy demo then brief Codex packet refresh only\"; demo deploy + packet refresh only.",
     "scope": "DEMO_ONLY_PREPARE_ONLY_NOT_NATIVE_APPROVAL",
     "team": {
@@ -332,12 +332,190 @@
     "required_check_policy_confirmation": "OWNER_REQUIRED",
     "supersedes_historical_demo_bindings": true,
     "native_approval_granted": false,
-    "network_requests_in_this_refresh": 0
+    "network_requests_in_this_refresh": 0,
+    "network_requests_scope": "Prior demo-evidence transcription only; excludes the ten read-only provider metadata queries recorded in the current OWNER_REQUIRED candidate pass."
   },
   "superseded_comparison_candidate": {
     "sha": "ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0",
     "pr": 149,
     "status": "HISTORICAL_SUPERSEDED_NOT_APPROVED"
   },
-  "binding_interpretation": "Seven supplied values are recorded for this demo evidence packet only, not approved Native bindings. Twelve top-level Gate A fields remain OWNER_REQUIRED; URL DB/Auth/data isolation and required-check policy also remain OWNER_REQUIRED. No allowlist access, AP execution, spend, delete or reset is authorized."
+  "binding_interpretation": "Seven supplied values are recorded for this demo evidence packet only, not approved Native bindings. Twelve top-level Gate A fields remain OWNER_REQUIRED; URL DB/Auth/data isolation and required-check policy also remain OWNER_REQUIRED. No allowlist access, AP execution, spend, delete or reset is authorized. Provider candidates are separate observed blocks only; all existing selected bindings are unchanged and await Willy for Native approval.",
+  "provider_candidate_evidence": {
+    "status": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
+    "authority": "Willy approved starting to fill OWNER_REQUIRED fields; provider-observed candidates only. No binding selection or Native/AP approval.",
+    "observed_at_hkt": "2026-10-29 ~22:55 HKT (UTC+8)",
+    "source": {
+      "path": "/workspace/cli-logs/comsec-gate-a-owner-required.provider-evidence.md",
+      "sha256": "717084a6accfbde6291f829a603a064be40c9539a0bbf7d45d59ed9f45902f9e",
+      "provenance": "Read-only provider evidence gathered by shepherd this pass; transcribed from the supplied file without additional provider queries. ComSec OS reports are labelled separately."
+    },
+    "request_counters": {
+      "previous_provider_control_plane_requests": 0,
+      "this_pass_read_only_metadata_queries": 10,
+      "provider_control_plane_requests": 10,
+      "vercel": {
+        "get_deployment": 1,
+        "list_deployments": 1,
+        "total": 2
+      },
+      "neon": {
+        "list_postgres_roles": 2,
+        "list_postgres_databases": 2,
+        "list_branch_computes": 2,
+        "get_auth": 2,
+        "total": 8
+      },
+      "scope": "Provider reads gathered by shepherd this pass and transcribed locally; no additional provider request by the packet editor. ComSec-reported /files 404 and QA env match are not additional queries in this count."
+    },
+    "selected_stack": "OWNER_REQUIRED",
+    "observed_artifact_checksum": {
+      "status": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
+      "value": "PROVIDER_EXPOSES_NO_DIGEST",
+      "deployment_id": "dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c",
+      "get_deployment_observation": "Response exposes no artifact digest/checksum field.",
+      "files_observation": {
+        "result": "HTTP404_FOR_GIT_DEPLOY",
+        "provenance": "Reported by ComSec OS; not re-run by shepherd or packet editor."
+      },
+      "labelled_substitutes": {
+        "status": "LABELLED_SUBSTITUTES_ONLY_NOT_A_DEPLOYED_ARTIFACT_DIGEST",
+        "source_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+        "ci_run_id": 40755216699,
+        "ci_provenance": "Existing supplied demo_deploy_evidence; not queried or rerun in this pass.",
+        "repository_lockfiles": [
+          {
+            "path": "package-lock.json",
+            "sha256": "bd17e9f06ecaa5410cad9a75fa6ec5fbf277c57986583686d503f21d8bee2f2c",
+            "git_blob": "edac118ae868a36f6e495b8ba333f4cb0d58493e"
+          },
+          {
+            "path": "bun.lock",
+            "sha256": "f943a902e9ba1aa2ecb84262a796eb3e7d58b48229a6fce215d0f1a6909600db",
+            "git_blob": "075646221414316b5205d720df9d2b15acfffa00"
+          }
+        ],
+        "interpretation": "Source SHA, CI run and repository lockfile hashes are comparison substitutes only, explicitly not a deployed artifact digest, not proof of deployed bytes and not approval."
+      },
+      "remaining_owner_input": "OWNER_REQUIRED: Willy must resolve acceptable artifact evidence/disposition in a later approval; no digest is fabricated or selected."
+    },
+    "candidate_stacks": {
+      "demo": {
+        "status": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
+        "vercel": {
+          "project_name": "kossilon-hub-demo",
+          "project_id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+          "deployment_id": "dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c",
+          "state": "READY",
+          "target": "production",
+          "observed_source_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+          "provenance": "Shepherd Vercel get_deployment withGitRepoInfo=true."
+        },
+        "neon": {
+          "project_id": "green-unit-86146635",
+          "branch_id": "br-raspy-math-azlq08ge",
+          "database_name": "kossilon_demo",
+          "observed_role_names": [
+            "kossilon_demo_owner"
+          ],
+          "database_owner": "kossilon_demo_owner",
+          "app_role": "NONE_EXISTS",
+          "readonly_observer_role": "NONE_EXISTS",
+          "endpoint": {
+            "id": "ep-holy-surf-aztq6cid",
+            "type": "read_write",
+            "state": "active",
+            "region": "aws-ap-southeast-1",
+            "host": "ep-holy-surf-aztq6cid.c-3.ap-southeast-1.aws.neon.tech",
+            "pooled_host": "ep-holy-surf-aztq6cid-pooler.c-3.ap-southeast-1.aws.neon.tech",
+            "proxy_host": "c-3.ap-southeast-1.aws.neon.tech",
+            "port": "OWNER_REQUIRED",
+            "port_observation": "Provider API exposes no port; no default assumed."
+          },
+          "auth": {
+            "provider": "better_auth",
+            "auth_provider_project_id": "53ec191d-f012-46bb-b595-a583e514cc95",
+            "database_name": "kossilon_demo",
+            "name": "kossilon-demo",
+            "base_url": "https://ep-holy-surf-aztq6cid.neonauth.c-3.ap-southeast-1.aws.neon.tech/kossilon_demo/auth"
+          },
+          "provenance": "Shepherd list_postgres_roles, list_postgres_databases, list_branch_computes and get_auth for this project/branch."
+        },
+        "runtime_db_auth_url_link": {
+          "status": "UNPROVEN",
+          "provenance": "Sensitive Vercel DATABASE_URL/NEON_AUTH_URL env values were not read; branch Auth metadata does not prove runtime linkage."
+        },
+        "db_auth_data_isolation": "OWNER_REQUIRED"
+      },
+      "qa": {
+        "status": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
+        "vercel": {
+          "project_name": "kossilon-cosec-qa-20261025",
+          "project_id": "prj_5Q6rrOoH7voW4jEmxhhMqxz0s8qp",
+          "observed_deployment_count": 4,
+          "latest_deployment": {
+            "id": "dpl_FN5etCBSmhy1unZvBjx7pQG1TEt6",
+            "source": "CLI",
+            "observed_source_sha": null,
+            "meta": {},
+            "state": "READY",
+            "target": "production"
+          },
+          "git_deployment": {
+            "id": "dpl_AUMBEB8NtguuEwx6kpHWfXJHrpMt",
+            "source": "Git",
+            "observed_source_sha": "4d63818fe2562146f85e9a7b9917d8f0eb58f4c1",
+            "ref": "codex/cosec-20261023",
+            "state": "READY",
+            "target": "production"
+          },
+          "comparison_to_candidate": "No listed deployment exposes d5183ba04cd510230e7a7f6b6b53c4529141aad6; latest CLI has no SHA and observed Git deployment is at 4d63818fe2562146f85e9a7b9917d8f0eb58f4c1. QA is not a verified same-source candidate.",
+          "provenance": "Shepherd Vercel list_deployments projectId=prj_5Q6rrOoH7voW4jEmxhhMqxz0s8qp limit=5."
+        },
+        "neon": {
+          "project_id": "broad-mouse-83325496",
+          "branch_id": "br-aged-flower-b3clbnr6",
+          "database_name": "kossilon_qa",
+          "observed_role_names": [
+            "kossilon_qa_owner"
+          ],
+          "app_role": "NONE_EXISTS",
+          "readonly_observer_role": "NONE_EXISTS",
+          "endpoint": {
+            "id": "ep-delicate-math-b35l9rdb",
+            "type": "read_write",
+            "state": "active",
+            "region": "aws-ap-southeast-1",
+            "host": "ep-delicate-math-b35l9rdb.c-4.ap-southeast-1.aws.neon.tech",
+            "pooled_host": "ep-delicate-math-b35l9rdb-pooler.c-4.ap-southeast-1.aws.neon.tech",
+            "proxy_host": "c-4.ap-southeast-1.aws.neon.tech",
+            "port": "OWNER_REQUIRED",
+            "port_observation": "Provider API exposes no port; no default assumed."
+          },
+          "auth": {
+            "provider": "better_auth",
+            "auth_provider_project_id": "0f60a808-46df-46f3-8723-a47767ad48ba",
+            "database_name": "kossilon_qa",
+            "name": "kossilon-cosec-isolated-20261025",
+            "base_url": "https://ep-delicate-math-b35l9rdb.neonauth.c-4.ap-southeast-1.aws.neon.tech/kossilon_qa/auth"
+          },
+          "provenance": "Shepherd list_postgres_roles, list_postgres_databases, list_branch_computes and get_auth for this project/branch."
+        },
+        "runtime_auth_url_link": {
+          "status": "NEON_AUTH_URL_MATCH_REPORTED_BY_COMSEC_OS",
+          "matches": "neon.auth.base_url",
+          "provenance": "ComSec OS reported the QA Vercel NEON_AUTH_URL match; shepherd did not re-read env and packet editor did not access env.",
+          "scope": "Auth URL match only; not DB URL linkage, data isolation, same-source artifact verification or approval."
+        },
+        "db_auth_data_isolation": "OWNER_REQUIRED"
+      }
+    },
+    "role_disposition": "Both branches expose only their *_owner role. app_role and readonly_observer_role NONE_EXISTS; selected bindings stay OWNER_REQUIRED. Restricted roles must be created and approved by Willy later; no role creation authorized or performed here.",
+    "execution_enabled": false,
+    "approved_packet_ids": [],
+    "ap_executed": false,
+    "sensitive_env_values_read": false,
+    "database_connections": 0,
+    "resources_created": 0
+  }
 }

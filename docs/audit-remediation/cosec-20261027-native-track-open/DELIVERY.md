@@ -5,8 +5,9 @@
 Refresh date: 2026-10-29 HKT. Original track-open date: 2026-10-27. This
 packet continues the unapproved plan in
 [../cosec-20261025-native-plan-fccb7c22/](../cosec-20261025-native-plan-fccb7c22/).
-Authority: **Willy Approve 2026-10-29 ~21:17 HKT — "deploy demo then brief
-Codex packet refresh only"** (demo deploy + packet refresh only).
+Prior demo/refresh authority: **Willy Approve 2026-10-29 ~21:17 HKT — "deploy
+demo then brief Codex packet refresh only"**. Current authority permits recording
+provider-observed `OWNER_REQUIRED` candidates only; no selection or approval.
 
 **Prepare-only. Native NO_GO. execution_enabled=false. No AP authorized.
 No Ready/merge/Native ask.** `approved_packet_ids` stays `[]`. Seven supplied
@@ -17,9 +18,10 @@ stay `NOT_READY`.
 
 ## Supplied verified demo deployment evidence — not Native approval
 
-The following evidence was supplied in Willy's task and transcribed without
-Vercel/Neon/Auth requests, visiting the demo URL, querying hosted CI, or running
-any AP. Full machine evidence: [approval-request.json](approval-request.json),
+The following demo/CI evidence was supplied for the prior refresh, which made
+no provider request. The current pass separately records ten read-only provider
+queries in `provider_candidate_evidence`; it visits no demo URL, queries no
+hosted CI and runs no AP. Full machine evidence: [approval-request.json](approval-request.json),
 `demo_deploy_evidence`.
 
 | Field | Supplied value |
@@ -35,9 +37,10 @@ any AP. Full machine evidence: [approval-request.json](approval-request.json),
 | Cleanup | `RETAIN_ONLY` — no delete/reset |
 
 Provider `READY` and CI `SUCCESS` are supplied observations, not Native/AP
-approval. Artifact checksum, usable isolated DB endpoint and Auth tenant are
-not in the evidence and remain `OWNER_REQUIRED`. The production Vercel project
-`kossilon-hub` was not touched. This refresh performed no deployment.
+approval. The demo exposes no artifact digest. DB endpoint and Auth tenant
+candidates are now recorded separately, with selection/isolation still
+`OWNER_REQUIRED`. The production Vercel project `kossilon-hub` was not touched.
+This refresh performed no deployment.
 
 Historical demo deployment `dpl_2YSZmZTxQzxPLsL3nUnUF6vLeeEY` and its fixed URL
 remain in discovery and the original metadata receipt as **HISTORICAL /
@@ -47,7 +50,8 @@ SUPERSEDED**, not current bindings. Old receipts and older packets are unchanged
 
 | Pin | SHA | What it is |
 | --- | --- | --- |
-| Current PR base / comparison candidate | `d5183ba04cd510230e7a7f6b6b53c4529141aad6` | `main`; PR [#150](https://github.com/YNWAforever/kossilon-hub/pull/150) merge. Supplied demo deployment/source and CI evidence recorded above; Native unapproved |
+| Comparison source candidate | `d5183ba04cd510230e7a7f6b6b53c4529141aad6` | `main`; PR [#150](https://github.com/YNWAforever/kossilon-hub/pull/150) merge. Supplied demo deployment/source and CI evidence recorded above; Native unapproved |
+| Current packet branch base | `48371b2c3cdd73e6faab60ec733896d5f3b71fa8` | `main` at start of `codex/native-gate-a-owner-required-20261029`; source comparison stays `d5183ba` |
 | Previous comparison candidate (historical / superseded) | `ae9cbc195878235d72c8d0f1d1e49d0f3ad3e5c0` | PR [#149](https://github.com/YNWAforever/kossilon-hub/pull/149) squash merge; prior packet comparison only |
 | Original track-open candidate (historical) | `79ad0c04da892ec03601f11c12d82fcc84039b31` | Then-draft PR #149, branch `cursor/reminder-upload-protocol-942a`, subject `docs: record staff recovery finalize resume evidence` |
 | PR #147 head | `fcce28d6b5483bd78bc31c8f32590325f3152d98` | Draft PR [#147](https://github.com/YNWAforever/kossilon-hub/pull/147), branch `codex/cosec-20261023`. Ancestor of #149. Merge-base of #149 and #148 |
@@ -127,7 +131,7 @@ recording a demo URL/project or CI result does not settle isolation or CI policy
 | `runtime_project_id` | Recorded: demo `prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm`; DB/Auth/data isolation remains `OWNER_REQUIRED` |
 | `deployment_id` | Recorded: demo `dpl_J9ZwsCtnJ99f3N4RWsBYgXMdhR1c`; checksum and isolation remain `OWNER_REQUIRED` |
 | `observed_source_sha` | Recorded from supplied evidence: `d5183ba04cd510230e7a7f6b6b53c4529141aad6`, the new comparison candidate; no Native approval |
-| `observed_artifact_checksum` | Checksum of that deployed artifact |
+| `observed_artifact_checksum` | Observed `PROVIDER_EXPOSES_NO_DIGEST`; status/selected binding stay `OWNER_REQUIRED`. Source/CI/lockfile substitutes are explicitly not a deployed digest or approval |
 | `required_ci_run_ids_and_results` | Recorded: 40755216699 `SUCCESS`, `Node22` / `Node24` / `verify`, same SHA; required-check policy remains `OWNER_REQUIRED` |
 | `artifact_sbom_and_dependency_disposition` | SBOM or lockfile identity and the accepted dependency disposition for that artifact |
 | `db_provider_project_id` | Provider project ID of the disposable or dedicated QA database |
@@ -236,11 +240,18 @@ and retain-only proposal are historical counters, not current binding counts.
 
 ## 2026-10-29 packet refresh validation and remaining gaps
 
-The current comparison/base is `d5183ba04cd510230e7a7f6b6b53c4529141aad6`.
+The comparison/source pin is `d5183ba04cd510230e7a7f6b6b53c4529141aad6`;
+the current packet branch base is `48371b2c3cdd73e6faab60ec733896d5f3b71fa8`.
 All 26 discovery source paths, git blobs and SHA256 values, both candidate
 lockfiles and source-reference JSON pointers were locally rechecked at that
-base. All source bytes match the previous fingerprints. Supplied evidence has
-separate provenance in `demo_deploy_evidence`; it was not independently queried.
+source pin. All 26 pinned source bytes match the previous fingerprints. The
+current packet branch matches 24 of those sources; its two lockfiles differ.
+The existing lockfile hashes remain pinned to `d5183ba` and are not repinned to
+the current branch. Prior demo/CI evidence has separate provenance in
+`demo_deploy_evidence`. Current candidate observations
+have provenance in `provider_candidate_evidence`, sourced from the shepherd
+file gathered 2026-10-29 ~22:55 HKT (UTC+8); demo deployment metadata was
+corroborated by `get_deployment`, while hosted CI was not queried.
 `verification-report.json` fingerprints the current six other packet files.
 
 Twelve top-level fields remain `OWNER_REQUIRED`: deployed artifact checksum;
@@ -249,16 +260,48 @@ and database name; application and read-only observer roles; server identity;
 Auth tenant; role identity manifest/existing QA session method; network allowlist;
 and cost ceiling/currency/HKT window/expiry/approver. All 14 actual alias IDs,
 DB/Auth/data isolation and required-check policy remain `OWNER_REQUIRED`.
-No repo/packet/lockfile hash is substituted for a deployed artifact checksum.
+No repo/packet/lockfile hash is treated as a deployed artifact checksum.
 Historical Neon `red-morning-00331124`, `br-fragrant-sunset-aosoylhr` /
 `kossilon-r01-staging-20261004`, and `neondb` remain historical references only.
-No Neon resource was created or queried.
+No Neon resource was created. Eight read-only Neon metadata queries are now
+recorded; no DB connection, role creation or binding selection occurred.
 
-No Native/Auth/HTTP/DB/RLS/browser/provider/CI/scheduler/restore action or AP was
-run. No provider state, runtime setting, production project, older packet or
+This pass records ten read-only provider metadata queries (Vercel 2, Neon 8),
+with no Native/Auth/HTTP/DB/RLS/browser/hosted CI/scheduler/restore or AP execution.
+No provider state, runtime setting, production project, older packet or
 product source was changed. GitHub push and draft PR are delivery operations,
-separate from Native execution. Baseline counters label original passes and the
-current refresh separately. Historical matrix 70/114/0 and Gate B remain
-unchanged. Local validation checks JSON/invariants, base-pinned sources/locks,
+separate from Native execution. Baseline zero-query counters refer to the prior
+refresh. Current discovery and provider-evidence counters increase from 0 to 10,
+with per-method counts;
+ComSec-reported `/files` 404 and QA env match are not additional queries.
+Historical matrix 70/114/0 and Gate B remain unchanged. Local validation checks
+JSON/invariants, base-pinned sources/locks,
 historical files, relative Markdown links, basic secret patterns, docs-only
 scope and `git diff --check`. No Ready/merge/Native ask is made.
+
+## OWNER_REQUIRED candidate evidence pass — 2026-10-29 HKT (UTC+8)
+
+The demo and QA stacks are both `RECORDED_FOR_PACKET_ONLY_NOT_APPROVED`.
+Full metadata and provenance are in `approval-request.json#/provider_candidate_evidence`,
+with field observations in [gate-a-discovery.json](gate-a-discovery.json) and
+candidate/host tables in [APPROVAL-CHECKLIST.md](APPROVAL-CHECKLIST.md). No
+selected binding changed: seven earlier values remain recorded, twelve fields
+and all fourteen alias IDs remain `OWNER_REQUIRED`, as do isolation, required-check
+policy, allowlist and cost ceiling. Baseline is unchanged as a historical receipt.
+
+Demo runtime-to-DB/Auth URL linkage is `UNPROVEN` (sensitive env unread).
+QA `NEON_AUTH_URL` match proof is reported by ComSec OS; shepherd did not re-read
+env, and no DB URL link or data isolation is inferred. QA latest CLI deployment
+has no SHA; its Git deployment is at `4d63818`, with no verified `d5183ba`
+deployment. Both branches expose only their owner role: required app/observer
+roles are `NONE_EXISTS` and need later creation/approval by Willy. Endpoint
+hosts are candidates only; API exposes no port and port stays `OWNER_REQUIRED`.
+
+Demo checksum observation is `PROVIDER_EXPOSES_NO_DIGEST`. `get_deployment`
+exposes no digest; Git deploy `/files` 404 is ComSec OS-reported, not re-run.
+Source SHA `d5183ba04cd510230e7a7f6b6b53c4529141aad6`, existing CI run
+`40755216699` and both existing lockfile hashes are **LABELLED SUBSTITUTES ONLY,
+explicitly not a deployed artifact digest or approval**. Checksum status/selected
+binding remain `OWNER_REQUIRED` awaiting Willy's evidence/disposition decision.
+No AP was executed. Native `NO_GO`, `execution_enabled=false`, and
+`approved_packet_ids=[]` remain unchanged. This pass commits locally; no push.

@@ -1,10 +1,10 @@
 {
   "status": "PASS_REPOSITORY_PACKET_CHECKS_ONLY",
-  "verified_at_utc": "2026-10-29T13:29:13.827145+00:00",
+  "verified_at_utc": "2026-10-29T15:00:21.370490+00:00",
   "reviewed_repository_head": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
-  "validation_head": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
+  "validation_head": "48371b2c3cdd73e6faab60ec733896d5f3b71fa8",
   "review_base_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
-  "validation_scope": "Local working-packet verification against base/candidate d5183ba; report committed with the docs refresh. Six other packet-file fingerprints exclude this report to avoid a self-hash. Supplied deployment/CI evidence was transcribed, not independently queried. No product tests, build, app import, Vercel/Neon/Auth/hosted CI requests, deployment or Native/AP execution.",
+  "validation_scope": "Local docs-only OWNER_REQUIRED candidate pass on packet branch base 48371b2c; source/lock references remain pinned to d5183ba. Six other packet-file fingerprints exclude this report. Ten read-only provider metadata queries gathered by shepherd are recorded from the supplied evidence file, with no additional provider calls by the editor. QA env match and Git deploy /files 404 are ComSec OS-reported only. No hosted CI query, product test/build, deployment, DB connection, Native/AP execution or mutation.",
   "release_gate": "NO_GO",
   "execution_enabled": false,
   "approved_packet_ids": [],
@@ -39,10 +39,10 @@
   "source_files_hash_and_git_blob_verified": 26,
   "source_files_unchanged_from_previous_discovery": 26,
   "source_files_verified_at_sha": "d5183ba04cd510230e7a7f6b6b53c4529141aad6",
-  "source_references_resolved": 64,
+  "source_references_resolved": 87,
   "base_pinned_source_references_resolved": 56,
-  "supplied_evidence_references_resolved": 8,
-  "supplied_evidence_fingerprint_scope": "approval-request.json is covered below; supplied_evidence_refs resolves its demo_deploy_evidence JSON pointer. No provider receipt, artifact checksum or provider attestation is fabricated.",
+  "supplied_evidence_references_resolved": 31,
+  "supplied_evidence_fingerprint_scope": "All six packet files other than this report, including approval-request.json, are fingerprinted below. supplied_evidence_refs resolves demo_deploy_evidence and provider_candidate_evidence with JSON pointers; the supplied shepherd evidence file SHA256 is also checked. Provider metadata observations and ComSec OS-reported /files 404 / QA env match retain distinct provenance. No digest or approval is fabricated.",
   "candidate_lock_hashes_verified": 2,
   "historical_matrix": {
     "BLOCKED": 70,
@@ -59,27 +59,30 @@
   "previous_native_plan_files_compared_to_base": 22,
   "historical_ancestry_and_commit_counts_reverified_this_refresh": false,
   "historical_ancestry_note": "Original relations/counts remain labelled historical; this refresh rechecked original CSV/approval hashes and prior-plan bytes, not the old branch analysis.",
-  "relative_markdown_links_verified": 20,
+  "relative_markdown_links_verified": 22,
   "basic_secret_pattern_matches": 0,
   "changes_scoped_to_requested_packet": true,
   "checks": [
-    "JSON parsing (all four JSON files); gate/execution/approval/AP invariants and cross-file supplied binding consistency",
-    "Twelve top-level Gate A OWNER_REQUIRED values; seven recorded evidence values; fourteen unresolved aliases; DB/Auth isolation and CI policy still unresolved",
-    "Gate B aliases/fields and unapproved proposed limits unchanged; all thirteen APs NOT_READY with zero actions",
-    "All 26 repo source paths/SHA256/git blobs rechecked at d5183ba against working bytes; all source-reference JSON pointers resolved",
-    "Both candidate lockfiles verified at d5183ba and unchanged from historical ae9cbc19; repo hashes not deployed-artifact checksums",
-    "Historical matrix/scenario-map/approval hashes and CSV recounts; all tracked previous-plan files byte-equal to d5183ba",
-    "Relative Markdown links resolved locally; no remote URL checks",
-    "Basic email/private-key/DB-connection-string/GitHub-token/AWS-key/Bearer/JWT/secret-assignment pattern scan: zero matches in all seven packet files",
-    "Only requested packet paths changed; no untracked repo files; git diff --check"
+    "All four JSON files parsed; NO_GO/execution/approval/Native/AP invariants and cross-file binding consistency",
+    "All 19 selected_binding values and field statuses equal the starting packet; 7 earlier recorded values, 12 OWNER_REQUIRED fields, 14 unresolved aliases; isolation and required-check policy still unresolved",
+    "All approval bindings, allowlist, cost ceiling, role manifest, Gate B aliases/fields, public contracts and unapproved proposed limits unchanged; all 13 APs NOT_READY with zero actions",
+    "Supplied provider evidence SHA256 checked; demo/QA candidate IDs, role inventories, direct/pooled/proxy hosts and public Auth metadata checked against that file, with no binding selection",
+    "Provider counters increased by exactly 10 read-only metadata queries: Vercel 2, Neon 8; reported /files 404 and QA env match are distinct provenance, with no additional query counted",
+    "No provider artifact digest exposed; source SHA, existing CI and lockfile hashes explicitly labelled substitutes only, not a deployed digest or approval; checksum/roles/server port remain OWNER_REQUIRED",
+    "All 26 source SHA256/git blobs checked at d5183ba; 24 also match working bytes/branch base, while the two current lockfiles differ and retain their original source-pin hashes; all source-reference JSON pointers resolved",
+    "Both candidate lockfiles checked at d5183ba and unchanged from ae9cbc19; hashes do not prove deployed artifact bytes",
+    "Historical matrix/scenario-map/approval hashes and CSV recounts; all 22 previous-plan files byte-equal to source pin and branch base; baseline.json unchanged",
+    "Relative Markdown links resolved locally; basic email/private-key/DB-connection-string/GitHub-token/AWS-key/Bearer/JWT/secret-assignment scan: zero matches",
+    "npm run verify:audit-release passed (localLedgerContract=PASS, productionReleaseGate=NO_GO); script reads the general audit ledger and local migrations, not Native runtime state",
+    "Only six allowed packet documents changed; no untracked repo files; git diff --check"
   ],
   "file_sha256_excluding_this_report": {
-    "docs/audit-remediation/cosec-20261027-native-track-open/APPROVAL-CHECKLIST.md": "0f553f782a54f8d8c23caa731388e0bb1f748f1b3e1dd1e0942d5e080a6f4eea",
-    "docs/audit-remediation/cosec-20261027-native-track-open/DELIVERY.md": "3768f48b015bb96ddbcff95a46507bb540528c1932db3bcb7d693cefe28df3fd",
-    "docs/audit-remediation/cosec-20261027-native-track-open/approval-request.json": "1162632d18264408e61b4bc4eb3ce79d55e1ca6cf5f283bf723b4afcc59b96e8",
+    "docs/audit-remediation/cosec-20261027-native-track-open/APPROVAL-CHECKLIST.md": "db237f710193a17e33dd639dbaa9abece753f4b63965e35584692f6562d3fe7a",
+    "docs/audit-remediation/cosec-20261027-native-track-open/DELIVERY.md": "e44761b46948379cc80e4bfd3797ac5b52c1674c8f19748f3f64daa14edf1231",
+    "docs/audit-remediation/cosec-20261027-native-track-open/approval-request.json": "98ca27588f14c27fe31ba4dab3a5ed8394312f8ea0a7c4c1a2859f0e60055214",
     "docs/audit-remediation/cosec-20261027-native-track-open/baseline.json": "b53428334590bc445e65bce69f02df2c7f60096e7b775c4f4971d37a2dbbae03",
-    "docs/audit-remediation/cosec-20261027-native-track-open/blockers.md": "775a66decac769ce51e12ef9372231de3b589bc7ed697d316a5f06e421b16952",
-    "docs/audit-remediation/cosec-20261027-native-track-open/gate-a-discovery.json": "7957f6625fe558fe74f1713e8438bb1e88b1a8664ceaf113c29042ca7accc2ee"
+    "docs/audit-remediation/cosec-20261027-native-track-open/blockers.md": "c10ab61a05fc7490906893e7585117dc1e76a19185bd78b239eb29e1e6f308a1",
+    "docs/audit-remediation/cosec-20261027-native-track-open/gate-a-discovery.json": "1c37549d6dc5fba8beecef3d04aea29a8b5455aa0043be1d97dbb7f75b305f30"
   },
   "previous_verification": {
     "verified_at_utc": "2026-10-28T14:39:11.813769+00:00",
@@ -89,5 +92,33 @@
     "scope": "HISTORICAL_SUPERSEDED_REPOSITORY_PACKET_CHECKS"
   },
   "original_validation_head": "165e8cd53d9f85221e06d7b8bfb705f1681b2db7",
-  "original_verified_at_utc": "2026-10-27T16:22:44.183328+00:00"
+  "original_verified_at_utc": "2026-10-27T16:22:44.183328+00:00",
+  "verified_at_hkt": "2026-10-29 23:00:21 HKT (UTC+8)",
+  "packet_branch_base_sha": "48371b2c3cdd73e6faab60ec733896d5f3b71fa8",
+  "source_files_matching_packet_branch_base": 24,
+  "source_files_differing_from_packet_branch_base": [
+    "bun.lock",
+    "package-lock.json"
+  ],
+  "source_worktree_scope": "All 26 source hashes/blobs remain verified at d5183ba. Current branch/working tree matches 24 of those sources; bun.lock and package-lock.json differ at packet branch base 48371b2c. Existing lockfile substitute hashes remain pinned to d5183ba; no source hash is repinned or treated as a deployed digest.",
+  "provider_control_plane_requests": 10,
+  "provider_candidate_validation": {
+    "observed_at_hkt": "2026-10-29 ~22:55 HKT (UTC+8)",
+    "candidate_stacks_recorded": 2,
+    "candidate_status": "RECORDED_FOR_PACKET_ONLY_NOT_APPROVED",
+    "all_selected_bindings_unchanged": true,
+    "this_pass_read_only_metadata_queries": 10,
+    "vercel_queries": 2,
+    "neon_queries": 8,
+    "additional_provider_queries_by_packet_editor": 0,
+    "observed_artifact_checksum": "PROVIDER_EXPOSES_NO_DIGEST",
+    "checksum_selected_binding": "OWNER_REQUIRED",
+    "source_ci_lockfiles": "LABELLED_SUBSTITUTES_ONLY_NOT_A_DEPLOYED_ARTIFACT_DIGEST",
+    "demo_runtime_db_auth_url_link": "UNPROVEN",
+    "qa_auth_url_match_provenance": "REPORTED_BY_COMSEC_OS_NOT_REREAD",
+    "qa_verified_deployment_at_comparison_sha": false,
+    "app_and_readonly_roles_on_both_branches": "NONE_EXISTS",
+    "server_port_on_both_candidates": "OWNER_REQUIRED",
+    "baseline_counter_scope": "Unchanged historical receipt of the prior refresh; current cumulative discovery/provider-evidence total is 10."
+  }
 }
