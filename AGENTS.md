@@ -10,3 +10,7 @@
 > the editor, so keep the branch in a working state.
 
 <!-- LOVABLE:END -->
+
+## UI
+
+Avoid unnecessary secondary labels and descriptions. Let the layout do the explaining.
