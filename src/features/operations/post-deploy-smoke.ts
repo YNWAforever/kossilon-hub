@@ -71,7 +71,7 @@ export function productionChecks(origin = PRODUCTION_ORIGIN, expectedSha?: strin
       name: "health",
       url: `${origin}/api/health`,
       expectStatus: 200,
-      includes: ['"ok":true', '"maintenance"'],
+      includes: ['"ok":true', '"scheduler"', '"running":true'],
     },
   ];
 
