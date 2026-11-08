@@ -4,10 +4,12 @@ import { describe, expect, it } from "vitest";
 const route = (name: string) => readFileSync(new URL(name, import.meta.url), "utf8");
 
 describe("English login entry", () => {
-  it("ships a server-rendered English login route with its own title", () => {
-    const english = route("./en.login.tsx");
+  it("ships a server-rendered English login route outside the marketing layout", () => {
+    const english = route("./en_.login.tsx");
 
-    expect(english).toContain('createFileRoute("/en/login")');
+    // `en_.login.tsx` opts out of the `/en` marketing layout: nesting the login
+    // page under it rendered the marketing page for /en/login.
+    expect(english).toContain('createFileRoute("/en_/login")');
     expect(english).toContain("ssr: true");
     expect(english).toContain('pageTitle("Sign in")');
     expect(english).toContain('locale="en"');

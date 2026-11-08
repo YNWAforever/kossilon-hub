@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { pageTitle } from "@/lib/page-title";
 import { LoginPage } from "@/features/auth/login-page";
 
-export const Route = createFileRoute("/en/login")({
+export const Route = createFileRoute("/en_/login")({
   ssr: true,
   head: () => ({
     meta: [
