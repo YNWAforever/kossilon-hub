@@ -13,6 +13,11 @@ on:
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
+    inputs:
+      include_health:
+        description: "Include the maintenance/cron health alarm (scheduled runs do)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -54,4 +59,10 @@ jobs:
         env:
           EXPECTED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
           SMOKE_ALERT_WEBHOOK: ${{ secrets.SMOKE_ALERT_WEBHOOK }}
-        run: node --experimental-strip-types scripts/smoke-production.ts --expect-sha "$EXPECTED_SHA"
+          INCLUDE_HEALTH: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.include_health) }}
+        run: |
+          if [ "$INCLUDE_HEALTH" = "true" ]; then
+            node --experimental-strip-types scripts/smoke-production.ts --expect-sha "$EXPECTED_SHA"
+          else
+            node --experimental-strip-types scripts/smoke-production.ts --expect-sha "$EXPECTED_SHA" --skip-health
+          fi

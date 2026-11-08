@@ -10,10 +10,12 @@ Canonical environment map: [`environments.md`](environments.md).
 2. Merge. Vercel's Git integration creates a production deployment automatically.
 3. The **Post-deploy smoke** workflow runs after CI on `main`. It polls
    `GET /api/version` for up to ten minutes until the live SHA equals the merge commit, then runs
-   the production and demo checks.
-4. The same smoke job runs on a 15-minute schedule to monitor the live surface and the maintenance
-   tick (`/api/health`). A failure fails the workflow; if the `SMOKE_ALERT_WEBHOOK` repository
-   secret is set, the job also posts the failure there.
+   the production and demo checks. Deploy-triggered runs skip the scheduler health check: a
+   pre-existing dead cron must not make every deploy look broken.
+4. The same smoke job runs on a 15-minute schedule to monitor the live surface **and** the
+   maintenance tick (`/api/health`; a manual dispatch can opt in with `include_health`). A failure
+   fails the workflow; if the `SMOKE_ALERT_WEBHOOK` repository secret is set, the job also posts
+   the failure there.
 
 No hand deployment is required. Do not re-implement one.
 
@@ -42,7 +44,9 @@ notes. Set the note (receipt, smoke run, rollback drill) for the new deployment 
 
 - `GET /api/health` returns `200` when the app is up and the five-minute maintenance tick is recent
   (`healthy` or `degraded`), and `503` when the scheduler has `never-observed`, went `stale` or is
-  `failing`. The body carries the derived maintenance state, not raw rows or secrets.
+  `failing`. The body carries the derived maintenance state and the runtime's database identity
+  (`database`, `branchId`) — never raw rows or secrets — so "stale in which database?" is answerable
+  from the response.
 - The scheduled smoke workflow is the alerting loop. A red scheduled workflow is the signal; make
   sure GitHub notifications for failed workflows reach the operator.
 - After rollbacks or deploys, check `/operations` during the next working day (daily pilot check).

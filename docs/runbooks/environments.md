@@ -27,6 +27,13 @@ Known gaps as of 2026-11-09 (tracked in `integration-audit/32-next-development-p
 `FIRM_ID`, `EMAIL_FROM`/`RESEND_FROM`, WOZTELL bindings, malware-scanner configuration, backups
 evidence. Do not “fix” these by copying values into docs; they are provider/provisioning decisions.
 
+**Active alert (2026-11-09):** `GET /api/health` reports the maintenance tick as `stale` with the last
+scheduled run on 2026-09-30, while the Neon branch `br-muddy-mountain-aov8bbku` shows fresh
+five-minute runs. The health response now reports the runtime's own `database`/`branchId`; resolving
+the mismatch (production `DATABASE_URL` vs the branch the schedule actually writes to) is Track 1
+work and needs production env approval. The scheduled smoke workflow is expected to be red until it
+is fixed — that is the alert working, not a deploy failure.
+
 ## Flags
 
 | Flag                          | Production                   | Demo            | Local  | Notes                                           |

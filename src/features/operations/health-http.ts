@@ -5,6 +5,7 @@ export type HealthHttpDependencies = {
   readMaintenance: () => Promise<{
     runs: readonly MaintenanceRunRecord[];
     lastScheduledSuccessAt: string | null;
+    database: { database: string; branchId: string | null };
   }>;
 };
 
@@ -53,6 +54,7 @@ export function createHealthHttpHandler(dependencies: HealthHttpDependencies) {
       return json(ok ? 200 : 503, {
         ok,
         checkedAt: now.toISOString(),
+        database: maintenance.database,
         maintenance: health,
       });
     } catch {
