@@ -195,9 +195,7 @@ describe("reviewed historical lineage", () => {
     expect(health.missing).toEqual([]);
     expect(health.ahead).toEqual([]);
     expect(health.historicalCount).toBe(HISTORICAL_MIGRATIONS.length);
-    expect(health.repairedCount).toBe(
-      Object.keys(FORWARD_REPAIRED_MIGRATIONS).length,
-    );
+    expect(health.repairedCount).toBe(Object.keys(FORWARD_REPAIRED_MIGRATIONS).length);
     expect(health.summary).toContain("歷史遷移");
   });
 
