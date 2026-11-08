@@ -4,7 +4,14 @@ import { isPublicRoute, isServerRenderable } from "./route-guard";
 
 describe("isServerRenderable", () => {
   it("renders the public documents and the login shells on the server", () => {
-    for (const pathname of ["/", "/en", "/login", "/en/login"]) {
+    for (const pathname of [
+      "/",
+      "/en",
+      "/login",
+      "/en/login",
+      "/request-access",
+      "/en/request-access",
+    ]) {
       expect(isServerRenderable(pathname)).toBe(true);
     }
   });

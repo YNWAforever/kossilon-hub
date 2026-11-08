@@ -436,7 +436,7 @@ export function LoginPage({ locale = "zh-HK" }: { locale?: "zh-HK" | "en" } = {}
                 "只限受邀用戶使用。如需開通，請聯絡公司管理員。",
               )}
               <a
-                href="mailto:willylai@fimmick.com?subject=ComSec%20OS%20%E5%B7%A5%E4%BD%9C%E7%A9%BA%E9%96%93%E9%96%8B%E9%80%9A%E7%94%B3%E8%AB%8B"
+                href={locale === "en" ? "/en/request-access" : "/request-access"}
                 className="font-medium text-primary underline-offset-4 hover:underline"
               >
                 {t("Request access", "申請邀請")}

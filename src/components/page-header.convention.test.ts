@@ -34,6 +34,7 @@ describe("page header convention", () => {
     const ownsItsOwnHeading = new Set([
       "routes/__root.tsx", // 404 and error screens
       "features/auth/login-page.tsx", // unauthenticated layout
+      "features/auth/request-access-page.tsx", // public request-access layout
       "features/marketing/page.tsx", // public marketing layout, outside the staff shell
       "components/page-header.tsx", // the convention itself
     ]);
@@ -50,6 +51,8 @@ describe("page header convention", () => {
       "routes/__root.tsx",
       "routes/login.tsx",
       "routes/en_.login.tsx", // pass-through to the shared login page component
+      "routes/request-access.tsx", // pass-through to the public request-access component
+      "routes/en_.request-access.tsx", // English version of the same
       "routes/index.tsx", // public marketing page owns its hero heading
       "routes/en.tsx", // English version of the same public layout
       // A pass-through to the demo and production case-detail components, which

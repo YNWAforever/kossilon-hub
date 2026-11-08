@@ -31,7 +31,13 @@ export function isMarketingRoute(pathname: string): boolean {
 }
 
 export function isPublicRoute(pathname: string): boolean {
-  return isMarketingRoute(pathname) || pathname === "/login" || pathname === "/en/login";
+  return (
+    isMarketingRoute(pathname) ||
+    pathname === "/login" ||
+    pathname === "/en/login" ||
+    pathname === "/request-access" ||
+    pathname === "/en/request-access"
+  );
 }
 
 /**
