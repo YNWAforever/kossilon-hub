@@ -414,17 +414,9 @@ export function createMaintenanceRunRepository(
     },
 
     async schemaLedger() {
-      // Unqualified, so it resolves through the same search_path db-migrate.ts
-      // created the table under. Hardcoding `public.` would report "no ledger"
-      // for a perfectly managed database served under any other schema.
-      const [presence] = await sql<{ present: boolean }[]>`
-        select to_regclass('schema_migrations') is not null present
-      `;
-
-      if (!presence?.present) return { present: false, applied: [] };
-
-      const rows = await sql<{ id: string }[]>`select id from schema_migrations`;
-      return { present: true, applied: rows.map((row) => row.id) };
+      // One catalog read keeps the ledger and the release receipt consistent;
+      // the reconciled lineage proves forward candidates with the receipt.
+      return (await readSchemaCatalog(sql)).ledger;
     },
 
     schemaCatalog: () => readSchemaCatalog(sql),

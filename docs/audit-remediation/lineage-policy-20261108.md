@@ -30,7 +30,20 @@ treated that expected divergence as failure:
 3. `schemaHealthOf` accepts optional `historical` / `forwardRepaired` inputs, defaulting to
    the reviewed lists. Passing `historical: []` restores strict equality for tests or future
    audits.
-4. `db-migrate.ts` / `assertMigrationPreflight` are deliberately **unchanged and remain strict**:
+
+## Forward candidates are proved by the release receipt
+
+The frozen package deliberately does **not** insert 0067–0082 into `schema_migrations`; it
+preserves the 66 historical rows and records one `schema_release_receipts` row. Therefore:
+
+4. `HISTORICAL_RELEASE_RECEIPT` pins that receipt (`kossilon-historical-release-20261002`,
+   payload `e685b365…`) and `HISTORICAL_RELEASE_MIGRATIONS` lists the 16 forward candidates it
+   proves. `readSchemaCatalog` now reads the receipt (when the table exists) and attaches it to
+   the ledger; `schemaHealthOf` treats those 16 expected IDs as satisfied only when the receipt
+   id **and** payload hash match.
+5. `repository.schemaLedger()` reads the same catalog so the Operations screen sees the same
+   lineage state. The ledger itself is unchanged — still 66 rows, no invented receipts.
+6. `db-migrate.ts` / `assertMigrationPreflight` are deliberately **unchanged and remain strict**:
    the normal migrator still refuses unrecognised IDs and historical gaps. Applying future
    migrations to this lineage remains a reviewed release operation.
 

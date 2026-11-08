@@ -139,6 +139,42 @@ export const FORWARD_REPAIRED_MIGRATIONS: Readonly<Record<string, readonly strin
   "0034_notification_outbox_dispatch_marker.sql": ["0067_repair_outbox_dispatch_marker.sql"],
 };
 
+/**
+ * The release receipt that proves the forward candidate migrations were applied
+ * to the reconciled lineage. The frozen package deliberately does **not** insert
+ * 0067–0082 into `schema_migrations`; it preserves the historical ledger and
+ * records one `schema_release_receipts` row instead.
+ */
+export const HISTORICAL_RELEASE_RECEIPT = {
+  id: "kossilon-historical-release-20261002",
+  payloadSha256: "e685b365b785afada3745c60e4c9eb5b7de0153c5780be0b18e0122902d7b480",
+} as const;
+
+/** The 16 forward candidate migrations proved by `HISTORICAL_RELEASE_RECEIPT`. */
+export const HISTORICAL_RELEASE_MIGRATIONS = [
+  "0067_repair_outbox_dispatch_marker.sql",
+  "0068_company_historical_data_origin.sql",
+  "0069_restore_maintenance_job_contract.sql",
+  "0070_payment_evidence_entries.sql",
+  "0071_staff_admin_contract.sql",
+  "0072_durable_bulk_assignment.sql",
+  "0073_bulk_maintenance_job_kind.sql",
+  "0074_reviewed_nar_apply.sql",
+  "0075_nar_legacy_year_review.sql",
+  "0076_document_scan_review_versions.sql",
+  "0077_document_analysis_evidence.sql",
+  "0078_whatsapp_manual_intake.sql",
+  "0079_bulk_daily_maintenance.sql",
+  "0080_manual_handoff_provenance.sql",
+  "0081_handoff_attempt_idempotency.sql",
+  "0082_case_template_snapshots.sql",
+] as const;
+
+export type SchemaReleaseReceipt = {
+  id: string;
+  payloadSha256: string;
+};
+
 export type SchemaLedger = {
   /**
    * False when `schema_migrations` does not exist at all.
@@ -153,6 +189,8 @@ export type SchemaLedger = {
   applied: readonly string[];
   /** Only actual ledger hash columns; absent historical hashes stay unknown. */
   hashes?: Readonly<Record<string, string | null>>;
+  /** Release receipt that proves forward candidates not present in the ledger. */
+  releaseReceipt?: SchemaReleaseReceipt | null;
 };
 
 export type SchemaHealthState =
@@ -194,6 +232,8 @@ export type SchemaHealth = {
   historicalCount?: number;
   /** Expected IDs satisfied by a reviewed forward-repair alias. */
   repairedCount?: number;
+  /** Expected forward candidates proved by the historical release receipt. */
+  receiptedCount?: number;
   /** Said in words. A colour is not a sentence, and this row is what staff read. */
   summary: string;
 };
@@ -211,6 +251,13 @@ export function schemaHealthOf(input: {
    * Defaults to `FORWARD_REPAIRED_MIGRATIONS`.
    */
   forwardRepaired?: Readonly<Record<string, readonly string[]>>;
+  /**
+   * Release receipt proving forward candidates were applied without ledger rows.
+   * Defaults to the ledger's own `releaseReceipt`.
+   */
+  releaseReceipt?: SchemaReleaseReceipt | null;
+  /** Expected forward-candidate IDs proved by the receipt. Defaults to the reviewed list. */
+  releaseMigrations?: readonly string[];
 }): SchemaHealth {
   const expectedCount = input.expected.length;
 
@@ -233,16 +280,27 @@ export function schemaHealthOf(input: {
   const applied = new Set(input.ledger.applied);
   const expected = new Set(input.expected);
   const historical = new Set(input.historical ?? HISTORICAL_MIGRATIONS);
+  const receipt = input.releaseReceipt ?? input.ledger.releaseReceipt ?? null;
+  const receiptVerified =
+    receipt !== null &&
+    receipt.id === HISTORICAL_RELEASE_RECEIPT.id &&
+    receipt.payloadSha256.toLowerCase() === HISTORICAL_RELEASE_RECEIPT.payloadSha256;
+  const receipted = new Set(
+    receiptVerified
+      ? (input.releaseMigrations ?? HISTORICAL_RELEASE_MIGRATIONS).filter((id) => expected.has(id))
+      : [],
+  );
+  const satisfied = (id: string) => applied.has(id) || receipted.has(id);
   const repaired = new Map<string, string>();
   for (const [expectedId, aliases] of Object.entries(
     input.forwardRepaired ?? FORWARD_REPAIRED_MIGRATIONS,
   )) {
-    if (!expected.has(expectedId) || applied.has(expectedId)) continue;
-    const alias = aliases.find((id) => applied.has(id));
+    if (!expected.has(expectedId) || satisfied(expectedId)) continue;
+    const alias = aliases.find((id) => satisfied(id));
     if (alias) repaired.set(expectedId, alias);
   }
 
-  const missing = input.expected.filter((id) => !applied.has(id) && !repaired.has(id));
+  const missing = input.expected.filter((id) => !satisfied(id) && !repaired.has(id));
   const recognisedHistorical = input.ledger.applied.filter(
     (id) => !expected.has(id) && historical.has(id),
   );
@@ -256,6 +314,7 @@ export function schemaHealthOf(input: {
     expectedCount,
     historicalCount: recognisedHistorical.length,
     repairedCount: repaired.size,
+    receiptedCount: receipted.size,
   };
 
   if (missing.length > 0 && ahead.length > 0) {
@@ -291,6 +350,7 @@ export function schemaHealthOf(input: {
   const lineageNote = [
     recognisedHistorical.length > 0 ? `${recognisedHistorical.length} 個已審核的歷史遷移` : null,
     repaired.size > 0 ? `${repaired.size} 個以審核中的替代遷移滿足` : null,
+    receipted.size > 0 ? `${receipted.size} 個以發布回條證明` : null,
   ].filter((part): part is string => part !== null);
 
   return {

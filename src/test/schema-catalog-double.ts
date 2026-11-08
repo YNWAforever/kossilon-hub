@@ -11,6 +11,7 @@ export function schemaCatalogDouble(role: AuthRole = "Staff") {
     active: true,
     provisioned: true,
     readFailure: false,
+    receipt: null as { id: string; payloadSha256: string } | null,
     queries: [] as string[],
   };
   const sql = (async (parts: TemplateStringsArray) => {
@@ -32,6 +33,12 @@ export function schemaCatalogDouble(role: AuthRole = "Staff") {
         ? [{ company_id: "ac7d801e-0189-4189-8189-000000000003", active: true }]
         : [];
     if (state.readFailure) throw new Error("private database path and credential must not escape");
+    if (text.includes("to_regclass('schema_release_receipts')"))
+      return [{ present: state.receipt !== null }];
+    if (text.includes("select id, payload_sha256 from schema_release_receipts"))
+      return state.receipt
+        ? [{ id: state.receipt.id, payload_sha256: state.receipt.payloadSha256 }]
+        : [];
     if (text.includes("to_regclass('schema_migrations')") && text.includes("application"))
       return [{ ledger: state.ledger.present, application: true }];
     if (text.includes("attname = 'sha256'")) return [{ present: false }];
