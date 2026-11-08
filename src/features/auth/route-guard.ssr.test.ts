@@ -11,6 +11,7 @@ describe("isServerRenderable", () => {
       "/en/login",
       "/request-access",
       "/en/request-access",
+      "/demo",
     ]) {
       expect(isServerRenderable(pathname)).toBe(true);
     }

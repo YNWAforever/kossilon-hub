@@ -1,5 +1,6 @@
 import { ArrowRight, Check, Files, Layers3, ShieldCheck } from "lucide-react";
 import { marketingCopy, type MarketingLocale } from "./content";
+import { isDemoAuthEnabled } from "@/features/auth/route-guard";
 
 const sections = ["workflow", "features", "pricing", "faq"] as const;
 
@@ -71,6 +72,12 @@ export function MarketingPage({ locale }: { locale: MarketingLocale }) {
             <p className="comsec-intro">{copy.intro}</p>
             <div className="comsec-hero-actions">
               {cta}
+              {isDemoAuthEnabled() && (
+                <a className="comsec-text-link" href="/demo">
+                  {locale === "en" ? "Try the demo" : "試用示範"}
+                  <ArrowRight size={17} aria-hidden="true" />
+                </a>
+              )}
               <a className="comsec-text-link" href="#workflow">
                 {copy.secondary}
                 <ArrowRight size={17} aria-hidden="true" />

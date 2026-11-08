@@ -1,4 +1,4 @@
-import { resolveDataMode } from "../runtime/data-mode";
+import { isFixtureDemoBuild, resolveDataMode } from "../runtime/data-mode";
 import type { AuthRole } from "./types";
 
 export const AUTH_REDIRECT_STORAGE_KEY = "kossilon.auth.redirect.v1";
@@ -19,6 +19,8 @@ export function isDemoAuthEnabled(
   value = import.meta.env.VITE_ENABLE_DEMO_AUTH,
   isProductionBuild = import.meta.env.PROD,
 ): boolean {
+  // A built fixture demo (the demo Vercel project) has no Neon Auth to talk to.
+  if (isFixtureDemoBuild()) return true;
   return (
     resolveDataMode({
       demoEnabled: value === "true",
@@ -37,7 +39,8 @@ export function isPublicRoute(pathname: string): boolean {
     pathname === "/login" ||
     pathname === "/en/login" ||
     pathname === "/request-access" ||
-    pathname === "/en/request-access"
+    pathname === "/en/request-access" ||
+    pathname === "/demo"
   );
 }
 

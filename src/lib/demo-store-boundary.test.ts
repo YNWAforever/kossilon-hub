@@ -142,6 +142,7 @@ const ROUTES_WITHOUT_A_MODE_BRANCH: Record<string, string> = {
   "routes/request-access.tsx": "public access-request page; renders no firm data in either mode",
   "routes/en_.request-access.tsx":
     "English access-request page; renders no firm data in either mode",
+  "routes/demo.tsx": "public demo landing; renders no firm data in either mode",
   "routes/admin.tsx": "branches inside AdminPage via Route.useRouteContext",
   "routes/__root.tsx": "the layout; reads dataMode in beforeLoad rather than in a component",
 };

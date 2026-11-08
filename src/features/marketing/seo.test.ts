@@ -12,6 +12,7 @@ describe("public SEO documents", () => {
     expect(robots).toContain("Allow: /");
     expect(robots).toContain("Disallow: /login");
     expect(robots).toContain("Disallow: /en/login");
+    expect(robots).toContain("Disallow: /demo");
     expect(robots).toContain("Disallow: /api/");
     expect(robots).toContain(`Sitemap: ${ORIGIN}/sitemap.xml`);
   });

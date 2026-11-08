@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "build:demo": "node --experimental-strip-types scripts/verify-demo-build.ts && vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint . --ignore-pattern .worktrees/**",
