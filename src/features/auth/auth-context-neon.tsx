@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { PRODUCT_NAME } from "@/lib/brand";
 import { createNeonAuthClient } from "./neon-auth-client";
 import { getAuthenticatedActor, getNeonAuthClientConfiguration } from "./neon-auth-rpc";
 import { isDemoAuthEnabled } from "./route-guard";
@@ -39,7 +40,7 @@ export function classifyAuthFailure(error: unknown): AuthIssue {
   if (status === 403 || message.startsWith("Forbidden:")) {
     return {
       kind: "unauthorized",
-      message: "此帳戶未獲授權使用 Kossilon Hub，請聯絡管理員或改用其他帳戶。",
+      message: `此帳戶未獲授權使用 ${PRODUCT_NAME}，請聯絡管理員或改用其他帳戶。`,
     };
   }
   if (status === 401 || message.startsWith("Unauthorized:")) {

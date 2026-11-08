@@ -1,10 +1,12 @@
+import { PRODUCT_NAME } from "./brand";
+
 export function renderErrorPage(): string {
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kossilon Hub</title>
+    <title>${PRODUCT_NAME}</title>
     <style>
       body { margin: 0; font-family: system-ui, sans-serif; background: #f8f5ef; color: #2d2924; }
       main { min-height: 100vh; display: grid; place-items: center; padding: 32px; }
@@ -17,7 +19,7 @@ export function renderErrorPage(): string {
     <main>
       <section>
         <h1>Something needs attention</h1>
-        <p>Kossilon Hub could not render this screen. The team has enough detail in the server logs to investigate.</p>
+        <p>${PRODUCT_NAME} could not render this screen. The team has enough detail in the server logs to investigate.</p>
       </section>
     </main>
   </body>

@@ -54,7 +54,7 @@ describe("createResendNotificationTransport", () => {
     expect(JSON.parse(String(seenInit?.body))).toEqual({
       from: "Kossilon Hub <auth@example.test>",
       to: ["client@example.test"],
-      subject: "Kossilon Hub notification",
+      subject: "ComSec OS notification",
       text: "Reminder body",
     });
   });

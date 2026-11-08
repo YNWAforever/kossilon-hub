@@ -35,6 +35,14 @@ export function isPublicRoute(pathname: string): boolean {
 }
 
 /**
+ * Routes that can render on the server: public marketing documents and the login
+ * shell. Every other route keeps the client-only staff/auth lifecycle.
+ */
+export function isServerRenderable(pathname: string): boolean {
+  return isMarketingRoute(pathname) || isPublicRoute(pathname);
+}
+
+/**
  * The routes a Client actor can actually use. /portal is theirs; /documents
  * authorises Client actors explicitly through requireClientCompanyAccess. Every
  * other screen resolves a staff actor and would refuse them on every query.
