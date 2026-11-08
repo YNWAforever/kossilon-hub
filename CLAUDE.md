@@ -1,7 +1,9 @@
 # Kossilon Hub — Project Instructions
 
 Company-secretary operations platform for Hong Kong firms (annual returns, WhatsApp
-chasing, document review, payments, SLA work queue). Single Cloudflare Worker.
+chasing, document review, payments, SLA work queue). Production runs on Vercel
+(project `kossilon-hub`); a Cloudflare Worker build path is retained in CI for parity but is not the
+live runtime. See `docs/runbooks/environments.md`.
 
 **Not** Next.js and **not** Supabase — ignore the Next.js/Supabase defaults in `~/CLAUDE.md`.
 See `AGENTS.md` for the Lovable git-history constraint (never force-push / rebase pushed commits).
@@ -11,7 +13,7 @@ See `AGENTS.md` for the Lovable git-history constraint (never force-push / rebas
 TanStack Start 1.x (+ TanStack Router file routing, TanStack Query 5) · React 19 · Vite 8 ·
 TypeScript 5.8 strict · Tailwind v4 (CSS-only `@theme` in `src/styles.css`) · shadcn/ui
 (new-york, slate) · Zod 3 · Postgres via `postgres` (postgres.js, raw SQL — no ORM) ·
-Neon Auth via `better-auth/client` · Cloudflare Workers + R2 + Hyperdrive · Vitest 4 · Bun
+Neon Auth via `better-auth/client` · Vercel + Neon Postgres + R2 (S3 API) + Cloudflare Worker path · Vitest 4 · Bun
 
 ## Build & Run
 
@@ -42,8 +44,9 @@ src/routes/          file-based routes; __root.tsx is the only layout. routeTree
 src/features/<name>/ vertical slice: types.ts, repository.ts (SQL), server-fns.ts, domain logic, components/
 src/lib/             demo stores + mock data + shared UI utils
 src/server/          db/client.ts, runtime-env.ts, provider-mode.ts, cron.ts, db/schema.sql
-src/server.ts        Worker entry — `scheduled` (the 5-min cron → runFirmMaintenance) and `fetch`
-                     (auth proxy + WhatsApp webhook routing, then the TanStack SSR handler)
+src/server.ts        Server entry (Vercel; the Worker build compiles the same module) — `fetch`:
+                     auth proxy, robots/sitemap, /api/version, /api/health, webhooks, then SSR
+src/server/version.ts, health-http wiring                 deployment identity + scheduler health
 src/start.ts         CSRF + error request middleware; defaultSsr: false
 db/migrations/       numbered forward-only SQL
 scripts/             offline validators/gates + db migrate/seed (run with node --experimental-strip-types or bun)

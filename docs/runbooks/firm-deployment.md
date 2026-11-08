@@ -2,10 +2,14 @@
 
 This runbook validates one firm environment without printing secrets or provisioning resources.
 
+> **Runtime note (2026-11-09):** production is deployed on Vercel (project `kossilon-hub`,
+> <https://kossilon-hub.vercel.app>) and deploys automatically from `main`. The Cloudflare Worker
+> build path in CI is retained for parity but is **not** the live runtime. Canonical map:
+> [`environments.md`](environments.md); release/rollback: [`releases.md`](releases.md).
+
 ## Local dry run
 
 ```powershell
-npm.cmd run check:production-imports
 npm.cmd run verify:firm -- --dry-run
 ```
 

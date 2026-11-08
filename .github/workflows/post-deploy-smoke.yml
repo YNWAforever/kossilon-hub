@@ -1,0 +1,57 @@
+name: Post-deploy smoke
+
+# Two triggers:
+#  - workflow_run pays attention to completed CI runs on main and waits for the
+#    matching commit to be live before checking.
+#  - schedule is the 24h monitor: it catches a deployment that later breaks, a
+#    dead cron (/api/health returns 503) and host/CDN problems.
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: post-deploy-smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Wait for the deployed commit
+        if: github.event_name == 'workflow_run'
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          for attempt in $(seq 1 30); do
+            sha="$(curl -fsS https://kossilon-hub.vercel.app/api/version | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).sha)}catch{console.log("")}})')"
+            if [ "$sha" = "$EXPECTED_SHA" ]; then
+              echo "production is $EXPECTED_SHA"
+              exit 0
+            fi
+            echo "attempt $attempt: production sha=${sha:-unavailable} expected=$EXPECTED_SHA"
+            sleep 20
+          done
+          echo "::error::production did not reach $EXPECTED_SHA within 10 minutes; the deploy may have failed"
+          exit 1
+
+      - name: Smoke production and demo
+        env:
+          EXPECTED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+          SMOKE_ALERT_WEBHOOK: ${{ secrets.SMOKE_ALERT_WEBHOOK }}
+        run: node --experimental-strip-types scripts/smoke-production.ts --expect-sha "$EXPECTED_SHA"
