@@ -24,7 +24,7 @@ const ALLOWED_RAW_BUTTONS: Record<string, number> = {
   "routes/work-queue.tsx": 1, // assignee recommendation card
   "routes/whatsapp.tsx": 1, // conversation rows
   "features/whatsapp/components/production-inbox.tsx": 1, // conversation rows
-  "routes/login.tsx": 1, // demo identity rows
+  "features/auth/login-page.tsx": 1, // demo identity rows
   "routes/imports.tsx": 1, // previous-import rows
   "routes/admin.tsx": 1, // tab bar
 };

@@ -24,7 +24,11 @@ vi.mock("./neon-auth-rpc", () => ({
   getNeonAuthClientConfiguration,
   getAuthenticatedActor,
 }));
-vi.mock("./route-guard", () => ({ isDemoAuthEnabled }));
+vi.mock("./route-guard", () => ({
+  isDemoAuthEnabled,
+  magicLinkCallback: (origin: string, redirect?: string | null) =>
+    `${origin}/login${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`,
+}));
 
 import { AuthProvider, useAuth } from "./auth-context-neon";
 

@@ -31,7 +31,7 @@ export function isMarketingRoute(pathname: string): boolean {
 }
 
 export function isPublicRoute(pathname: string): boolean {
-  return isMarketingRoute(pathname) || pathname === "/login";
+  return isMarketingRoute(pathname) || pathname === "/login" || pathname === "/en/login";
 }
 
 /**
@@ -108,4 +108,39 @@ export function consumeRedirectPath(storage = browserStorage(), fallback = "/das
   } catch {
     return fallback;
   }
+}
+
+/**
+ * Read the remembered target without consuming it.
+ *
+ * Safe to call before sign-in: the redirect effect still owns consumption and
+ * the role-based fallback. Used to carry a deep link into the magic-link
+ * callback, where the email opens a new tab and sessionStorage is empty.
+ */
+export function peekRedirectPath(storage = browserStorage()): string | undefined {
+  if (!storage) return undefined;
+
+  try {
+    const raw = storage.getItem(AUTH_REDIRECT_STORAGE_KEY);
+    if (!raw) return undefined;
+    const path = getSafeRedirectPath(raw);
+    return path === "/" ? undefined : path;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Callback URL for a magic-link request.
+ *
+ * Neon Auth returns the browser here after the one-time verification. Carrying
+ * the target in the query keeps a deep link across the new tab the email
+ * normally opens; unsafe or absent targets fall back to the plain `/login`.
+ */
+export function magicLinkCallback(origin: string, redirect?: string | null): string {
+  const target =
+    redirect && getSafeRedirectPath(redirect) === redirect && redirect !== "/"
+      ? redirect
+      : undefined;
+  return `${origin}/login${target ? `?redirect=${encodeURIComponent(target)}` : ""}`;
 }

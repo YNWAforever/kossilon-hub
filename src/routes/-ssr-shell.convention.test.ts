@@ -11,10 +11,11 @@ describe("public shell SSR convention", () => {
   it("server-renders the login shell without a hydration-time query read", () => {
     const root = route("./__root.tsx");
     const login = route("./login.tsx");
+    const page = readFileSync(new URL("../features/auth/login-page.tsx", import.meta.url), "utf8");
 
     expect(root).toContain("isServerRenderable(location.pathname) ? true : undefined");
     expect(login).toContain("ssr: true");
-    expect(login).toContain("setCallbackError(");
-    expect(login).not.toContain('typeof window !== "undefined"');
+    expect(page).toContain("setCallbackError(");
+    expect(page).not.toContain('typeof window !== "undefined"');
   });
 });

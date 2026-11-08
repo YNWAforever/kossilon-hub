@@ -89,7 +89,9 @@ describe("Neon Auth demo runtime validation", () => {
     expect(runbook).toContain("/api/webhooks/neon-auth");
     expect(runbook).toContain("/auth/magic-link/confirm");
     expect(runbook).toContain("Only the confirmation form POST");
-    expect(runbook).toContain("Production login remains password-only with no invitation CTA.");
+    expect(runbook).toContain(
+      "Production login matches `VITE_AUTH_METHODS` and shows the invitation CTA; record the observed methods.",
+    );
   });
 
   it("requires operator-only production identities", () => {

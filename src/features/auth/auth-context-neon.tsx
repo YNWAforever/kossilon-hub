@@ -13,7 +13,7 @@ import {
 import { PRODUCT_NAME } from "@/lib/brand";
 import { createNeonAuthClient } from "./neon-auth-client";
 import { getAuthenticatedActor, getNeonAuthClientConfiguration } from "./neon-auth-rpc";
-import { isDemoAuthEnabled } from "./route-guard";
+import { isDemoAuthEnabled, magicLinkCallback } from "./route-guard";
 import {
   demoUsers,
   getStoredSession,
@@ -73,7 +73,7 @@ type AuthContextValue = {
   demoUsers: readonly DemoUser[];
   isCurrentUserAdmin: boolean;
   login: (email: string, password: string) => Promise<AuthActionResult>;
-  loginWithMagicLink: (email: string) => Promise<AuthActionResult>;
+  loginWithMagicLink: (email: string, redirect?: string | null) => Promise<AuthActionResult>;
   loginWithGoogle: () => Promise<AuthActionResult>;
   loginDemo: (userId: string) => Promise<AuthActionResult>;
   loginDemoUser: (user: DemoUser) => Promise<AuthActionResult>;
@@ -371,14 +371,14 @@ function NeonAuthProvider({
     [client, refreshSession, signOutMarker, updateSignOut],
   );
   const loginWithMagicLink = useCallback(
-    async (email: string): Promise<AuthActionResult> => {
+    async (email: string, redirect?: string | null): Promise<AuthActionResult> => {
       if (signOutMarker.current && signOutMarker.current.state !== "signed-out")
         return { ok: false, error: "登出尚未確認，請先重試登出。" };
       const normalizedEmail = email.trim().toLowerCase();
       const result = await client.signIn.magicLink({
         email: normalizedEmail,
-        callbackURL: `${window.location.origin}/login`,
-        newUserCallbackURL: `${window.location.origin}/login`,
+        callbackURL: magicLinkCallback(window.location.origin, redirect),
+        newUserCallbackURL: magicLinkCallback(window.location.origin, redirect),
       });
 
       if (result.error) {
