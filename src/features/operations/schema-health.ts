@@ -292,12 +292,17 @@ export function schemaHealthOf(input: {
   );
   const satisfied = (id: string) => applied.has(id) || receipted.has(id);
   const repaired = new Map<string, string>();
-  for (const [expectedId, aliases] of Object.entries(
-    input.forwardRepaired ?? FORWARD_REPAIRED_MIGRATIONS,
-  )) {
-    if (!expected.has(expectedId) || satisfied(expectedId)) continue;
-    const alias = aliases.find((id) => satisfied(id));
-    if (alias) repaired.set(expectedId, alias);
+  // Forward repair is a property of the receipted historical lineage only: a
+  // ledger that merely happens to record the alias without the release receipt
+  // is unexplained and must still report the gap.
+  if (receiptVerified) {
+    for (const [expectedId, aliases] of Object.entries(
+      input.forwardRepaired ?? FORWARD_REPAIRED_MIGRATIONS,
+    )) {
+      if (!expected.has(expectedId) || satisfied(expectedId)) continue;
+      const alias = aliases.find((id) => satisfied(id));
+      if (alias) repaired.set(expectedId, alias);
+    }
   }
 
   const missing = input.expected.filter((id) => !satisfied(id) && !repaired.has(id));
