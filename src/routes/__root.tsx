@@ -16,6 +16,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { errorDetails } from "../lib/error-details";
 import { PRODUCT_DESCRIPTION_ZH, PRODUCT_NAME, PRODUCT_TAGLINE_ZH } from "@/lib/brand";
+import { DemoBanner } from "@/components/demo-banner";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppMobileNav } from "@/components/app-mobile-nav";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ import {
   isPublicRoute,
   isServerRenderable,
   rememberRedirectPath,
+  roleHomePath,
 } from "@/features/auth/route-guard";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { ensureActorQueryScope } from "@/features/auth/query-scope";
@@ -160,7 +162,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       // and landing on the dashboard hit Forbidden on every query it makes. They
       // get the portal instead — which is the only thing built for them.
       if (actor.role === "Client" && !isClientRoute(location.pathname)) {
-        throw redirect({ href: "/portal", replace: true });
+        throw redirect({ href: roleHomePath(actor.role), replace: true });
       }
 
       return { actor };
@@ -232,6 +234,7 @@ function RootComponent() {
 }
 
 function ProtectedAppShell() {
+  const { dataMode } = Route.useRouteContext();
   const { session, isHydrated, authIssue, retrySession } = useAuth();
   const navigate = useNavigate();
   const redirectPath = useRouterState({
@@ -278,12 +281,15 @@ function ProtectedAppShell() {
   return (
     <div
       key={JSON.stringify([session.id, session.role, session.team])}
-      className="flex min-h-screen w-full bg-background"
+      className="flex min-h-screen w-full flex-col bg-background"
     >
-      <AppSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <AppMobileNav />
-        <Outlet />
+      {dataMode === "demo" && <DemoBanner />}
+      <div className="flex min-h-0 w-full flex-1">
+        <AppSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <AppMobileNav />
+          <Outlet />
+        </div>
       </div>
     </div>
   );

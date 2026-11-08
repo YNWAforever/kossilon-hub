@@ -1,4 +1,5 @@
 import { resolveDataMode } from "../runtime/data-mode";
+import type { AuthRole } from "./types";
 
 export const AUTH_REDIRECT_STORAGE_KEY = "kossilon.auth.redirect.v1";
 
@@ -57,6 +58,11 @@ const CLIENT_ROUTES = ["/portal", "/documents"] as const;
 
 export function isClientRoute(pathname: string): boolean {
   return CLIENT_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
+
+/** The screen each actor should land on after sign-in. */
+export function roleHomePath(role: AuthRole): string {
+  return role === "Client" ? "/portal" : "/today";
 }
 
 /**
