@@ -10,6 +10,7 @@ export function robotsTxt(origin: string): string {
     "Allow: /",
     "Disallow: /login",
     "Disallow: /en/login",
+    "Disallow: /demo",
     "Disallow: /api/",
     "",
     `Sitemap: ${origin}/sitemap.xml`,

@@ -15,6 +15,7 @@ import { Route as AnnualReturnsRouteImport } from './routes/annual-returns'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as CorporateChangesRouteImport } from './routes/corporate-changes'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as EnRouteImport } from './routes/en'
 import { Route as ImportsRouteImport } from './routes/imports'
@@ -64,6 +65,11 @@ const CorporateChangesRoute = CorporateChangesRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocumentsRoute = DocumentsRouteImport.update({
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/documents': typeof DocumentsRoute
   '/en': typeof EnRoute
   '/imports': typeof ImportsRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/documents': typeof DocumentsRoute
   '/en': typeof EnRoute
   '/imports': typeof ImportsRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/documents': typeof DocumentsRoute
   '/en': typeof EnRoute
   '/imports': typeof ImportsRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/corporate-changes'
     | '/dashboard'
+    | '/demo'
     | '/documents'
     | '/en'
     | '/imports'
@@ -289,6 +299,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/corporate-changes'
     | '/dashboard'
+    | '/demo'
     | '/documents'
     | '/en'
     | '/imports'
@@ -317,6 +328,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/corporate-changes'
     | '/dashboard'
+    | '/demo'
     | '/documents'
     | '/en'
     | '/imports'
@@ -346,6 +358,7 @@ export interface RootRouteChildren {
   ClientsRoute: typeof ClientsRouteWithChildren
   CorporateChangesRoute: typeof CorporateChangesRouteWithChildren
   DashboardRoute: typeof DashboardRoute
+  DemoRoute: typeof DemoRoute
   DocumentsRoute: typeof DocumentsRoute
   EnRoute: typeof EnRoute
   ImportsRoute: typeof ImportsRoute
@@ -405,6 +418,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/documents': {
@@ -615,6 +635,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClientsRoute: ClientsRouteWithChildren,
   CorporateChangesRoute: CorporateChangesRouteWithChildren,
   DashboardRoute: DashboardRoute,
+  DemoRoute: DemoRoute,
   DocumentsRoute: DocumentsRoute,
   EnRoute: EnRoute,
   ImportsRoute: ImportsRoute,
