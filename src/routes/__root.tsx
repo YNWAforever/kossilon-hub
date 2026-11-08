@@ -33,7 +33,6 @@ import type { DataMode } from "@/features/runtime/data-mode";
 import {
   getSafeRedirectPath,
   isClientRoute,
-  isClientOnlyRoute,
   isMarketingRoute,
   isPublicRoute,
   isServerRenderable,
@@ -165,11 +164,6 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       if (actor.role === "Client" && !isClientRoute(location.pathname)) {
         throw redirect({ href: roleHomePath(actor.role), replace: true });
       }
-      // The mirror case: a staff member opening the client portal would fail
-      // every query Forbidden, so send them to their own landing screen.
-      if (actor.role !== "Client" && isClientOnlyRoute(location.pathname)) {
-        throw redirect({ href: roleHomePath(actor.role), replace: true });
-      }
 
       return { actor };
     }
@@ -220,7 +214,7 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
-  const { queryClient, actor, dataMode } = Route.useRouteContext();
+  const { queryClient, actor } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   // A public brochure never needs session bootstrap or staff data. It remains
@@ -231,7 +225,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthSessionBoundary queryClient={queryClient}>
         <AuthProvider key={JSON.stringify(actor)} queryClient={queryClient}>
-          {isPublicRoute(pathname) ? <Outlet /> : <ProtectedAppShell dataMode={dataMode} />}
+          {isPublicRoute(pathname) ? <Outlet /> : <ProtectedAppShell />}
           <Toaster />
         </AuthProvider>
       </AuthSessionBoundary>
@@ -239,7 +233,8 @@ function RootComponent() {
   );
 }
 
-function ProtectedAppShell({ dataMode }: { dataMode: DataMode }) {
+function ProtectedAppShell() {
+  const { dataMode } = Route.useRouteContext();
   const { session, isHydrated, authIssue, retrySession } = useAuth();
   const navigate = useNavigate();
   const redirectPath = useRouterState({
