@@ -44,7 +44,7 @@ describe("final review architecture restorations", () => {
     expect(rootRouteSource).toContain("errorComponent: ErrorComponent");
     expect(rootRouteSource).toContain('import appCss from "../styles.css?url"');
     expect(rootRouteSource).toContain('{ rel: "stylesheet", href: appCss }');
-    expect(rootRouteSource).toContain("Kossilon CoSec OS");
+    expect(rootRouteSource).toContain("PRODUCT_NAME");
   });
 
   it("exposes the operational routes in labeled desktop and mobile navigation", () => {

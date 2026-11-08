@@ -1,4 +1,5 @@
 import { roleLabel } from "@/features/auth/role-labels";
+import { PRODUCT_NAME, PRODUCT_TAGLINE_ZH } from "@/lib/brand";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
@@ -24,12 +25,13 @@ import {
 } from "@/features/auth/route-guard";
 
 export const Route = createFileRoute("/login")({
+  ssr: true,
   head: () => ({
     meta: [
       { title: pageTitle("登入") },
       {
         name: "description",
-        content: "登入 Kossilon Compliance Core。",
+        content: `登入 ${PRODUCT_NAME}。`,
       },
     ],
   }),
@@ -62,11 +64,15 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [denied, setDenied] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
-  const [callbackError] = useState(() =>
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).has("error")
-      ? "登入連結已過期或無效，請重新要求登入連結。"
-      : null,
-  );
+  // Read the query string in an effect, not during render: the server has no
+  // window, and a server/client initial-state difference is a hydration mismatch.
+  const [callbackError, setCallbackError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("error")) {
+      setCallbackError("登入連結已過期或無效，請重新要求登入連結。");
+    }
+  }, []);
 
   useEffect(() => {
     if (session) return;
@@ -200,21 +206,18 @@ export function LoginPage() {
       <section className="hidden min-h-screen flex-1 flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary-foreground text-primary">
-            <span className="font-display text-base font-bold">K</span>
+            <span className="font-display text-base font-bold">C</span>
           </div>
           <div>
-            <div className="font-display text-lg font-semibold">Kossilon</div>
+            <div className="font-display text-lg font-semibold">{PRODUCT_NAME}</div>
             <div className="text-xs uppercase tracking-wider text-primary-foreground/70">
-              公司秘書營運系統
+              {PRODUCT_TAGLINE_ZH}
             </div>
           </div>
         </div>
 
         <div className="max-w-xl">
-          <p className="text-sm uppercase tracking-[0.2em] text-primary-foreground/80">
-            Compliance Core
-          </p>
-          <h1 className="mt-4 font-display text-4xl font-semibold leading-tight">
+          <h1 className="font-display text-4xl font-semibold leading-tight">
             安全處理申報遞交、客戶證明文件、提醒及團隊運作。
           </h1>
           <p className="mt-4 text-sm leading-6 text-primary-foreground/75">
@@ -233,21 +236,21 @@ export function LoginPage() {
         <div className="w-full max-w-sm">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <span className="font-display text-base font-bold">K</span>
+              <span className="font-display text-base font-bold">C</span>
             </div>
             <div>
-              <div className="font-display text-lg font-semibold">Kossilon</div>
+              <div className="font-display text-lg font-semibold">{PRODUCT_NAME}</div>
               <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                公司秘書營運系統
+                {PRODUCT_TAGLINE_ZH}
               </div>
             </div>
           </div>
 
           <div>
             <StatusPill tone="blue">安全登入</StatusPill>
-            <h1 className="mt-4 font-display text-2xl font-semibold">登入 Compliance Core</h1>
+            <h1 className="mt-4 font-display text-2xl font-semibold">登入工作空間</h1>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              請使用貴公司的 Neon Auth 帳戶登入。
+              請使用貴公司的工作空間帳戶登入。
             </p>
           </div>
 
@@ -256,7 +259,7 @@ export function LoginPage() {
               className="mt-6 rounded-md border border-status-red/30 bg-status-red-soft px-3 py-2 text-xs text-status-red-text"
               role="alert"
             >
-              此帳戶未獲授權使用 Kossilon Hub。請聯絡管理員開通權限，或於下方改用其他帳戶登入。
+              此帳戶未獲授權使用 {PRODUCT_NAME}。請聯絡管理員開通權限，或於下方改用其他帳戶登入。
             </div>
           )}
 
@@ -385,7 +388,7 @@ export function LoginPage() {
             <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">
               只限受邀用戶使用。如需開通，請聯絡公司管理員。
               <a
-                href="mailto:willylai@fimmick.com?subject=Kossilon%20demo%20invitation%20request"
+                href="mailto:willylai@fimmick.com?subject=ComSec%20OS%20%E5%B7%A5%E4%BD%9C%E7%A9%BA%E9%96%93%E9%96%8B%E9%80%9A%E7%94%B3%E8%AB%8B"
                 className="font-medium text-primary underline-offset-4 hover:underline"
               >
                 申請邀請

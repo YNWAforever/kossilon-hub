@@ -15,6 +15,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { errorDetails } from "../lib/error-details";
+import { PRODUCT_DESCRIPTION_ZH, PRODUCT_NAME, PRODUCT_TAGLINE_ZH } from "@/lib/brand";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppMobileNav } from "@/components/app-mobile-nav";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import {
   isClientRoute,
   isMarketingRoute,
   isPublicRoute,
+  isServerRenderable,
   rememberRedirectPath,
 } from "@/features/auth/route-guard";
 import type { AuthenticatedActor } from "@/features/auth/types";
@@ -125,7 +127,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 export const Route = createRootRouteWithContext<RouterContext>()({
   // Public documents render without JavaScript. Keep the existing client-only
   // staff/auth lifecycle for every other route.
-  ssr: ({ location }) => (isMarketingRoute(location.pathname) ? true : undefined),
+  ssr: ({ location }) => (isServerRenderable(location.pathname) ? true : undefined),
   beforeLoad: async ({ context, location }) => {
     if (isPublicRoute(location.pathname)) {
       await ensureActorQueryScope(context.queryClient, null);
@@ -170,16 +172,15 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Kossilon CoSec OS — 公司秘書營運平台" },
+      { title: `${PRODUCT_NAME} — ${PRODUCT_TAGLINE_ZH}` },
       {
         name: "description",
-        content:
-          "香港公司秘書行的內部營運平台：WhatsApp 查詢、周年申報流程、文件追收、付款提醒及團隊分配。",
+        content: PRODUCT_DESCRIPTION_ZH,
       },
-      { property: "og:title", content: "Kossilon CoSec OS" },
+      { property: "og:title", content: PRODUCT_NAME },
       {
         property: "og:description",
-        content: "專為香港公司秘書行而設的營運平台。",
+        content: "專為香港公司秘書團隊而設的工作空間。",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -9,6 +9,8 @@ import {
   verify,
 } from "node:crypto";
 
+import { PRODUCT_NAME } from "@/lib/brand";
+
 const CONFIRM_PATH = "/auth/magic-link/confirm";
 const TICKET_COOKIE = "__Host-kossilon.magic_link_ticket";
 const TICKET_AAD = Buffer.from("kossilon-magic-link-ticket-v1");
@@ -164,14 +166,14 @@ function renderConfirmationPage(): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Confirm sign-in - Kossilon Hub</title>
+  <title>Confirm sign-in - ${PRODUCT_NAME}</title>
 </head>
 <body style="margin:0;background:#f6f7f8;color:#17191c;font-family:Arial,Helvetica,sans-serif">
   <main style="min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box">
     <section style="width:100%;max-width:420px;background:#fff;border:1px solid #dfe2e6;border-radius:8px;padding:32px;box-sizing:border-box">
-      <div style="font-size:14px;font-weight:700;color:#245b46">Kossilon Hub</div>
+      <div style="font-size:14px;font-weight:700;color:#245b46">${PRODUCT_NAME}</div>
       <h1 style="margin:24px 0 8px;font-size:26px;line-height:1.25">Confirm sign-in</h1>
-      <p style="margin:0 0 24px;color:#5d646d;font-size:15px;line-height:1.6">Continue to securely sign in to Compliance Core.</p>
+      <p style="margin:0 0 24px;color:#5d646d;font-size:15px;line-height:1.6">Continue to securely sign in to ${PRODUCT_NAME}.</p>
       <form method="post" action="${CONFIRM_PATH}">
         <button type="submit" style="width:100%;border:0;border-radius:6px;background:#1f5b46;color:#fff;padding:12px 16px;font-size:15px;font-weight:700;cursor:pointer">Continue</button>
       </form>
@@ -187,12 +189,12 @@ function renderInvalidPage(message: string): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sign-in link unavailable - Kossilon Hub</title>
+  <title>Sign-in link unavailable - ${PRODUCT_NAME}</title>
 </head>
 <body style="margin:0;background:#f6f7f8;color:#17191c;font-family:Arial,Helvetica,sans-serif">
   <main style="min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box">
     <section style="width:100%;max-width:420px;background:#fff;border:1px solid #dfe2e6;border-radius:8px;padding:32px;box-sizing:border-box">
-      <div style="font-size:14px;font-weight:700;color:#245b46">Kossilon Hub</div>
+      <div style="font-size:14px;font-weight:700;color:#245b46">${PRODUCT_NAME}</div>
       <h1 style="margin:24px 0 8px;font-size:26px;line-height:1.25">Sign-in link unavailable</h1>
       <p style="margin:0 0 24px;color:#5d646d;font-size:15px;line-height:1.6">${message}</p>
       <a href="/login" style="display:block;border-radius:6px;background:#1f5b46;color:#fff;padding:12px 16px;text-align:center;text-decoration:none;font-size:15px;font-weight:700">Request a new link</a>
@@ -380,8 +382,8 @@ function emailHtml(confirmationUrl: string): string {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;background-color:#f6f7f8">
     <tr><td align="center" style="padding-top:32px;padding-right:16px;padding-bottom:32px;padding-left:16px">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:560px;background-color:#ffffff;border:1px solid #dfe2e6">
-        <tr><td style="padding-top:32px;padding-right:32px;padding-bottom:8px;padding-left:32px;font-size:14px;line-height:20px;color:#245b46;font-weight:700">Kossilon Hub</td></tr>
-        <tr><td style="padding-top:16px;padding-right:32px;padding-bottom:8px;padding-left:32px;font-size:24px;line-height:32px;color:#17191c;font-weight:700">Sign in to Compliance Core</td></tr>
+        <tr><td style="padding-top:32px;padding-right:32px;padding-bottom:8px;padding-left:32px;font-size:14px;line-height:20px;color:#245b46;font-weight:700">${PRODUCT_NAME}</td></tr>
+        <tr><td style="padding-top:16px;padding-right:32px;padding-bottom:8px;padding-left:32px;font-size:24px;line-height:32px;color:#17191c;font-weight:700">Sign in to ${PRODUCT_NAME}</td></tr>
         <tr><td style="padding-top:0;padding-right:32px;padding-bottom:24px;padding-left:32px;font-size:15px;line-height:24px;color:#5d646d">Confirm this request to continue securely. This link expires shortly and can be used once.</td></tr>
         <tr><td style="padding-top:0;padding-right:32px;padding-bottom:32px;padding-left:32px">
           <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#1f5b46" style="background-color:#1f5b46;border-radius:6px">
@@ -419,9 +421,9 @@ async function sendMagicLinkEmail(
     body: JSON.stringify({
       from: options.resendFrom,
       to: [payload.email],
-      subject: "Sign in to Kossilon Hub",
+      subject: `Sign in to ${PRODUCT_NAME}`,
       html: emailHtml(confirmationUrl.toString()),
-      text: `Review and confirm your Kossilon Hub sign-in request:\n\n${confirmationUrl.toString()}\n\nIf you did not request this email, you can ignore it.`,
+      text: `Review and confirm your ${PRODUCT_NAME} sign-in request:\n\n${confirmationUrl.toString()}\n\nIf you did not request this email, you can ignore it.`,
     }),
   });
   if (!response.ok) throw new RequestError(502, "Magic-link delivery failed.");

@@ -1,6 +1,7 @@
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
+import { PRODUCT_NAME } from "./lib/brand";
 import { renderErrorPage } from "./lib/error-page";
 
 // Duplicated from ./features/whatsapp/webhook rather than imported: every other
@@ -207,7 +208,7 @@ export default {
           const resendFrom =
             (typeof runtimeEnv.RESEND_FROM === "string"
               ? runtimeEnv.RESEND_FROM
-              : process.env.RESEND_FROM) ?? "Kossilon Hub <auth@fimmick.com>";
+              : process.env.RESEND_FROM) ?? `${PRODUCT_NAME} <auth@fimmick.com>`;
           if (!resendApiKey.trim()) throw new Error("RESEND_API_KEY is required.");
 
           const { createNeonMagicLinkWebhookHandler } =

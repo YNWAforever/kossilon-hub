@@ -287,7 +287,7 @@ describe("LoginPage", () => {
     render(<LoginPage />);
 
     expect(screen.getByRole("link", { name: "申請邀請" }).getAttribute("href")).toBe(
-      "mailto:willylai@fimmick.com?subject=Kossilon%20demo%20invitation%20request",
+      "mailto:willylai@fimmick.com?subject=ComSec%20OS%20%E5%B7%A5%E4%BD%9C%E7%A9%BA%E9%96%93%E9%96%8B%E9%80%9A%E7%94%B3%E8%AB%8B",
     );
   });
 

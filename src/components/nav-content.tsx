@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
+import { PRODUCT_NAME, PRODUCT_TAGLINE_ZH } from "@/lib/brand";
 import { useAuth } from "@/features/auth/auth-context-neon";
 import { isNavItemActive, navGroupsForRole } from "./navigation";
 
@@ -98,11 +99,15 @@ export function BrandBlock() {
   return (
     <div className="flex items-center gap-2">
       <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-        <span className="font-display text-sm font-bold">K</span>
+        <span className="font-display text-sm font-bold">C</span>
       </div>
       <div className="leading-tight">
-        <div className="font-display text-sm font-semibold text-sidebar-foreground">Kossilon</div>
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">CoSec OS</div>
+        <div className="font-display text-sm font-semibold text-sidebar-foreground">
+          {PRODUCT_NAME}
+        </div>
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          {PRODUCT_TAGLINE_ZH}
+        </div>
       </div>
     </div>
   );

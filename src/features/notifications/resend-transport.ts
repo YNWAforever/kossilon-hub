@@ -1,4 +1,5 @@
 import type { ResendConfig } from "@/server/runtime-env";
+import { PRODUCT_NAME } from "@/lib/brand";
 import { notificationPayload, type NotificationTransport } from "./types";
 
 export function createResendNotificationTransport(
@@ -15,7 +16,7 @@ export function createResendNotificationTransport(
       const body = typeof payload.body === "string" ? payload.body : undefined;
       if (!body) throw new Error("Email notification is missing a message body.");
       const subject =
-        typeof payload.subject === "string" ? payload.subject : "Kossilon Hub notification";
+        typeof payload.subject === "string" ? payload.subject : `${PRODUCT_NAME} notification`;
 
       const response = await fetchImpl("https://api.resend.com/emails", {
         method: "POST",
