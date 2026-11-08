@@ -23,6 +23,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as OperationsRouteImport } from './routes/operations'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as PortalRouteImport } from './routes/portal'
+import { Route as RequestAccessRouteImport } from './routes/request-access'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TodayRouteImport } from './routes/today'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
@@ -31,6 +32,7 @@ import { Route as AnnualReturnsIdRouteImport } from './routes/annual-returns.$id
 import { Route as ClientsIdRouteImport } from './routes/clients.$id'
 import { Route as CorporateChangesIdRouteImport } from './routes/corporate-changes.$id'
 import { Route as EnLoginRouteImport } from './routes/en_.login'
+import { Route as EnRequestAccessRouteImport } from './routes/en_.request-access'
 import { Route as IncorporationIdRouteImport } from './routes/incorporation.$id'
 import { Route as WhatsappAutomationRouteImport } from './routes/whatsapp.automation'
 
@@ -104,6 +106,11 @@ const PortalRoute = PortalRouteImport.update({
   path: '/portal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RequestAccessRoute = RequestAccessRouteImport.update({
+  id: '/request-access',
+  path: '/request-access',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -144,6 +151,11 @@ const EnLoginRoute = EnLoginRouteImport.update({
   path: '/en/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EnRequestAccessRoute = EnRequestAccessRouteImport.update({
+  id: '/en_/request-access',
+  path: '/en/request-access',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IncorporationIdRoute = IncorporationIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -170,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/operations': typeof OperationsRoute
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
+  '/request-access': typeof RequestAccessRoute
   '/settings': typeof SettingsRoute
   '/today': typeof TodayRoute
   '/whatsapp': typeof WhatsappRouteWithChildren
@@ -178,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/clients/$id': typeof ClientsIdRoute
   '/corporate-changes/$id': typeof CorporateChangesIdRoute
   '/en/login': typeof EnLoginRoute
+  '/en/request-access': typeof EnRequestAccessRoute
   '/incorporation/$id': typeof IncorporationIdRoute
   '/whatsapp/automation': typeof WhatsappAutomationRoute
 }
@@ -196,6 +210,7 @@ export interface FileRoutesByTo {
   '/operations': typeof OperationsRoute
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
+  '/request-access': typeof RequestAccessRoute
   '/settings': typeof SettingsRoute
   '/today': typeof TodayRoute
   '/whatsapp': typeof WhatsappRouteWithChildren
@@ -204,6 +219,7 @@ export interface FileRoutesByTo {
   '/clients/$id': typeof ClientsIdRoute
   '/corporate-changes/$id': typeof CorporateChangesIdRoute
   '/en/login': typeof EnLoginRoute
+  '/en/request-access': typeof EnRequestAccessRoute
   '/incorporation/$id': typeof IncorporationIdRoute
   '/whatsapp/automation': typeof WhatsappAutomationRoute
 }
@@ -223,6 +239,7 @@ export interface FileRoutesById {
   '/operations': typeof OperationsRoute
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
+  '/request-access': typeof RequestAccessRoute
   '/settings': typeof SettingsRoute
   '/today': typeof TodayRoute
   '/whatsapp': typeof WhatsappRouteWithChildren
@@ -231,6 +248,7 @@ export interface FileRoutesById {
   '/clients/$id': typeof ClientsIdRoute
   '/corporate-changes/$id': typeof CorporateChangesIdRoute
   '/en_/login': typeof EnLoginRoute
+  '/en_/request-access': typeof EnRequestAccessRoute
   '/incorporation/$id': typeof IncorporationIdRoute
   '/whatsapp/automation': typeof WhatsappAutomationRoute
 }
@@ -251,6 +269,7 @@ export interface FileRouteTypes {
     | '/operations'
     | '/payments'
     | '/portal'
+    | '/request-access'
     | '/settings'
     | '/today'
     | '/whatsapp'
@@ -259,6 +278,7 @@ export interface FileRouteTypes {
     | '/clients/$id'
     | '/corporate-changes/$id'
     | '/en/login'
+    | '/en/request-access'
     | '/incorporation/$id'
     | '/whatsapp/automation'
   fileRoutesByTo: FileRoutesByTo
@@ -277,6 +297,7 @@ export interface FileRouteTypes {
     | '/operations'
     | '/payments'
     | '/portal'
+    | '/request-access'
     | '/settings'
     | '/today'
     | '/whatsapp'
@@ -285,6 +306,7 @@ export interface FileRouteTypes {
     | '/clients/$id'
     | '/corporate-changes/$id'
     | '/en/login'
+    | '/en/request-access'
     | '/incorporation/$id'
     | '/whatsapp/automation'
   id:
@@ -303,6 +325,7 @@ export interface FileRouteTypes {
     | '/operations'
     | '/payments'
     | '/portal'
+    | '/request-access'
     | '/settings'
     | '/today'
     | '/whatsapp'
@@ -311,6 +334,7 @@ export interface FileRouteTypes {
     | '/clients/$id'
     | '/corporate-changes/$id'
     | '/en_/login'
+    | '/en_/request-access'
     | '/incorporation/$id'
     | '/whatsapp/automation'
   fileRoutesById: FileRoutesById
@@ -330,11 +354,13 @@ export interface RootRouteChildren {
   OperationsRoute: typeof OperationsRoute
   PaymentsRoute: typeof PaymentsRoute
   PortalRoute: typeof PortalRoute
+  RequestAccessRoute: typeof RequestAccessRoute
   SettingsRoute: typeof SettingsRoute
   TodayRoute: typeof TodayRoute
   WhatsappRoute: typeof WhatsappRouteWithChildren
   WorkQueueRoute: typeof WorkQueueRoute
   EnLoginRoute: typeof EnLoginRoute
+  EnRequestAccessRoute: typeof EnRequestAccessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -437,6 +463,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/request-access': {
+      id: '/request-access'
+      path: '/request-access'
+      fullPath: '/request-access'
+      preLoaderRoute: typeof RequestAccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -491,6 +524,13 @@ declare module '@tanstack/react-router' {
       path: '/en/login'
       fullPath: '/en/login'
       preLoaderRoute: typeof EnLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en_/request-access': {
+      id: '/en_/request-access'
+      path: '/en/request-access'
+      fullPath: '/en/request-access'
+      preLoaderRoute: typeof EnRequestAccessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/incorporation/$id': {
@@ -583,11 +623,13 @@ const rootRouteChildren: RootRouteChildren = {
   OperationsRoute: OperationsRoute,
   PaymentsRoute: PaymentsRoute,
   PortalRoute: PortalRoute,
+  RequestAccessRoute: RequestAccessRoute,
   SettingsRoute: SettingsRoute,
   TodayRoute: TodayRoute,
   WhatsappRoute: WhatsappRouteWithChildren,
   WorkQueueRoute: WorkQueueRoute,
   EnLoginRoute: EnLoginRoute,
+  EnRequestAccessRoute: EnRequestAccessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

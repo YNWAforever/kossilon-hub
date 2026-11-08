@@ -126,6 +126,24 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const pathname = new URL(request.url).pathname;
+
+      // Public SEO documents: generated per request from the request origin so a
+      // preview, the demo host and production each advertise themselves rather
+      // than a hardcoded canonical URL.
+      if (request.method === "GET" && (pathname === "/robots.txt" || pathname === "/sitemap.xml")) {
+        const { robotsTxt, sitemapXml } = await import("./features/marketing/seo");
+        const origin = new URL(request.url).origin;
+        const isSitemap = pathname === "/sitemap.xml";
+        return new Response(isSitemap ? sitemapXml(origin) : robotsTxt(origin), {
+          headers: {
+            "content-type": isSitemap
+              ? "application/xml; charset=utf-8"
+              : "text/plain; charset=utf-8",
+            "cache-control": "public, max-age=3600",
+          },
+        });
+      }
+
       if (pathname === "/api/handoffs/export") {
         const [{ createHandoffExportHttpHandler }, { buildHandoffExportForRequest }] =
           await Promise.all([
