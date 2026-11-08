@@ -74,7 +74,7 @@ type AuthContextValue = {
   isCurrentUserAdmin: boolean;
   login: (email: string, password: string) => Promise<AuthActionResult>;
   loginWithMagicLink: (email: string, redirect?: string | null) => Promise<AuthActionResult>;
-  loginWithGoogle: () => Promise<AuthActionResult>;
+  loginWithGoogle: (redirect?: string | null) => Promise<AuthActionResult>;
   loginDemo: (userId: string) => Promise<AuthActionResult>;
   loginDemoUser: (user: DemoUser) => Promise<AuthActionResult>;
   signOut: () => Promise<void>;
@@ -389,25 +389,28 @@ function NeonAuthProvider({
     },
     [client, signOutMarker],
   );
-  const loginWithGoogle = useCallback(async (): Promise<AuthActionResult> => {
-    if (signOutMarker.current && signOutMarker.current.state !== "signed-out")
-      return { ok: false, error: "登出尚未確認，請先重試登出。" };
-    const result = await client.signIn.social({
-      provider: "google",
-      callbackURL: `${window.location.origin}/login`,
-      newUserCallbackURL: `${window.location.origin}/login`,
-    });
+  const loginWithGoogle = useCallback(
+    async (redirect?: string | null): Promise<AuthActionResult> => {
+      if (signOutMarker.current && signOutMarker.current.state !== "signed-out")
+        return { ok: false, error: "登出尚未確認，請先重試登出。" };
+      const result = await client.signIn.social({
+        provider: "google",
+        callbackURL: magicLinkCallback(window.location.origin, redirect),
+        newUserCallbackURL: magicLinkCallback(window.location.origin, redirect),
+      });
 
-    if (result.error) {
-      return { ok: false, error: result.error.message ?? "Google 登入失敗。" };
-    }
+      if (result.error) {
+        return { ok: false, error: result.error.message ?? "未能完成 Google 登入。" };
+      }
 
-    // better-auth's default redirectPlugin has already started navigating the
-    // browser to Google at this point (see client/config.mjs — active whenever
-    // the response carries {url, redirect: true}, which signIn.social's success
-    // response always does). There is nothing further to do here.
-    return { ok: true };
-  }, [client, signOutMarker]);
+      // better-auth's default redirectPlugin has already started navigating the
+      // browser to Google at this point (see client/config.mjs — active whenever
+      // the response carries {url, redirect: true}, which signIn.social's success
+      // response always does). There is nothing further to do here.
+      return { ok: true };
+    },
+    [client, signOutMarker],
+  );
   const demoUnavailable = useCallback(
     async (): Promise<AuthActionResult> => ({
       ok: false,
