@@ -35,7 +35,7 @@ export type MaintenanceTickInput = {
   scheduledAt: string;
   runId: string;
   allowedJobs: MaintenanceJobKind[];
-  triggerEvidence?: "native-hook" | "http-candidate" | "manual";
+  triggerEvidence?: "native-hook" | "platform-header" | "http-candidate" | "manual";
 };
 export type MaintenanceTickResult = {
   trigger: TriggerKind;

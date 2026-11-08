@@ -14,8 +14,10 @@ Canonical environment map: [`environments.md`](environments.md).
    pre-existing dead cron must not make every deploy look broken.
 4. The same smoke job runs on a 15-minute schedule to monitor the live surface **and** the
    maintenance tick (`/api/health`; a manual dispatch can opt in with `include_health`). A failure
-   fails the workflow; if the `SMOKE_ALERT_WEBHOOK` repository secret is set, the job also posts
-   the failure there.
+   fails the workflow and opens or updates an `ops-alert` GitHub issue, which triggers GitHub's
+   normal notifications/email for watchers. If the optional `SMOKE_ALERT_WEBHOOK` repository secret
+   is set, the job also posts there. Use `workflow_dispatch` with `simulate_failure=true` to verify
+   the alert path.
 
 No hand deployment is required. Do not re-implement one.
 

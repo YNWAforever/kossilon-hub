@@ -116,7 +116,9 @@ export async function runRuntimeMaintenanceTick(
             executionScope: "safe-maintenance-only",
             triggerEvidence: data.triggerEvidence ?? "manual",
             platformTriggerVerified:
-              data.trigger === "scheduled" && data.triggerEvidence === "native-hook",
+              data.trigger === "scheduled" &&
+              (data.triggerEvidence === "native-hook" ||
+                data.triggerEvidence === "platform-header"),
             build: ref && /^[a-f0-9]{40}$/.test(ref) ? ref : "unknown",
           },
           failedPasses,
