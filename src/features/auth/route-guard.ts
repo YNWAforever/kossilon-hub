@@ -1,4 +1,5 @@
 import { resolveDataMode } from "../runtime/data-mode";
+import type { AuthRole } from "./types";
 
 export const AUTH_REDIRECT_STORAGE_KEY = "kossilon.auth.redirect.v1";
 
@@ -57,6 +58,20 @@ const CLIENT_ROUTES = ["/portal", "/documents"] as const;
 
 export function isClientRoute(pathname: string): boolean {
   return CLIENT_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
+
+/**
+ * Screens that only a Client actor can use. `/documents` is not here: staff use
+ * it too. A staff member landing on `/portal` was previously left to fail every
+ * query with Forbidden instead of being sent somewhere they can work.
+ */
+export function isClientOnlyRoute(pathname: string): boolean {
+  return pathname === "/portal";
+}
+
+/** The screen each actor should land on after sign-in. */
+export function roleHomePath(role: AuthRole): string {
+  return role === "Client" ? "/portal" : "/today";
 }
 
 /**
