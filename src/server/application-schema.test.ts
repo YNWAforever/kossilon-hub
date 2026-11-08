@@ -1,7 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { assertApplicationWriteSchema, ApplicationSchemaError } from "./application-schema";
+import { EXPECTED_MIGRATIONS, HISTORICAL_MIGRATIONS } from "@/features/operations/schema-health";
 import { schemaCatalogDouble } from "@/test/schema-catalog-double";
 describe("UC189 shared application schema error", () => {
+  it("admits the reviewed historical production lineage when physical facts hold", async () => {
+    const { state, sql } = schemaCatalogDouble();
+    state.ledger = {
+      present: true,
+      applied: [
+        ...EXPECTED_MIGRATIONS.filter(
+          (id) => id !== "0034_notification_outbox_dispatch_marker.sql",
+        ),
+        ...HISTORICAL_MIGRATIONS,
+      ],
+    };
+
+    await expect(assertApplicationWriteSchema(sql)).resolves.toBeUndefined();
+  });
   it("replaces private SQL failures with a retryable, non-secret error", async () => {
     const { state, sql } = schemaCatalogDouble();
     state.readFailure = true;

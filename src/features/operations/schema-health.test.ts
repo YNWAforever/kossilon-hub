@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import {
   earliestMissingLabel,
   EXPECTED_MIGRATIONS,
+  FORWARD_REPAIRED_MIGRATIONS,
+  HISTORICAL_MIGRATIONS,
   schemaHealthOf,
   type SchemaLedger,
 } from "./schema-health";
@@ -172,6 +174,77 @@ describe("schemaHealthOf", () => {
 
     expect(health.state).toBe("current");
     expect(health.appliedCount).toBe(EXPECTED_MIGRATIONS.length);
+  });
+});
+
+describe("reviewed historical lineage", () => {
+  /**
+   * The reconciled production ledger records the 66 historical IDs from the
+   * frozen release package, plus the 16 forward candidates. The repo's own
+   * `0034` archive copy is satisfied forward-only by `0067_repair_…`.
+   */
+  const productionLedger: SchemaLedger = ledger([
+    ...EXPECTED_MIGRATIONS.filter((id) => id !== "0034_notification_outbox_dispatch_marker.sql"),
+    ...HISTORICAL_MIGRATIONS,
+  ]);
+
+  it("treats the reconciled production lineage as current, not diverged", () => {
+    const health = schemaHealthOf({ expected: EXPECTED_MIGRATIONS, ledger: productionLedger });
+
+    expect(health.state).toBe("current");
+    expect(health.missing).toEqual([]);
+    expect(health.ahead).toEqual([]);
+    expect(health.historicalCount).toBe(HISTORICAL_MIGRATIONS.length);
+    expect(health.repairedCount).toBe(
+      Object.keys(FORWARD_REPAIRED_MIGRATIONS).length,
+    );
+    expect(health.summary).toContain("歷史遷移");
+  });
+
+  it("still reports an unknown extra migration as ahead", () => {
+    const health = schemaHealthOf({
+      expected: EXPECTED_MIGRATIONS,
+      ledger: ledger([...productionLedger.applied, "0099_something_newer.sql"]),
+    });
+
+    expect(health.state).toBe("ahead");
+    expect(health.ahead).toEqual(["0099_something_newer.sql"]);
+  });
+
+  it("still reports a genuinely missing expected migration as behind", () => {
+    const health = schemaHealthOf({
+      expected: EXPECTED_MIGRATIONS,
+      ledger: ledger(
+        productionLedger.applied.filter((id) => id !== "0082_case_template_snapshots.sql"),
+      ),
+    });
+
+    expect(health.state).toBe("behind");
+    expect(health.missing).toEqual(["0082_case_template_snapshots.sql"]);
+  });
+
+  it("does not let the forward-repair alias hide a real gap", () => {
+    const health = schemaHealthOf({
+      expected: EXPECTED_MIGRATIONS,
+      ledger: ledger(
+        productionLedger.applied.filter((id) => id !== "0067_repair_outbox_dispatch_marker.sql"),
+      ),
+    });
+
+    expect(health.missing).toContain("0034_notification_outbox_dispatch_marker.sql");
+    expect(health.state).toBe("behind");
+  });
+
+  it("can be disabled to check strict history", () => {
+    const health = schemaHealthOf({
+      expected: EXPECTED_MIGRATIONS,
+      ledger: productionLedger,
+      historical: [],
+      forwardRepaired: {},
+    });
+
+    expect(health.state).toBe("diverged");
+    expect(health.ahead).toHaveLength(HISTORICAL_MIGRATIONS.length);
   });
 });
 
