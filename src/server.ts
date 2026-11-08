@@ -180,12 +180,13 @@ export default {
           readMaintenance: async () => {
             const repository = createMaintenanceRunRepository();
             try {
-              const [runs, lastScheduledSuccessAt, database] = await Promise.all([
+              const [runs, candidateRuns, lastScheduledSuccessAt, database] = await Promise.all([
                 repository.listRecentScheduledRuns(),
+                repository.listRecentScheduledCandidates(),
                 repository.lastScheduledSuccessAt(),
                 repository.databaseIdentity(),
               ]);
-              return { runs, lastScheduledSuccessAt, database };
+              return { runs, candidateRuns, lastScheduledSuccessAt, database };
             } finally {
               await repository.close();
             }

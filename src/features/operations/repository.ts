@@ -125,6 +125,16 @@ export type MaintenanceRunRepository = {
    */
   listRecentScheduledRuns(limit?: number): Promise<MaintenanceRunRecord[]>;
   /**
+   * Recent scheduled candidates, regardless of platform verification.
+   *
+   * The cron reaches the app over authenticated HTTP, so its runs are recorded
+   * as candidates until someone correlates them with platform logs. That means
+   * the strict list above can be empty while the schedule is demonstrably
+   * alive. Liveness (is the cron firing now?) reads this list; trust (has the
+   * schedule been platform-verified?) still comes from the strict one.
+   */
+  listRecentScheduledCandidates(limit?: number): Promise<MaintenanceRunRecord[]>;
+  /**
    * The last clean scheduled run in ALL of history, not within a window.
    *
    * "When did this last work" is a question about the whole record. Deriving it
@@ -377,6 +387,17 @@ export function createMaintenanceRunRepository(
         where trigger_source = 'scheduled'
           and (passes->>'executionScope' is distinct from 'safe-maintenance-only'
             or passes->>'platformTriggerVerified' = 'true')
+        order by scheduled_for desc
+        limit ${limit}
+      `;
+      return rows.map(mapRun);
+    },
+
+    async listRecentScheduledCandidates(limit = DEFAULT_RUN_LIMIT) {
+      const rows = await sql<RunRow[]>`
+        select ${runColumns}
+        from maintenance_runs
+        where trigger_source = 'scheduled'
         order by scheduled_for desc
         limit ${limit}
       `;

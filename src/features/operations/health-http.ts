@@ -4,10 +4,63 @@ export type HealthHttpDependencies = {
   now: () => Date;
   readMaintenance: () => Promise<{
     runs: readonly MaintenanceRunRecord[];
+    candidateRuns: readonly MaintenanceRunRecord[];
     lastScheduledSuccessAt: string | null;
     database: { database: string; branchId: string | null };
   }>;
 };
+
+export type SchedulerFreshness = {
+  state: "fresh" | "stale" | "never-observed";
+  lastRunAt: string | null;
+  lagSeconds: number | null;
+  toleranceSeconds: number;
+  /** True when the newest run was an unverified HTTP candidate. */
+  unverified: boolean;
+  /** True when the newest run recorded a failed outcome. */
+  failing: boolean;
+};
+
+/**
+ * Is the schedule firing right now?
+ *
+ * Deliberately different from `maintenanceHealthOf`: that rule asks whether a
+ * *platform-verified* run is recent, so it reports `stale` while the cron is
+ * demonstrably firing as unverified HTTP candidates. For an uptime alarm that
+ * would be a false negative — a dead cron is the emergency, verification is a
+ * separate fact. `maintenance` stays in the response so the gap is visible.
+ */
+export function schedulerCandidateFreshness(input: {
+  runs: readonly MaintenanceRunRecord[];
+  nowIso: string;
+  toleranceSeconds: number;
+}): SchedulerFreshness {
+  const scheduled = input.runs.filter((run) => run.triggerSource === "scheduled");
+  const latest = scheduled.reduce<MaintenanceRunRecord | null>(
+    (newest, run) =>
+      !newest || Date.parse(run.finishedAt) > Date.parse(newest.finishedAt) ? run : newest,
+    null,
+  );
+  if (!latest) {
+    return {
+      state: "never-observed",
+      lastRunAt: null,
+      lagSeconds: null,
+      toleranceSeconds: input.toleranceSeconds,
+      unverified: false,
+      failing: false,
+    };
+  }
+  const lagSeconds = Math.round((Date.parse(input.nowIso) - Date.parse(latest.finishedAt)) / 1000);
+  return {
+    state: lagSeconds > input.toleranceSeconds ? "stale" : "fresh",
+    lastRunAt: latest.finishedAt,
+    lagSeconds,
+    toleranceSeconds: input.toleranceSeconds,
+    unverified: latest.platformTriggerVerified !== true,
+    failing: latest.outcome === "failed",
+  };
+}
 
 function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -49,12 +102,28 @@ export function createHealthHttpHandler(dependencies: HealthHttpDependencies) {
         toleranceSeconds: defaultToleranceSeconds(),
         lastScheduledSuccessAt: maintenance.lastScheduledSuccessAt,
       });
-      const ok = health.state === "healthy" || health.state === "degraded";
+      const scheduler = schedulerCandidateFreshness({
+        runs: maintenance.candidateRuns,
+        nowIso: now.toISOString(),
+        toleranceSeconds: defaultToleranceSeconds(),
+      });
+      const ok = scheduler.state === "fresh" && !scheduler.failing;
 
       return json(ok ? 200 : 503, {
         ok,
         checkedAt: now.toISOString(),
         database: maintenance.database,
+        scheduler: {
+          running: scheduler.state === "fresh",
+          failing: scheduler.failing,
+          lastRunAt: scheduler.lastRunAt,
+          lagSeconds: scheduler.lagSeconds,
+          toleranceSeconds: scheduler.toleranceSeconds,
+          evidence: scheduler.unverified ? "http-candidate" : "platform-verified",
+        },
+        // Kept for parity with `/operations`: this is the strict
+        // platform-verified view, which may still say stale while the schedule
+        // is alive.
         maintenance: health,
       });
     } catch {
