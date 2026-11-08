@@ -6,13 +6,14 @@ const sections = ["workflow", "features", "pricing", "faq"] as const;
 export function MarketingPage({ locale }: { locale: MarketingLocale }) {
   const copy = marketingCopy[locale];
   const home = locale === "en" ? "/en" : "/";
+  const loginHref = locale === "en" ? "/en/login" : "/login";
   const nav = sections.map((section, i) => (
     <a key={section} href={`#${section}`}>
       {copy.nav[i]}
     </a>
   ));
   const cta = (
-    <a className="comsec-button" href="/login">
+    <a className="comsec-button" href={loginHref}>
       {copy.login} <ArrowRight size={18} aria-hidden="true" />
     </a>
   );
@@ -42,7 +43,7 @@ export function MarketingPage({ locale }: { locale: MarketingLocale }) {
             >
               {locale === "en" ? "繁體中文" : "EN"}
             </a>
-            <a className="comsec-nav-login" href="/login">
+            <a className="comsec-nav-login" href={loginHref}>
               {locale === "en" ? "Log in" : "登入"}
               <ArrowRight size={15} aria-hidden="true" />
             </a>
@@ -240,7 +241,7 @@ export function MarketingPage({ locale }: { locale: MarketingLocale }) {
             </div>
             <nav aria-label={locale === "en" ? "Footer" : "頁尾導覽"}>
               {nav}
-              <a href="/login">{copy.login}</a>
+              <a href={loginHref}>{copy.login}</a>
             </nav>
           </div>
           <div className="comsec-footer-bottom">

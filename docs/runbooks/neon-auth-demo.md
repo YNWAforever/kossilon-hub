@@ -29,7 +29,7 @@ and deployment preparation. Enter its path privately:
 $demoEnvFile = Read-Host "Approved demo environment file path"
 ```
 
-The file contains these names only; values are never committed. `VITE_ENABLE_DEMO_AUTH` may be absent, and if present it must be false. The public `VITE_ENABLE_NEON_AUTH_DEMO` flag is true only for the isolated demo build.
+The file contains these names only; values are never committed. `VITE_ENABLE_DEMO_AUTH` may be absent, and if present it must be false. `VITE_ENABLE_NEON_AUTH_DEMO` is accepted by the validator but has no runtime consumer in the app — do not rely on it to change the login UI. Which methods a build exposes is `VITE_AUTH_METHODS` (comma-separated `password`, `magic-link`, `google`; unset keeps all three).
 
 - `DATABASE_URL`
 - `DEMO_DATABASE_URL`
@@ -44,10 +44,11 @@ The file contains these names only; values are never committed. `VITE_ENABLE_DEM
 - `RESEND_FROM`
 - `VITE_PROVIDER_MODE`
 - `VITE_ENABLE_NEON_AUTH_DEMO`
+- `VITE_AUTH_METHODS` (optional)
 
 DATABASE_URL and DEMO_DATABASE_URL identify the same demo database.
 FIRM_ID and DEMO_FIRM_ID are both kossilon-demo.
-`VITE_PROVIDER_MODE=simulated` and `VITE_ENABLE_NEON_AUTH_DEMO=true` are required for the demo login experience. Keep the flag unset or false in production. Production identity values remain only in the operator-local file. They never enter the demo Vercel bindings.
+`VITE_PROVIDER_MODE=simulated` is required for simulated delivery. `VITE_ENABLE_NEON_AUTH_DEMO` has no runtime effect (kept for the validator); the login methods come from `VITE_AUTH_METHODS`. Production identity values remain only in the operator-local file. They never enter the demo Vercel bindings.
 
 The validator compares the demo database/Auth identities against the
 operator-only production identities. It fails if the identities match, if the
@@ -116,10 +117,10 @@ Obtain fresh, explicit approval immediately before changing managed Neon Auth se
 
 The webhook emails an encrypted app confirmation ticket instead of the one-time Neon verification URL. Automated GET requests can load `/auth/magic-link/confirm` but cannot see or consume the Neon token. Only the confirmation form POST decrypts the ticket and redirects once to Neon's verification endpoint. If delivery fails during activation, disable the webhook to restore Neon's built-in email delivery while investigating.
 
-The login page exposes the magic-link mode and invitation CTA only when both
-`VITE_ENABLE_NEON_AUTH_DEMO=true` and `VITE_PROVIDER_MODE=simulated` are set on
-the isolated demo build. Production leaves the feature flag unset or false and
-remains password-only.
+Which sign-in methods the login page exposes is `VITE_AUTH_METHODS` (comma-separated
+`password`, `magic-link`, `google`; unset keeps all three). `VITE_ENABLE_NEON_AUTH_DEMO` is accepted by the
+validator but has no runtime consumer in the app. The invitation CTA renders in any non-demo-fixture build.
+Production must record its actual values rather than assuming a password-only UI.
 
 ## Persistent data and guarded reset
 
@@ -165,10 +166,10 @@ Record only booleans, counts, deployment IDs, HTTP status codes, and route names
 - `/login` responds with HTTP 200.
 - An unauthenticated protected route redirects to `/login`.
 - The invited account can log in and log out through Neon Auth.
-- The demo login shows Password and Magic link modes only when both demo flags are enabled.
+- The login page shows the methods listed in `VITE_AUTH_METHODS` (unset = password, magic link and Google).
 - The emailed URL opens `/auth/magic-link/confirm` without consuming the Neon token.
 - The confirmation form POST completes the one-time verification and returns to `/login`.
-- Production login remains password-only with no invitation CTA.
+- Production login matches `VITE_AUTH_METHODS` and shows the invitation CTA; record the observed methods.
 - The authenticated account resolves to the `Admin` role.
 - Seeded companies and annual-return cases appear only for `kossilon-demo`.
 - One reversible workflow mutation persists after reload.

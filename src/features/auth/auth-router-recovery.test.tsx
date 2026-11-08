@@ -42,7 +42,7 @@ vi.mock("@/components/ui/sonner", () => ({ Toaster: () => null }));
 
 import { useAuth } from "./auth-context-neon";
 import { Route as AppRoot } from "@/routes/__root";
-import { LoginPage } from "@/routes/login";
+import { LoginPage } from "@/features/auth/login-page";
 
 const actorA: AuthenticatedActor = {
   authUserId: "auth-A",

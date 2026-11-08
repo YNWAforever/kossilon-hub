@@ -30,6 +30,7 @@ import { Route as WorkQueueRouteImport } from './routes/work-queue'
 import { Route as AnnualReturnsIdRouteImport } from './routes/annual-returns.$id'
 import { Route as ClientsIdRouteImport } from './routes/clients.$id'
 import { Route as CorporateChangesIdRouteImport } from './routes/corporate-changes.$id'
+import { Route as EnLoginRouteImport } from './routes/en.login'
 import { Route as IncorporationIdRouteImport } from './routes/incorporation.$id'
 import { Route as WhatsappAutomationRouteImport } from './routes/whatsapp.automation'
 
@@ -138,6 +139,11 @@ const CorporateChangesIdRoute = CorporateChangesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => CorporateChangesRoute,
 } as any)
+const EnLoginRoute = EnLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => EnRoute,
+} as any)
 const IncorporationIdRoute = IncorporationIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -157,7 +163,7 @@ export interface FileRoutesByFullPath {
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/documents': typeof DocumentsRoute
-  '/en': typeof EnRoute
+  '/en': typeof EnRouteWithChildren
   '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
   '/clients/$id': typeof ClientsIdRoute
   '/corporate-changes/$id': typeof CorporateChangesIdRoute
+  '/en/login': typeof EnLoginRoute
   '/incorporation/$id': typeof IncorporationIdRoute
   '/whatsapp/automation': typeof WhatsappAutomationRoute
 }
@@ -182,7 +189,7 @@ export interface FileRoutesByTo {
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/documents': typeof DocumentsRoute
-  '/en': typeof EnRoute
+  '/en': typeof EnRouteWithChildren
   '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
   '/clients/$id': typeof ClientsIdRoute
   '/corporate-changes/$id': typeof CorporateChangesIdRoute
+  '/en/login': typeof EnLoginRoute
   '/incorporation/$id': typeof IncorporationIdRoute
   '/whatsapp/automation': typeof WhatsappAutomationRoute
 }
@@ -208,7 +216,7 @@ export interface FileRoutesById {
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/documents': typeof DocumentsRoute
-  '/en': typeof EnRoute
+  '/en': typeof EnRouteWithChildren
   '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
   '/clients/$id': typeof ClientsIdRoute
   '/corporate-changes/$id': typeof CorporateChangesIdRoute
+  '/en/login': typeof EnLoginRoute
   '/incorporation/$id': typeof IncorporationIdRoute
   '/whatsapp/automation': typeof WhatsappAutomationRoute
 }
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/annual-returns/$id'
     | '/clients/$id'
     | '/corporate-changes/$id'
+    | '/en/login'
     | '/incorporation/$id'
     | '/whatsapp/automation'
   fileRoutesByTo: FileRoutesByTo
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/annual-returns/$id'
     | '/clients/$id'
     | '/corporate-changes/$id'
+    | '/en/login'
     | '/incorporation/$id'
     | '/whatsapp/automation'
   id:
@@ -299,6 +310,7 @@ export interface FileRouteTypes {
     | '/annual-returns/$id'
     | '/clients/$id'
     | '/corporate-changes/$id'
+    | '/en/login'
     | '/incorporation/$id'
     | '/whatsapp/automation'
   fileRoutesById: FileRoutesById
@@ -311,7 +323,7 @@ export interface RootRouteChildren {
   CorporateChangesRoute: typeof CorporateChangesRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   DocumentsRoute: typeof DocumentsRoute
-  EnRoute: typeof EnRoute
+  EnRoute: typeof EnRouteWithChildren
   ImportsRoute: typeof ImportsRoute
   IncorporationRoute: typeof IncorporationRouteWithChildren
   LoginRoute: typeof LoginRoute
@@ -473,6 +485,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CorporateChangesIdRouteImport
       parentRoute: typeof CorporateChangesRoute
     }
+    '/en/login': {
+      id: '/en/login'
+      path: '/login'
+      fullPath: '/en/login'
+      preLoaderRoute: typeof EnLoginRouteImport
+      parentRoute: typeof EnRoute
+    }
     '/incorporation/$id': {
       id: '/incorporation/$id'
       path: '/$id'
@@ -524,6 +543,16 @@ const CorporateChangesRouteChildren: CorporateChangesRouteChildren = {
 const CorporateChangesRouteWithChildren =
   CorporateChangesRoute._addFileChildren(CorporateChangesRouteChildren)
 
+interface EnRouteChildren {
+  EnLoginRoute: typeof EnLoginRoute
+}
+
+const EnRouteChildren: EnRouteChildren = {
+  EnLoginRoute: EnLoginRoute,
+}
+
+const EnRouteWithChildren = EnRoute._addFileChildren(EnRouteChildren)
+
 interface IncorporationRouteChildren {
   IncorporationIdRoute: typeof IncorporationIdRoute
 }
@@ -556,7 +585,7 @@ const rootRouteChildren: RootRouteChildren = {
   CorporateChangesRoute: CorporateChangesRouteWithChildren,
   DashboardRoute: DashboardRoute,
   DocumentsRoute: DocumentsRoute,
-  EnRoute: EnRoute,
+  EnRoute: EnRouteWithChildren,
   ImportsRoute: ImportsRoute,
   IncorporationRoute: IncorporationRouteWithChildren,
   LoginRoute: LoginRoute,

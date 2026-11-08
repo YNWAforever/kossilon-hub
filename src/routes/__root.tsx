@@ -199,7 +199,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 function RootShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   return (
-    <html lang={pathname === "/en" ? "en" : "zh-HK"}>
+    <html lang={pathname === "/en" || pathname.startsWith("/en/") ? "en" : "zh-HK"}>
       <head>
         <HeadContent />
       </head>

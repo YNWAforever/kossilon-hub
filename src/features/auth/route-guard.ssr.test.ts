@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { isPublicRoute, isServerRenderable } from "./route-guard";
 
 describe("isServerRenderable", () => {
-  it("renders the public documents and the login shell on the server", () => {
-    for (const pathname of ["/", "/en", "/login"]) {
+  it("renders the public documents and the login shells on the server", () => {
+    for (const pathname of ["/", "/en", "/login", "/en/login"]) {
       expect(isServerRenderable(pathname)).toBe(true);
     }
   });

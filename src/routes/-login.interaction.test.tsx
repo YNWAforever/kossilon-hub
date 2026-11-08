@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { ComponentType } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthSession } from "@/features/auth/session";
@@ -46,9 +45,7 @@ vi.mock("@/features/auth/auth-context-neon", () => ({
   }),
 }));
 
-import { Route } from "./login";
-
-const LoginPage = Route.options.component as ComponentType;
+import { LoginPage } from "@/features/auth/login-page";
 
 function enterEmail(email: string) {
   fireEvent.change(screen.getByLabelText("電郵"), { target: { value: email } });
@@ -237,7 +234,9 @@ describe("LoginPage", () => {
     enterEmail("staff@example.com");
     fireEvent.click(screen.getByRole("button", { name: "以電郵傳送登入連結" }));
 
-    await waitFor(() => expect(loginWithMagicLink).toHaveBeenCalledWith("staff@example.com"));
+    await waitFor(() =>
+      expect(loginWithMagicLink).toHaveBeenCalledWith("staff@example.com", undefined),
+    );
     expect(await screen.findByText("請查看電郵中的登入連結。")).toBeTruthy();
   });
 

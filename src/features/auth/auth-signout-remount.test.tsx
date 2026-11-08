@@ -54,7 +54,7 @@ vi.mock("@tanstack/react-router", async (original) => ({
 
 import { AuthProvider, useAuth } from "./auth-context-neon";
 import { Route } from "@/routes/__root";
-import { LoginPage } from "@/routes/login";
+import { LoginPage } from "@/features/auth/login-page";
 const Root = Route.options.component as ComponentType;
 const actor: AuthenticatedActor = {
   authUserId: "auth-A",
