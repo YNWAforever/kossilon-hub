@@ -29,7 +29,7 @@ and deployment preparation. Enter its path privately:
 $demoEnvFile = Read-Host "Approved demo environment file path"
 ```
 
-The file contains these names only; values are never committed. `VITE_ENABLE_DEMO_AUTH` may be absent, and if present it must be false. `VITE_ENABLE_NEON_AUTH_DEMO` is accepted by the validator but has no runtime consumer in the app — do not rely on it to change the login UI. Which methods a build exposes is `VITE_AUTH_METHODS` (comma-separated `password`, `magic-link`, `google`; unset keeps all three).
+The file contains these names only; values are never committed. `VITE_ENABLE_DEMO_AUTH` may be absent, and if present it must be false. `VITE_ENABLE_NEON_AUTH_DEMO` is accepted by the validator but has no runtime consumer in the app — do not rely on it to change the login UI. Which methods a build exposes is `VITE_AUTH_METHODS` (comma-separated `password`, `magic-link`, `google`; unset keeps all three). The production Neon Auth project has the Google provider configured (verified 2026-11-09: the auth proxy returns a `sign-in/social` init URL that redirects to `accounts.google.com`); production sets `password,magic-link,google`, and Google sign-in carries the same safe redirect target as the magic-link callback.
 
 - `DATABASE_URL`
 - `DEMO_DATABASE_URL`

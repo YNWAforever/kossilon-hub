@@ -435,3 +435,33 @@ describe("LoginPage denied state", () => {
     }
   });
 });
+
+describe("LoginPage sign-in options", () => {
+  it("toggles password visibility without submitting", () => {
+    render(<LoginPage />);
+
+    const password = screen.getByLabelText("密碼") as HTMLInputElement;
+    expect(password.type).toBe("password");
+
+    fireEvent.click(screen.getByRole("button", { name: "顯示密碼" }));
+    expect(password.type).toBe("text");
+
+    fireEvent.click(screen.getByRole("button", { name: "隱藏密碼" }));
+    expect(password.type).toBe("password");
+    expect(login).not.toHaveBeenCalled();
+  });
+
+  it("carries a safe deep link into Google sign-in", async () => {
+    const originalHref = window.location.href;
+    history.replaceState(null, "", "/login?redirect=%2Fdocuments%3Fsearch%3Dannual");
+
+    try {
+      render(<LoginPage />);
+      fireEvent.click(screen.getByRole("button", { name: "以 Google 帳戶登入" }));
+
+      await waitFor(() => expect(loginWithGoogle).toHaveBeenCalledWith("/documents?search=annual"));
+    } finally {
+      history.replaceState(null, "", originalHref);
+    }
+  });
+});
