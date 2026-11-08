@@ -18,9 +18,16 @@ on:
         description: "Include the maintenance/cron health alarm (scheduled runs do)"
         type: boolean
         default: false
+      simulate_failure:
+        description: "Fail on purpose to verify the alert path (opens an ops-alert issue)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
+  # Alerts are delivered as GitHub issues (which email watchers) so no external
+  # webhook is required. SMOKE_ALERT_WEBHOOK remains an optional extra.
+  issues: write
 
 concurrency:
   group: post-deploy-smoke
@@ -65,4 +72,26 @@ jobs:
             node --experimental-strip-types scripts/smoke-production.ts --expect-sha "$EXPECTED_SHA"
           else
             node --experimental-strip-types scripts/smoke-production.ts --expect-sha "$EXPECTED_SHA" --skip-health
+          fi
+
+      - name: Simulated failure (alert path test)
+        if: github.event_name == 'workflow_dispatch' && inputs.simulate_failure
+        run: |
+          echo "::error::simulated smoke failure to verify the alert path"
+          exit 1
+
+      - name: Open or update operations alert issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          title="Post-deploy smoke is failing"
+          body="Post-deploy smoke failed on ${GITHUB_REF_NAME} at ${GITHUB_SHA}."$'\n\n'"Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"$'\n\n'"This issue is the default alert channel for the scheduled production/demo smoke and the five-minute maintenance tick. It is updated in place while failures continue; close it once green again."
+          gh label create ops-alert --color B60205 --description "Automated operations alert" >/dev/null 2>&1 || true
+          existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --label ops-alert --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --label ops-alert --body "$body"
           fi

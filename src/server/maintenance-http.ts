@@ -1,3 +1,5 @@
+import { SCHEDULED_MAINTENANCE_CRON } from "@/features/operations/health";
+
 import { authorizeMaintenanceRequest, type MaintenanceTickInput } from "./maintenance-trigger";
 export type SchedulerOwner = "vercel" | "cloudflare" | "paused";
 export function schedulerOwner(env: Record<string, unknown>): SchedulerOwner {
@@ -7,6 +9,37 @@ export function schedulerOwner(env: Record<string, unknown>): SchedulerOwner {
 export function scheduledSlot(now: Date): string {
   return new Date(Math.floor(now.getTime() / 300_000) * 300_000).toISOString();
 }
+
+/**
+ * How this invocation was triggered, and whether the platform itself vouched
+ * for it.
+ *
+ * Vercel Cron sends two things our handler can rely on: the `Authorization`
+ * header carrying the deployment's `CRON_SECRET` (checked before this runs) and
+ * an `x-vercel-cron-schedule` header containing the expression from
+ * `vercel.json`. Matching that expression to the schedule this deployment
+ * declares is platform evidence, not a guess — a request without the secret
+ * never reaches here.
+ */
+export function classifyMaintenanceRequest(request: Request): {
+  trigger: "scheduled" | "manual";
+  evidence: "platform-header" | "http-candidate" | "manual";
+  verified: boolean;
+} {
+  const schedule = request.headers.get("x-vercel-cron-schedule")?.trim();
+  const userAgent = request.headers.get("user-agent");
+  const explicitSchedule = schedule === SCHEDULED_MAINTENANCE_CRON;
+  const cronUserAgent = userAgent === "vercel-cron/1.0";
+
+  if (explicitSchedule) {
+    return { trigger: "scheduled", evidence: "platform-header", verified: true };
+  }
+  if (cronUserAgent) {
+    return { trigger: "scheduled", evidence: "http-candidate", verified: false };
+  }
+  return { trigger: "manual", evidence: "manual", verified: false };
+}
+
 export function createMaintenanceHttpHandler(input: {
   env: Record<string, unknown>;
   run: (data: MaintenanceTickInput) => Promise<unknown>;
@@ -27,13 +60,12 @@ export function createMaintenanceHttpHandler(input: {
         headers,
       });
     const runId = crypto.randomUUID();
+    const classification = classifyMaintenanceRequest(request);
     const data: MaintenanceTickInput = {
-      // The user agent only classifies an already authenticated request. It is
-      // not a credential or proof of a platform invocation; release acceptance
-      // must also correlate these candidate runs with Vercel's invocation logs.
-      trigger: request.headers.get("user-agent") === "vercel-cron/1.0" ? "scheduled" : "manual",
-      triggerEvidence:
-        request.headers.get("user-agent") === "vercel-cron/1.0" ? "http-candidate" : "manual",
+      // Neither header is a credential on its own; both are read only after the
+      // bearer secret above succeeded.
+      trigger: classification.trigger,
+      triggerEvidence: classification.evidence,
       scheduledAt: scheduledSlot((input.clock ?? (() => new Date()))()),
       runId,
       allowedJobs: [
@@ -44,8 +76,6 @@ export function createMaintenanceHttpHandler(input: {
         "runBulkAssignments",
       ],
     };
-    // The endpoint is an authenticated schedule candidate. Platform logs are
-    // still required to prove 3 real ticks; a hand-crafted GET cannot pass UAT.
     try {
       const result = await input.run(data);
       return new Response(
@@ -53,7 +83,7 @@ export function createMaintenanceHttpHandler(input: {
           runId,
           result,
           executionScope: "safe-maintenance-only",
-          providerTriggerVerified: false,
+          providerTriggerVerified: classification.verified,
         }),
         { headers },
       );

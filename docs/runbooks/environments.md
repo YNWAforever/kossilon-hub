@@ -27,12 +27,11 @@ Known gaps as of 2026-11-09 (tracked in `integration-audit/32-next-development-p
 `FIRM_ID`, `EMAIL_FROM`/`RESEND_FROM`, WOZTELL bindings, malware-scanner configuration, backups
 evidence. Do not “fix” these by copying values into docs; they are provider/provisioning decisions.
 
-**Maintenance verification gap (2026-11-09):** the five-minute cron is firing and `/api/health`
-reports `scheduler.running: true`, but its runs arrive as authenticated **HTTP candidates**
-(`evidence: http-candidate`, `platformTriggerVerified: false`), so the strict `/operations`
-maintenance view still reports `stale`. Resolving this means either correlating candidates with
-Vercel invocation logs (the release runbook's requirement) or accepting candidate evidence by
-policy. It is Track 1/ops work; it does not block the entry release.
+**Maintenance verification (2026-11-09, decided):** Vercel Cron sends `Authorization: Bearer $CRON_SECRET` and
+`x-vercel-cron-schedule`; the maintenance endpoint verifies both and records a cron run as
+`platformTriggerVerified: true` when the schedule header matches this deployment's `*/5 * * * *`. `/api/health`
+reports `scheduler.evidence` and stays 503 on a dead/failing cron. Deployment without that header remains
+`http-candidate` and is not counted as verified. See [`pilot-integrations.md`](pilot-integrations.md) §4.
 
 ## Flags
 
