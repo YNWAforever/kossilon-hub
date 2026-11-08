@@ -144,6 +144,54 @@ export default {
         });
       }
 
+      // Public deployment identity: which commit is live and in which data mode.
+      // Used by the post-deploy smoke job and by anyone answering "what is live?".
+      if (request.method === "GET" && pathname === "/api/version") {
+        const [{ buildDeploymentVersion }, { currentDataMode }] = await Promise.all([
+          import("./server/version"),
+          import("./features/runtime/data-mode"),
+        ]);
+        const runtimeEnv = env && typeof env === "object" ? (env as Record<string, unknown>) : {};
+        const merged = { ...process.env, ...runtimeEnv };
+        const version = buildDeploymentVersion({
+          env: Object.fromEntries(
+            Object.entries(merged).filter(
+              (entry): entry is [string, string] => typeof entry[1] === "string",
+            ),
+          ),
+          dataMode: currentDataMode(),
+        });
+        return new Response(JSON.stringify(version), {
+          headers: {
+            "content-type": "application/json; charset=utf-8",
+            "cache-control": "no-store",
+          },
+        });
+      }
+
+      // Secret-free runtime health: app up + maintenance tick alive. A 503 here
+      // is what the scheduled smoke job alerts on.
+      if (pathname === "/api/health") {
+        const [{ createHealthHttpHandler }, { createMaintenanceRunRepository }] = await Promise.all(
+          [import("./features/operations/health-http"), import("./features/operations/repository")],
+        );
+        return createHealthHttpHandler({
+          now: () => new Date(),
+          readMaintenance: async () => {
+            const repository = createMaintenanceRunRepository();
+            try {
+              const [runs, lastScheduledSuccessAt] = await Promise.all([
+                repository.listRecentScheduledRuns(),
+                repository.lastScheduledSuccessAt(),
+              ]);
+              return { runs, lastScheduledSuccessAt };
+            } finally {
+              await repository.close();
+            }
+          },
+        })(request);
+      }
+
       if (pathname === "/api/handoffs/export") {
         const [{ createHandoffExportHttpHandler }, { buildHandoffExportForRequest }] =
           await Promise.all([

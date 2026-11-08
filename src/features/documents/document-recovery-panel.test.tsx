@@ -1,8 +1,21 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  configure,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DocumentRecoveryPanel } from "./document-recovery-panel";
+
+// This file drives several async recovery round-trips; the default 1s async
+// timeout turns a loaded CI runner into a false failure (observed twice on the
+// Node 24 leg). The assertions are still exact, just given time to arrive.
+configure({ asyncUtilTimeout: 5000 });
 const rpc = vi.hoisted(() => ({
   previewDocumentRecovery: vi.fn(),
   createDocumentUploadIntent: vi.fn(),
@@ -15,9 +28,9 @@ afterEach(() => {
   cleanup();
   vi.resetAllMocks();
 });
-function setup(
-  lookup: { state: string; intentId?: string; receiptState?: string } = { state: "absent" },
-) {
+type RecoveryRead = { state: string; intentId?: string; receiptState?: string };
+
+function setup(lookup: RecoveryRead = { state: "absent" }, reads: RecoveryRead[] = []) {
   rpc.previewDocumentRecovery.mockResolvedValue({
     documentId: "old",
     companyId: "company",
@@ -31,6 +44,10 @@ function setup(
   rpc.createDocumentUploadIntent.mockResolvedValue({ id: "new-intent", status: "created" });
   rpc.finalizeDocumentUpload.mockResolvedValue({ id: "new-document" });
   rpc.readOpenDocumentRecovery.mockResolvedValue(lookup);
+  // Queue the mount-time read and every later read *before* render. Setting a
+  // one-shot after `render()` raced the mount lookup: whichever won consumed the
+  // wrong value, which is the other half of the CI flake this file used to have.
+  for (const read of reads) rpc.readOpenDocumentRecovery.mockResolvedValueOnce(read);
   const onRecovered = vi.fn();
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -99,9 +116,11 @@ describe("controlled document recovery", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "批准並補傳" }));
     await screen.findByText(/上載 ID：current-intent/);
-    expect(rpc.readDocumentUploadReceipt).toHaveBeenLastCalledWith({
-      data: { intentId: "current-intent" },
-    });
+    await waitFor(() =>
+      expect(rpc.readDocumentUploadReceipt).toHaveBeenLastCalledWith({
+        data: { intentId: "current-intent" },
+      }),
+    );
     expect(rpc.createDocumentUploadIntent).toHaveBeenCalledTimes(1);
     expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
     expect(onRecovered).not.toHaveBeenCalled();
@@ -233,11 +252,19 @@ describe("controlled document recovery", () => {
   });
   it("reads an open recovery after a lost create and does not create again", async () => {
     setup();
-    rpc.readOpenDocumentRecovery.mockResolvedValueOnce({ state: "absent" }).mockResolvedValueOnce({
-      state: "open",
-      intentId: "recovered-intent",
-      receiptState: "unconfirmed",
-    });
+    // Answer by call shape and file-lookup sequence, never by mount timing:
+    // the mount lookup has no file; the pre-create lookup must be "absent";
+    // the reconcile after the lost create must find the open recovery.
+    let fileLookups = 0;
+    rpc.readOpenDocumentRecovery.mockImplementation(
+      async (input: { data: { fileName?: string } }) => {
+        if (!input.data.fileName) return { state: "absent" };
+        fileLookups += 1;
+        return fileLookups === 1
+          ? { state: "absent" }
+          : { state: "open", intentId: "recovered-intent", receiptState: "unconfirmed" };
+      },
+    );
     rpc.createDocumentUploadIntent.mockRejectedValue(new Error("lost response"));
     rpc.readDocumentUploadReceipt.mockResolvedValue({
       intentId: "recovered-intent",
@@ -251,9 +278,11 @@ describe("controlled document recovery", () => {
     expect(screen.queryByRole("button", { name: "批准並補傳" })).toBeNull();
     expect(rpc.createDocumentUploadIntent).toHaveBeenCalledTimes(1);
     expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
-    expect(rpc.readDocumentUploadReceipt).toHaveBeenCalledWith({
-      data: { intentId: "recovered-intent" },
-    });
+    await waitFor(() =>
+      expect(rpc.readDocumentUploadReceipt).toHaveBeenCalledWith({
+        data: { intentId: "recovered-intent" },
+      }),
+    );
   });
   it("loads an open recovery on mount before offering a create", async () => {
     setup({ state: "open", intentId: "existing-intent", receiptState: "unconfirmed" });
@@ -263,9 +292,11 @@ describe("controlled document recovery", () => {
     expect(rpc.createDocumentUploadIntent).not.toHaveBeenCalled();
     expect(rpc.finalizeDocumentUpload).not.toHaveBeenCalled();
     expect(rpc.readOpenDocumentRecovery).toHaveBeenCalledWith({ data: { documentId: "old" } });
-    expect(rpc.readDocumentUploadReceipt).toHaveBeenCalledWith({
-      data: { intentId: "existing-intent" },
-    });
+    await waitFor(() =>
+      expect(rpc.readDocumentUploadReceipt).toHaveBeenCalledWith({
+        data: { intentId: "existing-intent" },
+      }),
+    );
   });
   it("hides another actor's recovery without an intent id", async () => {
     setup({ state: "blocked" });

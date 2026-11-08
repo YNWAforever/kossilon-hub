@@ -24,7 +24,9 @@
     "db:seed:neon-auth-demo": "bun scripts/db-seed-neon-auth-demo.ts",
     "db:reset:neon-auth-demo": "bun scripts/db-reset-neon-auth-demo.ts",
     "verify:firm": "node --experimental-strip-types scripts/verify-firm-deployment.ts",
-    "verify:dev-server-imports": "node --experimental-strip-types scripts/verify-dev-server-imports.ts"
+    "verify:dev-server-imports": "node --experimental-strip-types scripts/verify-dev-server-imports.ts",
+    "smoke:prod": "node --experimental-strip-types scripts/smoke-production.ts",
+    "record:deployment": "node --experimental-strip-types scripts/record-deployment.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.2.8",
