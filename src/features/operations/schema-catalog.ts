@@ -1,5 +1,5 @@
 import type postgres from "postgres";
-import type { SchemaFact, SchemaLedger } from "./schema-health.ts";
+import type { SchemaFact, SchemaLedger, SchemaReleaseReceipt } from "./schema-health.ts";
 
 type Query = postgres.Sql | postgres.TransactionSql;
 const MARKER_MIGRATION = "0034_notification_outbox_dispatch_marker.sql";
@@ -9,6 +9,7 @@ export async function readSchemaCatalog(sql: Query): Promise<{
   ledger: SchemaLedger;
   facts: SchemaFact[];
   applicationPresent: boolean;
+  releaseReceipt: SchemaReleaseReceipt | null;
 }> {
   const [presence] = await sql<{ ledger: boolean; application: boolean }[]>`
     select to_regclass('schema_migrations') is not null ledger,
@@ -37,6 +38,23 @@ export async function readSchemaCatalog(sql: Query): Promise<{
       ledger = { present: true, applied: rows.map((row) => row.id) };
     }
   }
+
+  // The reconciled historical lineage records forward candidates in a release
+  // receipt instead of the migration ledger (the frozen package preserves the
+  // original 66 rows). Read it here so schema health can recognise that evidence.
+  let releaseReceipt: SchemaReleaseReceipt | null = null;
+  const [receiptPresence] = await sql<{ present: boolean }[]>`
+    select to_regclass('schema_release_receipts') is not null present
+  `;
+  if (receiptPresence?.present) {
+    const [receipt] = await sql<{ id: string; payload_sha256: string }[]>`
+      select id, payload_sha256 from schema_release_receipts order by executed_at desc limit 1
+    `;
+    if (receipt) {
+      releaseReceipt = { id: receipt.id, payloadSha256: receipt.payload_sha256 };
+    }
+  }
+  ledger = { ...ledger, releaseReceipt };
   const columns = await sql<
     { type: string; not_null: boolean; default_expression: string | null }[]
   >`
@@ -68,6 +86,7 @@ export async function readSchemaCatalog(sql: Query): Promise<{
   return {
     ledger,
     applicationPresent: presence.application,
+    releaseReceipt,
     facts: [
       {
         key: "notification_outbox.dispatch_started_attempt",

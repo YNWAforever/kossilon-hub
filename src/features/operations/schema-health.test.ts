@@ -4,6 +4,10 @@ import { describe, expect, it } from "vitest";
 import {
   earliestMissingLabel,
   EXPECTED_MIGRATIONS,
+  FORWARD_REPAIRED_MIGRATIONS,
+  HISTORICAL_MIGRATIONS,
+  HISTORICAL_RELEASE_MIGRATIONS,
+  HISTORICAL_RELEASE_RECEIPT,
   schemaHealthOf,
   type SchemaLedger,
 } from "./schema-health";
@@ -172,6 +176,105 @@ describe("schemaHealthOf", () => {
 
     expect(health.state).toBe("current");
     expect(health.appliedCount).toBe(EXPECTED_MIGRATIONS.length);
+  });
+});
+
+describe("reviewed historical lineage", () => {
+  /**
+   * The reconciled production ledger records only the 66 historical IDs; the
+   * package proves the 16 forward candidates with one release receipt and never
+   * inserts them into `schema_migrations`.
+   */
+  const productionLedger: SchemaLedger = ledger([
+    ...EXPECTED_MIGRATIONS.filter((id) => id < "0034"),
+    ...HISTORICAL_MIGRATIONS,
+  ]);
+  const receipt = {
+    id: HISTORICAL_RELEASE_RECEIPT.id,
+    payloadSha256: HISTORICAL_RELEASE_RECEIPT.payloadSha256,
+  };
+
+  it("treats the reconciled production lineage as current, not diverged", () => {
+    const health = schemaHealthOf({
+      expected: EXPECTED_MIGRATIONS,
+      ledger: productionLedger,
+      releaseReceipt: receipt,
+    });
+
+    expect(health.state).toBe("current");
+    expect(health.missing).toEqual([]);
+    expect(health.ahead).toEqual([]);
+    expect(health.historicalCount).toBe(HISTORICAL_MIGRATIONS.length);
+    expect(health.repairedCount).toBe(Object.keys(FORWARD_REPAIRED_MIGRATIONS).length);
+    expect(health.receiptedCount).toBe(HISTORICAL_RELEASE_MIGRATIONS.length);
+    expect(health.summary).toContain("歷史遷移");
+    expect(health.summary).toContain("發布回條");
+  });
+
+  it("does not call the lineage current without the release receipt", () => {
+    const health = schemaHealthOf({ expected: EXPECTED_MIGRATIONS, ledger: productionLedger });
+
+    expect(health.state).toBe("behind");
+    expect(health.missing).toContain("0034_notification_outbox_dispatch_marker.sql");
+    expect(health.missing).toContain("0082_case_template_snapshots.sql");
+    expect(health.missing).toHaveLength(1 + HISTORICAL_RELEASE_MIGRATIONS.length);
+  });
+
+  it("still reports an unknown extra migration as ahead", () => {
+    const health = schemaHealthOf({
+      expected: EXPECTED_MIGRATIONS,
+      ledger: ledger([...productionLedger.applied, "0099_something_newer.sql"]),
+      releaseReceipt: receipt,
+    });
+
+    expect(health.state).toBe("ahead");
+    expect(health.ahead).toEqual(["0099_something_newer.sql"]);
+  });
+
+  it("still reports a genuinely missing expected migration as behind", () => {
+    const health = schemaHealthOf({
+      expected: EXPECTED_MIGRATIONS,
+      ledger: productionLedger,
+      releaseReceipt: receipt,
+      releaseMigrations: HISTORICAL_RELEASE_MIGRATIONS.filter(
+        (id) => id !== "0082_case_template_snapshots.sql",
+      ),
+    });
+
+    expect(health.state).toBe("behind");
+    expect(health.missing).toEqual(["0082_case_template_snapshots.sql"]);
+  });
+
+  it("does not let the forward-repair alias hide a real gap", () => {
+    const health = schemaHealthOf({
+      expected: EXPECTED_MIGRATIONS,
+      ledger: productionLedger,
+      releaseReceipt: receipt,
+      releaseMigrations: HISTORICAL_RELEASE_MIGRATIONS.filter(
+        (id) => id !== "0067_repair_outbox_dispatch_marker.sql",
+      ),
+    });
+
+    expect(health.missing).toEqual([
+      "0034_notification_outbox_dispatch_marker.sql",
+      "0067_repair_outbox_dispatch_marker.sql",
+    ]);
+    expect(health.state).toBe("behind");
+  });
+
+  it("can be disabled to check strict history", () => {
+    const health = schemaHealthOf({
+      expected: EXPECTED_MIGRATIONS,
+      ledger: productionLedger,
+      historical: [],
+      forwardRepaired: {},
+      releaseReceipt: null,
+      releaseMigrations: [],
+    });
+
+    expect(health.state).toBe("diverged");
+    expect(health.ahead).toHaveLength(HISTORICAL_MIGRATIONS.length);
+    expect(health.missing).toHaveLength(1 + HISTORICAL_RELEASE_MIGRATIONS.length);
   });
 });
 

@@ -3,6 +3,7 @@ import {
   schemaHealthOf,
   type SchemaFact,
   type SchemaLedger,
+  type SchemaReleaseReceipt,
 } from "@/features/operations/schema-health";
 
 // These are the physical facts readSchemaCatalog currently verifies. This is
@@ -22,8 +23,13 @@ export class MaintenanceSchemaError extends Error {
 export function assertMaintenanceSchema(input: {
   ledger: SchemaLedger;
   facts: readonly SchemaFact[];
+  releaseReceipt?: SchemaReleaseReceipt | null;
 }) {
-  const health = schemaHealthOf({ expected: EXPECTED_MIGRATIONS, ledger: input.ledger });
+  const health = schemaHealthOf({
+    expected: EXPECTED_MIGRATIONS,
+    ledger: input.ledger,
+    releaseReceipt: input.releaseReceipt ?? input.ledger.releaseReceipt ?? null,
+  });
   if (
     health.state !== "current" ||
     REQUIRED_FACTS.some(

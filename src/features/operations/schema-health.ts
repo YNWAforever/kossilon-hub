@@ -77,6 +77,104 @@ export const EXPECTED_MIGRATIONS = [
   "0082_case_template_snapshots.sql",
 ] as const;
 
+/**
+ * Historical migration IDs recorded in the reconciled production ledger that
+ * this build knows about but does not replay.
+ *
+ * Provenance: the frozen `kossilon-historical-release-20261002` package
+ * (`docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json`,
+ * historical source `b87dfbba…`). The production database records these 33 IDs;
+ * the receipt table proves the forward candidates were applied on top of them.
+ * This is an exact reviewed list, not a pattern: do not extend it without a
+ * reviewed release, and never use it to bypass `db-migrate.ts`, which stays
+ * strict on purpose.
+ */
+export const HISTORICAL_MIGRATIONS = [
+  "0034_notification_delivery_attempts.sql",
+  "0035_maintenance_job_runs.sql",
+  "0036_bulk_operations.sql",
+  "0037_bulk_scheduler_job.sql",
+  "0038_nar_import_preview.sql",
+  "0039_nar_import_approval_apply.sql",
+  "0040_payment_reconciliation.sql",
+  "0041_filing_packages.sql",
+  "0042_manual_package_submission.sql",
+  "0043_filing_return_intake.sql",
+  "0044_message_preview.sql",
+  "0045_whatsapp_media_download.sql",
+  "0046_staff_lifecycle.sql",
+  "0047_checklist_template_versions.sql",
+  "0048_case_assignment_revision.sql",
+  "0049_bulk_case_assign_action.sql",
+  "0050_client_assignment_revision.sql",
+  "0051_bulk_client_assign_action.sql",
+  "0052_resource_tags.sql",
+  "0053_bulk_tag_action.sql",
+  "0054_bulk_reminder_drafts.sql",
+  "0055_bulk_domain_actions.sql",
+  "0056_document_analysis_context.sql",
+  "0057_import_preview_scale.sql",
+  "0058_import_apply_selection_limit.sql",
+  "0059_nar_import_stage_jobs.sql",
+  "0060_nar_import_stage_error_detail.sql",
+  "0061_subscription_reminder_drafts.sql",
+  "0062_legacy_filing_completion_eligibility.sql",
+  "0063_work_items_unconfigured_sla.sql",
+  "0064_work_item_sla_policy_attachment.sql",
+  "0065_bulk_sla_policy_attach.sql",
+  "0066_nar_import_scheduler_job.sql",
+] as const;
+
+/**
+ * Expected migration IDs whose ledger receipt is satisfied by a different,
+ * approved recorded ID.
+ *
+ * The dispatch marker exists twice by design: `0034_notification_outbox_dispatch_marker.sql`
+ * is the fresh-database archive copy, while on the historical production lineage
+ * the marker was applied forward-only by `0067_repair_outbox_dispatch_marker.sql`
+ * (the receipt package). Physical facts are still checked separately by
+ * `assertMaintenanceSchema`; this mapping only reconciles the ledger name.
+ */
+export const FORWARD_REPAIRED_MIGRATIONS: Readonly<Record<string, readonly string[]>> = {
+  "0034_notification_outbox_dispatch_marker.sql": ["0067_repair_outbox_dispatch_marker.sql"],
+};
+
+/**
+ * The release receipt that proves the forward candidate migrations were applied
+ * to the reconciled lineage. The frozen package deliberately does **not** insert
+ * 0067–0082 into `schema_migrations`; it preserves the historical ledger and
+ * records one `schema_release_receipts` row instead.
+ */
+export const HISTORICAL_RELEASE_RECEIPT = {
+  id: "kossilon-historical-release-20261002",
+  payloadSha256: "e685b365b785afada3745c60e4c9eb5b7de0153c5780be0b18e0122902d7b480",
+} as const;
+
+/** The 16 forward candidate migrations proved by `HISTORICAL_RELEASE_RECEIPT`. */
+export const HISTORICAL_RELEASE_MIGRATIONS = [
+  "0067_repair_outbox_dispatch_marker.sql",
+  "0068_company_historical_data_origin.sql",
+  "0069_restore_maintenance_job_contract.sql",
+  "0070_payment_evidence_entries.sql",
+  "0071_staff_admin_contract.sql",
+  "0072_durable_bulk_assignment.sql",
+  "0073_bulk_maintenance_job_kind.sql",
+  "0074_reviewed_nar_apply.sql",
+  "0075_nar_legacy_year_review.sql",
+  "0076_document_scan_review_versions.sql",
+  "0077_document_analysis_evidence.sql",
+  "0078_whatsapp_manual_intake.sql",
+  "0079_bulk_daily_maintenance.sql",
+  "0080_manual_handoff_provenance.sql",
+  "0081_handoff_attempt_idempotency.sql",
+  "0082_case_template_snapshots.sql",
+] as const;
+
+export type SchemaReleaseReceipt = {
+  id: string;
+  payloadSha256: string;
+};
+
 export type SchemaLedger = {
   /**
    * False when `schema_migrations` does not exist at all.
@@ -91,6 +189,8 @@ export type SchemaLedger = {
   applied: readonly string[];
   /** Only actual ledger hash columns; absent historical hashes stay unknown. */
   hashes?: Readonly<Record<string, string | null>>;
+  /** Release receipt that proves forward candidates not present in the ledger. */
+  releaseReceipt?: SchemaReleaseReceipt | null;
 };
 
 export type SchemaHealthState =
@@ -128,6 +228,12 @@ export type SchemaHealth = {
   /** Null when there is no ledger to count, which is not the same as zero. */
   appliedCount: number | null;
   expectedCount: number;
+  /** Recorded historical IDs recognised by the reviewed lineage policy. */
+  historicalCount?: number;
+  /** Expected IDs satisfied by a reviewed forward-repair alias. */
+  repairedCount?: number;
+  /** Expected forward candidates proved by the historical release receipt. */
+  receiptedCount?: number;
   /** Said in words. A colour is not a sentence, and this row is what staff read. */
   summary: string;
 };
@@ -135,6 +241,23 @@ export type SchemaHealth = {
 export function schemaHealthOf(input: {
   expected: readonly string[];
   ledger: SchemaLedger;
+  /**
+   * Reviewed lineage: recorded IDs this build knows but does not replay.
+   * Defaults to `HISTORICAL_MIGRATIONS`; pass `[]` to check strict equality.
+   */
+  historical?: readonly string[];
+  /**
+   * Expected ID → alternate recorded IDs that satisfy it.
+   * Defaults to `FORWARD_REPAIRED_MIGRATIONS`.
+   */
+  forwardRepaired?: Readonly<Record<string, readonly string[]>>;
+  /**
+   * Release receipt proving forward candidates were applied without ledger rows.
+   * Defaults to the ledger's own `releaseReceipt`.
+   */
+  releaseReceipt?: SchemaReleaseReceipt | null;
+  /** Expected forward-candidate IDs proved by the receipt. Defaults to the reviewed list. */
+  releaseMigrations?: readonly string[];
 }): SchemaHealth {
   const expectedCount = input.expected.length;
 
@@ -156,9 +279,48 @@ export function schemaHealthOf(input: {
 
   const applied = new Set(input.ledger.applied);
   const expected = new Set(input.expected);
-  const missing = input.expected.filter((id) => !applied.has(id));
-  const ahead = [...applied].filter((id) => !expected.has(id)).sort();
-  const shared = { missing, ahead, appliedCount: applied.size, expectedCount };
+  const historical = new Set(input.historical ?? HISTORICAL_MIGRATIONS);
+  const receipt = input.releaseReceipt ?? input.ledger.releaseReceipt ?? null;
+  const receiptVerified =
+    receipt !== null &&
+    receipt.id === HISTORICAL_RELEASE_RECEIPT.id &&
+    receipt.payloadSha256.toLowerCase() === HISTORICAL_RELEASE_RECEIPT.payloadSha256;
+  const receipted = new Set(
+    receiptVerified
+      ? (input.releaseMigrations ?? HISTORICAL_RELEASE_MIGRATIONS).filter((id) => expected.has(id))
+      : [],
+  );
+  const satisfied = (id: string) => applied.has(id) || receipted.has(id);
+  const repaired = new Map<string, string>();
+  // Forward repair is a property of the receipted historical lineage only: a
+  // ledger that merely happens to record the alias without the release receipt
+  // is unexplained and must still report the gap.
+  if (receiptVerified) {
+    for (const [expectedId, aliases] of Object.entries(
+      input.forwardRepaired ?? FORWARD_REPAIRED_MIGRATIONS,
+    )) {
+      if (!expected.has(expectedId) || satisfied(expectedId)) continue;
+      const alias = aliases.find((id) => satisfied(id));
+      if (alias) repaired.set(expectedId, alias);
+    }
+  }
+
+  const missing = input.expected.filter((id) => !satisfied(id) && !repaired.has(id));
+  const recognisedHistorical = input.ledger.applied.filter(
+    (id) => !expected.has(id) && historical.has(id),
+  );
+  const ahead = input.ledger.applied
+    .filter((id) => !expected.has(id) && !historical.has(id))
+    .sort();
+  const shared = {
+    missing,
+    ahead,
+    appliedCount: applied.size,
+    expectedCount,
+    historicalCount: recognisedHistorical.length,
+    repairedCount: repaired.size,
+    receiptedCount: receipted.size,
+  };
 
   if (missing.length > 0 && ahead.length > 0) {
     return {
@@ -190,10 +352,19 @@ export function schemaHealthOf(input: {
     };
   }
 
+  const lineageNote = [
+    recognisedHistorical.length > 0 ? `${recognisedHistorical.length} 個已審核的歷史遷移` : null,
+    repaired.size > 0 ? `${repaired.size} 個以審核中的替代遷移滿足` : null,
+    receipted.size > 0 ? `${receipted.size} 個以發布回條證明` : null,
+  ].filter((part): part is string => part !== null);
+
   return {
     ...shared,
     state: "current",
-    summary: `${expectedCount} 個預期遷移均有紀錄；實體欄位及索引仍須另行核對。`,
+    summary:
+      `${expectedCount} 個預期遷移均有紀錄` +
+      (lineageNote.length > 0 ? `（另有 ${lineageNote.join("、")}）` : "") +
+      "；實體欄位及索引仍須另行核對。",
   };
 }
 
