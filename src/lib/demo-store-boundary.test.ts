@@ -138,6 +138,7 @@ const ROUTES_WITHOUT_A_MODE_BRANCH: Record<string, string> = {
   "routes/index.tsx": "public marketing document; renders no firm data in either mode",
   "routes/en.tsx": "public English marketing document; renders no firm data in either mode",
   "routes/login.tsx": "unauthenticated entry point; renders no firm data in either mode",
+  "routes/en_.login.tsx": "English login shell; renders no firm data in either mode",
   "routes/admin.tsx": "branches inside AdminPage via Route.useRouteContext",
   "routes/__root.tsx": "the layout; reads dataMode in beforeLoad rather than in a component",
 };
@@ -164,7 +165,7 @@ describe("demo user fixtures stay out of production paths", () => {
   it("reaches every other consumer through the gated auth context", () => {
     // login.tsx is the reference: it takes demoUsers from useAuth(), and the Neon
     // provider hands back an empty list outside demo mode.
-    const login = read("routes/login.tsx");
+    const login = read("features/auth/login-page.tsx");
 
     expect(importsBinding(login, "demoUsers", "session")).toBe(false);
     expect(login).toContain("useAuth()");

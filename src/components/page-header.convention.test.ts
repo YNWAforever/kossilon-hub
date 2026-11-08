@@ -33,7 +33,7 @@ describe("page header convention", () => {
     // shell, so their headings are not page titles.
     const ownsItsOwnHeading = new Set([
       "routes/__root.tsx", // 404 and error screens
-      "routes/login.tsx", // unauthenticated layout
+      "features/auth/login-page.tsx", // unauthenticated layout
       "features/marketing/page.tsx", // public marketing layout, outside the staff shell
       "components/page-header.tsx", // the convention itself
     ]);
@@ -49,6 +49,7 @@ describe("page header convention", () => {
     const passThroughRoutes = new Set([
       "routes/__root.tsx",
       "routes/login.tsx",
+      "routes/en_.login.tsx", // pass-through to the shared login page component
       "routes/index.tsx", // public marketing page owns its hero heading
       "routes/en.tsx", // English version of the same public layout
       // A pass-through to the demo and production case-detail components, which
