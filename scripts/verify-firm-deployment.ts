@@ -163,6 +163,7 @@ const ROUTES_WITHOUT_A_MODE_BRANCH = new Set([
   "index.tsx", // public marketing; no firm data in either mode
   "en.tsx", // English public marketing; no firm data in either mode
   "login.tsx",
+  "en_.login.tsx", // English unauthenticated entry point; no firm data in either mode
   "admin.tsx",
   "work-queue.tsx",
   "__root.tsx",
