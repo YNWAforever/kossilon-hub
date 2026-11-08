@@ -150,6 +150,15 @@ export type MaintenanceRunRepository = {
    * runtime evidence for `document-text-extraction` (see capabilities.ts).
    */
   textLayerObserved(): Promise<boolean>;
+  /**
+   * Which database this runtime is connected to.
+   *
+   * Two deployment records can agree on the commit while pointing at different
+   * Neon branches; without this, "the scheduler is stale" is unactionable.
+   * `branchId` is Neon's branch identifier when the platform exposes it, null
+   * otherwise. No hostname or credential is returned.
+   */
+  databaseIdentity(): Promise<{ database: string; branchId: string | null }>;
   close(): Promise<void>;
 };
 
@@ -436,6 +445,15 @@ export function createMaintenanceRunRepository(
         startedUnknown: row.started_unknown,
         claimedExpired: row.claimed_expired,
         lastStartedAt: row.last_started_at,
+      };
+    },
+    async databaseIdentity() {
+      const [row] = await sql<{ database: string; branch_id: string | null }[]>`
+        select current_database() as database, current_setting('neon.branch_id', true) as branch_id
+      `;
+      return {
+        database: row?.database ?? "unknown",
+        branchId: row?.branch_id ?? null,
       };
     },
     async textLayerObserved() {

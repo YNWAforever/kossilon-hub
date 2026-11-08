@@ -23,7 +23,11 @@ function run(overrides: Partial<MaintenanceRunRecord> = {}): MaintenanceRunRecor
 function handler(runs: MaintenanceRunRecord[], lastScheduledSuccessAt: string | null = null) {
   return createHealthHttpHandler({
     now: () => new Date(NOW),
-    readMaintenance: async () => ({ runs, lastScheduledSuccessAt }),
+    readMaintenance: async () => ({
+      runs,
+      lastScheduledSuccessAt,
+      database: { database: "neondb", branchId: "br-muddy-mountain-aov8bbku" },
+    }),
   });
 }
 
@@ -35,6 +39,7 @@ describe("/api/health", () => {
     const body = await response.json();
     expect(body.ok).toBe(true);
     expect(body.maintenance.state).toBe("healthy");
+    expect(body.database).toEqual({ database: "neondb", branchId: "br-muddy-mountain-aov8bbku" });
     expect(response.headers.get("cache-control")).toBe("no-store");
   });
 

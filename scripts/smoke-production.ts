@@ -13,6 +13,11 @@ function argument(name: string): string | undefined {
   return match?.slice(prefix.length);
 }
 
+// Deploy-triggered runs verify the deployment; they do not own the scheduler
+// alarm. A pre-existing dead cron must not make every deploy look broken — the
+// scheduled monitor is the run that carries /api/health.
+const includeHealth = !process.argv.includes("--skip-health");
+
 const productionOrigin =
   argument("origin") ?? process.env.SMOKE_PRODUCTION_ORIGIN ?? PRODUCTION_ORIGIN;
 const demoOrigin = argument("demo-origin") ?? process.env.SMOKE_DEMO_ORIGIN ?? DEMO_ORIGIN;
@@ -21,7 +26,7 @@ const expectedSha = argument("expect-sha") ?? process.env.EXPECTED_SHA ?? "";
 const checks = [
   ...productionChecks(productionOrigin, expectedSha || undefined),
   ...demoChecks(demoOrigin),
-];
+].filter((check) => includeHealth || check.name !== "health");
 
 const { ok, results } = await runSmokeChecks(fetch, checks);
 const report = formatSmokeResults(results);
@@ -36,7 +41,8 @@ if (process.env.GITHUB_STEP_SUMMARY) {
       "",
       `Production: ${productionOrigin}`,
       `Demo: ${demoOrigin}`,
-      expectedSha ? `Expected SHA: \`${expectedSha}\`` : "",
+      `Expected SHA: ${expectedSha || "-"}`,
+      `Health/cron alarm: ${includeHealth ? "included" : "skipped (deploy verification mode)"}`,
       "",
       "```",
       report,
