@@ -28,9 +28,21 @@ A synthetic, disposable rehearsal can establish local mechanics while approved N
 
 Current local checkpoint: UC193 and the UC189 GET party-seed prerequisite are recorded under `docs/audit-remediation/cosec-20261024-restore-5aa3e18c/`. Consult its concrete candidate and blockers; the directory name is not an authorization or a success receipt.
 
-## Pre-pilot blocker
+## Executed drill — 2026-11-10
 
-Backup readiness remains blocked until an approved Neon staging branch is available for a non-destructive rehearsal. The dry-run verifier records this as the backups blocked gate and performs no export, restore, cleanup, or retention-policy change.
+The owner-approved restore-branch drill **passed**:
+
+- Created `backup-drill-20261109-180800` from production branch `br-muddy-mountain-aov8bbku`.
+- The branch became ready and its restored database verified: `schema_migrations` **67 ids**,
+  `request_access_requests` present, **443** `maintenance_runs`, **3** `companies`.
+- The drill branch was deleted and a follow-up list confirmed no leftover drill branches.
+
+Scope: this proves the **Postgres branch restore** path (copy-on-write from production). The **R2 object-store restore and
+DB+R2 pairing remain unexercised** and are still a pilot risk. Receipt: `docs/releases/backup-drill-latest.json`.
+
+Branch note: a Neon branch copy has no compute endpoint by default; the drill creates one `read_write` endpoint and
+passes its id to the connection-URI request. The API key used for the drill was local-only and must be revoked/deleted
+after use.
 
 ## Automated restore-branch drill (owner-approved)
 

@@ -1,0 +1,35 @@
+{
+  "startedAt": "2026-11-09T18:08:00.395Z",
+  "projectId": "red-morning-00331124",
+  "parentBranchId": "br-muddy-mountain-aov8bbku",
+  "drillBranchName": "backup-drill-20261109-180800",
+  "steps": [
+    {
+      "step": "project-readable",
+      "ok": true,
+      "detail": "Kossilon Hub (red-morning-00331124)"
+    },
+    {
+      "step": "branch-created",
+      "ok": true,
+      "detail": "br-round-bird-ao3tw1p4 (backup-drill-20261109-180800)"
+    },
+    {
+      "step": "branch-ready",
+      "ok": true,
+      "detail": "ready"
+    },
+    {
+      "step": "restored-data-verified",
+      "ok": true,
+      "detail": "{\"ledgerPresent\":true,\"ledgerCount\":67,\"requestAccessTablePresent\":true,\"maintenanceRuns\":443,\"companies\":3}"
+    },
+    {
+      "step": "drill-branch-deleted",
+      "ok": true,
+      "detail": "br-round-bird-ao3tw1p4 deleted"
+    }
+  ],
+  "passed": true,
+  "finishedAt": "2026-11-09T18:08:06.399Z"
+}

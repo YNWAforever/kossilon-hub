@@ -100,13 +100,18 @@ async function main() {
       detail: `${project.project.name} (${project.project.id})`,
     });
 
-    const created = await neon<{ branch: { id: string; name: string; current_state?: string } }>(
-      `/projects/${PROJECT_ID}/branches`,
-      {
-        method: "POST",
-        body: JSON.stringify({ branch: { name, parent_id: PARENT_BRANCH_ID } }),
-      },
-    );
+    const created = await neon<{
+      branch: { id: string; name: string; current_state?: string };
+      endpoints?: { id: string; current_state?: string }[];
+    }>(`/projects/${PROJECT_ID}/branches`, {
+      method: "POST",
+      // A branch copy has no compute endpoint by default; the connection URI
+      // endpoint resolves only once the drill branch owns one.
+      body: JSON.stringify({
+        branch: { name, parent_id: PARENT_BRANCH_ID },
+        endpoints: [{ type: "read_write" }],
+      }),
+    });
     branchId = created.branch.id;
     steps.push({
       step: "branch-created",
@@ -115,11 +120,17 @@ async function main() {
     });
 
     let ready = false;
+    let endpointId: string | undefined;
     for (let attempt = 0; attempt < 30; attempt += 1) {
-      const branch = await neon<{ branch: { current_state?: string } }>(
-        `/projects/${PROJECT_ID}/branches/${branchId}`,
-      );
-      if (branch.branch.current_state === "ready") {
+      const branch = await neon<{
+        branch: { current_state?: string };
+        endpoints?: { id: string; current_state?: string }[];
+      }>(`/projects/${PROJECT_ID}/branches/${branchId}`);
+      endpointId = branch.endpoints?.[0]?.id;
+      const endpointReady =
+        !branch.endpoints ||
+        branch.endpoints.every((endpoint) => endpoint.current_state === "ready");
+      if (branch.branch.current_state === "ready" && endpointReady) {
         ready = true;
         break;
       }
@@ -133,7 +144,7 @@ async function main() {
     if (!ready) throw new Error("restored branch did not become ready");
 
     const connection = await neon<{ uri: string }>(
-      `/projects/${PROJECT_ID}/connection_uri?branch_id=${branchId}&database_name=${DATABASE}&role_name=${ROLE}`,
+      `/projects/${PROJECT_ID}/connection_uri?branch_id=${branchId}${endpointId ? `&endpoint_id=${endpointId}` : ""}&database_name=${DATABASE}&role_name=${ROLE}`,
     );
     const sql = postgres(connection.uri, { ssl: "require", max: 1, connect_timeout: 20 });
     try {
