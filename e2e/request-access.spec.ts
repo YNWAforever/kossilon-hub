@@ -17,11 +17,11 @@ test("persists a public request and can be reviewed", async ({ page }, info) => 
 
   try {
     await page.goto("/request-access");
-    await page.getByLabel("姓名").fill("E2E Request");
-    await page.getByLabel("工作電郵").fill(email);
-    await page.getByLabel("公司").fill("E2E Firm Limited");
-    await page.getByLabel("團隊（選填）").fill("E2E Team");
-    await page.getByLabel("其他補充（選填）").fill("Created by the browser persistence test.");
+    await page.locator("#request-access-name").fill("E2E Request");
+    await page.locator("#request-access-email").fill(email);
+    await page.locator("#request-access-firm").fill("E2E Firm Limited");
+    await page.locator("#request-access-team").fill("E2E Team");
+    await page.locator("#request-access-message").fill("Created by the browser persistence test.");
     await page.getByRole("checkbox").check();
     await page.getByRole("button", { name: "送出申請" }).click();
 
