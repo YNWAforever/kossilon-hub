@@ -1,0 +1,45 @@
+{
+  "rehearsedAt": "2026-11-09T04:33:04.388Z",
+  "mode": "read-only",
+  "productionAlias": "https://kossilon-hub.vercel.app",
+  "currentSha": "b0af147077a347770298191cd4f37d14026fdafa",
+  "rollbackCandidate": {
+    "deploymentId": "dpl_CAKX9cRYJzAh1mGBPWBtAsKawZjC",
+    "sha": "6d34fa06942fff2f3771a2947eb0b9ec5d2fe575",
+    "url": "kossilon-ndz02jyjl-ynwaforevers-projects.vercel.app",
+    "created": "2026-11-09T04:02:31.374Z"
+  },
+  "checks": [
+    {
+      "name": "rollback-candidate-version",
+      "ok": true,
+      "detail": "status=200 sha=6d34fa06942fff2f3771a2947eb0b9ec5d2fe575 expected=6d34fa06942fff2f3771a2947eb0b9ec5d2fe575"
+    },
+    {
+      "name": "rollback-candidate-health",
+      "ok": true,
+      "detail": "status=200 ok=true"
+    },
+    {
+      "name": "rollback-candidate-login-headers",
+      "ok": true,
+      "detail": "status=200 nosniff=true csp=true"
+    },
+    {
+      "name": "capability-pause-request-access",
+      "ok": true,
+      "detail": "status=200 mailto=true form=false"
+    },
+    {
+      "name": "capability-status-readable",
+      "ok": true,
+      "detail": "status=200 ids=firm,database,auth,documents,email,whatsapp,document-scanner,scheduler"
+    },
+    {
+      "name": "rehearsal-is-read-only",
+      "ok": true,
+      "detail": "no alias switch performed; current sha b0af147077a347770298191cd4f37d14026fdafa"
+    }
+  ],
+  "passed": true
+}
