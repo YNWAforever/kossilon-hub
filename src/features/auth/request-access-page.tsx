@@ -1,5 +1,6 @@
 import { ArrowLeft, Mail } from "lucide-react";
 
+import { RequestAccessForm } from "@/features/auth/request-access-form";
 import { PRODUCT_NAME } from "@/lib/brand";
 
 type RequestAccessLocale = "zh-HK" | "en";
@@ -9,26 +10,49 @@ const ACCESS_MAILTO =
 
 /**
  * Public request-access page. There is no self-service signup: access is granted
- * by a firm administrator through Neon Auth, so this page explains the steps and
- * opens an email with the right subject. It stores nothing and needs no session.
+ * by a firm administrator through Neon Auth.
+ *
+ * When the persistence table exists (`formAvailable`), the page renders the
+ * review form; otherwise it keeps the mailto fallback. The fallback is what
+ * production shows until migration 0083 is explicitly applied.
  */
-export function RequestAccessPage({ locale }: { locale: RequestAccessLocale }) {
+export function RequestAccessPage({
+  locale,
+  formAvailable = false,
+}: {
+  locale: RequestAccessLocale;
+  formAvailable?: boolean;
+}) {
   const en = locale === "en";
   const home = en ? "/en" : "/";
 
-  const steps = en
-    ? [
-        "Confirm which firm and team you work with.",
-        "Email the administrator from your work address.",
-        "An administrator invites that address to the workspace.",
-        "Open the sign-in link from the invitation email.",
-      ]
-    : [
-        "確認你所屬的公司及團隊。",
-        "使用工作電郵聯絡系統管理員。",
-        "管理員會把該電郵加入工作空間。",
-        "開啟邀請電郵中的登入連結。",
-      ];
+  const steps = formAvailable
+    ? en
+      ? [
+          "Fill in your firm, team and work email.",
+          "An administrator reviews the request.",
+          "If approved, you receive a workspace invitation email.",
+          "Open the invitation link to sign in.",
+        ]
+      : [
+          "填寫公司、團隊及工作電郵。",
+          "管理員審核申請。",
+          "如獲批准，你會收到工作空間邀請電郵。",
+          "開啟邀請連結即可登入。",
+        ]
+    : en
+      ? [
+          "Confirm which firm and team you work with.",
+          "Email the administrator from your work address.",
+          "An administrator invites that address to the workspace.",
+          "Open the sign-in link from the invitation email.",
+        ]
+      : [
+          "確認你所屬的公司及團隊。",
+          "使用工作電郵聯絡系統管理員。",
+          "管理員會把該電郵加入工作空間。",
+          "開啟邀請電郵中的登入連結。",
+        ];
 
   return (
     <main className="min-h-screen bg-background px-6 py-12 text-foreground">
@@ -65,19 +89,25 @@ export function RequestAccessPage({ locale }: { locale: RequestAccessLocale }) {
             ))}
           </ol>
 
-          <a
-            className="mt-8 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            href={ACCESS_MAILTO}
-          >
-            <Mail className="h-4 w-4" aria-hidden="true" />
-            {en ? "Email the administrator" : "電郵公司管理員"}
-          </a>
+          {formAvailable ? (
+            <RequestAccessForm locale={locale} />
+          ) : (
+            <>
+              <a
+                className="mt-8 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                href={ACCESS_MAILTO}
+              >
+                <Mail className="h-4 w-4" aria-hidden="true" />
+                {en ? "Email the administrator" : "電郵公司管理員"}
+              </a>
 
-          <p className="mt-4 text-xs leading-5 text-muted-foreground">
-            {en
-              ? "The address is used only to reply about this request. Do not include client documents or passwords."
-              : "此地址只用於回覆你的開通查詢；請勿附上客戶文件或密碼。"}
-          </p>
+              <p className="mt-4 text-xs leading-5 text-muted-foreground">
+                {en
+                  ? "The address is used only to reply about this request. Do not include client documents or passwords."
+                  : "此地址只用於回覆你的開通查詢；請勿附上客戶文件或密碼。"}
+              </p>
+            </>
+          )}
         </section>
       </div>
     </main>
