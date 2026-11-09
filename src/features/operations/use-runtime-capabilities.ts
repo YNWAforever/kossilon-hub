@@ -1,8 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { currentDataMode, type DataMode } from "@/features/runtime/data-mode";
 
 type Capabilities = Record<string, boolean>;
+
+export type CapabilityRow = {
+  id: string;
+  configured: boolean;
+  missing: readonly string[];
+};
 
 export const WHATSAPP_NAV_PATHS = ["/whatsapp", "/whatsapp/automation"] as const;
 
@@ -29,57 +35,86 @@ export function isWhatsAppCapabilityUnavailable(input: {
   return input.dataMode === "production" && input.loaded && input.configured.whatsapp !== true;
 }
 
-let capabilityPromise: Promise<Capabilities> | null = null;
+let capabilityPromise: Promise<{ configured: Capabilities; rows: CapabilityRow[] }> | null = null;
 
-async function loadCapabilities(): Promise<Capabilities> {
+async function loadCapabilities(): Promise<{
+  configured: Capabilities;
+  rows: CapabilityRow[];
+}> {
   const response = await fetch("/api/capabilities", {
     headers: { accept: "application/json" },
     cache: "no-store",
   });
   if (!response.ok) throw new Error(`capabilities unavailable: ${response.status}`);
   const body = (await response.json()) as {
-    capabilities?: { id?: string; configured?: boolean }[];
+    capabilities?: { id?: string; configured?: boolean; missing?: unknown }[];
   };
-  return Object.fromEntries(
-    (body.capabilities ?? []).flatMap((capability) =>
-      capability.id ? [[capability.id, capability.configured === true] as const] : [],
-    ),
+  const rows = (body.capabilities ?? []).flatMap((capability) =>
+    capability.id
+      ? [
+          {
+            id: capability.id,
+            configured: capability.configured === true,
+            missing: Array.isArray(capability.missing)
+              ? capability.missing.filter((item): item is string => typeof item === "string")
+              : [],
+          },
+        ]
+      : [],
   );
+  return {
+    configured: Object.fromEntries(rows.map((row) => [row.id, row.configured])),
+    rows,
+  };
 }
 
 /**
  * Read-only capability report for UI honesty. Cached for the session; a failed
- * fetch returns an empty map (callers treat unknown as not configured).
+ * fetch returns an empty report (callers treat unknown as not configured).
  */
 export function useRuntimeCapabilities(): {
   loaded: boolean;
   configured: Capabilities;
+  rows: CapabilityRow[];
   dataMode: DataMode;
+  refresh: () => void;
 } {
   const dataMode = currentDataMode();
-  const [state, setState] = useState<{ loaded: boolean; configured: Capabilities }>({
+  const [reloadToken, setReloadToken] = useState(0);
+  const [state, setState] = useState<{
+    loaded: boolean;
+    configured: Capabilities;
+    rows: CapabilityRow[];
+  }>({
     loaded: dataMode !== "production",
     configured: {},
+    rows: [],
   });
+
+  const refresh = useCallback(() => {
+    capabilityPromise = null;
+    setState({ loaded: false, configured: {}, rows: [] });
+    setReloadToken((token) => token + 1);
+  }, []);
 
   useEffect(() => {
     if (dataMode !== "production") {
-      setState({ loaded: true, configured: {} });
+      setState({ loaded: true, configured: {}, rows: [] });
       return;
     }
     let cancelled = false;
     capabilityPromise ??= loadCapabilities().catch(() => {
       // Allow a later mount to retry after a transient failure.
       capabilityPromise = null;
-      return {};
+      return { configured: {}, rows: [] };
     });
-    void capabilityPromise.then((configured) => {
-      if (!cancelled) setState({ loaded: true, configured });
+    void capabilityPromise.then((report) => {
+      if (!cancelled) setState({ loaded: true, ...report });
     });
     return () => {
       cancelled = true;
     };
-  }, [dataMode]);
+  }, [dataMode, reloadToken]);
 
-  return { ...state, dataMode };
+  return { ...state, dataMode, refresh };
 }
