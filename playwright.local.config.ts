@@ -22,6 +22,7 @@ console.log(`[local-browser-evidence] run root: ${runRoot}`);
 export default defineConfig({
   testDir: "./e2e",
   testMatch: [
+    "a11y.spec.ts",
     "entry.spec.ts",
     "marketing.spec.ts",
     "local-ux.spec.ts",
