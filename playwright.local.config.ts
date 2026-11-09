@@ -28,6 +28,7 @@ export default defineConfig({
     "local-ux.spec.ts",
     "performance.spec.ts",
     "request-access.spec.ts",
+    "production-csp.spec.ts",
     "audit-release-demo.spec.ts",
     "audit-persona-local.spec.ts",
     "continuation-reflow.spec.ts",
