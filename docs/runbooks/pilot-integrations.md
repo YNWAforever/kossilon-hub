@@ -11,14 +11,11 @@ production env value is changed by accident. Canonical environments: [`environme
 **Decision: invite-only. No self-service signup, no open trial.**
 
 - `/login` remains invite-only; `/request-access` stays the public explanation.
-- **Implemented (code, awaiting migration approval):** migration `0083_request_access_requests.sql` is staged in
-  `db/pending-migrations/` (not `db/migrations/`, so it cannot be applied or break the live schema guard by
-  accident), together with a public request-access form and server functions that write a review queue
-  (`request_access_requests`, one pending row per address). The route loader checks
-  `to_regclass('public.request_access_requests')` and renders the form only when the table exists; otherwise the
-  page keeps the current mailto fallback. Production therefore stays unchanged until the migration is approved
-  and applied — no half-working form is shipped, and the maintenance tick keeps running.
-- Admin review/invite UI and Neon Auth invitation wiring follow the migration.
+- **Implemented and applied (2026-11-09):** migration `0083_request_access_requests.sql` creates the review queue
+  (`request_access_requests`, one pending row per address). The public form persists requests, and the Admin review
+  queue lists/approves/rejects them. The route loader keeps the availability check as a safety net: if the table is
+  missing, the page falls back to the mailto CTA instead of showing a form that cannot persist.
+- The admin **invite** (Neon Auth) is still manual; the approval decision is recorded, then an Admin invites by email.
 - Pricing stays "TBC"; no checkout or public purchase path is offered until the business confirms it.
 
 ## 2. Integration scope for the pilot
@@ -106,9 +103,9 @@ npm run rehearse:rollback          # prints JSON; add -- --write to refresh the 
 ```
 
 It selects the newest earlier READY production deployment (never the current one), checks that deployment's
-`/api/version` (sha must match), `/api/health` (200, ok) and `/login` (security headers), then checks the **capability
-pause**: `/request-access` must still render the mailto fallback with no form while migration 0083 is unapplied, and
-`/api/capabilities` must remain readable. It performs **no alias switch and no database write**. Latest receipt:
+`/api/version` (sha must match), `/api/health` (200, ok) and `/login` (security headers), then checks the
+**request-access honest state**: either the persisted form (migration 0083 applied) or the mailto fallback (table
+absent) — never neither — and that `/api/capabilities` remains readable. It performs **no alias switch and no database write**. Latest receipt:
 [`../releases/rollback-rehearsal-latest.json`](../releases/rollback-rehearsal-latest.json).
 
 **Actual rollback** (only on a failed deploy/smoke): use Vercel instant rollback to the candidate the rehearsal
