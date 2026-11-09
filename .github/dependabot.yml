@@ -1,0 +1,40 @@
+version: 2
+updates:
+  # Application dependencies. CI already audits both tracked lockfiles on every
+  # run; Dependabot adds the upgrade path so advisories do not sit until someone
+  # remembers to bump them.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+      timezone: Asia/Hong_Kong
+    open-pull-requests-limit: 5
+    groups:
+      dev-minor-patch:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      production-minor-patch:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+
+  # Keep the CI actions themselves patched; these changes are small and are
+  # validated by the same CI gate.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:30"
+      timezone: Asia/Hong_Kong
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(ci)"
