@@ -69,6 +69,12 @@ export function productionChecks(origin = PRODUCTION_ORIGIN, expectedSha?: strin
       includes: ["<urlset", "/request-access"],
     },
     {
+      name: "manifest",
+      url: `${origin}/manifest.webmanifest`,
+      expectStatus: 200,
+      includes: ['"name": "ComSec OS"', '"start_url": "/login"', "/icons/icon-maskable-512.png"],
+    },
+    {
       name: "auth-proxy",
       url: `${origin}/api/auth/ok`,
       expectStatus: 200,
