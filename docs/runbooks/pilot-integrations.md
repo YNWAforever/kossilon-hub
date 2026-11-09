@@ -11,14 +11,11 @@ production env value is changed by accident. Canonical environments: [`environme
 **Decision: invite-only. No self-service signup, no open trial.**
 
 - `/login` remains invite-only; `/request-access` stays the public explanation.
-- **Implemented (code, awaiting migration approval):** migration `0083_request_access_requests.sql` is staged in
-  `db/pending-migrations/` (not `db/migrations/`, so it cannot be applied or break the live schema guard by
-  accident), together with a public request-access form and server functions that write a review queue
-  (`request_access_requests`, one pending row per address). The route loader checks
-  `to_regclass('public.request_access_requests')` and renders the form only when the table exists; otherwise the
-  page keeps the current mailto fallback. Production therefore stays unchanged until the migration is approved
-  and applied — no half-working form is shipped, and the maintenance tick keeps running.
-- Admin review/invite UI and Neon Auth invitation wiring follow the migration.
+- **Implemented and applied (2026-11-09):** migration `0083_request_access_requests.sql` creates the review queue
+  (`request_access_requests`, one pending row per address). The public form persists requests, and the Admin review
+  queue lists/approves/rejects them. The route loader keeps the availability check as a safety net: if the table is
+  missing, the page falls back to the mailto CTA instead of showing a form that cannot persist.
+- The admin **invite** (Neon Auth) is still manual; the approval decision is recorded, then an Admin invites by email.
 - Pricing stays "TBC"; no checkout or public purchase path is offered until the business confirms it.
 
 ## 2. Integration scope for the pilot

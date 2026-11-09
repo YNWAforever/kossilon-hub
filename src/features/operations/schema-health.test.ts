@@ -188,6 +188,7 @@ describe("reviewed historical lineage", () => {
   const productionLedger: SchemaLedger = ledger([
     ...EXPECTED_MIGRATIONS.filter((id) => id < "0034"),
     ...HISTORICAL_MIGRATIONS,
+    "0083_request_access_requests.sql",
   ]);
   const receipt = {
     id: HISTORICAL_RELEASE_RECEIPT.id,
