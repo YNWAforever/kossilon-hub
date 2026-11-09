@@ -49,6 +49,21 @@ test("persists a public request and can be reviewed", async ({ page }, info) => 
       team: "E2E Team",
       status: "pending",
     });
+
+    // A second submission for the same pending address is a duplicate, not a
+    // second row: the partial unique index and the UI both say so.
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForTimeout(500);
+    await page.locator("#request-access-name").fill("E2E Request Duplicate");
+    await page.locator("#request-access-email").fill(email);
+    await page.locator("#request-access-firm").fill("E2E Firm Limited");
+    await page.getByRole("checkbox").check();
+    await page.getByRole("button", { name: "送出申請" }).click();
+    await expect(page.getByText(/已有待處理的申請/)).toBeVisible();
+    const [count] = await sql<{ n: number }[]>`
+      select count(*)::int n from request_access_requests where email = ${email}
+    `;
+    expect(count.n).toBe(1);
   } finally {
     await sql`delete from request_access_requests where email = ${email}`;
     await sql.end({ timeout: 5 });
