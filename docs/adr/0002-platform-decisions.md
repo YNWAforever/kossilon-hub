@@ -65,7 +65,8 @@ copy of production data without touching production.
 
 - Inventory: **158 branches**, most `codex/*`/`claude/*` from completed work.
 - Policy: delete only branches whose work is merged into `main` (or explicitly abandoned), in batches, with owner
-  approval; never delete release/evidence branches (`codex/lineage-policy-*`, `codex/entry-ux-*` receipts are in
+  approval; never delete release/evidence branches. Audit/delete mechanics: [`../runbooks/branch-cleanup.md`](../runbooks/branch-cleanup.md).
+  2026-11-09: 19 session branches deleted; remaining 150 branches = 94 safe / 2 open-PR / 53 unmerged / main (`codex/lineage-policy-*`, `codex/entry-ux-*` receipts are in
   git history already, so they may be deleted after the audit window). Do not force-push, rebase or rewrite
   published history.
 - Before deletion: verify with `gh pr list --state merged` / `git merge-base --is-ancestor <branch> main`; keep
