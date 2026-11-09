@@ -61,3 +61,28 @@ test.describe("entry accessibility", () => {
     });
   }
 });
+
+async function demoLogin(page: Page) {
+  await page.goto("/login");
+  await page.getByRole("button", { name: /Amy Chan/ }).click();
+  await expect(page).toHaveURL(/\/dashboard(?:\?|$)/);
+}
+
+const appShellPages = [
+  ["dashboard", "/dashboard"],
+  ["work queue", "/work-queue"],
+  ["documents", "/documents"],
+  ["portal", "/portal"],
+  ["operations", "/operations"],
+] as const;
+
+test.describe("app shell accessibility (demo session)", () => {
+  for (const [name, path] of appShellPages) {
+    test(`${name} has no serious WCAG A/AA violations`, async ({ page }) => {
+      await demoLogin(page);
+      await page.goto(path);
+      await page.waitForLoadState("networkidle");
+      await scan(page);
+    });
+  }
+});
