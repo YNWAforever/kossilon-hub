@@ -96,7 +96,25 @@ deploy. Verify `/request-access` renders the form, submit one test request, appr
 - Platform decisions (Vercel-only, staging plan, invite-only, zh-HK app, release cadence, branch cleanup) are
   recorded in [`../adr/0002-platform-decisions.md`](../adr/0002-platform-decisions.md).
 
-## 7. Rollout order
+## 7. Rollback and capability-pause rehearsal
+
+**Read-only rehearsal, run before pilot sign-off and after any risky deploy:**
+
+```bash
+npm run rehearse:rollback          # prints JSON; add -- --write to refresh the receipt
+```
+
+It selects the newest earlier READY production deployment (never the current one), checks that deployment's
+`/api/version` (sha must match), `/api/health` (200, ok) and `/login` (security headers), then checks the **capability
+pause**: `/request-access` must still render the mailto fallback with no form while migration 0083 is unapplied, and
+`/api/capabilities` must remain readable. It performs **no alias switch and no database write**. Latest receipt:
+[`../releases/rollback-rehearsal-latest.json`](../releases/rollback-rehearsal-latest.json).
+
+**Actual rollback** (only on a failed deploy/smoke): use Vercel instant rollback to the candidate the rehearsal
+verified, then re-run `npm run rehearse:rollback`; the production alias must show the candidate's sha. Never rewrite
+`main` history.
+
+## 8. Rollout order
 
 1. Provision `FIRM_ID` + `EMAIL_FROM` (approval) → verify document + email path.
 2. Request-access form + migration (approval) → manual invite flow.
