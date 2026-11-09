@@ -19,8 +19,15 @@ export const CONTENT_SECURITY_POLICY = [
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
-  "report-uri /api/csp-report",
 ].join("; ");
+
+/** Reporting is production-only: dev/Vite legitimately uses eval, and local
+ * browser suites treat any extra write as a failure. */
+export function cspWithReportUri(isProduction: boolean): string {
+  return isProduction
+    ? `${CONTENT_SECURITY_POLICY}; report-uri /api/csp-report`
+    : CONTENT_SECURITY_POLICY;
+}
 
 export function resolveSecurityHeaderMode(value: string | undefined): SecurityHeaderMode {
   if (value === "off") return "off";
@@ -41,9 +48,9 @@ export function securityHeaders(input: HeaderInput): Record<string, string> {
     headers["strict-transport-security"] = "max-age=31536000; includeSubDomains";
   }
   if (input.mode === "report-only") {
-    headers["content-security-policy-report-only"] = CONTENT_SECURITY_POLICY;
+    headers["content-security-policy-report-only"] = cspWithReportUri(input.isProduction);
   } else if (input.mode === "enforce") {
-    headers["content-security-policy"] = CONTENT_SECURITY_POLICY;
+    headers["content-security-policy"] = cspWithReportUri(input.isProduction);
   }
   return headers;
 }
