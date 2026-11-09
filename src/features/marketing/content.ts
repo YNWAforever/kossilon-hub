@@ -10,6 +10,7 @@ type MarketingCopy = {
   headline: string;
   intro: string;
   login: string;
+  requestAccess: string;
   secondary: string;
   footnote: string;
   valuesTitle: string;
@@ -56,6 +57,7 @@ export const marketingCopy: Record<MarketingLocale, MarketingCopy> = {
     intro:
       "由周年申報、文件追收到團隊交接，將分散嘅進度放返同一個工作空間。ComSec OS 幫你睇清到期日、負責人同待辦事項，讓團隊有序跟進。",
     login: "登入工作空間",
+    requestAccess: "申請開通",
     secondary: "睇下點樣運作",
     footnote: "為已獲授權嘅同事及客戶提供登入入口。方案及收費待公布。",
     valuesTitle: "少啲來回查問，多啲清晰進度。",
@@ -171,6 +173,7 @@ export const marketingCopy: Record<MarketingLocale, MarketingCopy> = {
     intro:
       "Bring annual returns, document follow-ups and team handovers into one workspace. ComSec OS helps your team see deadlines, ownership and outstanding work, so every case keeps moving.",
     login: "Log in to workspace",
+    requestAccess: "Request access",
     secondary: "See how it works",
     footnote:
       "Workspace access for authorized staff and clients. Plans and pricing to be confirmed.",
