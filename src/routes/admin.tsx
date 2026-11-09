@@ -18,6 +18,7 @@ import {
 
 import { StatusPill } from "@/components/status-pill";
 import { ProductionStaffAdmin } from "@/features/admin/production-staff-admin";
+import { RequestAccessQueue } from "@/features/admin/request-access-queue";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/field";
@@ -111,9 +112,12 @@ function ProductionAdminConsole() {
   }
 
   return (
-    <ProductionStaffAdmin
-      actorScope={JSON.stringify({ actor, sessionId: session?.id, role: session?.role })}
-    />
+    <div className="space-y-6">
+      <ProductionStaffAdmin
+        actorScope={JSON.stringify({ actor, sessionId: session?.id, role: session?.role })}
+      />
+      <RequestAccessQueue />
+    </div>
   );
 }
 

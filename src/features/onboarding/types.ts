@@ -27,6 +27,28 @@ export type RequestAccessResult =
   | { ok: true; duplicate: boolean }
   | { ok: false; code: "rate-limited" | "unavailable" | "error" };
 
+export type RequestAccessStatus = "pending" | "approved" | "rejected";
+
+export type RequestAccessQueueRow = {
+  id: string;
+  createdAt: string;
+  name: string;
+  email: string;
+  firm: string;
+  team: string | null;
+  message: string | null;
+  status: RequestAccessStatus;
+};
+
+export const requestAccessDecisionSchema = z
+  .object({
+    id: z.string().uuid(),
+    status: z.enum(["approved", "rejected"]),
+  })
+  .strict();
+
+export type RequestAccessDecision = z.infer<typeof requestAccessDecisionSchema>;
+
 export function normalizeRequestAccess(input: RequestAccessSubmission): NormalizedRequestAccess {
   return {
     name: input.name.trim(),
