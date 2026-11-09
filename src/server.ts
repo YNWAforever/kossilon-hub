@@ -220,6 +220,13 @@ export default {
         })(request);
       }
 
+      // CSP report-only violations land in structured runtime logs so an enforce
+      // decision can be based on observed violations. Paths/origins only.
+      if (pathname === "/api/csp-report") {
+        const { createCspReportHandler } = await import("./server/csp-report-http");
+        return createCspReportHandler()(request);
+      }
+
       // Client render errors land in structured runtime logs until a hosted
       // tracker is chosen. The handler sanitizes (no query/identity) and
       // rate-limits; reporting must never affect the user's error screen.

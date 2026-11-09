@@ -24,8 +24,17 @@ describe("security headers", () => {
     expect(headers["x-frame-options"]).toBe("DENY");
     expect(headers["permissions-policy"]).toContain("camera=()");
     expect(headers["strict-transport-security"]).toContain("max-age=31536000");
-    expect(headers["content-security-policy-report-only"]).toBe(CONTENT_SECURITY_POLICY);
+    expect(headers["content-security-policy-report-only"]).toBe(
+      `${CONTENT_SECURITY_POLICY}; report-uri /api/csp-report`,
+    );
     expect(headers["content-security-policy"]).toBeUndefined();
+  });
+
+  it("does not ask dev/local pages to report CSP, where eval is expected", () => {
+    const headers = securityHeaders({ mode: "report-only", isProduction: false });
+
+    expect(headers["content-security-policy-report-only"]).toBe(CONTENT_SECURITY_POLICY);
+    expect(headers["content-security-policy-report-only"]).not.toContain("report-uri");
   });
 
   it("enforces the same policy when the mode says so", () => {
@@ -37,7 +46,6 @@ describe("security headers", () => {
     expect(CONTENT_SECURITY_POLICY).toContain("frame-ancestors 'none'");
     expect(CONTENT_SECURITY_POLICY).toContain("object-src 'none'");
   });
-
   it("emits no CSP when disabled but keeps the cheap headers", () => {
     const headers = securityHeaders({ mode: "off", isProduction: true });
 

@@ -58,6 +58,8 @@ copy of production data without touching production.
   applied to HTML responses.
 - CSP ships **report-only** by default (`SECURITY_HEADERS=enforce` to enforce). It includes `'unsafe-inline'` for
   scripts/styles because the framework hydrates from inline payloads; tightening it is a follow-up.
+  Report-only violations POST to `/api/csp-report` and appear as structured `csp-violation` JSON in runtime logs
+  (path + directive + origin only). Enforce only after that log has been clean for an observation window.
 - Auth POSTs are throttled per instance (30/5 min per IP) as a speed bump. The durable layer is the platform
   edge/WAF; per-instance limits do not survive cold starts and are not shared across instances.
 
