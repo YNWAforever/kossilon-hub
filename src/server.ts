@@ -220,6 +220,14 @@ export default {
         })(request);
       }
 
+      // Client render errors land in structured runtime logs until a hosted
+      // tracker is chosen. The handler sanitizes (no query/identity) and
+      // rate-limits; reporting must never affect the user's error screen.
+      if (pathname === "/api/client-errors") {
+        const { createClientErrorHandler } = await import("./server/client-errors-http");
+        return createClientErrorHandler()(request);
+      }
+
       // Honest, secret-free capability status: which integrations this deployment
       // is actually provisioned for. Anything false here must not look enabled.
       if (request.method === "GET" && pathname === "/api/capabilities") {
