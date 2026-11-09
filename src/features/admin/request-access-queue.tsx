@@ -20,6 +20,11 @@ export function RequestAccessQueue() {
   const [rows, setRows] = useState<RequestAccessQueueRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [decidingId, setDecidingId] = useState<string | null>(null);
+  const [decided, setDecided] = useState<{
+    email: string;
+    name: string;
+    status: "approved" | "rejected";
+  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,6 +56,7 @@ export function RequestAccessQueue() {
         return;
       }
       setRows((current) => current.filter((item) => item.id !== row.id));
+      setDecided({ email: row.email, name: row.name, status });
     } catch {
       setError("未能更新申請，請重試。");
     } finally {
@@ -82,6 +88,25 @@ export function RequestAccessQueue() {
             {error}
           </p>
         )}
+
+        {decided ? (
+          <div
+            role="status"
+            className="mb-3 rounded-md border border-status-green/30 bg-status-green-soft p-3 text-xs leading-5 text-status-green-text"
+          >
+            {decided.status === "approved" ? (
+              <>
+                已批准 <strong>{decided.name}</strong>（<code>{decided.email}</code>）。 下一步：在
+                Neon Auth 邀請此電郵，然後在「用戶管理」指派角色及團隊。
+              </>
+            ) : (
+              <>
+                已拒絕 <strong>{decided.name}</strong>（<code>{decided.email}</code>
+                ）；此地址不會收到邀請。
+              </>
+            )}
+          </div>
+        ) : null}
 
         {!loading && !error && !available && (
           <div className="flex items-start gap-2 rounded-md border border-dashed p-3 text-xs leading-5 text-muted-foreground">
