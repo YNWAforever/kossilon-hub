@@ -210,11 +210,22 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   errorComponent: ErrorComponent,
 });
 
+/**
+ * Runs before any module bundle. Zod reads `globalThis.__zod_globalConfig` when
+ * its core module initializes, and its JIT probe calls `new Function("")` —
+ * caught, but strict CSP still reports it as blocked `eval`. Setting jitless
+ * here is deterministic regardless of chunk order; Node/SSR never executes this
+ * inline script, so the server keeps zod's JIT.
+ */
+const ZOD_JITLESS_BOOTSTRAP =
+  "globalThis.__zod_globalConfig=Object.assign(globalThis.__zod_globalConfig??{},{jitless:!0});";
+
 function RootShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   return (
     <html lang={pathname === "/en" || pathname.startsWith("/en/") ? "en" : "zh-HK"}>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: ZOD_JITLESS_BOOTSTRAP }} />
         <HeadContent />
       </head>
       <body>
