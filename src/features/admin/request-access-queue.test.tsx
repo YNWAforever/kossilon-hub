@@ -66,7 +66,12 @@ describe("RequestAccessQueue", () => {
         data: { id: row.id, status: "approved" },
       }),
     );
-    await waitFor(() => expect(screen.queryByText("Amy Chan")).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("button", { name: "批准" })).toBeNull());
+    const handoff = screen.getByRole("status");
+    expect(handoff.textContent).toContain("已批准");
+    expect(handoff.textContent).toContain("amy@example.test");
+    expect(handoff.textContent).toContain("Neon Auth");
+    expect(handoff.textContent).toContain("用戶管理");
   });
 
   it("reports a conflict and refreshes when another admin decided first", async () => {
