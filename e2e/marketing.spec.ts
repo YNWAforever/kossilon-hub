@@ -16,6 +16,9 @@ test("anonymous marketing has server-rendered content, locales, working navigati
   await expect(page).toHaveURL(/\/$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-HK");
   await expect(page).toHaveTitle(/ComSec OS/);
+  await expect(
+    page.locator(".comsec-hero-actions").getByRole("link", { name: "申請開通" }),
+  ).toHaveAttribute("href", "/request-access");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "讓每一宗公司秘書工作，都有清晰下一步。",
   );
@@ -39,6 +42,9 @@ test("anonymous marketing has server-rendered content, locales, working navigati
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "A clear next step for every company secretarial case.",
   );
+  await expect(
+    page.locator(".comsec-hero-actions").getByRole("link", { name: "Request access" }),
+  ).toHaveAttribute("href", "/en/request-access");
   await expect(page.locator("#pricing")).toContainText("TBC");
   await expect(page.locator("figcaption")).toContainText("Synthetic illustration");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

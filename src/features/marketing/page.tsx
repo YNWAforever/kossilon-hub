@@ -8,6 +8,7 @@ export function MarketingPage({ locale }: { locale: MarketingLocale }) {
   const copy = marketingCopy[locale];
   const home = locale === "en" ? "/en" : "/";
   const loginHref = locale === "en" ? "/en/login" : "/login";
+  const requestAccessHref = locale === "en" ? "/en/request-access" : "/request-access";
   const nav = sections.map((section, i) => (
     <a key={section} href={`#${section}`}>
       {copy.nav[i]}
@@ -72,6 +73,10 @@ export function MarketingPage({ locale }: { locale: MarketingLocale }) {
             <p className="comsec-intro">{copy.intro}</p>
             <div className="comsec-hero-actions">
               {cta}
+              <a className="comsec-text-link" href={requestAccessHref}>
+                {copy.requestAccess}
+                <ArrowRight size={17} aria-hidden="true" />
+              </a>
               {isDemoAuthEnabled() && (
                 <a className="comsec-text-link" href="/demo">
                   {locale === "en" ? "Try the demo" : "試用示範"}
@@ -249,6 +254,7 @@ export function MarketingPage({ locale }: { locale: MarketingLocale }) {
             <nav aria-label={locale === "en" ? "Footer" : "頁尾導覽"}>
               {nav}
               <a href={loginHref}>{copy.login}</a>
+              <a href={requestAccessHref}>{copy.requestAccess}</a>
             </nav>
           </div>
           <div className="comsec-footer-bottom">
