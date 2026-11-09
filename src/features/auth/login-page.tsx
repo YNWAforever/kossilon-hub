@@ -245,14 +245,14 @@ export function LoginPage({ locale = "zh-HK" }: { locale?: "zh-HK" | "en" } = {}
           </div>
           <div>
             <div className="font-display text-lg font-semibold">{PRODUCT_NAME}</div>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-primary-foreground/70">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-primary-foreground/80">
               {t("Company Secretarial Operations", PRODUCT_TAGLINE_ZH)}
             </div>
           </div>
         </div>
 
         <div className="relative max-w-xl">
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-primary-foreground/60">
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-primary-foreground/85">
             {t("Workspace for company secretarial teams", "公司秘書團隊工作空間")}
           </p>
           <p className="mt-4 font-display text-4xl font-semibold leading-tight">
@@ -299,7 +299,7 @@ export function LoginPage({ locale = "zh-HK" }: { locale?: "zh-HK" | "en" } = {}
           ))}
         </div>
 
-        <p className="relative text-[11px] text-primary-foreground/50">
+        <p className="relative text-[11px] text-primary-foreground/80">
           © {year} {PRODUCT_NAME}
         </p>
       </section>
