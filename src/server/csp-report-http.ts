@@ -8,6 +8,10 @@ export type CspViolation = {
   documentPath: string;
   directive: string;
   blocked: string;
+  /** Pathname only; omitted when the browser does not report a usable source. */
+  sourceFile?: string;
+  lineNumber?: number;
+  disposition?: "enforce" | "report";
 };
 
 /** Only the pathname is kept: report URLs can carry case/document ids. */
@@ -38,6 +42,41 @@ function directive(value: unknown): string {
   return typeof value === "string" && value.length > 0 ? value.slice(0, 120) : "unknown";
 }
 
+/** Pathname-only source evidence for triage; never includes query/hash. */
+export function sanitizeSourceFile(value: unknown): string | undefined {
+  if (typeof value !== "string" || value.length === 0) return undefined;
+  try {
+    const pathname = new URL(value).pathname;
+    return pathname ? pathname.slice(0, 200) : undefined;
+  } catch {
+    return value.startsWith("/") ? value.split("?")[0]!.slice(0, 200) : undefined;
+  }
+}
+
+function lineNumber(value: unknown): number | undefined {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 && parsed <= 10_000_000 ? parsed : undefined;
+}
+
+function disposition(value: unknown): "enforce" | "report" | undefined {
+  return value === "enforce" || value === "report" ? value : undefined;
+}
+
+function evidence(input: {
+  sourceFile?: unknown;
+  lineNumber?: unknown;
+  disposition?: unknown;
+}): Pick<CspViolation, "sourceFile" | "lineNumber" | "disposition"> {
+  const sourceFile = sanitizeSourceFile(input.sourceFile);
+  const line = lineNumber(input.lineNumber);
+  const mode = disposition(input.disposition);
+  return {
+    ...(sourceFile ? { sourceFile } : {}),
+    ...(line !== undefined ? { lineNumber: line } : {}),
+    ...(mode ? { disposition: mode } : {}),
+  };
+}
+
 /**
  * Accepts both the legacy `csp-report` shape and the Reporting API
  * `application/reports+json` array. Unknown shapes are ignored (null).
@@ -51,6 +90,11 @@ export function extractCspViolation(payload: unknown): CspViolation | null {
       documentPath: sanitizeDocumentPath(legacy["document-uri"]),
       directive: directive(legacy["violated-directive"] ?? legacy["effective-directive"]),
       blocked: sanitizeBlockedUri(legacy["blocked-uri"]),
+      ...evidence({
+        sourceFile: legacy["source-file"],
+        lineNumber: legacy["line-number"],
+        disposition: legacy.disposition,
+      }),
     };
   }
 
@@ -63,6 +107,11 @@ export function extractCspViolation(payload: unknown): CspViolation | null {
         documentPath: sanitizeDocumentPath(report.body.documentURL),
         directive: directive(report.body.effectiveDirective ?? report.body.violatedDirective),
         blocked: sanitizeBlockedUri(report.body.blockedURL),
+        ...evidence({
+          sourceFile: report.body.sourceFile,
+          lineNumber: report.body.lineNumber,
+          disposition: report.body.disposition,
+        }),
       };
     }
   }

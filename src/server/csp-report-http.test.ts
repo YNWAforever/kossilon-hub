@@ -51,6 +51,48 @@ describe("CSP report sink", () => {
     });
   });
 
+  it("keeps pathname-only source evidence for triage", () => {
+    expect(
+      extractCspViolation([
+        {
+          type: "csp-violation",
+          body: {
+            documentURL: "https://app.test/",
+            effectiveDirective: "script-src",
+            blockedURL: "eval",
+            sourceFile: "https://app.test/assets/chunk.js?token=secret#x",
+            lineNumber: 42,
+            disposition: "report",
+          },
+        },
+      ]),
+    ).toEqual({
+      documentPath: "/",
+      directive: "script-src",
+      blocked: "eval",
+      sourceFile: "/assets/chunk.js",
+      lineNumber: 42,
+      disposition: "report",
+    });
+
+    // Opaque/invalid evidence is omitted rather than logged.
+    expect(
+      extractCspViolation([
+        {
+          type: "csp-violation",
+          body: {
+            documentURL: "https://app.test/",
+            effectiveDirective: "script-src",
+            blockedURL: "eval",
+            sourceFile: "eval",
+            lineNumber: -1,
+            disposition: "unknown",
+          },
+        },
+      ]),
+    ).toEqual({ documentPath: "/", directive: "script-src", blocked: "eval" });
+  });
+
   it("ignores malformed and unrelated reports", () => {
     expect(extractCspViolation(null)).toBeNull();
     expect(extractCspViolation({ "csp-report": null })).toBeNull();
