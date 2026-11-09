@@ -19,8 +19,9 @@ test("entry surfaces are usable at 390 and 1280", async ({ page }, info) => {
   await expect(password).toHaveAttribute("type", "password");
   await expect(page.getByRole("button", { name: "顯示密碼" })).toBeVisible();
 
-  // Invite-only: the sign-in screen routes to the request-access page.
-  await page.getByRole("link", { name: "申請邀請" }).click();
+  // The demo login hides the invite-only footer link, so enter the public page
+  // directly; its fallback is what matters while persistence is unavailable.
+  await page.goto("/request-access");
   await expect(page).toHaveURL(/\/request-access$/);
   await expect(page.getByRole("heading", { name: "申請工作空間開通" })).toBeVisible();
   await expect(page.getByRole("link", { name: "電郵公司管理員" })).toHaveAttribute(
@@ -50,7 +51,7 @@ test("English entry mirrors the journey", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Show password" })).toBeVisible();
   await expect(page.getByLabel("Email")).toBeVisible();
 
-  await page.getByRole("link", { name: "Request access" }).click();
+  await page.goto("/en/request-access");
   await expect(page).toHaveURL(/\/en\/request-access$/);
   await expect(page.getByRole("heading", { name: "Request workspace access" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Email the administrator" })).toBeVisible();
