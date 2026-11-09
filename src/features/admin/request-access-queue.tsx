@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AlertCircle, Inbox } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { formatDateTime } from "@/lib/format-date";
 import { decideRequestAccess, listRequestAccessQueue } from "@/features/onboarding/server-fns";
 import type { RequestAccessQueueRow } from "@/features/onboarding/types";
 
@@ -118,7 +119,7 @@ export function RequestAccessQueue() {
                       </p>
                     )}
                     <p className="mt-1 text-[11px] text-muted-foreground">
-                      提交於 {new Date(row.createdAt).toLocaleString("zh-HK")}
+                      提交於 {formatDateTime(row.createdAt)}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">

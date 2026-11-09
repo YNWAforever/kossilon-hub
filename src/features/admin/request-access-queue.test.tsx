@@ -12,6 +12,7 @@ vi.mock("@/features/onboarding/server-fns", () => ({
 }));
 
 import { RequestAccessQueue } from "./request-access-queue";
+import { formatDateTime } from "@/lib/format-date";
 
 const row = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -55,6 +56,8 @@ describe("RequestAccessQueue", () => {
     expect(await screen.findByText("Amy Chan")).toBeTruthy();
     expect(screen.getByText(/amy@example.test/)).toBeTruthy();
     expect(screen.getByText(/Example Secretarial Ltd/)).toBeTruthy();
+    // Timestamps are the firm's Hong Kong day, not the running machine's zone.
+    expect(screen.getByText(/提交於/).textContent).toContain(formatDateTime(row.createdAt));
 
     fireEvent.click(screen.getByRole("button", { name: "批准" }));
 
