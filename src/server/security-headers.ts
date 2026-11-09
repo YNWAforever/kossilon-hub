@@ -19,6 +19,7 @@ export const CONTENT_SECURITY_POLICY = [
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
+  "report-uri /api/csp-report",
 ].join("; ");
 
 export function resolveSecurityHeaderMode(value: string | undefined): SecurityHeaderMode {
