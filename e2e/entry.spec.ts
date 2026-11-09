@@ -20,18 +20,20 @@ test("entry surfaces are usable at 390 and 1280", async ({ page }, info) => {
   await expect(page.getByRole("button", { name: "顯示密碼" })).toBeVisible();
 
   // The demo login hides the invite-only footer link, so enter the public page
-  // directly; its fallback is what matters while persistence is unavailable.
+  // directly. Migration 0083 is applied, so the persisted form is the live state;
+  // the mailto fallback is still accepted where the table is absent.
   await page.goto("/request-access");
-  await expect(page).toHaveURL(/\/request-access$/);
-  await expect(page.getByRole("heading", { name: "申請工作空間開通" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "電郵公司管理員" })).toHaveAttribute(
-    "href",
-    /^mailto:/,
-  );
-  // Until migration 0083 is applied this page must show the honest fallback,
-  // never a form that cannot persist.
-  await expect(page.getByLabel("姓名")).toHaveCount(0);
-  await expect(page.getByText("管理員會審核申請。")).toHaveCount(0);
+  const requestName = page.getByLabel("姓名");
+  const adminEmail = page.getByRole("link", { name: "電郵公司管理員" });
+  // Migration 0083 is applied, so CI renders the persisted form; the fallback is
+  // still accepted by the same journey for environments where the table is absent.
+  await expect(requestName.or(adminEmail)).toBeVisible();
+  if (await requestName.isVisible()) {
+    await expect(page.getByLabel("工作電郵")).toBeVisible();
+    await expect(page.getByRole("checkbox")).toBeVisible();
+  } else {
+    await expect(adminEmail).toHaveAttribute("href", /^mailto:/);
+  }
 
   // Deep-linkable back link, no client-side dead end.
   await page.getByRole("link", { name: "返回 ComSec OS" }).click();
@@ -54,8 +56,14 @@ test("English entry mirrors the journey", async ({ page }) => {
   await page.goto("/en/request-access");
   await expect(page).toHaveURL(/\/en\/request-access$/);
   await expect(page.getByRole("heading", { name: "Request workspace access" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Email the administrator" })).toBeVisible();
-  await expect(page.getByLabel("Name")).toHaveCount(0);
+  const requestName = page.getByLabel("Name");
+  const adminEmail = page.getByRole("link", { name: "Email the administrator" });
+  await expect(requestName.or(adminEmail)).toBeVisible();
+  if (await requestName.isVisible()) {
+    await expect(page.getByLabel("Work email")).toBeVisible();
+  } else {
+    await expect(adminEmail).toBeVisible();
+  }
   await page.getByRole("link", { name: "Back to ComSec OS" }).click();
   await expect(page).toHaveURL(/\/en$/);
 

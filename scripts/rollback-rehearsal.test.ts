@@ -71,13 +71,46 @@ describe("rollback rehearsal", () => {
       "rollback-candidate-version",
       "rollback-candidate-health",
       "rollback-candidate-login-headers",
-      "capability-pause-request-access",
+      "request-access-honest-state",
       "capability-status-readable",
       "rehearsal-is-read-only",
     ]);
   });
 
-  it("fails the pause check if a non-persisting form would render", async () => {
+  it("fails when request-access shows neither the form nor the fallback", async () => {
+    const fetcher = (async (input: string | URL | Request) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url.endsWith("/api/version"))
+        return new Response(JSON.stringify({ sha: earlier.meta!.githubCommitSha }), {
+          status: 200,
+        });
+      if (url.endsWith("/api/health"))
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      if (url.endsWith("/login"))
+        return new Response("<html>", {
+          status: 200,
+          headers: {
+            "x-content-type-options": "nosniff",
+            "content-security-policy-report-only": "default-src 'self'",
+          },
+        });
+      if (url.endsWith("/request-access"))
+        return new Response("<html>unavailable</html>", { status: 200 });
+      if (url.endsWith("/api/capabilities"))
+        return new Response(
+          JSON.stringify({ capabilities: [{ id: "firm" }, { id: "whatsapp" }] }),
+          {
+            status: 200,
+          },
+        );
+      return new Response("missing", { status: 404 });
+    }) as typeof fetch;
+
+    const checks = await runRehearsalChecks(fetcher, earlier, current.meta!.githubCommitSha!);
+    expect(checks.find((check) => check.name === "request-access-honest-state")?.ok).toBe(false);
+  });
+
+  it("accepts the persisted form after migration 0083", async () => {
     const fetcher = (async (input: string | URL | Request) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url.endsWith("/api/version"))
@@ -105,8 +138,6 @@ describe("rollback rehearsal", () => {
     }) as typeof fetch;
 
     const checks = await runRehearsalChecks(fetcher, earlier, current.meta!.githubCommitSha!);
-    expect(checks.find((check) => check.name === "capability-pause-request-access")?.ok).toBe(
-      false,
-    );
+    expect(checks.find((check) => check.name === "request-access-honest-state")?.ok).toBe(true);
   });
 });

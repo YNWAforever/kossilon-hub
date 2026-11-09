@@ -103,9 +103,9 @@ npm run rehearse:rollback          # prints JSON; add -- --write to refresh the 
 ```
 
 It selects the newest earlier READY production deployment (never the current one), checks that deployment's
-`/api/version` (sha must match), `/api/health` (200, ok) and `/login` (security headers), then checks the **capability
-pause**: `/request-access` must still render the mailto fallback with no form while migration 0083 is unapplied, and
-`/api/capabilities` must remain readable. It performs **no alias switch and no database write**. Latest receipt:
+`/api/version` (sha must match), `/api/health` (200, ok) and `/login` (security headers), then checks the
+**request-access honest state**: either the persisted form (migration 0083 applied) or the mailto fallback (table
+absent) — never neither — and that `/api/capabilities` remains readable. It performs **no alias switch and no database write**. Latest receipt:
 [`../releases/rollback-rehearsal-latest.json`](../releases/rollback-rehearsal-latest.json).
 
 **Actual rollback** (only on a failed deploy/smoke): use Vercel instant rollback to the candidate the rehearsal

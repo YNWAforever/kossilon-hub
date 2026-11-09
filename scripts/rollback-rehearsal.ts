@@ -104,15 +104,15 @@ export async function runRehearsalChecks(
 
   // Capability pause: migration 0083 is intentionally unapplied, so the public
   // page must fall back to mailto and never render a form that cannot persist.
+  // After migration 0083 the persisted form is the honest state; the mailto
+  // fallback remains honest where the table is absent. Anything else is a failure.
   const requestAccess = await get(fetcher, `${PRODUCTION_ORIGIN}/request-access`);
-  const paused =
-    requestAccess.status === 200 &&
-    requestAccess.body.includes("mailto:") &&
-    !requestAccess.body.includes("request-access-name");
+  const hasFallback = requestAccess.body.includes("mailto:");
+  const hasForm = requestAccess.body.includes("request-access-name");
   checks.push({
-    name: "capability-pause-request-access",
-    ok: paused,
-    detail: `status=${requestAccess.status} mailto=${requestAccess.body.includes("mailto:")} form=${requestAccess.body.includes("request-access-name")}`,
+    name: "request-access-honest-state",
+    ok: requestAccess.status === 200 && (hasFallback || hasForm),
+    detail: `status=${requestAccess.status} fallback=${hasFallback} form=${hasForm}`,
   });
 
   const capabilities = await get(fetcher, `${PRODUCTION_ORIGIN}/api/capabilities`);
