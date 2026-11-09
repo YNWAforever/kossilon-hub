@@ -15,12 +15,16 @@ export function reportClientError(input: {
     path: input.path,
     digest: input.digest,
   });
-  void fetch("/api/client-errors", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body,
-    keepalive: true,
-  }).catch(() => {
-    // Reporting must never break the error screen itself.
-  });
+  try {
+    // `fetch` can also throw synchronously (bad URL, test doubles, blocked
+    // network); reporting must never break the error screen itself.
+    void fetch("/api/client-errors", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body,
+      keepalive: true,
+    }).catch(() => undefined);
+  } catch {
+    // Ignore: error reporting is best-effort observability only.
+  }
 }
