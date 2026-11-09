@@ -56,7 +56,7 @@ jobs:
           # installer consistent with package.json and local verification.
           bun-version: 1.4.2
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
 
