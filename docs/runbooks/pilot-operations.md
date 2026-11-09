@@ -15,16 +15,16 @@ Latest machine receipts: [`pilot-signoff-latest.json`](../releases/pilot-signoff
 
 ## Current verified facts
 
-| Fact                 | Value                                                                                                  |
-| -------------------- | ------------------------------------------------------------------------------------------------------ |
-| Production identity  | `kossilon-hub.vercel.app`, `environment=production`, `dataMode=production`, sha matches the deployment |
-| Demo identity        | `kossilon-hub-demo.vercel.app`, `dataMode=demo` (fixture, read-only)                                   |
-| Scheduler            | `/api/health` 200 · `running=true` · `evidence=platform-verified` · `maintenance=healthy`              |
-| Security headers     | `/login` returns nosniff + report-only CSP (+ HSTS in production)                                      |
-| Request-access state | honest mailto fallback; persisted form hidden until migration 0083 is applied                          |
-| Capabilities         | `/api/capabilities` lists firm/database/auth/documents/email/whatsapp/document-scanner/scheduler       |
-| Alerting             | scheduled smoke failure opens/updates an `ops-alert` GitHub issue (email to watchers)                  |
-| Rollback             | previous READY deployment verified by read-only rehearsal (no traffic switch)                          |
+| Fact                 | Value                                                                                                                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Production identity  | `kossilon-hub.vercel.app`, `environment=production`, `dataMode=production`, sha matches the deployment                                                                                                              |
+| Demo identity        | `kossilon-hub-demo.vercel.app`, `dataMode=demo` (fixture, read-only)                                                                                                                                                |
+| Scheduler            | `/api/health` 200 · `running=true` · `evidence=platform-verified` · `maintenance=healthy`                                                                                                                           |
+| Security headers     | `/login` returns nosniff + report-only CSP (+ HSTS in production). **CSP stays report-only:** 2026-11-10 observation found 39 `eval` script-src violations in 24h on `/`; sink now records source/line/disposition. |
+| Request-access state | persisted form live after migration 0083; E2E proves save + duplicate handling and the admin queue records decisions                                                                                                |
+| Capabilities         | `/api/capabilities` lists firm/database/auth/documents/email/whatsapp/document-scanner/scheduler                                                                                                                    |
+| Alerting             | scheduled smoke failure opens/updates an `ops-alert` GitHub issue (email to watchers)                                                                                                                               |
+| Rollback             | previous READY deployment verified by read-only rehearsal (no traffic switch)                                                                                                                                       |
 
 ## Sign-off checklist
 
