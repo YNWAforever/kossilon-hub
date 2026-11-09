@@ -15,8 +15,19 @@ test("persists a public request and can be reviewed", async ({ page }, info) => 
   const ssl = process.env.DATABASE_SSL === "disable" ? false : "require";
   const sql = postgres(databaseUrl!, { ssl, max: 1, connect_timeout: 15 });
 
+  page.on("response", (response) => {
+    if (response.url().includes("/_serverFn") && response.status() >= 400)
+      console.log("server-fn response", response.status(), response.url());
+  });
+  page.on("console", (message) => {
+    if (message.type() === "error") console.log("browser console error", message.text());
+  });
+
   try {
-    await page.goto("/request-access");
+    await page.goto("/request-access", { waitUntil: "networkidle" });
+    // The form is server-rendered; give React time to attach the submit handler
+    // before typing (a native submit would reload the page and lose the success state).
+    await page.waitForTimeout(1000);
     await page.locator("#request-access-name").fill("E2E Request");
     await page.locator("#request-access-email").fill(email);
     await page.locator("#request-access-firm").fill("E2E Firm Limited");
