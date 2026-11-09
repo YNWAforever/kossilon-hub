@@ -31,3 +31,20 @@ Current local checkpoint: UC193 and the UC189 GET party-seed prerequisite are re
 ## Pre-pilot blocker
 
 Backup readiness remains blocked until an approved Neon staging branch is available for a non-destructive rehearsal. The dry-run verifier records this as the backups blocked gate and performs no export, restore, cleanup, or retention-policy change.
+
+## Automated restore-branch drill (owner-approved)
+
+Provide the Neon API key as `NEON_API_KEY`, or save it (single line, owner-only permissions) at
+`%USERPROFILE%\.kossilon-neon-api-key` (override with `NEON_API_KEY_FILE`). Never commit it. Then run:
+
+```bash
+npm run drill:backup            # add -- --write to refresh docs/releases/backup-drill-latest.json
+```
+
+The drill creates an ephemeral branch from the production branch (copy-on-write at creation time), waits for it,
+connects with the branch connection URI, and verifies: `schema_migrations` present with ≥67 ids, the latest
+`request_access_requests` table present, non-empty `maintenance_runs`/`companies` data. It then deletes the drill
+branch and verifies it is gone. It never writes to the production branch and never logs the connection URI or key.
+
+The receipt in `docs/releases/backup-drill-latest.json` (passed true/false, branch name, facts, deletion proof) is the
+pilot sign-off evidence. A failed drill leaves the runbook's pre-pilot blocker in place.

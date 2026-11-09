@@ -30,7 +30,8 @@
     "rehearse:rollback": "node --experimental-strip-types scripts/rollback-rehearsal.ts",
     "pilot:signoff": "node --experimental-strip-types scripts/pilot-signoff.ts",
     "hygiene:branches": "node --experimental-strip-types scripts/branch-hygiene.ts",
-    "verify:freshness": "node --experimental-strip-types scripts/verify-production-freshness.ts"
+    "verify:freshness": "node --experimental-strip-types scripts/verify-production-freshness.ts",
+    "drill:backup": "node --experimental-strip-types scripts/backup-restore-drill.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.2.8",
