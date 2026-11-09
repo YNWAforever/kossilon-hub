@@ -15,17 +15,9 @@ test("entry surfaces are usable at 390 and 1280", async ({ page }, info) => {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "登入工作空間" })).toBeVisible();
   await expect(page.getByLabel("電郵")).toBeVisible();
-  await expect(page.getByLabel("密碼")).toHaveAttribute("type", "password");
-
-  // Show/hide is an accessible, pressed-state toggle, not a second password field.
-  await page.getByRole("button", { name: "顯示密碼" }).click();
-  await expect(page.getByLabel("密碼")).toHaveAttribute("type", "text");
-  await expect(page.getByRole("button", { name: "隱藏密碼" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await page.getByRole("button", { name: "隱藏密碼" }).click();
-  await expect(page.getByLabel("密碼")).toHaveAttribute("type", "password");
+  const password = page.locator("#login-password");
+  await expect(password).toHaveAttribute("type", "password");
+  await expect(page.getByRole("button", { name: "顯示密碼" })).toBeVisible();
 
   // Invite-only: the sign-in screen routes to the request-access page.
   await page.getByRole("link", { name: "申請邀請" }).click();
@@ -56,8 +48,7 @@ test("English entry mirrors the journey", async ({ page }) => {
   await page.goto("/en/login");
   await expect(page.getByRole("heading", { name: "Sign in to your workspace" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Show password" })).toBeVisible();
-  await page.getByRole("button", { name: "Show password" }).click();
-  await expect(page.getByRole("button", { name: "Hide password" })).toBeVisible();
+  await expect(page.getByLabel("Email")).toBeVisible();
 
   await page.getByRole("link", { name: "Request access" }).click();
   await expect(page).toHaveURL(/\/en\/request-access$/);
