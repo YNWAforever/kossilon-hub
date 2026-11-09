@@ -194,12 +194,14 @@ export function RequestAccessForm({ locale }: { locale: Locale }) {
         />
       </div>
 
-      {/* Honeypot: hidden from real users and assistive tech. */}
+      {/* Honeypot: hidden from real users and assistive tech. Uses the shared
+          field component because every text input in the app must. */}
       <div aria-hidden="true" className="hidden">
         <label htmlFor="request-access-website">Website</label>
-        <input
+        <Input
           id="request-access-website"
           name="website"
+          type="text"
           tabIndex={-1}
           autoComplete="off"
           value={website}
