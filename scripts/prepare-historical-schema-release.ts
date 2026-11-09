@@ -26,8 +26,11 @@ export function prepareHistoricalSchemaRelease() {
   const catalog = JSON.parse(
     read("docs/audit-remediation/evidence/2026-10-02-historical-catalog-guard.json"),
   ) as { sql: string; catalog_sha256: string };
+  // Exactly the frozen 0067–0082 candidate inputs. The range is bounded at 0082
+  // so a post-release forward migration (0083+) can never be pulled into the
+  // historical package; this regex previously matched 0083 as "8x".
   const files = readdirSync(resolve(root, "db/migrations"))
-    .filter((file) => /^00(?:6[7-9]|[78]\d)_.*\.sql$/.test(file))
+    .filter((file) => /^00(?:6[7-9]|7\d|8[0-2])_.*\.sql$/.test(file))
     .sort();
   if (files.length !== 16 || historical.historical_sources.length !== 66)
     throw new Error("Release inventory changed; review plan");

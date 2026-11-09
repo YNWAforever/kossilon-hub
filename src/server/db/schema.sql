@@ -2061,3 +2061,30 @@ begin
 end $$;
 create trigger annual_return_case_template_immutable before update on annual_return_cases
   for each row execute function preserve_case_template_snapshot();
+
+-- Migration 0083: public request-access review queue (invite-only onboarding).
+-- Not an identity source; administrators invite separately through Neon Auth.
+create table request_access_requests (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  name text not null check (char_length(name) between 1 and 120),
+  email text not null check (
+    char_length(email) <= 254
+    and email ~* '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'
+  ),
+  firm text not null check (char_length(firm) between 1 and 160),
+  team text check (team is null or char_length(team) between 1 and 160),
+  message text check (message is null or char_length(message) <= 2000),
+  status text not null default 'pending' check (status in ('pending','approved','rejected')),
+  reviewed_by text,
+  reviewed_at timestamptz,
+  constraint request_access_review_agrees check (
+    (status = 'pending' and reviewed_by is null and reviewed_at is null)
+    or (status <> 'pending' and reviewed_by is not null and reviewed_at is not null)
+  )
+);
+create unique index request_access_pending_email_uidx
+  on request_access_requests (lower(email))
+  where status = 'pending';
+create index request_access_created_idx
+  on request_access_requests (created_at desc);

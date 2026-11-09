@@ -11,8 +11,12 @@ production env value is changed by accident. Canonical environments: [`environme
 **Decision: invite-only. No self-service signup, no open trial.**
 
 - `/login` remains invite-only; `/request-access` stays the public explanation.
-- The next increment adds a **request-access form with persistence** (a new forward-only migration) so requests
-  become a reviewable queue instead of a mailto. Approval is needed before applying any production migration.
+- **Implemented (code, awaiting migration approval):** migration `0083_request_access_requests.sql`, a public
+  request-access form and server functions that write a review queue (`request_access_requests`, one pending row
+  per address). The route loader checks `to_regclass('public.request_access_requests')` and renders the form only
+  when the table exists; otherwise the page keeps the current mailto fallback. Production therefore stays
+  unchanged until the migration is approved and applied — no half-working form is shipped.
+- Admin review/invite UI and Neon Auth invitation wiring are the next increment after the migration.
 - Pricing stays "TBC"; no checkout or public purchase path is offered until the business confirms it.
 
 ## 2. Integration scope for the pilot
@@ -42,6 +46,13 @@ These values are deployment configuration, not documentation. They are **not** i
 
 Approval rule: production env changes are their own reviewed operation, followed by a deploy and the post-deploy
 smoke run. No feature PR may carry them.
+
+### Pending migration approval — request-access queue
+
+`db/migrations/0083_request_access_requests.sql` and its code are merged, but the migration is **not applied**.
+`/request-access` keeps the mailto fallback until it is. Apply it through the approved forward-migration path,
+then verify that the same URL renders the form and that one test submission appears in
+`request_access_requests`; delete the test row afterwards. The admin review/invite UI follows the migration.
 
 ## 4. Scheduler verification policy
 

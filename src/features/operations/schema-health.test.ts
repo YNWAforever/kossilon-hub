@@ -184,10 +184,15 @@ describe("reviewed historical lineage", () => {
    * The reconciled production ledger records only the 66 historical IDs; the
    * package proves the 16 forward candidates with one release receipt and never
    * inserts them into `schema_migrations`.
+   *
+   * A post-release forward migration (0083) is added here because this fixture
+   * models the target state after the request-access migration is approved and
+   * applied; the test below covers the pre-apply state explicitly.
    */
   const productionLedger: SchemaLedger = ledger([
     ...EXPECTED_MIGRATIONS.filter((id) => id < "0034"),
     ...HISTORICAL_MIGRATIONS,
+    "0083_request_access_requests.sql",
   ]);
   const receipt = {
     id: HISTORICAL_RELEASE_RECEIPT.id,
@@ -209,6 +214,20 @@ describe("reviewed historical lineage", () => {
     expect(health.receiptedCount).toBe(HISTORICAL_RELEASE_MIGRATIONS.length);
     expect(health.summary).toContain("歷史遷移");
     expect(health.summary).toContain("發布回條");
+  });
+
+  it("is behind until the request-access migration is applied", () => {
+    const health = schemaHealthOf({
+      expected: EXPECTED_MIGRATIONS,
+      ledger: ledger([
+        ...EXPECTED_MIGRATIONS.filter((id) => id < "0034"),
+        ...HISTORICAL_MIGRATIONS,
+      ]),
+      releaseReceipt: receipt,
+    });
+
+    expect(health.state).toBe("behind");
+    expect(health.missing).toEqual(["0083_request_access_requests.sql"]);
   });
 
   it("does not call the lineage current without the release receipt", () => {
