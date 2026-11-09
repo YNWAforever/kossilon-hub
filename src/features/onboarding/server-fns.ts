@@ -1,9 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { createMemoryRateLimiter } from "@/features/auth/rate-limit";
-import { createSqlClient, getSqlClient } from "@/server/db/client";
 
-import { createRequestAccessRepository } from "./repository";
 import {
   normalizeRequestAccess,
   requestAccessSubmissionSchema,
@@ -15,9 +13,14 @@ import {
 // guards. Five submissions per address per hour is far above human use.
 const submissionLimiter = createMemoryRateLimiter({ limit: 5, windowMs: 60 * 60_000 });
 
-function repository() {
-  return createRequestAccessRepository({ sql: getSqlClient() as never });
+async function requestAccessRepository() {
+  // Dynamic, and from a `.server.ts` module: the client graph must never see the
+  // database client just because a route imports the server functions.
+  const { createRequestAccessRepositoryForRequest } = await import("./repository.server");
+  return createRequestAccessRepositoryForRequest();
 }
+
+type RequestAccessRepositoryInstance = Awaited<ReturnType<typeof requestAccessRepository>>;
 
 /**
  * Whether the request-access form can persist. Public and read-only.
@@ -28,9 +31,9 @@ function repository() {
  */
 export const getRequestAccessAvailability = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ available: boolean; reason?: "database-unavailable" }> => {
-    let instance: ReturnType<typeof repository> | null = null;
+    let instance: RequestAccessRepositoryInstance | null = null;
     try {
-      instance = repository();
+      instance = await requestAccessRepository();
       return { available: await instance.tableExists() };
     } catch {
       return { available: false, reason: "database-unavailable" };
@@ -50,9 +53,9 @@ export const submitRequestAccessRequest = createServerFn({ method: "POST" })
     const decision = submissionLimiter.consume(normalized.email);
     if (!decision.allowed) return { ok: false, code: "rate-limited" };
 
-    let instance: ReturnType<typeof repository> | null = null;
+    let instance: RequestAccessRepositoryInstance | null = null;
     try {
-      instance = repository();
+      instance = await requestAccessRepository();
       if (!(await instance.tableExists())) return { ok: false, code: "unavailable" };
       const created = await instance.create(normalized);
       return { ok: true, duplicate: created.duplicate };
@@ -62,11 +65,3 @@ export const submitRequestAccessRequest = createServerFn({ method: "POST" })
       await instance?.close().catch(() => undefined);
     }
   });
-
-/** Exposed for a future admin screen and tests; no public caller uses this. */
-export function createRequestAccessRepositoryForDatabase(databaseUrl?: string) {
-  return createRequestAccessRepository({
-    sql: databaseUrl ? (createSqlClient(databaseUrl) as never) : (getSqlClient() as never),
-    ownsClient: Boolean(databaseUrl),
-  });
-}
