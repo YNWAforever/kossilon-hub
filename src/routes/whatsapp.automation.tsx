@@ -16,6 +16,11 @@ import {
   type ClientPortalPaymentProofFollowUpDraft,
 } from "../lib/client-portal-store";
 import { ProductionWhatsAppAutomation } from "../features/annual-return/components/production-whatsapp-automation";
+import { WhatsAppCapabilityUnavailable } from "../features/whatsapp/components/capability-unavailable";
+import {
+  isWhatsAppCapabilityUnavailable,
+  useRuntimeCapabilities,
+} from "@/features/operations/use-runtime-capabilities";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 
@@ -46,6 +51,10 @@ type AutomationQueueRow =
 
 function WhatsAppAutomationRoute() {
   const { dataMode, actor } = Route.useRouteContext();
+  const capability = useRuntimeCapabilities();
+  if (isWhatsAppCapabilityUnavailable(capability)) {
+    return <WhatsAppCapabilityUnavailable title="WhatsApp 自動發送" />;
+  }
   return dataMode === "demo" ? (
     <DemoWhatsAppAutomationRoute />
   ) : (

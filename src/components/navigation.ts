@@ -99,15 +99,21 @@ export const navGroups: NavGroup[] = [
 ];
 
 /** Presentation only; existing server policies remain authoritative. */
-export function navGroupsForRole(role: AuthRole | undefined): NavGroup[] {
+export function navGroupsForRole(
+  role: AuthRole | undefined,
+  options: { hiddenTo?: ReadonlySet<string> } = {},
+): NavGroup[] {
   if (!role) return [];
+  const hiddenTo = options.hiddenTo ?? new Set();
   return navGroups
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) =>
-        role === "Client"
-          ? ["/documents", "/portal"].includes(item.to)
-          : !item.roles || item.roles.includes(role),
+      items: group.items.filter(
+        (item) =>
+          !hiddenTo.has(item.to) &&
+          (role === "Client"
+            ? ["/documents", "/portal"].includes(item.to)
+            : !item.roles || item.roles.includes(role)),
       ),
     }))
     .filter((group) => group.items.length > 0);

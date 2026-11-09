@@ -3,8 +3,20 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { AuthRole } from "@/features/auth/types";
 const auth = vi.hoisted(() => ({ role: "Admin" as AuthRole }));
+const caps = vi.hoisted(() => ({
+  dataMode: "demo" as "demo" | "production",
+  configured: {} as Record<string, boolean>,
+}));
 vi.mock("@/features/auth/auth-context-neon", () => ({
   useAuth: () => ({ session: { role: auth.role } }),
+}));
+vi.mock("@/features/operations/use-runtime-capabilities", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../features/operations/use-runtime-capabilities")>()),
+  useRuntimeCapabilities: () => ({
+    loaded: true,
+    configured: caps.configured,
+    dataMode: caps.dataMode,
+  }),
 }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
@@ -26,6 +38,19 @@ import { navGroups } from "./navigation";
 import { NavList } from "./nav-content";
 afterEach(cleanup);
 describe("daily role navigation", () => {
+  it("hides unprovisioned WhatsApp in production without touching the rest", () => {
+    caps.dataMode = "production";
+    caps.configured = {};
+    auth.role = "Admin";
+    render(<NavList pathname="/today" />);
+
+    expect(screen.getAllByRole("link")).toHaveLength(14);
+    expect(screen.queryByRole("link", { name: /WhatsApp/ })).toBeNull();
+    expect(screen.getByRole("link", { name: "系統運作" })).toBeTruthy();
+
+    caps.dataMode = "demo";
+    caps.configured = {};
+  });
   it("retains all sixteen Admin destinations in five business groups", () => {
     expect(navGroups.map((g) => g.heading)).toEqual([
       "今日工作",

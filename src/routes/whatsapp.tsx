@@ -7,6 +7,11 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/field";
 import { ProductionWhatsAppInbox } from "../features/whatsapp/components/production-inbox";
+import { WhatsAppCapabilityUnavailable } from "../features/whatsapp/components/capability-unavailable";
+import {
+  isWhatsAppCapabilityUnavailable,
+  useRuntimeCapabilities,
+} from "@/features/operations/use-runtime-capabilities";
 import {
   enquiries,
   enquiryIntentLabels,
@@ -27,11 +32,16 @@ export const Route = createFileRoute("/whatsapp")({
 function WhatsAppRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { dataMode } = Route.useRouteContext();
+  const capability = useRuntimeCapabilities();
 
   // Must stay above the data-mode branch: /whatsapp/automation renders through
   // this Outlet, and a branch that returns a screen unconditionally would blank it.
   if (pathname !== "/whatsapp") {
     return <Outlet />;
+  }
+
+  if (isWhatsAppCapabilityUnavailable(capability)) {
+    return <WhatsAppCapabilityUnavailable title="WhatsApp 收件箱" />;
   }
 
   return dataMode === "demo" ? <DemoWhatsAppInbox /> : <ProductionWhatsAppInbox />;
