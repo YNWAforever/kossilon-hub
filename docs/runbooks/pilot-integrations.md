@@ -11,12 +11,14 @@ production env value is changed by accident. Canonical environments: [`environme
 **Decision: invite-only. No self-service signup, no open trial.**
 
 - `/login` remains invite-only; `/request-access` stays the public explanation.
-- **Implemented (code, awaiting migration approval):** migration `0083_request_access_requests.sql`, a public
-  request-access form and server functions that write a review queue (`request_access_requests`, one pending row
-  per address). The route loader checks `to_regclass('public.request_access_requests')` and renders the form only
-  when the table exists; otherwise the page keeps the current mailto fallback. Production therefore stays
-  unchanged until the migration is approved and applied — no half-working form is shipped.
-- Admin review/invite UI and Neon Auth invitation wiring are the next increment after the migration.
+- **Implemented (code, awaiting migration approval):** migration `0083_request_access_requests.sql` is staged in
+  `db/pending-migrations/` (not `db/migrations/`, so it cannot be applied or break the live schema guard by
+  accident), together with a public request-access form and server functions that write a review queue
+  (`request_access_requests`, one pending row per address). The route loader checks
+  `to_regclass('public.request_access_requests')` and renders the form only when the table exists; otherwise the
+  page keeps the current mailto fallback. Production therefore stays unchanged until the migration is approved
+  and applied — no half-working form is shipped, and the maintenance tick keeps running.
+- Admin review/invite UI and Neon Auth invitation wiring follow the migration.
 - Pricing stays "TBC"; no checkout or public purchase path is offered until the business confirms it.
 
 ## 2. Integration scope for the pilot
@@ -49,10 +51,16 @@ smoke run. No feature PR may carry them.
 
 ### Pending migration approval — request-access queue
 
-`db/migrations/0083_request_access_requests.sql` and its code are merged, but the migration is **not applied**.
-`/request-access` keeps the mailto fallback until it is. Apply it through the approved forward-migration path,
-then verify that the same URL renders the form and that one test submission appears in
-`request_access_requests`; delete the test row afterwards. The admin review/invite UI follows the migration.
+`db/pending-migrations/0083_request_access_requests.sql` and its code are merged, but the migration is **not
+applied**. `/request-access` keeps the mailto fallback and the admin queue shows "not enabled" until it is.
+
+Do **not** move a migration into `db/migrations/` (or add it to `EXPECTED_MIGRATIONS`/`schema.sql`) before it is
+applied: the maintenance/write schema guard reads the expected ledger and returns `503 start_or_record`, stopping
+the five-minute tick. This happened on 2026-11-09 and was reverted by staging the file here.
+
+To apply it (one reviewed operation): move the file to `db/migrations/`, add the table to `src/server/db/schema.sql`
+and the ID to `EXPECTED_MIGRATIONS` in the same PR, run the approved forward migration against production, then
+deploy. Verify `/request-access` renders the form, submit one test request, approve it in Admin, delete the test row.
 
 ## 4. Scheduler verification policy
 
