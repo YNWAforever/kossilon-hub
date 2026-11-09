@@ -45,6 +45,12 @@ jobs:
         with:
           node-version: 24
 
+      - name: Verify production is running latest main
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node --experimental-strip-types scripts/verify-production-freshness.ts
+
       - name: Wait for the deployed commit
         if: github.event_name == 'workflow_run'
         env:

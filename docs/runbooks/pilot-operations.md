@@ -58,6 +58,9 @@ resource; they are not code caveats.
 | partial   | Some passes threw; the rest ran                       | The named pass did nothing this tick.                                                                 |
 | healthy   | Clean run inside tolerance                            | Nothing.                                                                                              |
 
+Also confirm `/api/version` shows the latest `main` SHA. The scheduled smoke now checks freshness before the health
+checks and opens an `ops-alert` issue if production is running an older commit.
+
 Only platform-verified cron invocations count as evidence. A manual `curl` cannot make a dead cron look alive.
 A failing smoke or health check opens/updates the `ops-alert` GitHub issue; close it only after the next two ticks are
 healthy.

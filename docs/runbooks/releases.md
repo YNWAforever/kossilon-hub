@@ -18,6 +18,9 @@ Canonical environment map: [`environments.md`](environments.md).
    normal notifications/email for watchers. If the optional `SMOKE_ALERT_WEBHOOK` repository secret
    is set, the job also posts there. Use `workflow_dispatch` with `simulate_failure=true` to verify
    the alert path.
+5. Scheduled runs first assert production is on the **latest `main` SHA**
+   (`scripts/verify-production-freshness.ts`). A skipped Vercel Git deployment is silent otherwise; a miss fails the
+   run and opens the `ops-alert` issue.
 
 No hand deployment is required. Do not re-implement one.
 
