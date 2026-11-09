@@ -48,7 +48,9 @@ reports `scheduler.evidence` and stays 503 on a dead/failing cron. Deployment wi
 
 - Live commit/environment/data mode: `GET https://kossilon-hub.vercel.app/api/version`
 - App + scheduler health: `GET /api/health` (`503` = scheduler never ran / stale / failing)
+- Provisioned integrations (binding names only): `GET /api/capabilities`
 - Deployment history: `docs/releases/deployments.json` (regenerate with `npm run record:deployment`)
+- Platform decisions: [`../adr/0002-platform-decisions.md`](../adr/0002-platform-decisions.md)
 - Vercel project settings: Vercel dashboard/API; the deployment record and version endpoint are the
   reviewed copies.
 

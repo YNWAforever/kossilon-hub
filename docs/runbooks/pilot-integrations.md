@@ -65,7 +65,19 @@ smoke run. No feature PR may carry them.
 - `SMOKE_ALERT_WEBHOOK` remains optional for Slack/Teams; it needs an incoming-webhook URL and is set as a
   repository secret. It is not required for alerting to work.
 
-## 6. Rollout order
+## 6. Capability transparency and security baseline
+
+- `GET /api/capabilities` (public, no secrets) reports which integrations this deployment is provisioned for, by
+  binding name only. Anything `configured: false` must not look enabled in the UI; `/operations` remains the
+  authenticated detail view. Use it in support triage instead of reading env values.
+- HTML responses carry baseline security headers (nosniff, referrer policy, frame denial, permissions policy,
+  HSTS in production) plus a **report-only CSP**; `SECURITY_HEADERS=enforce` enforces it after an observation
+  window. Auth POSTs are throttled per instance (30/5 min/IP) as a speed bump — the durable layer is the platform
+  edge/WAF.
+- Platform decisions (Vercel-only, staging plan, invite-only, zh-HK app, release cadence, branch cleanup) are
+  recorded in [`../adr/0002-platform-decisions.md`](../adr/0002-platform-decisions.md).
+
+## 7. Rollout order
 
 1. Provision `FIRM_ID` + `EMAIL_FROM` (approval) → verify document + email path.
 2. Request-access form + migration (approval) → manual invite flow.

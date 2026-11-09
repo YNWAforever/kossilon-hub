@@ -4,6 +4,8 @@ export type SmokeCheck = {
   expectStatus: number;
   includes?: readonly string[];
   excludes?: readonly string[];
+  /** Response header names that must be present (values are not asserted). */
+  headerPresent?: readonly string[];
 };
 
 export type SmokeResult = {
@@ -30,6 +32,11 @@ export function productionChecks(origin = PRODUCTION_ORIGIN, expectedSha?: strin
       url: `${origin}/login`,
       expectStatus: 200,
       includes: ["登入工作空間"],
+      headerPresent: [
+        "x-content-type-options",
+        "content-security-policy-report-only",
+        "referrer-policy",
+      ],
     },
     {
       name: "login-en",
@@ -66,6 +73,12 @@ export function productionChecks(origin = PRODUCTION_ORIGIN, expectedSha?: strin
       url: `${origin}/api/auth/ok`,
       expectStatus: 200,
       includes: ['"ok":true'],
+    },
+    {
+      name: "capabilities",
+      url: `${origin}/api/capabilities`,
+      expectStatus: 200,
+      includes: ['"capabilities"', '"firm"', '"email"'],
     },
     {
       name: "health",
@@ -143,6 +156,9 @@ export async function runSmokeChecks(
       }
       for (const needle of check.excludes ?? []) {
         if (body.includes(needle)) failures.push(`unexpected ${JSON.stringify(needle)}`);
+      }
+      for (const header of check.headerPresent ?? []) {
+        if (!response.headers.has(header)) failures.push(`missing header ${header}`);
       }
       results.push({
         name: check.name,
