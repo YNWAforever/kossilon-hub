@@ -26,6 +26,7 @@ describe("post-deploy smoke checks", () => {
       "/sitemap.xml",
       "/api/auth/ok",
       "/api/health",
+      "/api/capabilities",
       "/api/version",
     ]) {
       expect(urls).toContain(path);
@@ -76,6 +77,28 @@ describe("post-deploy smoke checks", () => {
     expect(result.results[0].detail).toContain("missing");
     expect(result.results[1].detail).toContain("expected 200, got 500");
     expect(result.results[2].detail).toContain("unexpected");
+  });
+
+  it("fails when a required security header is missing", async () => {
+    const fetcher = (async () =>
+      new Response("ok", {
+        status: 200,
+        headers: { "x-content-type-options": "nosniff" },
+      })) as unknown as typeof fetch;
+
+    const result = await runSmokeChecks(fetcher, [
+      {
+        name: "login",
+        url: "https://app.test/login",
+        expectStatus: 200,
+        headerPresent: ["x-content-type-options", "content-security-policy-report-only"],
+      },
+    ]);
+
+    expect(result.ok).toBe(false);
+    expect(result.results[0].detail).toContain(
+      "missing header content-security-policy-report-only",
+    );
   });
 
   it("turns a network failure into a failed check, not a crash", async () => {

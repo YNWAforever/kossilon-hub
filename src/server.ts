@@ -3,6 +3,17 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { PRODUCT_NAME } from "./lib/brand";
 import { renderErrorPage } from "./lib/error-page";
+import {
+  createMemoryRateLimiter,
+  isRateLimitedAuthRequest,
+  rateLimitKey,
+  rateLimitResponse,
+} from "./features/auth/rate-limit";
+import { applySecurityHeaders, resolveSecurityHeaderMode } from "./server/security-headers";
+
+// Per-instance speed bump for auth POSTs (see rate-limit.ts for the limits of
+// that guarantee). 30 requests per five minutes per client IP.
+const authRateLimiter = createMemoryRateLimiter({ limit: 30, windowMs: 5 * 60_000 });
 
 // Duplicated from ./features/whatsapp/webhook rather than imported: every other
 // branch here defers its imports so a cold start does not pull the database
@@ -23,6 +34,16 @@ async function getServerEntry(): Promise<ServerEntry> {
     );
   }
   return serverEntryPromise;
+}
+
+function securityInput(): {
+  mode: ReturnType<typeof resolveSecurityHeaderMode>;
+  isProduction: boolean;
+} {
+  return {
+    mode: resolveSecurityHeaderMode(process.env.SECURITY_HEADERS),
+    isProduction: process.env.VERCEL_ENV === "production",
+  };
 }
 
 // h3 swallows in-handler throws into a normal 500 Response with body
@@ -127,6 +148,11 @@ export default {
     try {
       const pathname = new URL(request.url).pathname;
 
+      if (isRateLimitedAuthRequest(request)) {
+        const decision = authRateLimiter.consume(rateLimitKey(request));
+        if (!decision.allowed) return rateLimitResponse(decision.retryAfterSeconds);
+      }
+
       // Public SEO documents: generated per request from the request origin so a
       // preview, the demo host and production each advertise themselves rather
       // than a hardcoded canonical URL.
@@ -192,6 +218,27 @@ export default {
             }
           },
         })(request);
+      }
+
+      // Honest, secret-free capability status: which integrations this deployment
+      // is actually provisioned for. Anything false here must not look enabled.
+      if (request.method === "GET" && pathname === "/api/capabilities") {
+        const { runtimeCapabilities } = await import("./server/capabilities-http");
+        const runtimeEnv = env && typeof env === "object" ? (env as Record<string, unknown>) : {};
+        const merged = { ...process.env, ...runtimeEnv };
+        const payload = runtimeCapabilities(
+          Object.fromEntries(
+            Object.entries(merged).filter(
+              (entry): entry is [string, string] => typeof entry[1] === "string",
+            ),
+          ),
+        );
+        return new Response(JSON.stringify(payload), {
+          headers: {
+            "content-type": "application/json; charset=utf-8",
+            "cache-control": "no-store",
+          },
+        });
       }
 
       if (pathname === "/api/handoffs/export") {
@@ -296,13 +343,19 @@ export default {
 
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return applySecurityHeaders(
+        await normalizeCatastrophicSsrResponse(response),
+        securityInput(),
+      );
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
-        status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
-      });
+      return applySecurityHeaders(
+        new Response(renderErrorPage(), {
+          status: 500,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+        securityInput(),
+      );
     }
   },
 };
