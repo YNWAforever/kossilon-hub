@@ -88,8 +88,8 @@ deploy. Verify `/request-access` renders the form, submit one test request, appr
   authenticated detail view. Use it in support triage instead of reading env values.
 - HTML responses carry baseline security headers (nosniff, referrer policy, frame denial, permissions policy,
   HSTS in production) plus a **report-only CSP**. The 2026-11-10 observation found 39 `eval` script-src reports in 24h on `/`, traced to zod's JIT probe in
-  `schemas-*.js`; a browser-only `jitless` config removes it. `SECURITY_HEADERS=enforce` stays **off** until a clean
-  observation window. Auth POSTs are throttled per instance (30/5 min/IP) as a speed bump — the durable layer is the platform
+  `schemas-*.js`. A browser-only `jitless` bootstrap now removes it; the post-fix production browser check produced
+  **0 CSP reports**. Enabling `SECURITY_HEADERS=enforce` is a one-variable change awaiting owner approval. Auth POSTs are throttled per instance (30/5 min/IP) as a speed bump — the durable layer is the platform
   edge/WAF.
 - Navigation and the WhatsApp routes are capability-aware in production: an unprovisioned integration is hidden and direct URLs show a paused screen instead of a fake inbox. The fixture demo is unaffected.
 - Platform decisions (Vercel-only, staging plan, invite-only, zh-HK app, release cadence, branch cleanup) are
