@@ -24,6 +24,7 @@ describe("post-deploy smoke checks", () => {
       "/en/request-access",
       "/robots.txt",
       "/sitemap.xml",
+      "/manifest.webmanifest",
       "/api/auth/ok",
       "/api/health",
       "/api/capabilities",
