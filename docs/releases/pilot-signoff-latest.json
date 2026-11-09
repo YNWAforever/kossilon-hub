@@ -1,0 +1,47 @@
+{
+  "checkedAt": "2026-11-09T04:49:49.185Z",
+  "mode": "read-only",
+  "production": "https://kossilon-hub.vercel.app",
+  "demo": "https://kossilon-hub-demo.vercel.app",
+  "facts": [
+    {
+      "name": "production-identity",
+      "ok": true,
+      "detail": "status=200 sha=9d0a845eef1e env=production mode=production"
+    },
+    {
+      "name": "scheduler-and-maintenance",
+      "ok": true,
+      "detail": "status=200 running=true evidence=platform-verified maintenance=healthy"
+    },
+    {
+      "name": "login-security-headers",
+      "ok": true,
+      "detail": "status=200 nosniff=true csp=true"
+    },
+    {
+      "name": "request-access-honest-state",
+      "ok": true,
+      "detail": "status=200 fallback=true persisted-form=false"
+    },
+    {
+      "name": "capabilities-readable",
+      "ok": true,
+      "detail": "status=200 ids=firm,database,auth,documents,email,whatsapp,document-scanner,scheduler"
+    },
+    {
+      "name": "demo-fixture-identity",
+      "ok": true,
+      "detail": "status=200 sha=9d0a845eef1e mode=demo"
+    }
+  ],
+  "passed": true,
+  "ownerGates": [
+    "FIRM_ID production slug approval",
+    "EMAIL_FROM / RESEND_FROM sender approval",
+    "WhatsApp (WOZTELL) scope and templates",
+    "Migration 0083 apply approval (request-access form + admin queue)",
+    "Neon Auth invite wiring",
+    "Backup/restore drill (Neon credentials + approved target)"
+  ]
+}

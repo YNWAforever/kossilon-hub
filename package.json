@@ -27,7 +27,8 @@
     "verify:dev-server-imports": "node --experimental-strip-types scripts/verify-dev-server-imports.ts",
     "smoke:prod": "node --experimental-strip-types scripts/smoke-production.ts",
     "record:deployment": "node --experimental-strip-types scripts/record-deployment.ts",
-    "rehearse:rollback": "node --experimental-strip-types scripts/rollback-rehearsal.ts"
+    "rehearse:rollback": "node --experimental-strip-types scripts/rollback-rehearsal.ts",
+    "pilot:signoff": "node --experimental-strip-types scripts/pilot-signoff.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.2.8",

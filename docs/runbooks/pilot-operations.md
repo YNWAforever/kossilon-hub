@@ -1,114 +1,102 @@
 # Pilot Operations Runbook
 
-For the staff pilot (plan §9, Phase F). Read alongside
-[the firm deployment runbook](firm-deployment.md) and
-[the backup and restore runbook](backup-restore.md).
+Status: **runtime signed off; owner-gated items remain** (2026-11-09).
 
-## Before the pilot begins
+This runbook is the checklist for the staff pilot. Re-check it with the read-only sign-off command before the
+pilot starts and after any risky deploy:
 
-No provider account exists, and no deployed runtime has been observed. The SQL
-itself has now run: CI executes every repository test against a migrated, seeded
-Postgres, and `0023`–`0033` were rehearsed onto a populated database locally.
-Confirm each of these, in order. A "no" is a reason to delay, not a caveat to
-record.
+```bash
+npm run pilot:signoff          # prints JSON; add -- --write to refresh the receipt
+npm run rehearse:rollback      # verifies the rollback candidate + capability pause
+```
 
-0. **Rehearse the migration against populated data first.** Not optional, and not
-   the same thing as a green CI run: CI builds an empty Postgres every run, so it
-   only ever exercises the INSERT path of the seed and cannot see a defect that
-   depends on rows already existing. One such defect was found exactly this way
-   (`0030` backfills `companies.data_origin` to `'client'`, and until the seed's
-   `on conflict` clause was fixed, re-seeding never repaired it — leaving the
-   fixture-replay guard matching zero rows). The rehearsal that catches it:
+Latest machine receipts: [`pilot-signoff-latest.json`](../releases/pilot-signoff-latest.json),
+[`rollback-rehearsal-latest.json`](../releases/rollback-rehearsal-latest.json).
 
-   ```bash
-   docker run -d --name kossilon-rehearsal -e POSTGRES_PASSWORD=rehearsal -p 5544:5432 postgres:17-alpine
-   ```
+## Current verified facts
 
-   Then, with `DATABASE_URL` pointing at it and `DATABASE_SSL=disable`: apply only
-   the migrations the target database already has, seed it with the seed script
-   **as it was at that commit**, apply the new migrations on top, re-seed, and
-   check the rows the new migration touched. Discard the container afterwards.
+| Fact                 | Value                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------ |
+| Production identity  | `kossilon-hub.vercel.app`, `environment=production`, `dataMode=production`, sha matches the deployment |
+| Demo identity        | `kossilon-hub-demo.vercel.app`, `dataMode=demo` (fixture, read-only)                                   |
+| Scheduler            | `/api/health` 200 · `running=true` · `evidence=platform-verified` · `maintenance=healthy`              |
+| Security headers     | `/login` returns nosniff + report-only CSP (+ HSTS in production)                                      |
+| Request-access state | honest mailto fallback; persisted form hidden until migration 0083 is applied                          |
+| Capabilities         | `/api/capabilities` lists firm/database/auth/documents/email/whatsapp/document-scanner/scheduler       |
+| Alerting             | scheduled smoke failure opens/updates an `ops-alert` GitHub issue (email to watchers)                  |
+| Rollback             | previous READY deployment verified by read-only rehearsal (no traffic switch)                          |
 
-1. **Migrations `0023`–`0033` are applied to the target.** They have been applied
-   to a local rehearsal container only; no staging or production database has
-   them. Applying them to a non-local `DATABASE_URL` **requires explicit
-   approval** (`CLAUDE.md`).
-2. **`npm run verify:firm -- --dry-run` passes**, and the `BLOCKED` lines it
-   prints are the ones you expect. It reads binding _names_ only and makes no
-   network calls.
-3. **The `/operations` screen shows a scheduled run.** Until it does, the
-   schedule has never been observed to fire on this runtime — see below.
-4. **The disabled capabilities on `/operations` have been read by the staff
-   running the pilot**, and each has a person who knows the manual fallback.
+## Sign-off checklist
+
+| #   | Requirement                            | Status                        | Evidence / next step                                                                                                                                                                                                |
+| --- | -------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | CI + auto-deploy + post-deploy smoke   | **YES**                       | GitHub Actions `CI`; smoke workflow green on every main merge                                                                                                                                                       |
+| 2   | Deployment identity                    | **YES**                       | `/api/version` sha matches deployed commit                                                                                                                                                                          |
+| 3   | Scheduler liveness + platform evidence | **YES**                       | `/api/health` platform-verified; five-minute Vercel cron                                                                                                                                                            |
+| 4   | Alert delivery                         | **YES**                       | `ops-alert` issue path exercised (issue #171 simulated; #176 real outage, both closed)                                                                                                                              |
+| 5   | Rollback rehearsal                     | **YES**                       | `npm run rehearse:rollback` — candidate version/health/login verified, read-only                                                                                                                                    |
+| 6   | Capability-pause rehearsal             | **YES**                       | migration 0083 staged; `/request-access` fallback proven (`form=false`)                                                                                                                                             |
+| 7   | Integration states honest              | **PARTIAL**                   | `/api/capabilities` + `/operations` report bindings; R2/docs configured; email/WhatsApp/scanner unconfigured. Staff-facing nav hiding for WhatsApp/scanner is **not yet implemented** — see `pilot-integrations.md` |
+| 8   | Request-access persistence             | **NO — owner approval**       | migration `db/pending-migrations/0083…`; apply procedure in `pilot-integrations.md`                                                                                                                                 |
+| 9   | Admin invite / role-team provisioning  | **NO — design + Neon Auth**   | review queue exists (approve/reject); actual invitation call not wired                                                                                                                                              |
+| 10  | `FIRM_ID` / `EMAIL_FROM` provisioning  | **NO — owner values**         | `pilot-integrations.md` §3                                                                                                                                                                                          |
+| 11  | Backup/restore drill                   | **NO — credentials + target** | `backup-restore.md`; Neon PITR + retained branch exist but restore was never exercised                                                                                                                              |
+| 12  | Authenticated UAT re-run               | **NO — invited accounts**     | audit UC99–UC118 + P1 findings; portal/readiness code fixes already landed, runtime proof missing                                                                                                                   |
+
+Do not start the staff pilot while rows 8–12 are “NO”. Rows 7–12 each need an owner decision or an approved
+resource; they are not code caveats.
 
 ## The one thing to check every morning
 
-`/operations` → 五分鐘排程.
+`/operations` scheduler state (or `GET /api/health`):
 
-| What it says     | What it means                                                | What to do                                                                                                                          |
-| ---------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 從未觀察到執行   | No run has **ever** been recorded. Not "quiet" — unobserved. | The cron is not firing, or the deployment is new. Check the trigger is registered before trusting any reminder, escalation or scan. |
-| 排程已停止       | Two consecutive ticks were missed.                           | Nothing has been evaluated or dispatched since 最後一次執行. Treat every chase list and deadline as unrefreshed.                    |
-| 最近一次執行失敗 | The tick did not complete.                                   | Read the Worker logs; the row records the error's class only.                                                                       |
-| 部分環節失敗     | Some passes threw; the rest ran.                             | The named pass did no work this tick. The others did.                                                                               |
-| 正常             | A clean run inside the tolerance.                            | Nothing.                                                                                                                            |
+| State     | Meaning                                               | Action                                                                                                |
+| --------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| never run | No scheduled run has **ever** been recorded           | Cron not registered or wrong deployment. Do not trust reminder/chase lists.                           |
+| stale     | Two consecutive ticks missed (default tolerance 600s) | Nothing has been re-evaluated since the last run. Treat every chase list and deadline as unrefreshed. |
+| failing   | The tick did not complete                             | Read the structured runtime logs; `/api/health` returns 503.                                          |
+| partial   | Some passes threw; the rest ran                       | The named pass did nothing this tick.                                                                 |
+| healthy   | Clean run inside tolerance                            | Nothing.                                                                                              |
 
-A run listed as 人手 does **not** count towards the health of the schedule. Only
-the cron hook may write a `scheduled` row, so running the entrypoint by hand
-cannot make a dead cron look alive.
-
-### Why the blank matters
-
-Every other screen reads tables a person writes to. A schedule that stops firing
-leaves all of them looking completely normal — the chase list still lists, the
-board still boards — because the only thing that changed is that nothing is being
-_re-evaluated_. This is the only screen where an absence is the finding.
+Only platform-verified cron invocations count as evidence. A manual `curl` cannot make a dead cron look alive.
+A failing smoke or health check opens/updates the `ops-alert` GitHub issue; close it only after the next two ticks are
+healthy.
 
 ## Pausing a capability
 
-There is no feature-flag table, and deliberately so: a capability is disabled by
-removing the binding it needs. That is a real pause, it survives a restart, and
-it cannot be half-applied.
+A capability is paused by **removing its binding**, not by deleting rows or reversing migrations.
 
-| To pause                   | Remove                                             | What happens                                                                                                                                        |
-| -------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live document scanning     | `DOCUMENT_SCANNER_URL`, `DOCUMENT_SCANNER_API_KEY` | The scan pass reports `not-configured` on every tick. Documents stay quarantined and stay visible. Nothing is deleted; no document is marked clean. |
-| The model tier of analysis | the AI provider binding                            | Tier 3 is skipped. Tiers 1 and 2 still run. No finding disappears.                                                                                  |
-| WhatsApp sending           | `WOZTELL_ACCESS_TOKEN`                             | The dispatch pass fails, loudly, and the outbox retains its rows. Messages queue; none is lost and none is sent twice.                              |
-| Email sending              | `RESEND_API_KEY`                                   | Same shape as above.                                                                                                                                |
+| To pause                   | Remove                                             | What happens                                                                                       |
+| -------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Document scanning          | `DOCUMENT_SCANNER_URL`, `DOCUMENT_SCANNER_API_KEY` | Scan pass reports not-configured; documents stay quarantined and visible; nothing is marked clean. |
+| AI analysis tier           | AI provider binding                                | Tier 3 skipped; tiers 1–2 still run; no finding disappears.                                        |
+| WhatsApp sending           | `WOZTELL_ACCESS_TOKEN`                             | Dispatch fails loudly; outbox retains rows; no loss, no double send.                               |
+| Email sending              | `RESEND_API_KEY`                                   | Same shape as WhatsApp.                                                                            |
+| Request-access persistence | keep migration 0083 staged (do not apply)          | Public page shows mailto fallback; admin queue shows “not enabled yet”; no row can be written.     |
 
-**Do not pause a capability by deleting rows, dropping a table, or reversing a
-migration.** Every one of those destroys evidence, and the evidence is what a
-filing is defended with. `db/migrations/` is forward-only.
-
-### After a pause
-
-The paused pass reports `not-configured`, which the health rule treats as a
-disabled capability rather than a fault — so `/operations` stays 正常. That is
-intended: an alarm that is red permanently is an alarm nobody reads. The pause is
-visible in 已停用的功能 instead, which is where a person should be looking for
-it.
+`/api/capabilities` and `/operations` are the source of truth for what is paused/configured. Never fake a capability
+as enabled.
 
 ## Rollback
 
-Roll back the **deployment**, not the data. A previous Worker version reads the
-same schema; the migrations in this range are additive, and no screen depends on
-a column that a rollback would remove.
+Roll back the **deployment**, not the data: this schema is forward-only and additive.
 
-If a restore is genuinely required, use
-[the backup and restore runbook](backup-restore.md) — and note its open gap: a
-restore must be verified for the database **and** the object store _together_,
-because a document row whose bytes are missing from R2, and an R2 object whose
-row is gone, both read as "fine" from one side alone. That verification has never
-been performed.
+1. Run `npm run rehearse:rollback` to confirm the previous READY deployment still serves version/health/login and
+   to record the candidate sha.
+2. Use Vercel instant rollback to that candidate; re-run the rehearsal; `/api/version` must show the candidate sha.
+3. Do not rewrite `main` history (Lovable constraint). Data restore is a separate operation — see
+   [`backup-restore.md`](backup-restore.md), including its open requirement to verify database and R2 together.
+
+## Incident lesson (2026-11-09)
+
+Adding an unapplied migration to `EXPECTED_MIGRATIONS` stopped the maintenance tick with 503 for ~65 minutes: the
+schema guard refuses to run when the expected ledger is ahead of the database. Forward migrations must stay in
+`db/pending-migrations/` until the apply operation moves them into `db/migrations/` together with `schema.sql` and the
+expected ledger.
 
 ## What this runbook cannot tell you yet
 
-- Whether the schedule fires on the deployed runtime — this is
-  `BLOCKED_INTEGRATION: deployment-runtime`, and the first 排程 row on
-  `/operations` is the answer.
-- Whether search and the board hold up past 200 cases. No dataset that size
-  exists, and no query plan has been read. Adding indexes before measuring is
-  explicitly out of scope (plan F2).
-- Any measured benefit. No baseline has been collected. Do not report saved
-  hours, accuracy or adoption without it (plan F3).
+- Backup/restore integrity (database + R2 together) — never exercised.
+- Provider deliveries (Resend email, WOZTELL WhatsApp, scanner, AI) — no approved provider accounts.
+- Authenticated UAT outcomes and role/session isolation — needs invited accounts.
+- Representative performance past 200 cases / 10k work items on production data.
