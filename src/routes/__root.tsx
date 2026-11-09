@@ -14,6 +14,7 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { reportClientError } from "../lib/report-client-error";
 import { errorDetails } from "../lib/error-details";
 import { PRODUCT_DESCRIPTION_ZH, PRODUCT_NAME, PRODUCT_TAGLINE_ZH } from "@/lib/brand";
 import { DemoBanner } from "@/components/demo-banner";
@@ -83,7 +84,12 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
+    reportClientError({
+      message,
+      path: pathname,
+      digest: (error as { digest?: string } | null)?.digest,
+    });
+  }, [error, message, pathname]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
