@@ -28,6 +28,18 @@ vi.mock("@/features/auth/neon-auth-rpc", () => ({
   getAuthenticatedActor: () => Promise.resolve({ authUserId: "test-admin" }),
 }));
 
+// This file pins the navigation/route structure, not capability provisioning.
+// Report WhatsApp as configured so the nav assertions stay about layout; the
+// hiding behaviour has its own tests.
+vi.mock("@/features/operations/use-runtime-capabilities", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../features/operations/use-runtime-capabilities")>()),
+  useRuntimeCapabilities: () => ({
+    loaded: true,
+    configured: { whatsapp: true },
+    dataMode: "production" as const,
+  }),
+}));
+
 vi.mock("@/features/auth/auth-context-neon", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../features/auth/auth-context-neon")>();
   const session = {

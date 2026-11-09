@@ -6,17 +6,26 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PRODUCT_NAME, PRODUCT_TAGLINE_ZH } from "@/lib/brand";
 import { useAuth } from "@/features/auth/auth-context-neon";
+import {
+  hiddenNavPaths,
+  useRuntimeCapabilities,
+} from "@/features/operations/use-runtime-capabilities";
 import { isNavItemActive, navGroupsForRole } from "./navigation";
 
 /**
  * Grouped destination list shared by the desktop sidebar and the mobile drawer.
  * `onNavigate` lets the drawer close itself after a selection.
+ *
+ * Unprovisioned integrations are hidden in production (never in the fixture
+ * demo), so navigation cannot imply a capability the deployment does not have.
  */
 export function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   const { session } = useAuth();
+  const { dataMode, configured } = useRuntimeCapabilities();
+  const hiddenTo = hiddenNavPaths({ dataMode, configured });
   return (
     <div className="space-y-5">
-      {navGroupsForRole(session?.role).map((group) => (
+      {navGroupsForRole(session?.role, { hiddenTo }).map((group) => (
         <div key={group.heading}>
           <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {group.heading}
