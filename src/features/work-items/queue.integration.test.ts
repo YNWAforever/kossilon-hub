@@ -185,5 +185,8 @@ describe.skipIf(!url)("R16 / R28 actual SQL page and snapshot agreement", () => 
           ),
         );
     }
-  }, 120000);
+    // 10k-row fixture + snapshot comparison: Node22 CI runners can exceed the
+    // default 120s under load while Node24 passes. 240s keeps the same work
+    // without turning a slow machine into a red main.
+  }, 240000);
 });
