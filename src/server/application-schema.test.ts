@@ -9,11 +9,7 @@ import { schemaCatalogDouble } from "@/test/schema-catalog-double";
 describe("UC189 shared application schema error", () => {
   const historicalLedger = {
     present: true as const,
-    applied: [
-      ...EXPECTED_MIGRATIONS.filter((id) => id < "0034"),
-      ...HISTORICAL_MIGRATIONS,
-      "0083_request_access_requests.sql",
-    ],
+    applied: [...EXPECTED_MIGRATIONS.filter((id) => id < "0034"), ...HISTORICAL_MIGRATIONS],
   };
   it("admits the reconciled historical lineage when the release receipt and facts hold", async () => {
     const { state, sql } = schemaCatalogDouble();

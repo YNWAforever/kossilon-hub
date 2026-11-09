@@ -75,7 +75,6 @@ export const EXPECTED_MIGRATIONS = [
   "0080_manual_handoff_provenance.sql",
   "0081_handoff_attempt_idempotency.sql",
   "0082_case_template_snapshots.sql",
-  "0083_request_access_requests.sql",
 ] as const;
 
 /**
