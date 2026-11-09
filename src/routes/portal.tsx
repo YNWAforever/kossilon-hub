@@ -695,6 +695,16 @@ function ClientPortalView({ caseId }: { caseId?: string }) {
                   ? ` · 尚需您提供 ${caseItem.outstandingRequiredItems} 份文件`
                   : " · 您毋須再提供文件"}
               </p>
+              {caseItem.awaitingOurReviewItems > 0 ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {`已收到 ${caseItem.awaitingOurReviewItems} 份文件，待我們核實。`}
+                </p>
+              ) : null}
+              {caseItem.paymentStatus ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {`付款狀態：${paymentStatusLabel(caseItem.paymentStatus)}`}
+                </p>
+              ) : null}
               <Button asChild className="mt-3">
                 <Link to="/portal" search={{ caseId: caseItem.id }}>
                   開啟
