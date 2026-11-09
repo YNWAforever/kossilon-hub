@@ -29,7 +29,8 @@
     "record:deployment": "node --experimental-strip-types scripts/record-deployment.ts",
     "rehearse:rollback": "node --experimental-strip-types scripts/rollback-rehearsal.ts",
     "pilot:signoff": "node --experimental-strip-types scripts/pilot-signoff.ts",
-    "hygiene:branches": "node --experimental-strip-types scripts/branch-hygiene.ts"
+    "hygiene:branches": "node --experimental-strip-types scripts/branch-hygiene.ts",
+    "verify:freshness": "node --experimental-strip-types scripts/verify-production-freshness.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.2.8",
