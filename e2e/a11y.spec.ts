@@ -47,6 +47,9 @@ const entryPages = [
   ["en login", "/en/login"],
   ["zh-HK request access", "/request-access"],
   ["en request access", "/en/request-access"],
+  ["zh-HK marketing", "/"],
+  ["en marketing", "/en"],
+  ["demo entry", "/demo"],
 ] as const;
 
 test.describe("entry accessibility", () => {
