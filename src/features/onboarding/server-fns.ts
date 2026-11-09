@@ -1,10 +1,14 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
+import { z } from "zod";
 
 import { createMemoryRateLimiter } from "@/features/auth/rate-limit";
+import type { AuthenticatedActor } from "@/features/auth/types";
 
 import {
   normalizeRequestAccess,
+  requestAccessDecisionSchema,
   requestAccessSubmissionSchema,
+  type RequestAccessQueueRow,
   type RequestAccessResult,
 } from "./types";
 
@@ -63,5 +67,58 @@ export const submitRequestAccessRequest = createServerFn({ method: "POST" })
       return { ok: false, code: "error" };
     } finally {
       await instance?.close().catch(() => undefined);
+    }
+  });
+
+/** Reviewing access requests is an Admin action; Managers/Staff may not. */
+export function assertRequestAccessReviewer(actor: Pick<AuthenticatedActor, "role">): void {
+  if (actor.role !== "Admin") throw new Error("Forbidden: Admin access required.");
+}
+
+const adminContext = createServerOnlyFn(async () => {
+  const [{ getRequest }, { requireStaffActor }, repositoryModule] = await Promise.all([
+    import("@tanstack/react-start/server"),
+    import("@/features/auth/neon-auth-server"),
+    import("./repository.server"),
+  ]);
+  const actor = await requireStaffActor(getRequest());
+  assertRequestAccessReviewer(actor);
+  return { actor, repository: repositoryModule.createRequestAccessRepositoryForRequest() };
+});
+
+type RequestAccessQueueResult = {
+  available: boolean;
+  rows: RequestAccessQueueRow[];
+};
+
+/**
+ * Pending request queue for the admin screen. Admin-only and read-only.
+ * Returns `available:false` (empty list) until migration 0083 is applied, so the
+ * screen can explain the state instead of erroring.
+ */
+export const listRequestAccessQueue = createServerFn({ method: "GET" })
+  .validator(z.object({}).strict())
+  .handler(async (): Promise<RequestAccessQueueResult> => {
+    const { repository } = await adminContext();
+    try {
+      if (!(await repository.tableExists())) return { available: false, rows: [] };
+      return { available: true, rows: await repository.listPending() };
+    } finally {
+      await repository.close().catch(() => undefined);
+    }
+  });
+
+export const decideRequestAccess = createServerFn({ method: "POST" })
+  .validator(requestAccessDecisionSchema)
+  .handler(async ({ data }): Promise<{ ok: true } | { ok: false; code: "not-found" }> => {
+    const { actor, repository } = await adminContext();
+    try {
+      const updated = await repository.decide({
+        ...data,
+        reviewer: actor.authUserId,
+      });
+      return updated ? { ok: true } : { ok: false, code: "not-found" };
+    } finally {
+      await repository.close().catch(() => undefined);
     }
   });

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeRequestAccess, requestAccessSubmissionSchema } from "./types";
+import {
+  normalizeRequestAccess,
+  requestAccessDecisionSchema,
+  requestAccessSubmissionSchema,
+} from "./types";
 
 const valid = {
   name: "  Amy Chan ",
@@ -48,5 +52,23 @@ describe("request-access submission", () => {
   it("accepts and flags any filled honeypot so spam gets a generic success", () => {
     const parsed = requestAccessSubmissionSchema.parse({ ...valid, website: "spam-bot" });
     expect(normalizeRequestAccess(parsed).honeypot).toBe(true);
+  });
+
+  it("only allows approve/reject decisions on a UUID", () => {
+    expect(() =>
+      requestAccessDecisionSchema.parse({
+        id: "11111111-1111-4111-8111-111111111111",
+        status: "approved",
+      }),
+    ).not.toThrow();
+    expect(() =>
+      requestAccessDecisionSchema.parse({ id: "not-a-uuid", status: "approved" }),
+    ).toThrow();
+    expect(() =>
+      requestAccessDecisionSchema.parse({
+        id: "11111111-1111-4111-8111-111111111111",
+        status: "pending",
+      }),
+    ).toThrow();
   });
 });
