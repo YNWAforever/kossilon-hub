@@ -26,6 +26,17 @@ const FULLY_PROVISIONED = {
 };
 
 describe("runtime capabilities", () => {
+  it("reports the live CSP mode without exposing values", () => {
+    expect(runtimeCapabilities({ SECURITY_HEADERS: "enforce" }).security).toEqual({
+      cspMode: "enforce",
+    });
+    expect(runtimeCapabilities({}).security).toEqual({ cspMode: "report-only" });
+    expect(runtimeCapabilities({ SECURITY_HEADERS: "off" }).security).toEqual({ cspMode: "off" });
+    expect(JSON.stringify(runtimeCapabilities({ SECURITY_HEADERS: "enforce" }))).not.toContain(
+      "SECURITY_HEADERS",
+    );
+  });
+
   it("reports everything configured when the bindings exist", () => {
     const { capabilities } = runtimeCapabilities(FULLY_PROVISIONED);
 

@@ -12,7 +12,7 @@ import { setupRows } from "@/features/operations/integration-setup";
  * which bindings are missing and what approval/action each one needs.
  */
 export function IntegrationSetupPanel() {
-  const { loaded, rows, refresh } = useRuntimeCapabilities();
+  const { loaded, rows, security, refresh } = useRuntimeCapabilities();
   const setup = setupRows(rows);
 
   return (
@@ -37,40 +37,47 @@ export function IntegrationSetupPanel() {
         {!loaded ? (
           <p className="text-sm text-muted-foreground">正在讀取整合狀態…</p>
         ) : (
-          <ul className="space-y-2">
-            {setup.map((item) => (
-              <li key={item.id} className="rounded-md border p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-sm font-medium">{item.label}</span>
-                  <span
-                    className={
-                      item.configured
-                        ? "inline-flex items-center gap-1 rounded-full bg-status-green-soft px-2 py-0.5 text-xs text-status-green-text"
-                        : "inline-flex items-center gap-1 rounded-full bg-status-yellow-soft px-2 py-0.5 text-xs text-status-yellow-text"
-                    }
-                  >
-                    {item.configured ? (
-                      <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                    ) : (
-                      <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                    )}
-                    {item.configured ? "已配置" : "未配置"}
-                  </span>
-                </div>
-                {!item.configured ? (
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    缺少：<code className="break-all">{item.missing.join(", ")}</code>
-                  </p>
-                ) : null}
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.action}</p>
-                {item.secrets.length > 0 ? (
-                  <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
-                    以下名稱屬敏感值，只可設定在 Vercel（不經此介面）：{item.secrets.join(", ")}
-                  </p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-2">
+              {setup.map((item) => (
+                <li key={item.id} className="rounded-md border p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-sm font-medium">{item.label}</span>
+                    <span
+                      className={
+                        item.configured
+                          ? "inline-flex items-center gap-1 rounded-full bg-status-green-soft px-2 py-0.5 text-xs text-status-green-text"
+                          : "inline-flex items-center gap-1 rounded-full bg-status-yellow-soft px-2 py-0.5 text-xs text-status-yellow-text"
+                      }
+                    >
+                      {item.configured ? (
+                        <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      ) : (
+                        <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                      )}
+                      {item.configured ? "已配置" : "未配置"}
+                    </span>
+                  </div>
+                  {!item.configured ? (
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      缺少：<code className="break-all">{item.missing.join(", ")}</code>
+                    </p>
+                  ) : null}
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.action}</p>
+                  {item.secrets.length > 0 ? (
+                    <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+                      以下名稱屬敏感值，只可設定在 Vercel（不經此介面）：{item.secrets.join(", ")}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+            {security ? (
+              <p className="mt-3 text-xs leading-5 text-muted-foreground">
+                CSP: <strong>{security.cspMode}</strong> (SECURITY_HEADERS)
+              </p>
+            ) : null}
+          </>
         )}
       </div>
     </section>
