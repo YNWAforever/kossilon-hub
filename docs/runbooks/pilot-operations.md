@@ -103,3 +103,8 @@ expected ledger.
 - Provider deliveries (Resend email, WOZTELL WhatsApp, scanner, AI) — no approved provider accounts.
 - Authenticated UAT outcomes and role/session isolation — needs invited accounts.
 - Representative performance past 200 cases / 10k work items on production data.
+
+## Invite-only enforcement
+
+Public Better Auth sign-up paths (`/api/auth/sign-up*`) are rejected at the auth proxy with 403 `SIGNUP_DISABLED`; accounts exist only through the admin/Neon Auth invitation path. PR #213.
+

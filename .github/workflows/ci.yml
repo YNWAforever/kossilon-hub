@@ -15,7 +15,10 @@ jobs:
   verify-runtime:
     name: Node${{ matrix.node }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Node24 runners have been slow enough to hit the old 15m ceiling while the
+    # browser/local-parser step and integration tests were still passing. Keep a
+    # bound, but leave headroom so a slow runner is not reported as a test failure.
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -48,7 +51,7 @@ jobs:
       DATABASE_SSL: disable
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -56,7 +59,7 @@ jobs:
           # installer consistent with package.json and local verification.
           bun-version: 1.4.2
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
 
