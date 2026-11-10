@@ -8,6 +8,10 @@ export type SmokeCheck = {
   headerPresent?: readonly string[];
   /** Header groups where at least one member must be present. */
   headerAnyOf?: readonly (readonly string[])[];
+  /** HTTP method; defaults to GET. Smoke checks may need a safe POST (e.g. signup refusal). */
+  method?: "GET" | "POST";
+  /** JSON body for POST checks. */
+  body?: string;
 };
 
 export type SmokeResult = {
@@ -81,6 +85,20 @@ export function productionChecks(origin = PRODUCTION_ORIGIN, expectedSha?: strin
       includes: ['"ok":true'],
     },
     {
+      // The pilot is invite-only: the auth proxy must refuse public sign-up even
+      // for a valid-looking payload. No account is created on a 403.
+      name: "auth-signup-disabled",
+      url: `${origin}/api/auth/sign-up/email`,
+      expectStatus: 403,
+      method: "POST",
+      body: JSON.stringify({
+        name: "Smoke probe",
+        email: "smoke-probe@example.test",
+        password: "smoke-probe-password",
+      }),
+      includes: ['"code":"SIGNUP_DISABLED"'],
+    },
+    {
       name: "capabilities",
       url: `${origin}/api/capabilities`,
       expectStatus: 200,
@@ -149,8 +167,13 @@ export async function runSmokeChecks(
   for (const check of checks) {
     try {
       const response = await fetcher(check.url, {
+        method: check.method ?? "GET",
         redirect: "follow",
-        headers: { "cache-control": "no-cache" },
+        headers: {
+          "cache-control": "no-cache",
+          ...(check.body ? { "content-type": "application/json" } : {}),
+        },
+        ...(check.body ? { body: check.body } : {}),
       });
       const body = await response.text();
       const failures: string[] = [];
