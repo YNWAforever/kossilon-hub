@@ -37,12 +37,17 @@ npm run hygiene:branches -- --delete-safe --yes
   merged PRs keep the work recoverable.
 - Do not force-push or rewrite pushed history (Lovable constraint).
 
-## Executed cleanup — 2026-11-09
+## Executed cleanup — 2026-11-09 and 2026-11-10
 
-The audit found **169** branches. Only this session's own merged `*-20261109` branches were deleted after verifying
-they were in `safeToDelete` — **19 branches**, each with a merged PR. The post-cleanup audit records **150** branches:
-**94 safe**, **2 with open PRs**, **53 unmerged**, `main` retained. The remaining safe list waits for owner approval;
-open-PR and unmerged branches stay untouched.
+- **2026-11-09:** audit found **169** branches; deleted this session's own merged `*-20261109` branches after verifying
+  they were in `safeToDelete` — **19 branches**, each with a merged PR. Post-cleanup: **150** branches
+  (**94 safe**, 2 open PRs, 53 unmerged, `main`).
+- **2026-11-10:** owner approved deleting the remaining safe batch. `hygiene:branches --delete-safe --yes` deleted
+  **94** branches. Post-cleanup audit: **55** branches — **0 safe**, **1 with an open PR**
+  (`fix/node22-queue-test-speed`), **53 unmerged**, `main` retained. No open-PR, unmerged, `main`, demo or protected
+  branch was touched.
+
+Receipt: [`../releases/branch-hygiene-latest.json`](../releases/branch-hygiene-latest.json).
 
 ## Retain on purpose
 
