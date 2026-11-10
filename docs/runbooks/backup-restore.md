@@ -37,6 +37,27 @@ The owner-approved restore-branch drill **passed**:
   `request_access_requests` present, **443** `maintenance_runs`, **3** `companies`.
 - The drill branch was deleted and a follow-up list confirmed no leftover drill branches.
 
+## Object-storage pairing check (R2, read-only)
+
+The Postgres drill proves the database half only. `npm run drill:storage` checks the other half without listing or
+reading objects:
+
+- Samples current `document_versions` rows (plus legacy documents without versions) up to `--limit` (default 100).
+- HEADs each referenced R2 key and compares stored `checksumSha256`/`sizeBytes` metadata with the database.
+- Fails closed on a missing object, unreadable HEAD, incomplete metadata, checksum/size mismatch or an empty sample.
+- Writes `docs/releases/storage-pairing-latest.json` with `--write`; never deletes or mutates anything.
+
+Credentials may be supplied as `R2_ACCOUNT_ID`/`R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`/`R2_BUCKET_NAME` or as a
+JSON file at `%USERPROFILE%\.kossilon-r2.json` (override with `R2_CREDENTIALS_FILE`); the database URI comes from
+`DATABASE_URL` or `DATABASE_URL_FILE`. Values are never logged. Run:
+
+```bash
+npm run drill:storage -- --write
+```
+
+A full **R2 restore** (recovering bytes from versioning/backup) is still a separate owner-run procedure; this check
+only proves that the database and the live bucket agree on what exists.
+
 Scope: this proves the **Postgres branch restore** path (copy-on-write from production). The **R2 object-store restore and
 DB+R2 pairing remain unexercised** and are still a pilot risk. Receipt: `docs/releases/backup-drill-latest.json`.
 

@@ -31,7 +31,8 @@
     "pilot:signoff": "node --experimental-strip-types scripts/pilot-signoff.ts",
     "hygiene:branches": "node --experimental-strip-types scripts/branch-hygiene.ts",
     "verify:freshness": "node --experimental-strip-types scripts/verify-production-freshness.ts",
-    "drill:backup": "node --experimental-strip-types scripts/backup-restore-drill.ts"
+    "drill:backup": "node --experimental-strip-types scripts/backup-restore-drill.ts",
+    "drill:storage": "node --experimental-strip-types scripts/storage-pairing.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.2.8",
