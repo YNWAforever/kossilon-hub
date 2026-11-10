@@ -306,10 +306,20 @@ function ProtectedAppShell() {
       key={JSON.stringify([session.id, session.role, session.team])}
       className="flex min-h-screen w-full flex-col bg-background"
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        跳至主要內容
+      </a>
       {dataMode === "demo" && <DemoBanner />}
       <div className="flex min-h-0 w-full flex-1">
         <AppSidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div
+          id="main-content"
+          tabIndex={-1}
+          className="flex min-w-0 flex-1 flex-col focus:outline-none"
+        >
           <AppMobileNav />
           <Outlet />
         </div>

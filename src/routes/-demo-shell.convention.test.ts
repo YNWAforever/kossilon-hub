@@ -9,6 +9,14 @@ describe("role-safe shell and demo chrome", () => {
     expect(root).toContain("roleHomePath(actor.role)");
   });
 
+  it("gives keyboard users a skip link to the main content", () => {
+    expect(root).toContain('href="#main-content"');
+    expect(root).toContain('id="main-content"');
+    expect(root).toContain("跳至主要內容");
+    // The target must be focusable or the browser will not move focus for a skip link.
+    expect(root).toContain("tabIndex={-1}");
+  });
+
   it("shows the demo banner only in demo data mode", () => {
     expect(root).toContain('{dataMode === "demo" && <DemoBanner />}');
     expect(root).toContain('import { DemoBanner } from "@/components/demo-banner";');
