@@ -1,8 +1,8 @@
 {
-  "startedAt": "2026-11-09T18:08:00.395Z",
+  "startedAt": "2026-11-10T15:46:07.548Z",
   "projectId": "red-morning-00331124",
   "parentBranchId": "br-muddy-mountain-aov8bbku",
-  "drillBranchName": "backup-drill-20261109-180800",
+  "drillBranchName": "backup-drill-20261110-154607",
   "steps": [
     {
       "step": "project-readable",
@@ -12,7 +12,7 @@
     {
       "step": "branch-created",
       "ok": true,
-      "detail": "br-round-bird-ao3tw1p4 (backup-drill-20261109-180800)"
+      "detail": "br-patient-dawn-aol614pr (backup-drill-20261110-154607)"
     },
     {
       "step": "branch-ready",
@@ -22,14 +22,14 @@
     {
       "step": "restored-data-verified",
       "ok": true,
-      "detail": "{\"ledgerPresent\":true,\"ledgerCount\":67,\"requestAccessTablePresent\":true,\"maintenanceRuns\":443,\"companies\":3}"
+      "detail": "{\"ledgerPresent\":true,\"ledgerCount\":67,\"requestAccessTablePresent\":true,\"maintenanceRuns\":703,\"companies\":3}"
     },
     {
       "step": "drill-branch-deleted",
       "ok": true,
-      "detail": "br-round-bird-ao3tw1p4 deleted"
+      "detail": "br-patient-dawn-aol614pr deleted"
     }
   ],
   "passed": true,
-  "finishedAt": "2026-11-09T18:08:06.399Z"
+  "finishedAt": "2026-11-10T15:46:13.236Z"
 }
