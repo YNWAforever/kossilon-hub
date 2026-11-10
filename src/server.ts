@@ -304,6 +304,15 @@ export default {
         })(request);
       }
 
+      // Invite-only pilot: the proxy would otherwise expose Better Auth's public
+      // sign-up endpoints and let anyone create an account. Account creation must
+      // go through request access -> admin invite.
+      if (isAuthProxyRequest) {
+        const { isPublicSignupPath, publicSignupDisabledResponse } =
+          await import("./features/auth/public-signup");
+        if (isPublicSignupPath(pathname)) return publicSignupDisabledResponse();
+      }
+
       if (isAuthProxyRequest || isMagicLinkWebhook || isMagicLinkConfirmation) {
         const { createNeonAuthProxy } = await import("./features/auth/neon-auth-proxy");
         const runtimeEnv = env && typeof env === "object" ? (env as Record<string, unknown>) : {};
