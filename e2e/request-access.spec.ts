@@ -69,3 +69,43 @@ test("persists a public request and can be reviewed", async ({ page }, info) => 
     await sql.end({ timeout: 5 });
   }
 });
+
+/**
+ * Keyboard-only proof for the same public form: focus moves to the consent box,
+ * Space checks it, focus moves to submit, Enter submits. No pointer input is used
+ * after the initial navigation.
+ */
+test("is operable with the keyboard only", async ({ page }, info) => {
+  const databaseUrl = process.env.DATABASE_URL;
+  test.skip(!databaseUrl, "requires the CI database (DATABASE_URL)");
+  const email = `e2e-keyboard-${info.project.name}-${Date.now()}@example.test`;
+  const ssl = process.env.DATABASE_SSL === "disable" ? false : "require";
+  const sql = postgres(databaseUrl!, { ssl, max: 1, connect_timeout: 15 });
+
+  try {
+    await page.goto("/request-access", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1000);
+    await page.locator("#request-access-name").fill("Keyboard Request");
+    await page.locator("#request-access-email").fill(email);
+    await page.locator("#request-access-firm").fill("Keyboard Firm Limited");
+
+    const consent = page.getByRole("checkbox");
+    await consent.focus();
+    await page.keyboard.press("Space");
+    await expect(consent).toBeChecked();
+
+    const submit = page.locator('button[type="submit"]');
+    await submit.focus();
+    await page.keyboard.press("Enter");
+
+    await expect(page.getByRole("status")).toContainText("\u5df2\u6536\u5230\u7533\u8acb");
+    const rows = await sql<{ name: string; email: string }[]>`
+      select name, email from request_access_requests where email = ${email}
+    `;
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ name: "Keyboard Request", email });
+  } finally {
+    await sql`delete from request_access_requests where email = ${email}`;
+    await sql.end({ timeout: 5 });
+  }
+});
