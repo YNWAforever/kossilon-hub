@@ -1,3 +1,9 @@
+import { resolveSecurityHeaderMode } from "./security-headers";
+
+export type SecurityPosture = {
+  cspMode: "off" | "report-only" | "enforce";
+};
+
 export type CapabilityStatus = {
   id:
     | "firm"
@@ -39,7 +45,10 @@ function status(
  * endpoint makes no outbound probe — "configured" means the binding exists, not
  * that the provider is reachable.
  */
-export function runtimeCapabilities(env: Env): { capabilities: CapabilityStatus[] } {
+export function runtimeCapabilities(env: Env): {
+  capabilities: CapabilityStatus[];
+  security: SecurityPosture;
+} {
   const documents =
     present(env, "DOCUMENTS_BUCKET") ||
     (present(env, "R2_ACCOUNT_ID") &&
@@ -64,6 +73,7 @@ export function runtimeCapabilities(env: Env): { capabilities: CapabilityStatus[
   if (!present(env, "CRON_SECRET")) schedulerMissing.push("CRON_SECRET");
 
   return {
+    security: { cspMode: resolveSecurityHeaderMode(env.SECURITY_HEADERS) },
     capabilities: [
       status("firm", "Firm identity", env, ["FIRM_ID"]),
       status("database", "Database", env, ["DATABASE_URL"]),

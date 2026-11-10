@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const refresh = vi.hoisted(() => vi.fn());
 const state = vi.hoisted(() => ({
   loaded: true,
+  security: { cspMode: "enforce" },
   rows: [
     { id: "firm", configured: false, missing: ["FIRM_ID"] },
     { id: "email", configured: false, missing: ["EMAIL_FROM|RESEND_FROM"] },
@@ -39,6 +40,7 @@ describe("IntegrationSetupPanel", () => {
     expect(screen.queryByRole("textbox")).toBeNull();
     // Configured rows say so.
     expect(screen.getByText("已配置")).toBeTruthy();
+    expect(screen.getByText("enforce")).toBeTruthy();
   });
 
   it("refreshes the capability report on demand", () => {

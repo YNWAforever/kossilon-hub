@@ -10,6 +10,8 @@ export type CapabilityRow = {
   missing: readonly string[];
 };
 
+export type CapabilitySecurity = { cspMode: "off" | "report-only" | "enforce" };
+
 export const WHATSAPP_NAV_PATHS = ["/whatsapp", "/whatsapp/automation"] as const;
 
 /**
@@ -35,11 +37,16 @@ export function isWhatsAppCapabilityUnavailable(input: {
   return input.dataMode === "production" && input.loaded && input.configured.whatsapp !== true;
 }
 
-let capabilityPromise: Promise<{ configured: Capabilities; rows: CapabilityRow[] }> | null = null;
+let capabilityPromise: Promise<{
+  configured: Capabilities;
+  rows: CapabilityRow[];
+  security: CapabilitySecurity | null;
+}> | null = null;
 
 async function loadCapabilities(): Promise<{
   configured: Capabilities;
   rows: CapabilityRow[];
+  security: CapabilitySecurity | null;
 }> {
   const response = await fetch("/api/capabilities", {
     headers: { accept: "application/json" },
@@ -48,6 +55,7 @@ async function loadCapabilities(): Promise<{
   if (!response.ok) throw new Error(`capabilities unavailable: ${response.status}`);
   const body = (await response.json()) as {
     capabilities?: { id?: string; configured?: boolean; missing?: unknown }[];
+    security?: { cspMode?: unknown };
   };
   const rows = (body.capabilities ?? []).flatMap((capability) =>
     capability.id
@@ -62,9 +70,13 @@ async function loadCapabilities(): Promise<{
         ]
       : [],
   );
+  const mode = body.security?.cspMode;
+  const security: CapabilitySecurity | null =
+    mode === "enforce" || mode === "report-only" || mode === "off" ? { cspMode: mode } : null;
   return {
     configured: Object.fromEntries(rows.map((row) => [row.id, row.configured])),
     rows,
+    security,
   };
 }
 
@@ -76,6 +88,7 @@ export function useRuntimeCapabilities(): {
   loaded: boolean;
   configured: Capabilities;
   rows: CapabilityRow[];
+  security: CapabilitySecurity | null;
   dataMode: DataMode;
   refresh: () => void;
 } {
@@ -85,28 +98,30 @@ export function useRuntimeCapabilities(): {
     loaded: boolean;
     configured: Capabilities;
     rows: CapabilityRow[];
+    security: CapabilitySecurity | null;
   }>({
     loaded: dataMode !== "production",
     configured: {},
     rows: [],
+    security: null,
   });
 
   const refresh = useCallback(() => {
     capabilityPromise = null;
-    setState({ loaded: false, configured: {}, rows: [] });
+    setState({ loaded: false, configured: {}, rows: [], security: null });
     setReloadToken((token) => token + 1);
   }, []);
 
   useEffect(() => {
     if (dataMode !== "production") {
-      setState({ loaded: true, configured: {}, rows: [] });
+      setState({ loaded: true, configured: {}, rows: [], security: null });
       return;
     }
     let cancelled = false;
     capabilityPromise ??= loadCapabilities().catch(() => {
       // Allow a later mount to retry after a transient failure.
       capabilityPromise = null;
-      return { configured: {}, rows: [] };
+      return { configured: {}, rows: [], security: null };
     });
     void capabilityPromise.then((report) => {
       if (!cancelled) setState({ loaded: true, ...report });
