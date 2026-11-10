@@ -86,3 +86,19 @@ test.describe("app shell accessibility (demo session)", () => {
     });
   }
 });
+
+test.describe("app shell keyboard navigation (demo session)", () => {
+  test("the first Tab reaches the skip link and Enter moves focus to main", async ({ page }) => {
+    await demoLogin(page);
+    await page.goto("/dashboard", { waitUntil: "networkidle" });
+    await page.waitForTimeout(500);
+
+    await page.keyboard.press("Tab");
+    const skip = page.getByRole("link", { name: "跳至主要內容" });
+    await expect(skip).toBeFocused();
+
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/#main-content$/);
+    await expect(page.locator("#main-content")).toBeFocused();
+  });
+});
