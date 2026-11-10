@@ -6,6 +6,8 @@ export type SmokeCheck = {
   excludes?: readonly string[];
   /** Response header names that must be present (values are not asserted). */
   headerPresent?: readonly string[];
+  /** Header groups where at least one member must be present. */
+  headerAnyOf?: readonly (readonly string[])[];
 };
 
 export type SmokeResult = {
@@ -32,11 +34,9 @@ export function productionChecks(origin = PRODUCTION_ORIGIN, expectedSha?: strin
       url: `${origin}/login`,
       expectStatus: 200,
       includes: ["登入工作空間"],
-      headerPresent: [
-        "x-content-type-options",
-        "content-security-policy-report-only",
-        "referrer-policy",
-      ],
+      headerPresent: ["x-content-type-options", "referrer-policy"],
+      // The deployment may run CSP report-only or enforced; either is honest.
+      headerAnyOf: [["content-security-policy", "content-security-policy-report-only"]],
     },
     {
       name: "login-en",
@@ -165,6 +165,10 @@ export async function runSmokeChecks(
       }
       for (const header of check.headerPresent ?? []) {
         if (!response.headers.has(header)) failures.push(`missing header ${header}`);
+      }
+      for (const group of check.headerAnyOf ?? []) {
+        if (!group.some((header) => response.headers.has(header)))
+          failures.push(`missing any of ${group.join("|")}`);
       }
       results.push({
         name: check.name,

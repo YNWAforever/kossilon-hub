@@ -93,13 +93,15 @@ export async function runRehearsalChecks(
   });
 
   const login = await get(fetcher, `${candidateOrigin}/login`);
+  const cspEnforced = login.headers.has("content-security-policy");
+  const cspReportOnly = login.headers.has("content-security-policy-report-only");
   checks.push({
     name: "rollback-candidate-login-headers",
     ok:
       login.status === 200 &&
       login.headers.has("x-content-type-options") &&
-      login.headers.has("content-security-policy-report-only"),
-    detail: `status=${login.status} nosniff=${login.headers.has("x-content-type-options")} csp=${login.headers.has("content-security-policy-report-only")}`,
+      (cspEnforced || cspReportOnly),
+    detail: `status=${login.status} nosniff=${login.headers.has("x-content-type-options")} csp=${cspEnforced ? "enforce" : cspReportOnly ? "report-only" : "missing"}`,
   });
 
   // Capability pause: migration 0083 is intentionally unapplied, so the public

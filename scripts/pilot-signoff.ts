@@ -55,13 +55,15 @@ export async function collectPilotFacts(fetcher: typeof fetch): Promise<SignoffF
   });
 
   const login = await get(fetcher, `${PRODUCTION_ORIGIN}/login`);
+  const cspEnforced = login.headers.has("content-security-policy");
+  const cspReportOnly = login.headers.has("content-security-policy-report-only");
   facts.push({
     name: "login-security-headers",
     ok:
       login.status === 200 &&
       login.headers.has("x-content-type-options") &&
-      login.headers.has("content-security-policy-report-only"),
-    detail: `status=${login.status} nosniff=${login.headers.has("x-content-type-options")} csp=${login.headers.has("content-security-policy-report-only")}`,
+      (cspEnforced || cspReportOnly),
+    detail: `status=${login.status} nosniff=${login.headers.has("x-content-type-options")} csp=${cspEnforced ? "enforce" : cspReportOnly ? "report-only" : "missing"}`,
   });
 
   const requestAccess = await get(fetcher, `${PRODUCTION_ORIGIN}/request-access`);
