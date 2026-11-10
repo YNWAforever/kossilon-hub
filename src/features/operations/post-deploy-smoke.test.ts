@@ -80,6 +80,29 @@ describe("post-deploy smoke checks", () => {
     expect(result.results[2].detail).toContain("unexpected");
   });
 
+  it("accepts either enforced or report-only CSP", async () => {
+    const fetcher = (async () =>
+      new Response("ok", {
+        status: 200,
+        headers: {
+          "x-content-type-options": "nosniff",
+          "content-security-policy": "default-src 'self'",
+        },
+      })) as unknown as typeof fetch;
+
+    const result = await runSmokeChecks(fetcher, [
+      {
+        name: "login",
+        url: "https://app.test/login",
+        expectStatus: 200,
+        headerPresent: ["x-content-type-options"],
+        headerAnyOf: [["content-security-policy", "content-security-policy-report-only"]],
+      },
+    ]);
+
+    expect(result.ok).toBe(true);
+  });
+
   it("fails when a required security header is missing", async () => {
     const fetcher = (async () =>
       new Response("ok", {
