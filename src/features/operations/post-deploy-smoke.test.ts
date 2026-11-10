@@ -26,6 +26,7 @@ describe("post-deploy smoke checks", () => {
       "/sitemap.xml",
       "/manifest.webmanifest",
       "/api/auth/ok",
+      "/api/auth/sign-up/email",
       "/api/health",
       "/api/capabilities",
       "/api/version",
@@ -58,6 +59,29 @@ describe("post-deploy smoke checks", () => {
     const result = await runSmokeChecks(fetcher, checks);
     expect(result.ok).toBe(true);
     expect(result.results.every((item) => item.ok)).toBe(true);
+  });
+
+  it("runs the signup-refusal probe as a POST and passes on 403 SIGNUP_DISABLED", async () => {
+    let seen: { method?: string; body?: string } = {};
+    const fetcher = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      seen = { method: init?.method, body: typeof init?.body === "string" ? init.body : undefined };
+      return response('{"code":"SIGNUP_DISABLED","message":"invite-only"}', 403);
+    }) as unknown as typeof fetch;
+
+    const result = await runSmokeChecks(fetcher, [
+      {
+        name: "auth-signup-disabled",
+        url: "https://app.test/api/auth/sign-up/email",
+        expectStatus: 403,
+        method: "POST",
+        body: JSON.stringify({ email: "probe@example.test" }),
+        includes: ['"code":"SIGNUP_DISABLED"'],
+      },
+    ]);
+
+    expect(result.ok).toBe(true);
+    expect(seen.method).toBe("POST");
+    expect(seen.body).toContain("probe@example.test");
   });
 
   it("fails loudly on status, missing text or unexpected text", async () => {
