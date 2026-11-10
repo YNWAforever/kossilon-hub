@@ -28,6 +28,32 @@ A synthetic, disposable rehearsal can establish local mechanics while approved N
 
 Current local checkpoint: UC193 and the UC189 GET party-seed prerequisite are recorded under `docs/audit-remediation/cosec-20261024-restore-5aa3e18c/`. Consult its concrete candidate and blockers; the directory name is not an authorization or a success receipt.
 
+## Full R2 restore procedure (owner-run; not yet exercised)
+
+Status: **design only**. Bucket versioning/retention has not been confirmed, R2 read credentials have not been supplied, and
+no restore target has been approved. Do not treat this section as a completed drill.
+
+Prerequisites:
+
+- Bucket versioning (or a scheduled object backup) enabled and its retention recorded against the pilot's RPO.
+- Read-only pairing credentials for the check, plus a separately approved write path for the restore itself.
+- A Postgres branch restored with `drill:backup` from the same recovery point, so database and object expectations agree.
+- A staging target (separate bucket/prefix or staging branch) — never restore directly over the live bucket first.
+
+Procedure:
+
+1. **Single object.** List object versions for the key through the Cloudflare dashboard/API or S3-compatible tooling
+   (`GET ?versions&prefix=<key>`), pick a version whose checksum matches the restored database row, and copy that version
+   back over the current key. Rerun `drill:storage` and open the document preview.
+2. **Whole bucket.** Restore the backup into a separate staging bucket/prefix, point a staging app and the restored
+   database at it, run `drill:storage` there, and compare sampled checksums/counts. Only then repoint production.
+3. **Verify.** Pairing check passes, sampled downloads match DB checksums, no referenced key is missing, and the document
+   preview path renders. Record actual RTO/RPO, the recovery point and the tooling version in a receipt.
+4. **Clean up.** Remove temporary buckets/keys under an explicit approval; keep the receipt and drill branch identity.
+
+A partial restore that only passes the pairing check is not a full restore: it proves the references line up, not that
+historical bytes were recoverable.
+
 ## Executed drill — 2026-11-10
 
 The owner-approved restore-branch drill **passed**:
@@ -58,8 +84,10 @@ npm run drill:storage -- --write
 A full **R2 restore** (recovering bytes from versioning/backup) is still a separate owner-run procedure; this check
 only proves that the database and the live bucket agree on what exists.
 
-Scope: this proves the **Postgres branch restore** path (copy-on-write from production). The **R2 object-store restore and
-DB+R2 pairing remain unexercised** and are still a pilot risk. Receipt: `docs/releases/backup-drill-latest.json`.
+Scope: this proves the **Postgres branch restore** path (copy-on-write from production). The read-only **DB↔R2 pairing
+check now exists** (`npm run drill:storage`) but has not been executed against production; a **full R2 object restore**
+remains unexercised and is still a pilot risk. Receipts: `docs/releases/backup-drill-latest.json` and, once run,
+`docs/releases/storage-pairing-latest.json`.
 
 Branch note: a Neon branch copy has no compute endpoint by default; the drill creates one `read_write` endpoint and
 passes its id to the connection-URI request. The API key used for the drill was local-only and must be revoked/deleted
