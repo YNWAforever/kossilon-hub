@@ -27,14 +27,33 @@ const FULLY_PROVISIONED = {
 
 describe("runtime capabilities", () => {
   it("reports the live CSP mode without exposing values", () => {
+    const all = { password: true, magicLink: true, google: true };
     expect(runtimeCapabilities({ SECURITY_HEADERS: "enforce" }).security).toEqual({
       cspMode: "enforce",
+      authMethods: all,
     });
-    expect(runtimeCapabilities({}).security).toEqual({ cspMode: "report-only" });
-    expect(runtimeCapabilities({ SECURITY_HEADERS: "off" }).security).toEqual({ cspMode: "off" });
+    expect(runtimeCapabilities({}).security).toEqual({
+      cspMode: "report-only",
+      authMethods: all,
+    });
+    expect(runtimeCapabilities({ SECURITY_HEADERS: "off" }).security).toEqual({
+      cspMode: "off",
+      authMethods: all,
+    });
     expect(JSON.stringify(runtimeCapabilities({ SECURITY_HEADERS: "enforce" }))).not.toContain(
       "SECURITY_HEADERS",
     );
+  });
+
+  it("reports the deployed sign-in methods", () => {
+    expect(runtimeCapabilities({ VITE_AUTH_METHODS: "password" }).security.authMethods).toEqual({
+      password: true,
+      magicLink: false,
+      google: false,
+    });
+    expect(
+      runtimeCapabilities({ VITE_AUTH_METHODS: "password,magic-link,google" }).security.authMethods,
+    ).toEqual({ password: true, magicLink: true, google: true });
   });
 
   it("reports everything configured when the bindings exist", () => {

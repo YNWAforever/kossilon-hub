@@ -10,7 +10,16 @@ export type CapabilityRow = {
   missing: readonly string[];
 };
 
-export type CapabilitySecurity = { cspMode: "off" | "report-only" | "enforce" };
+export type CapabilityAuthMethods = {
+  password: boolean;
+  magicLink: boolean;
+  google: boolean;
+};
+
+export type CapabilitySecurity = {
+  cspMode: "off" | "report-only" | "enforce";
+  authMethods: CapabilityAuthMethods | null;
+};
 
 export const WHATSAPP_NAV_PATHS = ["/whatsapp", "/whatsapp/automation"] as const;
 
@@ -55,7 +64,7 @@ async function loadCapabilities(): Promise<{
   if (!response.ok) throw new Error(`capabilities unavailable: ${response.status}`);
   const body = (await response.json()) as {
     capabilities?: { id?: string; configured?: boolean; missing?: unknown }[];
-    security?: { cspMode?: unknown };
+    security?: { cspMode?: unknown; authMethods?: unknown };
   };
   const rows = (body.capabilities ?? []).flatMap((capability) =>
     capability.id
@@ -71,8 +80,19 @@ async function loadCapabilities(): Promise<{
       : [],
   );
   const mode = body.security?.cspMode;
+  const rawMethods = body.security?.authMethods;
+  const authMethods: CapabilityAuthMethods | null =
+    rawMethods && typeof rawMethods === "object"
+      ? {
+          password: (rawMethods as Record<string, unknown>).password === true,
+          magicLink: (rawMethods as Record<string, unknown>).magicLink === true,
+          google: (rawMethods as Record<string, unknown>).google === true,
+        }
+      : null;
   const security: CapabilitySecurity | null =
-    mode === "enforce" || mode === "report-only" || mode === "off" ? { cspMode: mode } : null;
+    mode === "enforce" || mode === "report-only" || mode === "off"
+      ? { cspMode: mode, authMethods }
+      : null;
   return {
     configured: Object.fromEntries(rows.map((row) => [row.id, row.configured])),
     rows,
