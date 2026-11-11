@@ -117,8 +117,19 @@ jobs:
       - name: Original audit acceptance ledger (local contracts only)
         run: npm run verify:audit-release
 
+      # GitHub's Ubuntu mirrors have intermittently failed DNS inside a runner,
+      # and `--with-deps` re-runs apt on every attempt. Retry the whole install
+      # instead of failing the PR on an apt outage that is not caused by the code.
       - name: Install isolated local browser
-        run: bunx playwright install --with-deps chromium
+        run: |
+          for attempt in 1 2 3; do
+            if bunx playwright install --with-deps chromium; then
+              exit 0
+            fi
+            echo "browser install failed (attempt ${attempt}); retrying in 30s"
+            sleep 30
+          done
+          exit 1
 
       - name: Local demo browser and real parser regressions (not runtime UAT)
         run: npm run test:e2e:local

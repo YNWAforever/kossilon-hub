@@ -1,7 +1,14 @@
+import { authMethodsFor, type AuthMethods } from "../features/auth/auth-methods";
 import { resolveSecurityHeaderMode } from "./security-headers";
 
 export type SecurityPosture = {
   cspMode: "off" | "report-only" | "enforce";
+  /**
+   * Which sign-in methods the build exposes (VITE_AUTH_METHODS, defaulting to
+   * password + magic link + Google). This is the same resolver the login page
+   * uses, so an administrator can see the deployed choice rather than infer it.
+   */
+  authMethods: AuthMethods;
 };
 
 export type CapabilityStatus = {
@@ -73,7 +80,10 @@ export function runtimeCapabilities(env: Env): {
   if (!present(env, "CRON_SECRET")) schedulerMissing.push("CRON_SECRET");
 
   return {
-    security: { cspMode: resolveSecurityHeaderMode(env.SECURITY_HEADERS) },
+    security: {
+      cspMode: resolveSecurityHeaderMode(env.SECURITY_HEADERS),
+      authMethods: authMethodsFor(env.VITE_AUTH_METHODS),
+    },
     capabilities: [
       status("firm", "Firm identity", env, ["FIRM_ID"]),
       status("database", "Database", env, ["DATABASE_URL"]),
