@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const refresh = vi.hoisted(() => vi.fn());
 const state = vi.hoisted(() => ({
   loaded: true,
-  security: { cspMode: "enforce" },
+  security: { cspMode: "enforce", authMethods: { password: true, magicLink: true, google: true } },
   rows: [
     { id: "firm", configured: false, missing: ["FIRM_ID"] },
     { id: "email", configured: false, missing: ["EMAIL_FROM|RESEND_FROM"] },
@@ -41,6 +41,7 @@ describe("IntegrationSetupPanel", () => {
     // Configured rows say so.
     expect(screen.getByText("已配置")).toBeTruthy();
     expect(screen.getByText("enforce")).toBeTruthy();
+    expect(screen.getByText(/密碼 · 登入連結 · Google/)).toBeTruthy();
   });
 
   it("refreshes the capability report on demand", () => {

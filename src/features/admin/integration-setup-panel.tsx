@@ -11,6 +11,21 @@ import { setupRows } from "@/features/operations/integration-setup";
  * stores provider secrets. It exists so an administrator can see, in one place,
  * which bindings are missing and what approval/action each one needs.
  */
+function signInMethodLabels(
+  methods: {
+    password: boolean;
+    magicLink: boolean;
+    google: boolean;
+  } | null,
+): string {
+  if (!methods) return "未能讀取";
+  const labels: string[] = [];
+  if (methods.password) labels.push("密碼");
+  if (methods.magicLink) labels.push("登入連結");
+  if (methods.google) labels.push("Google");
+  return labels.length > 0 ? labels.join(" · ") : "無";
+}
+
 export function IntegrationSetupPanel() {
   const { loaded, rows, security, refresh } = useRuntimeCapabilities();
   const setup = setupRows(rows);
@@ -73,9 +88,15 @@ export function IntegrationSetupPanel() {
               ))}
             </ul>
             {security ? (
-              <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                CSP: <strong>{security.cspMode}</strong> (SECURITY_HEADERS)
-              </p>
+              <div className="mt-3 space-y-1 text-xs leading-5 text-muted-foreground">
+                <p>
+                  CSP: <strong>{security.cspMode}</strong> (SECURITY_HEADERS)
+                </p>
+                <p>
+                  登入方式: <strong>{signInMethodLabels(security.authMethods)}</strong>{" "}
+                  (VITE_AUTH_METHODS)
+                </p>
+              </div>
             ) : null}
           </>
         )}
