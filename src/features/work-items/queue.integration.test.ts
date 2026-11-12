@@ -57,6 +57,18 @@ describe.skipIf(!url)("R16 / R28 actual SQL page and snapshot agreement", () => 
           >`insert into work_items(company_id,case_type,annual_return_case_id,source_event_key,source_event_type,work_type,title,priority,owner_id,team_id,sla_policy_version_id,sla_started_at,sla_warning_at,sla_due_at)
           select ${companyId},'annual_return',${caseId},${fixtureRunId}||':'||n,'synthetic_queue','annual_return_case','Review document: NAR1',n%101,${actorId},${teamId},(select id from sla_policies order by id limit 1),'2026-10-01'::timestamptz,'2026-10-02'::timestamptz,'2026-10-03'::timestamptz+((n%3)::text||' microseconds')::interval from generate_series(1,10000)n returning id`;
           ids.push(...rows.map((r) => r.id));
+          // Autovacuum cannot see these uncommitted rows. Give the planner the
+          // fixture's real size instead of the tiny seed's statistics before
+          // running 600 pages through the production query and its joins.
+          await tx`analyze work_items`;
+          // Keep PostgreSQL's microsecond precision in this independent order
+          // oracle; mapping timestamps to JS Dates would collapse the ties.
+          const orderedRows = await tx<
+            { id: string }[]
+          >`select id from work_items where annual_return_case_id=${caseId}
+            order by (sla_breached_at is null),sla_due_at,priority desc,id`;
+          const expectedOrder = orderedRows.map((r) => r.id);
+          const expectedIds = [...ids].sort();
           let firstQuery: { strings: string[]; parameters: unknown[] } | undefined;
           const reader = new Proxy(tx, {
             apply(target, thisArg, args) {
@@ -70,7 +82,7 @@ describe.skipIf(!url)("R16 / R28 actual SQL page and snapshot agreement", () => 
           const bulk = createBulkOperationsRepository({ sql: tx as unknown as SqlClient });
           for (const q of ["覆核文件", "Review document", "香港測試公司"]) {
             firstQuery = undefined;
-            const seen = new Set<string>();
+            const pagedIds: string[] = [];
             let cursor: string | undefined;
             let firstBytes = 0;
             do {
@@ -86,6 +98,11 @@ describe.skipIf(!url)("R16 / R28 actual SQL page and snapshot agreement", () => 
                 includeFixtures: false,
               });
               expect(page.items.length).toBeLessThanOrEqual(50);
+              const pageIds = page.items.map((item) => item.id);
+              // Compare each whole page instead of making 30,000 per-item
+              // assertions; this also detects order errors across page edges.
+              expect(pageIds).toEqual(expectedOrder.slice(pagedIds.length, pagedIds.length + 50));
+              pagedIds.push(...pageIds);
               if (!cursor) {
                 firstBytes = new TextEncoder().encode(JSON.stringify(page)).byteLength;
                 expect(firstQuery).toBeDefined();
@@ -99,13 +116,12 @@ describe.skipIf(!url)("R16 / R28 actual SQL page and snapshot agreement", () => 
                 ]);
                 queryEvidence.push({ query: q, ...captured, explain });
               }
-              for (const item of page.items) {
-                expect(seen.has(item.id)).toBe(false);
-                seen.add(item.id);
-              }
               cursor = page.nextCursor ?? undefined;
             } while (cursor);
-            expect([...seen].sort()).toEqual([...ids].sort());
+            expect(pagedIds).toEqual(expectedOrder);
+            expect(new Set(pagedIds).size).toBe(10000);
+            const pagedIdsSorted = [...pagedIds].sort();
+            expect(pagedIdsSorted).toEqual(expectedIds);
             const snapshot = await bulk.createSnapshot(actor, {
               resource: "work_item",
               filters: { q, activeOnly: true, view: "team" },
@@ -115,10 +131,10 @@ describe.skipIf(!url)("R16 / R28 actual SQL page and snapshot agreement", () => 
             const [stored] = await tx<
               { items: { id: string }[] }[]
             >`select items from bulk_selection_snapshots where id=${snapshot.snapshotId}`;
-            expect(stored.items.map((i) => i.id).sort()).toEqual([...seen].sort());
+            expect(stored.items.map((i) => i.id).sort()).toEqual(pagedIdsSorted);
             measurements.push({
               query: q,
-              visible: seen.size,
+              visible: pagedIds.length,
               snapshot: snapshot.count,
               maxPageSize: 50,
               firstResponseBytes: firstBytes,
@@ -155,6 +171,9 @@ describe.skipIf(!url)("R16 / R28 actual SQL page and snapshot agreement", () => 
         }),
       ).rejects.toBe(rollback);
     } finally {
+      // ANALYZE's relation-size estimates survive rollback. Restore them for
+      // the following files in the serialized db project.
+      await sql!`analyze work_items`;
       const [remaining] = await sql!<
         { count: string }[]
       >`select count(*) count from work_items where id=any(${ids}::uuid[])`;
