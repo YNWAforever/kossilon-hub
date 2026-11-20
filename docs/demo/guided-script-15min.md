@@ -1,96 +1,45 @@
 # 15-minute guided demo script
 
-Audience: owner/partner and operations lead of a Hong Kong company-secretarial firm.
-Goal: they recognise their current workflow, trust the role/permission model, and agree to a short pilot conversation.
+Audience is the owner, partner or operations lead of a Hong Kong company-secretarial firm. The goal is to show how staff and clients can understand the status of one filing and agree on a next step for a pilot.
 
-Setup: `https://kossilon-hub-demo.vercel.app/login` → **Amy Chan (Admin)**. Say once, at the start:
-“This is a read-only demo with fictional data. Anything that would write or send is intentionally disabled.”
+Start at the [Chinese demo picker](https://kossilon-hub-demo.vercel.app/login) or the [English demo picker](https://kossilon-hub-demo.vercel.app/en/login). Select **Amy Chan (Admin)**. The workspace labels below use Traditional Chinese. Say “This is a read-only demo with fictional data.”
 
-## 0:00–1:00 — Frame the problem
+## 0:00–2:00 — Start on the dashboard
 
-> “公司秘書團隊通常同時追 周年申報、文件、付款同老闆/客戶嘅問題，進度散落喺 Excel、WhatsApp 同同事記憶。
-> ComSec OS 將每一宗個案嘅下一步、負責人同到期日放返同一個工作空間。”
+On **總覽** (`/dashboard`), explain how a team can use the overview to spot filings that need attention. Ask the prospect what they use today to track who owns the next step.
 
-Keep it to 60 seconds; do not tour the marketing page.
+> 公司秘書團隊通常要同時追周年申報、文件同付款。ComSec OS 將每宗個案嘅下一步、負責人同到期日放返同一個工作空間。
 
-## 1:00–3:30 — Admin: what the team sees today (Amy)
+## 2:00–8:00 — Walk through one filing
 
-Open **今日工作** (`/today`), then **總覽** (`/dashboard`), then **工作隊列** (`/work-queue`).
+Open **周年申報** (`/annual-returns`). Search for **Crestview** and open **Crestview Logistics Limited** (`/annual-returns/ar-crestview`).
 
-- Point to overdue/upcoming counts and what is due today.
-- In 工作隊列, show that rows carry owner, company, status and due date; the same list is the team’s daily chase board.
-- Say: “每一行都係一宗個案，唔係一個 task；打開就見到成條流程同紀錄。”
-- Avoid: any “新增/指派/完成” control. If clicked, it will show the read-only notice — use that as the honesty point.
+1. Point to the owner, filing deadline and current status. Ask the prospect which of these they spend the most time confirming.
+2. Show the missing signed NAR1 and the overdue filing-fee payment. Explain what the case owner would need to gather before the case moves forward.
+3. Use the checklist and activity to show how a colleague could pick up the case during a handover.
 
-## 3:30–6:00 — Admin: one annual-return case end to end
+> 睇到文件同付款狀態，同事交接嗰陣就知下一步追邊樣。
 
-Open **周年申報** (`/annual-returns`), then open the first overdue row (for example a Harbour Trading/Kowloon Textiles case).
+## 8:00–12:00 — Show what the client would see
 
-- Walk the status strip: upcoming → reminder → documents pending/received → payment → NAR1 prepared → signature → filed.
-- Show the checklist, owner, due date, documents and payment state on one screen.
-- Say: “狀態係共用語言；同事、經理同客戶都睇同一份事實。”
-- Then open **文件** (`/documents`): missing vs received, what is being chased, and how a reminder would be recorded in production.
-- Then **付款** (`/payments`): paid/pending/overdue and proof state; explain that a case can be “ready” but payment-gated in production.
+Open **客戶入口** (`/portal`). Select **Crestview Logistics Limited** if it is not already selected. Point to the deadline, required actions and payment status. Ask which updates would prevent a client from calling to check progress.
 
-## 6:00–8:00 — Manager: scope and workload (Ken Wong)
+Explain that Amy is using the staff preview. The demo offers three staff personas. If asked about roles, explain that production access is by invitation and client access is scoped to their company's filings. Confirm the prospect's roles and integrations during pilot planning.
 
-Sign out (sidebar account block) → `/login` → **Ken Wong (Manager)**.
+## 12:00–15:00 — Agree on a pilot conversation
 
-- Re-open 工作隊列 / 周年申報 and point out the manager sees the wider team scope, not a personal list.
-- Say: “同一個畫面，按角色同 team 收窄；server-side 授權，唔係靠前端隱藏。”
-- Do not claim features that are not on screen (no separate workload analytics dashboard).
+Summarise the case the prospect just saw, then ask which filing workflow they would try first with their own team. Capture the integration they would need and who would own the pilot.
 
-## 8:00–9:30 — Staff: least privilege (Mei Lam)
+Share the [Chinese pilot request form](https://kossilon-hub.vercel.app/request-access) or the [English pilot request form](https://kossilon-hub.vercel.app/en/request-access). Explain who will follow up. Use the agreed feedback destination from the [outreach notes](feedback-and-outreach.md).
 
-Sign out → **Mei Lam (Staff)**.
+## Common questions
 
-- Show 今日工作 and the work queue; staff sees assigned work and can act only within that scope.
-- Say: “新人第一日就知做邊幾宗；唔會誤改其他 team 嘅個案。”
-- This is the moment to mention audit/history: every case carries a timeline of who did what.
+| Question                            | Answer                                                                                                         |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Can I upload or create a case here? | The demo uses read-only fixtures. We will agree on sample data and permitted actions for the pilot.            |
+| Is WhatsApp live?                   | WhatsApp requires WOZTELL configuration. Confirm the channels included in the pilot before promising delivery. |
+| Where is data stored?               | Production runs on Vercel with Neon Postgres. Confirm data residency and processing terms for the pilot.       |
+| How much does it cost?              | Pilot scope, limits and pricing are agreed in the follow-up conversation.                                      |
+| Can we import our filing list?      | Bring an anonymised sample to the pilot discussion so we can review the inputs and expected results together.  |
 
-## 9:30–11:00 — Client-facing story
-
-Sign back in as Amy (Admin), open **客戶入口** (`/portal`).
-
-- The demo shows a client-style portal view for the selected case: progress, required actions, document/payment state, activity.
-- Say: “客戶只會見到自己公司嘅個案同需要佢做嘅事；唔會見到其他客戶或者內部備註。”
-- Honesty note: the demo has no Client persona yet; this is the staff-side view of the client experience.
-
-## 11:00–13:30 — Trust: roles, invite-only, integrations
-
-Open **系統運作** (`/operations`), then **用戶管理** (`/admin`) if the audience asks about setup.
-
-- 系統運作 shows deployment identity, scheduler health, capability states and security posture; it is designed to be
-  honest about what is configured.
-- 用戶管理 shows that accounts are invite-only, with roles Admin/Manager/Staff and client memberships by company.
-- If asked about WhatsApp/email/scanner: “功能須完成服務設定先會啟用；未啟用時系統會顯示未配置，不會扮有。”
-- Do not demo 設定 (`/settings`) unless asked; it is admin-only and not part of the story.
-
-## 13:30–15:00 — Close
-
-Summarise in three sentences:
-
-1. One shared case record replaces scattered spreadsheets and chat chasing.
-2. Roles and invite-only access keep client data scoped to the right people.
-3. The pilot is a small, real workspace with your own team and processes.
-
-Then:
-
-- Offer the 2-week pilot / next conversation; send the booking link in writing.
-- Ask for the feedback form before they leave the call (or send immediately after).
-- Do not improvise pricing; capture their budget expectation instead.
-
-## Common objections
-
-| Objection                  | Answer                                                                                                                                 |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| “Can I upload/create now?” | “This demo is read-only by design so nobody accidentally writes. A pilot workspace is writable and scoped to your team.”               |
-| “Is WhatsApp live?”        | “The inbox/chase experience is designed; it needs WOZTELL service configuration before it sends anything. We show the state honestly.” |
-| “Where is our data?”       | “Production runs on Vercel with Neon Postgres; demo data is fictional. Residency/DPA details are confirmed for the pilot.”             |
-| “How much?”                | “Pricing and limits are still being confirmed; pilot terms are part of the next conversation.”                                         |
-| “Can we import our cases?” | “Import/onboarding is scoped with the pilot; don’t promise a self-serve import in the demo.”                                           |
-
-## Reset after the call
-
-Nothing to delete: reload or sign out and the fixtures reset. If the prospect sent real files during the call, do not
-upload them; keep them in your own secure channel and follow the firm’s data-handling policy.
+Sign out after the call. Keep any prospect documents in your firm's approved channel.

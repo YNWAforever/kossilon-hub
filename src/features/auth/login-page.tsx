@@ -23,9 +23,11 @@ import {
   consumeRedirectPath,
   getSafeRedirectPath,
   isDemoAuthEnabled,
+  isLoginRoute,
   peekRedirectPath,
   rememberRedirectPath,
 } from "@/features/auth/route-guard";
+import { PRODUCTION_ORIGIN } from "@/features/runtime/public-origins";
 import { PRODUCT_NAME, PRODUCT_TAGLINE_ZH } from "@/lib/brand";
 
 type LoginMode = "password" | "magic-link";
@@ -33,6 +35,7 @@ type LoginMode = "password" | "magic-link";
 export function LoginPage({ locale = "zh-HK" }: { locale?: "zh-HK" | "en" } = {}) {
   const navigate = useNavigate();
   const t = (en: string, zh: string) => (locale === "en" ? en : zh);
+  const requestAccessPath = locale === "en" ? "/en/request-access" : "/request-access";
   const demoAuth = isDemoAuthEnabled();
   const methods = authMethodsFor(import.meta.env.VITE_AUTH_METHODS);
   const magicLinkEnabled = !demoAuth && methods.magicLink;
@@ -83,7 +86,7 @@ export function LoginPage({ locale = "zh-HK" }: { locale?: "zh-HK" | "en" } = {}
     if (!isHydrated || !session) return;
     // The actor-keyed provider may remount while navigation is committing.
     // A departed login page must not replace the chosen destination again.
-    if (window.location.pathname !== "/login") return;
+    if (!isLoginRoute(window.location.pathname)) return;
     // A Forbidden rejection (the only way to reach ?denied=1) implies a session
     // that authenticates but isn't provisioned — so `session` here can be the
     // same stale, still-truthy value carried over from immediately before the
@@ -484,7 +487,7 @@ export function LoginPage({ locale = "zh-HK" }: { locale?: "zh-HK" | "en" } = {}
                     </Button>
                   </div>
                   <a
-                    href={locale === "en" ? "/en/request-access" : "/request-access"}
+                    href={requestAccessPath}
                     className="mt-2 inline-block text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                   >
                     {t(
@@ -549,7 +552,7 @@ export function LoginPage({ locale = "zh-HK" }: { locale?: "zh-HK" | "en" } = {}
               <div className="mt-6 border-t border-border pt-5 text-center text-xs leading-5 text-muted-foreground">
                 {t("Access is invite-only.", "只限受邀用戶使用。")}{" "}
                 <a
-                  href={locale === "en" ? "/en/request-access" : "/request-access"}
+                  href={requestAccessPath}
                   className="font-medium text-primary underline-offset-4 hover:underline"
                 >
                   {t("Request access", "申請邀請")}
@@ -610,6 +613,12 @@ export function LoginPage({ locale = "zh-HK" }: { locale?: "zh-HK" | "en" } = {}
                     </button>
                   ))}
                 </div>
+                <a
+                  href={`${PRODUCTION_ORIGIN}${requestAccessPath}`}
+                  className="mt-4 inline-block text-xs font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {t("Request pilot access", "申請試行開通")}
+                </a>
               </div>
             )}
           </div>
