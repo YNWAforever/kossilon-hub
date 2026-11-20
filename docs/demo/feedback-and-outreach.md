@@ -18,13 +18,11 @@ Optional rating: “How clear was the demo?” 1–5.
 Owner action: create the form, send the link in the follow-up email, and keep responses out of the demo workspace. If no
 form tool is available, use the note field on the production request-access form and reply from the owner inbox.
 
-## Booking
+## Request a pilot conversation
 
-Use the production request-access form: https://kossilon-hub.vercel.app/request-access
-
-It persists a request to the admin queue. The demo deployment’s own `/request-access` shows setup instructions rather than
-the form, so always send the production link. State the response time the owner commits to (for example “within one
-business day”).
+Use the [Chinese intake](https://kossilon-hub.vercel.app/request-access) or the
+[English intake](https://kossilon-hub.vercel.app/en/request-access). The form records a request for the administrator to
+review and follow up. Share the response time the owner has agreed to.
 
 ## Invitation email / message (Chinese)
 
@@ -50,10 +48,10 @@ business day”).
 > and client updates in one case record.
 >
 > Try the read-only demo (about 10 minutes, no credentials needed, fictional data):
-> https://kossilon-hub-demo.vercel.app/
+> https://kossilon-hub-demo.vercel.app/en/login
 >
 > Choose any persona under “Demo identities”. If you would like a 15-minute guided walkthrough, leave your details here:
-> https://kossilon-hub.vercel.app/request-access
+> https://kossilon-hub.vercel.app/en/request-access
 >
 > Please don’t enter real client data in the demo; a pilot workspace is separate and writable.
 >

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openNavigation } from "./read-only-demo-journey";
 
 /**
  * Critical entry journeys for the read-only local demo.
@@ -68,6 +69,39 @@ test("English entry mirrors the journey", async ({ page }) => {
   await expect(page).toHaveURL(/\/en$/);
 
   expect(pageErrors).toEqual([]);
+});
+
+test("English demo entry reaches the Crestview filing and client preview", async ({ page }) => {
+  await page.goto("/en");
+  await page.locator(".comsec-hero").getByRole("link", { name: "Try the demo" }).click();
+  await expect(page).toHaveURL(/\/en\/login$/);
+  await expect(page.getByRole("link", { name: "Request pilot access" })).toHaveAttribute(
+    "href",
+    "https://kossilon-hub.vercel.app/en/request-access",
+  );
+  await page.getByRole("button", { name: /Amy Chan/ }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "總覽", exact: true })).toBeVisible();
+
+  const company = "Crestview Logistics Limited";
+  const annualReturns = await openNavigation(page);
+  await annualReturns.getByRole("link", { name: "周年申報", exact: true }).click();
+  await page.getByRole("textbox", { name: "搜尋公司或聯絡人" }).fill("Crestview");
+  await page.getByRole("link", { name: `開啟 ${company}`, exact: true }).click();
+  await expect(page).toHaveURL(/\/annual-returns\/ar-crestview$/);
+  const heading = page.getByRole("heading", { level: 1, name: company });
+  await expect(heading).toBeVisible();
+
+  const portal = await openNavigation(page);
+  await portal.getByRole("link", { name: "客戶入口", exact: true }).click();
+  await expect(page).toHaveURL(/\/portal\?caseId=ar-crestview$/);
+  await expect(heading).toBeVisible();
+});
+
+test("English demo sign-in preserves a filing deep link", async ({ page }) => {
+  await page.goto("/en/login?redirect=%2Fannual-returns%2Far-crestview");
+  await page.getByRole("button", { name: /Amy Chan/ }).click();
+  await expect(page).toHaveURL(/\/annual-returns\/ar-crestview$/);
+  await expect(page.getByRole("heading", { name: "Crestview Logistics Limited" })).toBeVisible();
 });
 
 test("a demo identity still enters the fixture dashboard and can sign out", async ({

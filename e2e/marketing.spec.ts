@@ -18,7 +18,7 @@ test("anonymous marketing has server-rendered content, locales, working navigati
   await expect(page).toHaveTitle(/ComSec OS/);
   await expect(
     page.locator(".comsec-hero-actions").getByRole("link", { name: "申請開通" }),
-  ).toHaveAttribute("href", "/request-access");
+  ).toHaveAttribute("href", "https://kossilon-hub.vercel.app/request-access");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "讓每一宗公司秘書工作，都有清晰下一步。",
   );
@@ -44,7 +44,7 @@ test("anonymous marketing has server-rendered content, locales, working navigati
   );
   await expect(
     page.locator(".comsec-hero-actions").getByRole("link", { name: "Request access" }),
-  ).toHaveAttribute("href", "/en/request-access");
+  ).toHaveAttribute("href", "https://kossilon-hub.vercel.app/en/request-access");
   await expect(page.locator("#pricing")).toContainText("TBC");
   await expect(page.locator("figcaption")).toContainText("Synthetic illustration");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -67,10 +67,7 @@ test("anonymous marketing has server-rendered content, locales, working navigati
   // Native locale links load a fresh document; allow its hydration and scroll
   // restoration to settle before Playwright scrolls back to the hero CTA.
   await page.waitForLoadState("networkidle");
-  await page
-    .locator(".comsec-hero")
-    .getByRole("link", { name: /登入工作空間/ })
-    .click();
+  await page.locator(".comsec-hero").getByRole("link", { name: "試用示範" }).click();
   await expect(page).toHaveURL(/\/login$/);
   expect(errors).toEqual([]);
 });
@@ -92,11 +89,9 @@ test("marketing works without JavaScript, including language, FAQ and login link
     await expect(page.locator("#faq details").first()).toHaveAttribute("open", "");
     await page.getByRole("link", { name: "EN", exact: true }).click();
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
-    await page
-      .locator(".comsec-hero")
-      .getByRole("link", { name: /Log in to workspace/ })
-      .click();
-    await expect(page).toHaveURL(/\/login$/);
+    await page.locator(".comsec-hero").getByRole("link", { name: "Try the demo" }).click();
+    await expect(page).toHaveURL(/\/en\/login$/);
+    await expect(page.getByRole("heading", { name: "Sign in to your workspace" })).toBeVisible();
   } finally {
     await context.close();
   }

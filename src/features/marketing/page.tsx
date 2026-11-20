@@ -1,14 +1,18 @@
 import { ArrowRight, Check, Files, Layers3, ShieldCheck } from "lucide-react";
+import { currentDataMode } from "@/features/runtime/data-mode";
+import { DEMO_ORIGIN, PRODUCTION_ORIGIN } from "@/features/runtime/public-origins";
 import { marketingCopy, type MarketingLocale } from "./content";
-import { isDemoAuthEnabled } from "@/features/auth/route-guard";
 
 const sections = ["workflow", "features", "pricing", "faq"] as const;
 
 export function MarketingPage({ locale }: { locale: MarketingLocale }) {
   const copy = marketingCopy[locale];
+  const demo = currentDataMode() === "demo";
   const home = locale === "en" ? "/en" : "/";
   const loginHref = locale === "en" ? "/en/login" : "/login";
-  const requestAccessHref = locale === "en" ? "/en/request-access" : "/request-access";
+  const requestAccessPath = locale === "en" ? "/en/request-access" : "/request-access";
+  const requestAccessHref = demo ? `${PRODUCTION_ORIGIN}${requestAccessPath}` : requestAccessPath;
+  const demoLabel = locale === "en" ? "Try the demo" : "試用示範";
   const nav = sections.map((section, i) => (
     <a key={section} href={`#${section}`}>
       {copy.nav[i]}
@@ -16,7 +20,7 @@ export function MarketingPage({ locale }: { locale: MarketingLocale }) {
   ));
   const cta = (
     <a className="comsec-button" href={loginHref}>
-      {copy.login} <ArrowRight size={18} aria-hidden="true" />
+      {demo ? demoLabel : copy.login} <ArrowRight size={18} aria-hidden="true" />
     </a>
   );
 
@@ -77,9 +81,9 @@ export function MarketingPage({ locale }: { locale: MarketingLocale }) {
                 {copy.requestAccess}
                 <ArrowRight size={17} aria-hidden="true" />
               </a>
-              {isDemoAuthEnabled() && (
-                <a className="comsec-text-link" href="/demo">
-                  {locale === "en" ? "Try the demo" : "試用示範"}
+              {!demo && (
+                <a className="comsec-text-link" href={`${DEMO_ORIGIN}${loginHref}`}>
+                  {demoLabel}
                   <ArrowRight size={17} aria-hidden="true" />
                 </a>
               )}

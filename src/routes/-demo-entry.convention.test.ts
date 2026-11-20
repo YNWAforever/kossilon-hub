@@ -24,13 +24,6 @@ describe("gated fixture demo entry", () => {
     expect(seo).not.toContain("<loc>${origin}/demo</loc>");
   });
 
-  it("only offers the demo CTA when the build actually has a demo", () => {
-    const marketing = read("../features/marketing/page.tsx");
-
-    expect(marketing).toContain("isDemoAuthEnabled()");
-    expect(marketing).toContain('href="/demo"');
-  });
-
   it("guards the fixture build at build time", () => {
     const script = readFileSync(
       new URL("../../scripts/verify-demo-build.ts", import.meta.url),

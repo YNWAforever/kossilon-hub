@@ -1,3 +1,7 @@
+import { DEMO_ORIGIN, PRODUCTION_ORIGIN } from "../runtime/public-origins.ts";
+
+export { DEMO_ORIGIN, PRODUCTION_ORIGIN };
+
 export type SmokeCheck = {
   name: string;
   url: string;
@@ -21,9 +25,6 @@ export type SmokeResult = {
   ok: boolean;
   detail: string;
 };
-
-export const PRODUCTION_ORIGIN = "https://kossilon-hub.vercel.app";
-export const DEMO_ORIGIN = "https://kossilon-hub-demo.vercel.app";
 
 export function productionChecks(origin = PRODUCTION_ORIGIN, expectedSha?: string): SmokeCheck[] {
   const checks: SmokeCheck[] = [
