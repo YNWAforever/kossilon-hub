@@ -1,5 +1,5 @@
 import {
-  EXPECTED_MIGRATIONS,
+  operationalMigrations,
   schemaHealthOf,
   type SchemaFact,
   type SchemaLedger,
@@ -26,7 +26,7 @@ export function assertMaintenanceSchema(input: {
   releaseReceipt?: SchemaReleaseReceipt | null;
 }) {
   const health = schemaHealthOf({
-    expected: EXPECTED_MIGRATIONS,
+    expected: operationalMigrations(input.ledger),
     ledger: input.ledger,
     releaseReceipt: input.releaseReceipt ?? input.ledger.releaseReceipt ?? null,
   });

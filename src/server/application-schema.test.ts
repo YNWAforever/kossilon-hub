@@ -4,6 +4,7 @@ import {
   EXPECTED_MIGRATIONS,
   HISTORICAL_MIGRATIONS,
   HISTORICAL_RELEASE_RECEIPT,
+  ONBOARDING_COMPLETION_MIGRATION,
 } from "@/features/operations/schema-health";
 import { schemaCatalogDouble } from "@/test/schema-catalog-double";
 describe("UC189 shared application schema error", () => {
@@ -25,6 +26,21 @@ describe("UC189 shared application schema error", () => {
 
     await expect(assertApplicationWriteSchema(sql)).resolves.toBeUndefined();
   });
+  it("admits only the reviewed additive onboarding migration on the historical lineage", async () => {
+    const { state, sql } = schemaCatalogDouble();
+    state.ledger = {
+      ...historicalLedger,
+      applied: [...historicalLedger.applied, ONBOARDING_COMPLETION_MIGRATION],
+    };
+    state.receipt = {
+      id: HISTORICAL_RELEASE_RECEIPT.id,
+      payloadSha256: HISTORICAL_RELEASE_RECEIPT.payloadSha256,
+    };
+    await expect(assertApplicationWriteSchema(sql)).resolves.toBeUndefined();
+    state.ledger = { ...state.ledger, applied: [...state.ledger.applied, "0099_unknown.sql"] };
+    await expect(assertApplicationWriteSchema(sql)).rejects.toBeInstanceOf(ApplicationSchemaError);
+  });
+
   it("refuses the historical ledger when the release receipt is missing", async () => {
     const { state, sql } = schemaCatalogDouble();
     state.ledger = historicalLedger;

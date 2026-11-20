@@ -78,6 +78,17 @@ export const EXPECTED_MIGRATIONS = [
   "0083_request_access_requests.sql",
 ] as const;
 
+export const ONBOARDING_COMPLETION_MIGRATION = "0084_request_access_onboarding_completion.sql";
+
+/** Intake completion is optional during the rollout and does not gate core writes. */
+export function operationalMigrations(ledger: SchemaLedger): readonly string[] {
+  const expected: readonly string[] = EXPECTED_MIGRATIONS;
+  const base = expected.filter((id) => id !== ONBOARDING_COMPLETION_MIGRATION);
+  return ledger.applied.includes(ONBOARDING_COMPLETION_MIGRATION)
+    ? [...base, ONBOARDING_COMPLETION_MIGRATION]
+    : base;
+}
+
 /**
  * Historical migration IDs recorded in the reconciled production ledger that
  * this build knows about but does not replay.

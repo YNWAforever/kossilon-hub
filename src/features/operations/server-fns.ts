@@ -15,7 +15,12 @@ import {
   type MaintenanceRunRecord,
 } from "./health";
 import type { MaintenanceRunRepository, QueueDepths } from "./repository";
-import { EXPECTED_MIGRATIONS, schemaHealthOf, type SchemaHealth } from "./schema-health";
+import {
+  EXPECTED_MIGRATIONS,
+  operationalMigrations,
+  schemaHealthOf,
+  type SchemaHealth,
+} from "./schema-health";
 import { compareRuntimeContracts } from "./release-catalog";
 import {
   evaluateHistoricalReleaseCompatibility,
@@ -114,10 +119,8 @@ export async function buildOperationsHealth(
   };
   let schema: SchemaHealth;
   try {
-    schema = schemaHealthOf({
-      expected: EXPECTED_MIGRATIONS,
-      ledger: await dependencies.repository.schemaLedger(),
-    });
+    const ledger = await dependencies.repository.schemaLedger();
+    schema = schemaHealthOf({ expected: operationalMigrations(ledger), ledger });
   } catch {
     failed("schemaLedger");
     schema = {
